@@ -13,6 +13,7 @@
   --accent:#2a78d6; --away:#2a78d6; --home:#eb6834; --pos:#2a78d6; --neg:#e34948; --mid:#f0efec;
   --ice:#f8fbff; --rink:#c7d3e0; --rink-red:#e34948; --rink-blue:#2a78d6; --crease:#dbeafe;
   --live:#d03b3b; --good:#0ca30c; --gold:#d4a017; --gold-ink:#8a6300;
+  --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100; --c5:#e87ba4; --c6:#008300;
   --shadow:0 1px 2px rgba(16,24,40,.05),0 2px 6px rgba(16,24,40,.06);
   --r:12px;
   color-scheme:light;
@@ -23,6 +24,7 @@
     --accent:#3987e5; --away:#3987e5; --home:#d95926; --pos:#3987e5; --neg:#e66767; --mid:#383835;
     --ice:#121821; --rink:#2d3a4b; --rink-red:#b84747; --rink-blue:#2f6fbf; --crease:#1b2b42;
     --shadow:0 1px 2px rgba(0,0,0,.4); --gold:#e0b341; --gold-ink:#f0c95a;
+    --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#008300;
     color-scheme:dark;
   }
 }
@@ -31,6 +33,7 @@
   --accent:#3987e5; --away:#3987e5; --home:#d95926; --pos:#3987e5; --neg:#e66767; --mid:#383835;
   --ice:#121821; --rink:#2d3a4b; --rink-red:#b84747; --rink-blue:#2f6fbf; --crease:#1b2b42;
   --shadow:0 1px 2px rgba(0,0,0,.4); --gold:#e0b341; --gold-ink:#f0c95a;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#008300;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -49,7 +52,22 @@ a{color:var(--accent)}
 .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
 .brand h1{font-size:26px;font-weight:700;line-height:1}
 .brand small{display:block;color:var(--muted);font-size:12px}
-.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;max-width:100%;order:3;flex-basis:100%}
+@media (min-width:900px){.tabs{flex-wrap:wrap}}
+.rbar{position:relative;height:8px;width:100%;min-width:70px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.rbar .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--muted)}
+.rbar i{position:absolute;top:0;bottom:0;border-radius:99px}
+.rcell{display:flex;align-items:center;gap:8px;min-width:150px}
+.rcell b{min-width:46px;text-align:right}
+.pw-rk{font-family:"Barlow Condensed",Inter,sans-serif;font-size:20px;font-weight:700;width:26px;text-align:right}
+.mv{font-size:11px;font-weight:700;width:30px;color:var(--muted)}
+.mv.up{color:var(--good)}
+.mv.down{color:var(--neg)}
+.l10{display:flex;gap:2px}
+.l10 i{width:8px;height:14px;border-radius:2px;display:block}
+.l10 i.w{background:var(--good)}
+.l10 i.l{background:var(--neg);opacity:.55}
+tr.lgrow td{color:var(--muted);font-size:12px;background:var(--surface-2)}
 .tabs button{border:0;background:none;padding:8px 12px;border-radius:8px;color:var(--text-2);font-weight:600;cursor:pointer;white-space:nowrap}
 .tabs button:hover{background:var(--surface-2)}
 .tabs button.on{background:var(--accent);color:#fff}
@@ -354,11 +372,16 @@ footer{max-width:1280px;margin:0 auto;padding:10px 16px 30px;color:var(--muted);
     <nav class="tabs" id="tabs">
       <button data-tab="scores" class="on">Scores</button>
       <button data-tab="standings">Standings</button>
+      <button data-tab="power">Power Rankings</button>
       <button data-tab="teams">Team Analytics</button>
+      <button data-tab="special">Special Teams</button>
+      <button data-tab="splits">Splits</button>
       <button data-tab="skaters">Skaters</button>
+      <button data-tab="rookies">Rookies</button>
       <button data-tab="goalies">Goalies</button>
       <button data-tab="luck">Luck Watch</button>
       <button data-tab="compare">Compare</button>
+      <button data-tab="model">Model Lab</button>
       <button data-tab="glossary">Glossary</button>
     </nav>
     <button class="icon-btn" id="themeBtn" title="Toggle light/dark" aria-label="Toggle theme">◐</button>
@@ -389,6 +412,11 @@ footer{max-width:1280px;margin:0 auto;padding:10px 16px 30px;color:var(--muted);
   </section>
 
   <!-- ANALYTICS SHARED CONTROLS are injected into each analytics tab -->
+  <section class="tab" id="tab-power"><div class="abar"></div><div id="pwBody"></div></section>
+  <section class="tab" id="tab-special"><div class="abar"></div><div id="stBody"></div></section>
+  <section class="tab" id="tab-splits"><div class="abar"></div><div id="spBody"></div></section>
+  <section class="tab" id="tab-rookies"><div class="abar"></div><div id="rkBody"></div></section>
+  <section class="tab" id="tab-model"><div class="abar"></div><div id="mdBody"></div></section>
   <section class="tab" id="tab-teams">
     <div class="abar"></div>
     <div id="teamsBody"></div>
@@ -427,6 +455,9 @@ footer{max-width:1280px;margin:0 auto;padding:10px 16px 30px;color:var(--muted);
           <dt>ixG · iCF</dt><dd>Individual expected goals and individual shot attempts: a player's own shots only.</dd>
           <dt>/60</dt><dd>A rate per 60 minutes of ice time, so players and teams with different minutes can be compared fairly.</dd>
           <dt>Even strength (EV)</dt><dd>Both teams have the same number of skaters, mostly 5-on-5. Analysts prefer it because power plays skew everything.</dd>
+          <dt>Score-adjusted stats</dt><dd>Teams that are trailing take more shots, so raw even-strength numbers flatter bad teams that chase games. Score adjustment weights each shot by the shooting team's score state (and home or road) so every state counts equally. It's on by default and can be switched off in Team Analytics or the Model Lab.</dd>
+          <dt>Team strength rating</dt><dd>Goals per game better or worse than an average team, split into offense and defense. It updates after every game from score-adjusted expected goals (70%) and actual goals (30%), adjusted for the opponent and home ice. It powers the power rankings and predictions.</dd>
+          <dt>Prediction tracker</dt><dd>Every loaded game is re-predicted using only the games played before it, then graded. That's the honest test of whether the model would have helped.</dd>
           <dt>Deserve-to-win meter</dt><dd>We replay each game's shots 10,000 times, with every shot going in at its xG probability, and count how often each team wins. Ties are split 50/50.</dd>
         </dl>
       </div>
@@ -434,7 +465,7 @@ footer{max-width:1280px;margin:0 auto;padding:10px 16px 30px;color:var(--muted);
         <h2>How it's built</h2>
         <dl>
           <dt>Data</dt><dd>All data comes live from ESPN's public API: scoreboard, standings, and full play-by-play with rink coordinates for every shot. The NHL's own API and sites like MoneyPuck and Natural Stat Trick don't let web pages fetch their data directly, so every advanced stat here is computed in your browser from the play-by-play.</dd>
-          <dt>Expected goals model</dt><dd>A logistic model using shot distance, shot angle, shot type (tip, deflection, backhand, slap, snap, wrist, wrap-around), rebounds (a shot within 3 seconds of a teammate's attempt), rush chances (a shot within 4 seconds of an event outside the offensive zone), and power play. Totals are then calibrated so league-wide xG matches league-wide goals across the games you've loaded.</dd>
+          <dt>Expected goals model</dt><dd>A logistic regression using shot distance and angle, shot type, rebounds, rush chances, cross-ice movement, shots off turnovers and faceoff wins, and power play or shorthanded situations. It starts from weights pre-trained on March 2026 games and re-trains on whatever games you load (see Model Lab). Totals are then calibrated so league-wide xG matches league-wide goals.</dd>
           <dt>Ice time</dt><dd>Player TOI comes from ESPN box scores. Team even-strength time is estimated as the sum of skaters' even-strength TOI ÷ 5.</dd>
           <dt>Caching</dt><dd>Processed games are saved in your browser, so after the first load, switching ranges or coming back later is much faster. Use "Clear cache" if something looks off.</dd>
           <dt>Limitations</dt><dd>This is an approximation. Public models like MoneyPuck and Evolving-Hockey use more inputs (pre-shot movement, score effects, shooter talent) and official NHL shift data. Expect our numbers to be directionally the same as theirs, not identical. ESPN occasionally mislabels a shot's coordinates or type, and early-season samples are noisy.</dd>
@@ -454,7 +485,7 @@ footer{max-width:1280px;margin:0 auto;padding:10px 16px 30px;color:var(--muted);
 /* ============================== utilities ============================== */
 const API = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl';
 const API2 = 'https://site.api.espn.com/apis/v2/sports/hockey/nhl';
-const VER = 4; // bump to invalidate cached processed games
+const VER = 5; // bump to invalidate cached processed games
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -560,16 +591,21 @@ function shotType(t) {
   if (/\bWrist Shot\b/i.test(t)) return 'Wrist';
   return 'Other';
 }
-const TYPE_ADJ = { Tip: .35, Deflection: .35, Backhand: -.15, Slap: .10, Snap: .05, Wrap: -.55, Batted: 0, Poke: -.2, Trick: .1, Wrist: 0, Other: 0 };
-function xgModel(d, a, st, reb, rush, str) {
-  if (d == null) { d = 35; a = 30; }
-  a = Math.min(a, 95);
-  let z = -1.19 - 0.050 * d - 0.011 * a + (TYPE_ADJ[st] || 0);
-  if (reb) z += 0.85;
-  if (rush) z += 0.30;
-  if (str === 1) z += 0.20;
-  return 1 / (1 + Math.exp(-z));
+/* Expected goals model: one logistic regression. DEFAULT_W is the starter model;
+   the Model tab can re-train these weights on the games you load. */
+const FEATS = [
+  ['bias', 'Baseline'], ['dist', 'Distance (per 10 ft)'], ['dist2', 'Distance² (curve)'], ['ang', 'Angle (per 10°)'],
+  ['tip', 'Tip-in'], ['defl', 'Deflection'], ['back', 'Backhand'], ['slap', 'Slap shot'], ['snap', 'Snap shot'], ['wrap', 'Wrap-around'], ['oth', 'Other shot type'],
+  ['reb', 'Rebound'], ['rush', 'Rush chance'], ['cross', 'Cross-ice / lateral'], ['turn', 'Off a turnover'], ['fo', 'Off a faceoff win'], ['pp', 'Power play'], ['sh', 'Shorthanded']];
+// starter weights: pre-trained on 242 regular-season games from March 2026 (20,721 unblocked shots)
+const DEFAULT_W = [-1.23, -0.20, -0.05, -0.15, -0.47, 0.18, -0.29, 0.30, 0.28, -0.60, -0.06, 0.03, 0.11, 0.10, 0.11, -0.30, 0.34, 0.09];
+function featVec(s) {
+  const d = s.d == null ? 35 : s.d, a = s.a == null ? 30 : Math.min(s.a, 95), st = s.st, f = s.f || 0;
+  return [1, d / 10, (d / 10) ** 2, a / 10, st === 'Tip' ? 1 : 0, st === 'Deflection' ? 1 : 0, st === 'Backhand' ? 1 : 0, st === 'Slap' ? 1 : 0, st === 'Snap' ? 1 : 0, st === 'Wrap' ? 1 : 0,
+    (st === 'Poke' || st === 'Batted' || st === 'Trick' || st === 'Other') ? 1 : 0, f & 1 ? 1 : 0, f & 2 ? 1 : 0, f & 16 ? 1 : 0, f & 32 ? 1 : 0, f & 64 ? 1 : 0, s.str === 1 ? 1 : 0, s.str === 2 ? 1 : 0];
 }
+const sigm = z => 1 / (1 + Math.exp(-z));
+function predictW(W, s) { const x = featVec(s); let z = 0; for (let i = 0; i < W.length; i++) z += W[i] * x[i]; return sigm(z); }
 const strCode = s => { const t = ((s && (s.abbreviation || s.text)) || '').toLowerCase(); return t.includes('power') ? 1 : t.includes('short') ? 2 : 0; };
 
 /* Turn an ESPN summary into a compact game record */
@@ -584,7 +620,7 @@ function processGame(s) {
   const nm = {};
 
   // box score
-  const sk = {}, gk = {};
+  const sk = {}, gk = {}, bx = {};
   for (const tb of ((s.boxscore && s.boxscore.players) || [])) {
     const tid = String(tb.team && tb.team.id);
     for (const grp of (tb.statistics || [])) {
@@ -600,16 +636,21 @@ function processGame(s) {
       }
     }
   }
+  for (const t of ((s.boxscore && s.boxscore.teams) || [])) {
+    const g = n => { const x = (t.statistics || []).find(q => q.name === n); return x ? parseFloat(x.displayValue) || 0 : 0; };
+    bx[String(t.team.id)] = { ppg: g('powerPlayGoals'), ppo: g('powerPlayOpportunities'), shg: g('shortHandedGoals') };
+  }
+  const pk = (s.pickcenter && s.pickcenter[0]) || null;
+  const ml = pk && pk.homeTeamOdds && pk.awayTeamOdds && isFinite(pk.homeTeamOdds.moneyLine) && isFinite(pk.awayTeamOdds.moneyLine) ? { h: +pk.homeTeamOdds.moneyLine, a: +pk.awayTeamOdds.moneyLine } : null;
 
   // events
   const T = { Shot: 1, Goal: 0, Missed: 2, Blocked: 3 };
-  const ev = (s.plays || []).map(p => ({ p, type: (p.type && p.type.text) || '', per: (p.period && p.period.number) || 0, sec: toSec(p.clock && p.clock.displayValue), x: p.coordinate && typeof p.coordinate.x === 'number' ? p.coordinate.x : null, y: p.coordinate && typeof p.coordinate.y === 'number' ? p.coordinate.y : null }));
+  const ev = (s.plays || []).map(p => ({ p, type: (p.type && p.type.text) || '', tid: p.team ? String(p.team.id) : null, per: (p.period && p.period.number) || 0, sec: toSec(p.clock && p.clock.displayValue), x: p.coordinate && typeof p.coordinate.x === 'number' ? p.coordinate.x : null, y: p.coordinate && typeof p.coordinate.y === 'number' ? p.coordinate.y : null }));
   const isSO = e => stype !== 3 && e.per >= 5;
   for (const e of ev) {
     if (T[e.type] === undefined || !e.p.team || isSO(e)) continue;
     e.t = T[e.type];
-    const tid = String(e.p.team.id);
-    e.team = e.t === 3 ? (tid === home.id ? away.id : home.id) : tid; // "Blocked" plays are credited to the blocking team
+    e.team = e.t === 3 ? (e.tid === home.id ? away.id : home.id) : e.tid; // "Blocked" plays are credited to the blocking team
   }
   // which net is each team attacking in each period?
   const sum = {}; const key = (t, p) => t + '|' + p;
@@ -628,19 +669,24 @@ function processGame(s) {
   const shots = []; let prev = null;
   for (let i = 0; i < ev.length; i++) {
     const e = ev[i]; if (e.t === undefined) continue;
-    const sd = getSide(e.team, e.per), defT = e.team === home.id ? away.id : home.id;
+    const sdS = getSide(e.team, e.per), defT = e.team === home.id ? away.id : home.id;
     let xn = null, yn = null, d = null, a = null;
     if (e.x != null && e.y != null && !(e.x === 0 && e.y === 0)) {
-      xn = Math.max(-100, Math.min(100, sd * e.x)); yn = Math.max(-42.5, Math.min(42.5, sd * e.y));
+      xn = Math.max(-100, Math.min(100, sdS * e.x)); yn = Math.max(-42.5, Math.min(42.5, sdS * e.y));
       const dx = 89 - xn; d = Math.hypot(dx, yn); a = Math.atan2(Math.abs(yn), dx) * 180 / Math.PI;
     }
     const reb = !!(prev && prev.team === e.team && prev.per === e.per && e.sec >= prev.sec && e.sec - prev.sec <= 3);
-    let rush = false;
+    // look back at the few seconds before the shot
+    let rush = false, cross = false, turn = false, fo = false;
     for (let j = i - 1; j >= 0; j--) {
       const q = ev[j]; if (q.per !== e.per || e.sec - q.sec > 4) break;
-      if (q.type === 'Face Off') continue;
-      if (q.type === 'Stoppage' || q.type === 'Period Start' || q.t !== undefined) break;
-      if (q.x != null && sd * q.x < 25) { rush = true; break; }
+      if (q.type === 'Stoppage' || q.type === 'Period Start') break;
+      const qx = q.x != null ? sdS * q.x : null, qy = q.y != null ? sdS * q.y : null;
+      if (q.type === 'Face Off') { if (q.tid === e.team && qx != null && qx > 25 && e.sec - q.sec <= 3) fo = true; continue; }
+      if ((q.type === 'Takeaway' && q.tid === e.team) || (q.type === 'Giveaway' && q.tid && q.tid !== e.team)) turn = true;
+      if (qx != null && qx < 25 && q.t === undefined) rush = true;
+      if (qx != null && qy != null && yn != null && qx > 25 && e.sec - q.sec <= 3 && Math.sign(qy) !== Math.sign(yn) && Math.abs(qy - yn) >= 20) cross = true;
+      if (q.t !== undefined) break; // stop at the previous shot attempt
     }
     const text = e.p.text || '', stp = shotType(text);
     let str = strCode(e.p.strength); if (e.t === 3) str = str === 1 ? 2 : str === 2 ? 1 : str;
@@ -652,15 +698,21 @@ function processGame(s) {
     parts.forEach(x => { if (x.athlete) nm[x.athlete.id] = nm[x.athlete.id] || x.athlete.displayName; });
     if (saver && saver.athlete) lastG[defT] = String(saver.athlete.id);
     const gl = (e.t === 3 || en) ? null : (saver && saver.athlete ? String(saver.athlete.id) : lastG[defT]);
-    const xg = e.t === 3 ? 0 : en ? 0 : xgModel(d, a, stp, reb, rush, str);
+    // score before this shot, from the shooter's point of view (goal plays already include the goal)
+    const ha = e.team === home.id ? 1 : 0;
+    let hs = +e.p.homeScore || 0, as = +e.p.awayScore || 0;
+    if (e.t === 0) { if (ha) hs--; else as--; }
+    const sd = Math.max(-3, Math.min(3, ha ? hs - as : as - hs));
     let f = 0;
-    if (reb) f |= 1; if (rush) f |= 2;
+    if (reb) f |= 1; if (rush) f |= 2; if (cross) f |= 16; if (turn) f |= 32; if (fo) f |= 64;
     if (e.t !== 3 && d != null) {
       const hd = (d <= 22 && a <= 50) || (reb && d <= 30);
-      const sc = hd || (d <= 38 && a <= 60) || reb || (rush && d <= 45);
+      const sc = hd || (d <= 38 && a <= 60) || reb || (rush && d <= 45) || (cross && d <= 45);
       if (hd) f |= 4; if (sc) f |= 8;
     }
-    shots.push({ tm: e.team, pl: shooter && shooter.athlete ? String(shooter.athlete.id) : null, t: e.t, per: e.per, sec: e.sec, x: xn == null ? null : +xn.toFixed(1), y: yn == null ? null : +yn.toFixed(1), xg: +xg.toFixed(4), str, st: stp, en: en ? 1 : 0, gl, f, d: d == null ? null : +d.toFixed(1) });
+    const shot = { tm: e.team, pl: shooter && shooter.athlete ? String(shooter.athlete.id) : null, t: e.t, per: e.per, sec: e.sec, x: xn == null ? null : +xn.toFixed(1), y: yn == null ? null : +yn.toFixed(1), xg: 0, str, st: stp, en: en ? 1 : 0, gl, f, d: d == null ? null : +d.toFixed(1), a: a == null ? null : +a.toFixed(1), sd, ha };
+    shot.xg = (e.t === 3 || en) ? 0 : +predictW(DEFAULT_W, shot).toFixed(4);
+    shots.push(shot);
     prev = e;
   }
   // game length
@@ -671,11 +723,18 @@ function processGame(s) {
   let toi;
   if (st.completed) toi = lastPer > 3 ? (stype === 3 ? 3600 + (lastPer - 4) * 1200 + (maxSec[lastPer] || 0) : 3600 + (so ? 300 : (maxSec[4] || 300))) : 3600;
   else toi = Math.max(1, (lastPer - 1) * 1200 + (maxSec[lastPer] || 0));
-  return {
+  const g = {
     v: VER, id: String(s.header.id), date: comp.date, stype, final: !!st.completed, state: st.state, detail: st.shortDetail || st.detail || '',
     home: { ...home, score: +cH.score || 0 }, away: { ...away, score: +cA.score || 0 },
-    toi, ot: lastPer > 3, so, shots, sk, gk, nm
+    toi, ot: lastPer > 3, so, shots, sk, gk, nm, bx, ml
   };
+  if (A.W && A.useTrained) applyModel(g);
+  return g;
+}
+/* re-score a game's unblocked shots with the active model */
+function applyModel(g) {
+  const W = A.useTrained && A.W ? A.W : DEFAULT_W;
+  for (const s of g.shots) s.xg = (s.t === 3 || s.en) ? 0 : +predictW(W, s).toFixed(4);
 }
 
 /* ============================== chart helpers ============================== */
@@ -830,6 +889,7 @@ async function loadLeaders(evs, d) {
     const id = String(e.id);
     return e.competitions[0].status.type.completed ? getGame(id) : processGame(await getJSON(`${API}/summary?event=${id}`));
   })).filter(Boolean);
+  if (A.W && A.useTrained) games.forEach(applyModel);
   if (S.date !== d || !box()) return;
   const k = A.calib || 1, sk = [], gk = [];
   for (const g of games) {
@@ -1107,7 +1167,14 @@ $('#stView').onclick = e => { const b = e.target.closest('button'); if (!b) retu
 $('#stSeason').onchange = e => { ST.season = +e.target.value; loadStandings(); };
 
 /* ============================== ANALYTICS DATA ============================== */
-const A = { season: null, range: '30', types: 'reg', sit: 'ev', games: new Map(), ids: [], filtered: [], calib: 1, loading: false, token: 0, cal: {}, note: '', loadedKey: null, agg: null };
+const A = { season: null, range: '30', types: 'reg', sit: 'ev', games: new Map(), ids: [], filtered: [], calib: 1, loading: false, token: 0, cal: {}, note: '', loadedKey: null, agg: null, memo: {}, W: null, useTrained: true, model: null, adj: true };
+function invalidate() { A.agg = null; A.memo = {}; }
+function recalib() { let gs = 0, xs = 0; for (const g of A.filtered) for (const s of g.shots) if (s.t !== 3 && !s.en) { xs += s.xg; if (s.t === 0) gs++; } A.calib = A.filtered.length >= 40 && xs > 0 ? Math.max(.7, Math.min(1.4, gs / xs)) : 1; }
+function trainAndApply() {
+  const rep = trainModel(A.filtered); A.model = rep; A.W = rep && rep.W ? rep.W : null;
+  for (const g of A.filtered) applyModel(g);
+  recalib(); invalidate();
+}
 const typesFor = t => t === 'reg' ? [2] : t === 'po' ? [3] : [2, 3];
 async function seasonCalendar(y) {
   if (A.cal[y]) return A.cal[y];
@@ -1140,10 +1207,10 @@ async function ensureData(force) {
   if (!A.season) return; // init still running; it will call us
   const key = `${A.season}|${A.range}|${A.types}`;
   if (!force && A.loadedKey === key) { renderActiveAnalytics(); return; }
-  const tok = ++A.token; A.loading = true; A.agg = null;
+  const tok = ++A.token; A.loading = true; invalidate();
   const cancelled = () => tok !== A.token;
   renderAbar();
-  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody'];
+  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody'];
   bodyIds.forEach(b => { $('#' + b).innerHTML = `<div class="empty"><div class="spinner"></div>Crunching play-by-play… the first load of a big range can take a minute. It's much faster after that.</div>`; });
   try {
     const cal = await seasonCalendar(A.season); if (cancelled()) return;
@@ -1169,8 +1236,9 @@ async function ensureData(force) {
     if (cancelled()) return;
     A.filtered = games.filter(g => g && g.final);
     // calibrate xG to actual goals across loaded games
-    let gs = 0, xs = 0; for (const g of A.filtered) for (const s of g.shots) if (s.t !== 3 && !s.en) { xs += s.xg; if (s.t === 0) gs++; }
-    A.calib = A.filtered.length >= 40 && xs > 0 ? Math.max(.7, Math.min(1.4, gs / xs)) : 1;
+    progress('Training the expected goals model', 1, 1);
+    await sleep(20);
+    trainAndApply();
     A.loadedKey = key; A.loading = false;
     $$('.abar .prog').forEach(p => p.hidden = true);
     renderAbar(); renderActiveAnalytics();
@@ -1218,11 +1286,40 @@ function addShot(F, Ag, s, xg) {
   if (s.t <= 1) { F.sf++; Ag.sa++; }
   if (s.t === 0) { F.gf++; Ag.ga++; if (!s.en) { F.gfn++; Ag.gan++; } }
 }
+/* score effects: trailing teams outshoot opponents, so even-strength events are weighted by the shooter's score state */
+function scoreWeights() {
+  if (A.memo.sw) return A.memo.sw;
+  const kOf = (ha, sd) => ha + '|' + Math.max(-2, Math.min(2, sd || 0));
+  const mirror = k => { const [ha, sd] = k.split('|'); return (1 - +ha) + '|' + (-sd); };
+  const C = { cf: {}, ff: {}, xg: {} };
+  for (const g of A.filtered) for (const s of g.shots) {
+    if (s.str !== 0 || s.ha == null) continue;
+    const k = kOf(s.ha, s.sd); C.cf[k] = (C.cf[k] || 0) + 1;
+    if (s.t !== 3) { C.ff[k] = (C.ff[k] || 0) + 1; if (!s.en) C.xg[k] = (C.xg[k] || 0) + s.xg; }
+  }
+  const W = { cf: {}, ff: {}, xg: {} }, share = { cf: {}, ff: {}, xg: {} };
+  for (const m of ['cf', 'ff', 'xg']) {
+    const keys = [...new Set([...Object.keys(C[m]), ...Object.keys(C[m]).map(mirror)])];
+    const avg = {};
+    for (const ha of ['0', '1']) { let f = 0, a = 0; keys.filter(k => k[0] === ha).forEach(k => { f += C[m][k] || 0; a += C[m][mirror(k)] || 0; }); avg[ha] = f + a ? f / (f + a) : .5; }
+    for (const k of keys) { const f = C[m][k] || 0, a = C[m][mirror(k)] || 0; const sh = f + a >= 30 ? f / (f + a) : avg[k[0]]; share[m][k] = sh; W[m][k] = Math.max(.6, Math.min(1.6, sh > 0 ? avg[k[0]] / sh : 1)); }
+  }
+  return (A.memo.sw = { W, share, kOf, C });
+}
+const swW = (sw, m, s) => s.ha == null ? 1 : (sw.W[m][sw.kOf(s.ha, s.sd)] ?? 1);
+function addShotAdj(F, Ag, s, xg, sw) {
+  const wc = swW(sw, 'cf', s), wf = swW(sw, 'ff', s), wx = swW(sw, 'xg', s);
+  F.cf += wc; Ag.ca += wc;
+  if (s.t !== 3) { F.ff += wf; Ag.fa += wf; if (!s.en) { F.xgf += xg * wx; Ag.xga += xg * wx; } if (s.f & 4) { F.hdf += wf; Ag.hda += wf; } if (s.f & 8) { F.scf += wf; Ag.sca += wf; } }
+  if (s.t <= 1) { F.sf += wf; Ag.sa += wf; }
+  if (s.t === 0) { F.gf++; Ag.ga++; if (!s.en) { F.gfn++; Ag.gan++; } }
+}
 function aggregate() {
   if (A.agg) return A.agg;
   const k = A.calib, R = {}, P = {}, G = {};
-  const team = id => R[id] || (R[id] = { id, gp: 0, w: 0, l: 0, otl: 0, toi: 0, ev: 0, pp: 0, sh: 0, all: blank(), evs: blank(), ppb: blank(), pkb: blank(), log: [], hmF: {}, hmA: {} });
-  const pl = (id, g) => P[id] || (P[id] = { id, n: g.nm[id] || 'Unknown', tm: null, pos: '', gp: 0, toi: 0, es: 0, g: 0, a: 0, sog: 0, ht: 0, bs: 0, pm: 0, icf: 0, iff: 0, ixg: 0, ihd: 0, igoals: 0 });
+  const sw = scoreWeights();
+  const team = id => R[id] || (R[id] = { id, gp: 0, w: 0, l: 0, otl: 0, toi: 0, ev: 0, pp: 0, sh: 0, all: blank(), evs: blank(), evsa: blank(), ppb: blank(), pkb: blank(), log: [], hmF: {}, hmA: {}, ppg: 0, ppo: 0, pkga: 0, pko: 0, shgf: 0, shga: 0 });
+  const pl = (id, g) => P[id] || (P[id] = { id, n: g.nm[id] || 'Unknown', tm: null, pos: '', gp: 0, toi: 0, es: 0, pptoi: 0, g: 0, a: 0, sog: 0, ht: 0, bs: 0, pm: 0, icf: 0, iff: 0, ixg: 0, ihd: 0, igoals: 0, ppixg: 0, ppgoals: 0, log: [] });
   const games = [...A.filtered].sort((a, b) => a.date < b.date ? -1 : 1);
   for (const g of games) {
     const per = {};
@@ -1232,29 +1329,34 @@ function aggregate() {
       r.toi += g.toi; let es = 0, pp = 0, sh = 0;
       for (const p of Object.values(g.sk)) if (p.tm === me.id) { es += p.es; pp += p.pp; sh += p.sh; }
       r.ev += es > 0 ? es / 5 : g.toi * .8; r.pp += pp / 5; r.sh += sh / 4;
-      per[me.id] = { date: g.date, opp: op.id, gf: me.score, ga: op.score, xgf: 0, xga: 0, cf: 0, ca: 0 };
+      const bm = (g.bx || {})[me.id], bo = (g.bx || {})[op.id];
+      if (bm) { r.ppg += bm.ppg; r.ppo += bm.ppo; r.shgf += bm.shg || 0; }
+      if (bo) { r.pkga += bo.ppg; r.pko += bo.ppo; r.shga += bo.shg || 0; }
+      per[me.id] = { date: g.date, gid: g.id, home: me.id === g.home.id, opp: op.id, gf: me.score, ga: op.score, xgf: 0, xga: 0, cf: 0, ca: 0, xfa: 0, xaa: 0, gfn: 0, gan: 0 };
     }
     for (const s of g.shots) {
       const f = s.tm, ag = f === g.home.id ? g.away.id : g.home.id, xg = s.t === 3 ? 0 : s.xg * k;
       const RF = team(f), RA = team(ag);
       addShot(RF.all, RA.all, s, xg);
-      if (s.str === 0) addShot(RF.evs, RA.evs, s, xg);
+      if (s.str === 0) { addShot(RF.evs, RA.evs, s, xg); addShotAdj(RF.evsa, RA.evsa, s, xg, sw); }
+      if (s.t !== 3 && !s.en) { const wx = s.str === 0 ? swW(sw, 'xg', s) : 1; per[f].xfa += xg * wx; per[ag].xaa += xg * wx; }
+      if (s.t === 0 && !s.en) { per[f].gfn++; per[ag].gan++; }
       else if (s.str === 1) addShot(RF.ppb, RA.pkb, s, xg);
       else addShot(RF.pkb, RA.ppb, s, xg);
       per[f].cf++; per[ag].ca++; if (s.t !== 3 && !s.en) { per[f].xgf += xg; per[ag].xga += xg; }
       if (s.t !== 3 && s.x != null && s.x > 25) { const cx = Math.min(14, Math.floor((s.x - 25) / 5)), cy = Math.min(16, Math.max(0, Math.floor((s.y + 42.5) / 5))), key = cx + ',' + cy; RF.hmF[key] = (RF.hmF[key] || 0) + 1; RA.hmA[key] = (RA.hmA[key] || 0) + 1; }
-      if (s.pl) { const p = pl(s.pl, g); p.icf++; if (s.t !== 3) { p.iff++; if (!s.en) p.ixg += xg; if (s.f & 4) p.ihd++; } if (s.t === 0) p.igoals++; }
+      if (s.pl) { const p = pl(s.pl, g); p.icf++; if (s.t !== 3) { p.iff++; if (!s.en) p.ixg += xg; if (s.f & 4) p.ihd++; if (s.str === 1 && !s.en) p.ppixg += xg; } if (s.t === 0) { p.igoals++; if (s.str === 1) p.ppgoals++; } }
       if (s.gl && s.t !== 3 && !s.en) { const q = G[s.gl] || (G[s.gl] = { id: s.gl, n: g.nm[s.gl] || 'Unknown', tm: ag, gp: 0, toi: 0, sa: 0, ga: 0, sv: 0, xga: 0, gan: 0, ub: 0, hdsa: 0, hdga: 0 }); q.xga += xg; q.ub++; if (s.t === 0) q.gan++; if ((s.f & 4) && s.t <= 1) { q.hdsa++; if (s.t === 0) q.hdga++; } }
     }
     for (const id of [g.home.id, g.away.id]) team(id).log.push(per[id]);
-    for (const [id, p] of Object.entries(g.sk)) { const r = pl(id, g); r.n = p.n; r.tm = p.tm; r.pos = p.pos || r.pos; if (p.toi > 0) r.gp++; r.toi += p.toi; r.es += p.es; r.g += p.g; r.a += p.a; r.sog += p.sog; r.ht += p.ht; r.bs += p.bs; r.pm += p.pm; }
+    for (const [id, p] of Object.entries(g.sk)) { const r = pl(id, g); r.n = p.n; r.tm = p.tm; r.pos = p.pos || r.pos; if (p.toi > 0) { r.gp++; r.log.push({ date: g.date, g: p.g, a: p.a }); } r.toi += p.toi; r.es += p.es; r.pptoi += p.pp; r.g += p.g; r.a += p.a; r.sog += p.sog; r.ht += p.ht; r.bs += p.bs; r.pm += p.pm; }
     for (const [id, p] of Object.entries(g.gk)) { if (!(p.toi > 0)) continue; const q = G[id] || (G[id] = { id, n: p.n, tm: p.tm, gp: 0, toi: 0, sa: 0, ga: 0, sv: 0, xga: 0, gan: 0, ub: 0, hdsa: 0, hdga: 0 }); q.n = p.n; q.tm = p.tm; q.gp++; q.toi += p.toi; q.sa += p.sa; q.ga += p.ga; q.sv += p.sv; }
   }
   A.agg = { R, P, G };
   return A.agg;
 }
 function teamDerived(r, sit) {
-  const b = sit === 'ev' ? r.evs : r.all, toi = sit === 'ev' ? r.ev : r.toi;
+  const b = sit === 'ev' ? (A.adj ? r.evsa : r.evs) : r.all, toi = sit === 'ev' ? r.ev : r.toi;
   const shp = div(b.gf, b.sf), svp = 1 - div(b.ga, b.sa);
   return {
     r, b, gp: r.gp, rec: `${r.w}-${r.l}-${r.otl}`, ptsp: div(2 * r.w + r.otl, 2 * r.gp),
@@ -1296,7 +1398,7 @@ function renderTeams() {
   const pts2 = rows.map(r => ({ id: r.id, x: r.xgp * 100, y: r.gfp * 100, tip: `<b>${esc(TM(r.id).name)}</b><div class='row'><span>xGF%</span><b>${pct1(r.xgp)}</b></div><div class='row'><span>GF%</span><b>${pct1(r.gfp)}</b></div><div class='row'><span>PDO</span><b>${f1(r.pdo)}</b></div>` })).filter(p => fin(p.x) && fin(p.y));
   body.innerHTML = `
     <div class="bar"><h2 class="grow">Team analytics <span class="muted" style="font-size:16px;font-weight:500">· ${sitLbl}</span></h2>
-      <div class="seg" id="sitSeg"><button data-v="ev" class="${A.sit === 'ev' ? 'on' : ''}">Even strength</button><button data-v="all" class="${A.sit === 'all' ? 'on' : ''}">All situations</button></div></div>
+      ${A.sit === 'ev' ? `<div class="seg" id="adjSeg" title="Weights shots by score state to remove score effects"><button data-v="1" class="${A.adj ? 'on' : ''}">Score-adjusted</button><button data-v="0" class="${!A.adj ? 'on' : ''}">Raw</button></div>` : ''}<div class="seg" id="sitSeg"><button data-v="ev" class="${A.sit === 'ev' ? 'on' : ''}">Even strength</button><button data-v="all" class="${A.sit === 'all' ? 'on' : ''}">All situations</button></div></div>
     <div class="grid g2" style="margin-bottom:14px">
       <div class="card"><div class="card-h"><h3>Who's controlling play?</h3><p>Expected goals for vs. against per 60 · tap a logo</p></div>${scatterLogos({ pts: pts1, xl: 'xGF/60 (offense)', yl: 'xGA/60 (defense)', invY: true, avgX: avg('xgf60'), avgY: avg('xga60'), quad: ['Dull', 'Good', 'Bad', 'Fun'] })}</div>
       <div class="card"><div class="card-h"><h3>Luck check</h3><p>Expected share vs. actual goal share</p></div>${scatterLogos({ pts: pts2, xl: 'xGF% (chances)', yl: 'GF% (goals)', same: true, diag: true, fx: f0, fy: f0, quad: ['Lucky', 'Legit good', 'Legit bad', 'Unlucky'] })}
@@ -1307,6 +1409,7 @@ function renderTeams() {
       <div class="tbl-legend"><span><i class="sw" style="background:color-mix(in srgb,var(--pos) 38%,transparent)"></i>Better than league average</span><span><i class="sw" style="background:color-mix(in srgb,var(--neg) 38%,transparent)"></i>Worse than league average</span><span>xG calibration factor: ${f2(A.calib)}</span></div></div>`;
   RERENDER.teams = renderTeams;
   $('#sitSeg').onclick = e => { const b = e.target.closest('button'); if (b) { A.sit = b.dataset.v; renderTeams(); } };
+  const adjS = $('#adjSeg'); if (adjS) adjS.onclick = e => { const b = e.target.closest('button'); if (b) { A.adj = b.dataset.v === '1'; invalidate(); renderTeams(); } };
 }
 document.addEventListener('click', e => { const t = e.target.closest('[data-teamopen], .pt[data-team]'); if (!t || e.target.closest('th')) return; openTeam(t.dataset.teamopen || t.dataset.team); });
 
@@ -1819,16 +1922,17 @@ async function renderMatchup(s, g) {
       mk('Power play xG / 60', 'ppxg60', f2, 'high', 'all'); mk('Penalty kill xGA / 60', 'pkxga60', f2, 'low', 'all');
       mk('Goaltending (GSAx)', 'gsax', sgn1, 'high', 'all'); mk('Finishing (G − xG)', 'fin', sgn1, 'high', 'all'); mk('PDO (luck)', 'pdo', f1, null, 'ev');
       // model prediction
+      const pm = predictMatch(H, W);
       const hIce = .08;
-      const lh = Math.max(.5, (aH.xgf60 + aA.xga60) / 2 + hIce), la = Math.max(.5, (aA.xgf60 + aH.xga60) / 2 - hIce / 2);
-      const sim = poissonSim(lh, la);
+      const lh = pm ? pm.lh : Math.max(.5, (aH.xgf60 + aA.xga60) / 2 + hIce), la = pm ? pm.la : Math.max(.5, (aA.xgf60 + aH.xga60) / 2 - hIce / 2);
+      const sim = pm ? { h: pm.pH, a: 1 - pm.pH } : poissonSim(lh, la);
       const odds = (s.pickcenter && s.pickcenter[0]) || null;
       let vegas = '';
       if (odds && odds.homeTeamOdds && odds.awayTeamOdds) {
         const ph = impliedProb(odds.homeTeamOdds.moneyLine), pa = impliedProb(odds.awayTeamOdds.moneyLine);
         if (fin(ph) && fin(pa)) { const nh = ph / (ph + pa); vegas = `<div class="pred-row"><span>Betting market</span><div class="meter"><i style="width:${(1 - nh) * 100}%;background:var(--away)"></i><i style="width:${nh * 100}%;background:var(--home)"></i></div><span class="num">${f0((1 - nh) * 100)}% – ${f0(nh * 100)}%</span></div>`; }
       }
-      pred = `<div class="card"><div class="card-h"><h3>Ice Lab prediction</h3><p>Based on each team's expected goals for and against, plus home ice</p></div>
+      pred = `<div class="card"><div class="card-h"><h3>Ice Lab prediction</h3><p>From team strength ratings (offense and defense) plus home ice</p></div>
         <div style="display:flex;justify-content:space-between;font-weight:700"><span>${esc(g.away.abbr)}</span><span>${esc(g.home.abbr)}</span></div>
         <div class="pred-row"><span>Ice Lab model</span><div class="meter"><i style="width:${sim.a * 100}%;background:var(--away)"></i><i style="width:${sim.h * 100}%;background:var(--home)"></i></div><span class="num">${f0(sim.a * 100)}% – ${f0(sim.h * 100)}%</span></div>${vegas}
         <p class="muted" style="font-size:12px;margin:8px 0 0">Projected expected goals: ${esc(g.away.abbr)} ${f2(la)} · ${esc(g.home.abbr)} ${f2(lh)}. ${vegas ? 'Moneylines converted to win chances with the bookmaker margin removed.' : ''} Just for fun, not betting advice.</p></div>`;
@@ -2009,18 +2113,388 @@ async function drawCompare() {
     <h3 class="cmp-sec">Career <span class="muted" style="font-weight:500;font-size:13px">regular season, from ESPN</span></h3>${cStats.map(crow).join('')}${ppg}</div>`;
 }
 
+/* ============================== MODEL TRAINING ============================== */
+function fitLogit(rows, w0, lambda, nf) {
+  nf = nf || w0.length;
+  const w = Float64Array.from(w0.slice(0, nf)), prior = Float64Array.from(w0.slice(0, nf));
+  for (let it = 0; it < 12; it++) {
+    const g = new Float64Array(nf), H = new Float64Array(nf * nf);
+    for (let i = 0; i < nf; i++) { g[i] = lambda * (w[i] - prior[i]); H[i * nf + i] = lambda + 1e-9; }
+    for (const r of rows) {
+      const x = r.x; let z = 0; for (let i = 0; i < nf; i++) z += w[i] * x[i];
+      const p = sigm(z), e = p - r.y, v = p * (1 - p);
+      for (let i = 0; i < nf; i++) { if (!x[i]) continue; g[i] += e * x[i]; const vi = v * x[i]; for (let j = i; j < nf; j++) if (x[j]) H[i * nf + j] += vi * x[j]; }
+    }
+    for (let i = 0; i < nf; i++) for (let j = 0; j < i; j++) H[i * nf + j] = H[j * nf + i];
+    const step = solve(H, g, nf); let mx = 0;
+    for (let i = 0; i < nf; i++) { w[i] -= step[i]; mx = Math.max(mx, Math.abs(step[i])); }
+    if (mx < 1e-6) break;
+  }
+  return Array.from(w);
+}
+function solve(H, g, n) { // Gaussian elimination with partial pivoting
+  const M = []; for (let i = 0; i < n; i++) { M.push([...H.slice(i * n, i * n + n), g[i]]); }
+  for (let c = 0; c < n; c++) {
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    [M[c], M[p]] = [M[p], M[c]]; const d = M[c][c] || 1e-12;
+    for (let r = 0; r < n; r++) { if (r === c) continue; const f = M[r][c] / d; if (!f) continue; for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k]; }
+  }
+  return M.map((row, i) => row[n] / (row[i] || 1e-12));
+}
+function evalModel(rows, W, nf) {
+  nf = nf || W.length; let ll = 0, br = 0; const ps = [];
+  for (const r of rows) { let z = 0; for (let i = 0; i < nf; i++) z += W[i] * r.x[i]; const p = Math.min(1 - 1e-9, Math.max(1e-9, sigm(z))); ll -= r.y ? Math.log(p) : Math.log(1 - p); br += (p - r.y) ** 2; ps.push([p, r.y]); }
+  ps.sort((a, b) => a[0] - b[0]); let pos = 0, rankSum = 0; ps.forEach(([, y], i) => { if (y) { pos++; rankSum += i + 1; } });
+  const neg = ps.length - pos, auc = pos && neg ? (rankSum - pos * (pos + 1) / 2) / (pos * neg) : NaN;
+  const edges = [0, .02, .04, .06, .08, .1, .14, .2, .3, .45, 1], bins = edges.slice(1).map(() => ({ p: 0, y: 0, n: 0 }));
+  for (const [p, y] of ps) { let b = edges.findIndex((e, i) => i > 0 && p <= e) - 1; if (b < 0) b = bins.length - 1; bins[b].p += p; bins[b].y += y; bins[b].n++; }
+  return { ll: ll / rows.length, brier: br / rows.length, auc, bins: bins.filter(b => b.n >= 20).map(b => [b.p / b.n, b.y / b.n, b.n]), goals: pos, expected: ps.reduce((a, [p]) => a + p, 0) };
+}
+function trainModel(games) {
+  const rows = [];
+  for (const g of games) { const hold = (parseInt(g.id, 10) || 0) % 5 === 0; for (const s of g.shots) if (s.t !== 3 && !s.en && s.d != null) rows.push({ x: featVec(s), y: s.t === 0 ? 1 : 0, h: hold }); }
+  if (rows.length < 6000) return { n: rows.length, games: games.length, W: null };
+  const train = rows.filter(r => !r.h), test = rows.filter(r => r.h);
+  const lam = 40;
+  const Wt = fitLogit(train, DEFAULT_W, lam), Wd = fitLogit(train, DEFAULT_W, 40, 3);
+  const metrics = { trained: evalModel(test, Wt), handset: evalModel(test, DEFAULT_W), distance: evalModel(test, Wd, 3) };
+  return { n: rows.length, games: games.length, nTest: test.length, W: fitLogit(rows, DEFAULT_W, lam), metrics };
+}
+
+/* ============================== TEAM STRENGTH RATINGS ============================== */
+function winProb(lh, la) {
+  const pmf = l => { const o = []; let p = Math.exp(-l); for (let k = 0; k <= 14; k++) { o.push(p); p *= l / (k + 1); } return o; };
+  const H = pmf(lh), Aw = pmf(la); let win = 0, tie = 0;
+  for (let i = 0; i <= 14; i++) for (let j = 0; j <= 14; j++) { const p = H[i] * Aw[j]; if (i > j) win += p; else if (i === j) tie += p; }
+  return win + tie * .52;
+}
+const devig = ml => { if (!ml) return NaN; const ph = impliedProb(ml.h), pa = impliedProb(ml.a); return fin(ph) && fin(pa) ? ph / (ph + pa) : NaN; };
+function ratings() {
+  if (A.memo.rt) return A.memo.rt;
+  aggregate();
+  const k = A.calib, sw = scoreWeights(), HA = 0.08, BL = .7; // BL = weight on expected goals vs actual goals
+  const games = [...A.filtered].sort((a, b) => a.date < b.date ? -1 : 1);
+  const perf = g => { const o = {}; for (const t of [g.home.id, g.away.id]) o[t] = { x: 0, gl: 0 }; for (const s of g.shots) { if (s.t === 3 || s.en || !o[s.tm]) continue; o[s.tm].x += s.xg * k * (s.str === 0 ? swW(sw, 'xg', s) : 1); if (s.t === 0) o[s.tm].gl++; } for (const t in o) o[t].v = BL * o[t].x + (1 - BL) * o[t].gl; return o; };
+  const P = games.map(perf); let tot = 0, n = 0; P.forEach(o => { for (const t in o) { tot += o[t].v; n++; } });
+  const mu = n ? tot / n : 2.9;
+  const T = {}, get = id => T[id] || (T[id] = { id, off: mu, def: mu, n: 0, hist: [] });
+  const preds = [];
+  games.forEach((g, gi) => {
+    const h = get(g.home.id), a = get(g.away.id);
+    const lh = Math.max(.3, h.off + a.def - mu + HA), la = Math.max(.3, a.off + h.def - mu - HA);
+    preds.push({ id: g.id, date: g.date, h: g.home.id, a: g.away.id, pH: winProb(lh, la), lh, la, hw: g.home.score > g.away.score, mk: devig(g.ml), hn: h.n, an: a.n, hs: g.home.score, as: g.away.score, ot: g.ot || g.so });
+    const o = P[gi], ph = o[g.home.id].v - HA, pa = o[g.away.id].v + HA;
+    const al = t => Math.max(.07, 1 / (t.n + 8));
+    const nh = { off: h.off + al(h) * (ph - (a.def - mu) - h.off), def: h.def + al(h) * (pa - (a.off - mu) - h.def) };
+    const na = { off: a.off + al(a) * (pa - (h.def - mu) - a.off), def: a.def + al(a) * (ph - (h.off - mu) - a.def) };
+    Object.assign(h, nh); Object.assign(a, na); h.n++; a.n++;
+    h.hist.push({ date: g.date, r: h.off - h.def }); a.hist.push({ date: g.date, r: a.off - a.def });
+  });
+  return (A.memo.rt = { T, preds, mu, HA });
+}
+function predictMatch(hId, aId) {
+  const rt = ratings(), h = rt.T[hId], a = rt.T[aId]; if (!h || !a) return null;
+  const lh = Math.max(.3, h.off + a.def - rt.mu + rt.HA), la = Math.max(.3, a.off + h.def - rt.mu - rt.HA);
+  return { lh, la, pH: winProb(lh, la) };
+}
+function sparkline(vals, w = 110, h = 26) {
+  if (vals.length < 2) return '';
+  const mn = Math.min(...vals), mx = Math.max(...vals), sy = v => h - 3 - (v - mn) / ((mx - mn) || 1) * (h - 6), sx = i => 2 + i / (vals.length - 1) * (w - 6);
+  const pts = vals.map((v, i) => `${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/><circle cx="${sx(vals.length - 1)}" cy="${sy(vals[vals.length - 1])}" r="2.8" fill="var(--accent)"/></svg>`;
+}
+
+/* ============================== POWER RANKINGS ============================== */
+function renderPower() {
+  const body = $('#pwBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const rt = ratings(), { R } = aggregate();
+  const last = A.filtered.reduce((m, g) => g.date > m ? g.date : m, '');
+  const cut = new Date(new Date(last).getTime() - 7 * 864e5).toISOString();
+  const rows = Object.values(rt.T).map(t => {
+    const past = [...t.hist].reverse().find(h => h.date <= cut);
+    return { id: t.id, r: t.off - t.def, off: t.off - rt.mu, def: rt.mu - t.def, prev: past ? past.r : null, hist: t.hist.slice(-25).map(h => h.r), rec: R[t.id] ? `${R[t.id].w}-${R[t.id].l}-${R[t.id].otl}` : '', l10: R[t.id] ? R[t.id].log.slice(-10) : [] };
+  }).sort((a, b) => b.r - a.r);
+  const prevOrder = rows.filter(r => r.prev != null).sort((a, b) => b.prev - a.prev).map(r => r.id);
+  const rankOf = (arr, key) => { const s = [...arr].sort((a, b) => b[key] - a[key]); return id => s.findIndex(x => x.id === id) + 1; };
+  const offRank = rankOf(rows, 'off'), defRank = rankOf(rows, 'def');
+  const mx = Math.max(...rows.map(r => Math.abs(r.r)), .1);
+  const tag = r => { const o = offRank(r.id), d = defRank(r.id); if (o <= 6 && d <= 6) return 'Complete team'; if (o <= 5) return 'Elite offense'; if (d <= 5) return 'Stingy defense'; if (o >= 28 && d >= 28) return 'Struggling at both ends'; if (o >= 28) return 'Offense struggling'; if (d >= 28) return 'Leaky defense'; return o < d ? 'Offense-driven' : 'Defense-driven'; };
+  const tr = rows.map((r, i) => {
+    const pr = prevOrder.indexOf(r.id), mv = pr >= 0 ? pr - i : 0;
+    const bar = `<div class="rbar"><span class="mid"></span><i style="${r.r >= 0 ? `left:50%;width:${r.r / mx * 50}%;background:var(--pos)` : `right:50%;width:${-r.r / mx * 50}%;background:var(--neg)`}"></i></div>`;
+    return `<tr class="click" data-teamopen="${r.id}"><td class="l"><div class="tcell"><span class="pw-rk num">${i + 1}</span><span class="mv ${mv > 0 ? 'up' : mv < 0 ? 'down' : ''}">${mv > 0 ? '▲' + mv : mv < 0 ? '▼' + (-mv) : '–'}</span>${logoImg(r.id, 24)}<b>${esc(TM(r.id).name)}</b></div></td>
+      <td>${esc(r.rec)}</td><td><div class="rcell"><b class="num">${sgn2(r.r)}</b>${bar}</div></td><td class="num">${sgn2(r.off)} <small class="muted">${ord(offRank(r.id))}</small></td><td class="num">${sgn2(r.def)} <small class="muted">${ord(defRank(r.id))}</small></td>
+      <td><div class="l10">${r.l10.map(x => `<i class="${x.gf > x.ga ? 'w' : 'l'}" data-tip="${esc(`${x.gf}-${x.ga} vs ${TM(x.opp).abbr}`)}"></i>`).join('')}</div></td><td>${sparkline(r.hist)}</td><td class="l muted">${esc(tag(r))}</td></tr>`;
+  }).join('');
+  body.innerHTML = `<div class="bar"><h2 class="grow">Power rankings</h2></div>
+    <div class="note">Ranked by <b>team strength rating</b>: how many goals per game better than an average team, based mostly on expected goals (score-adjusted) with some weight on actual goals. Offense and defense are rated separately and adjusted for opponents and home ice. Arrows show movement over the last 7 days of games.</div>
+    <div class="card"><div class="twrap"><table><thead><tr><th class="l">Team</th><th>Record</th><th>Rating</th><th>Offense</th><th>Defense</th><th>Last 10</th><th>Trend</th><th class="l">Identity</th></tr></thead><tbody>${tr}</tbody></table></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Ratings start every team at league average when the loaded range begins, so they're most reliable with <b>Full season</b> loaded. Tap a team for its profile.</p></div>`;
+}
+
+/* ============================== SPECIAL TEAMS ============================== */
+function renderSpecial() {
+  const body = $('#stBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const { R, P } = aggregate();
+  const rows = Object.values(R).map(r => ({ id: r.id, gp: r.gp,
+    ppp: div(r.ppg, r.ppo), ppo: r.ppo, pptoi: r.pp / r.gp, ppxg60: per60(r.ppb.xgf, r.pp), ppgf60: per60(r.ppb.gf, r.pp), ppcf60: per60(r.ppb.cf, r.pp), pphd60: per60(r.ppb.hdf, r.pp), ppga: r.ppb.ga,
+    pkp: 1 - div(r.pkga, r.pko), pko: r.pko, pktoi: r.sh / r.gp, pkxga60: per60(r.pkb.xga, r.sh), pkga60: per60(r.pkb.ga, r.sh), pkca60: per60(r.pkb.ca, r.sh), shgf: r.pkb.gf,
+    net: (r.ppb.gf + r.pkb.gf) - (r.pkb.ga + r.ppb.ga) }));
+  const cols = [
+    { k: 'team', h: 'Team', l: 1, v: r => TM(r.id).abbr, f: (v, r) => `<div class="tcell">${logoImg(r.id)}<b>${esc(v)}</b></div>` },
+    { k: 'ppp', h: 'PP%', v: r => r.ppp, f: pct1, dir: 1, t: 'Power-play goals ÷ opportunities (box score)' },
+    { k: 'ppo', h: 'PP opp', v: r => r.ppo, f: f0 },
+    { k: 'pptoi', h: 'PP TOI/GP', v: r => r.pptoi, f: v => mmss(v) },
+    { k: 'ppxg60', h: 'PP xGF/60', v: r => r.ppxg60, f: f2, dir: 1, t: 'Chance quality created on the power play' },
+    { k: 'ppcf60', h: 'PP CF/60', v: r => r.ppcf60, f: f1, dir: 1 },
+    { k: 'pphd60', h: 'PP HD/60', v: r => r.pphd60, f: f1, dir: 1, t: 'High-danger chances per 60 on the PP' },
+    { k: 'ppgf60', h: 'PP GF/60', v: r => r.ppgf60, f: f2, dir: 1 },
+    { k: 'pkp', h: 'PK%', v: r => r.pkp, f: pct1, dir: 1 },
+    { k: 'pktoi', h: 'PK TOI/GP', v: r => r.pktoi, f: v => mmss(v) },
+    { k: 'pkxga60', h: 'PK xGA/60', v: r => r.pkxga60, f: f2, dir: -1 },
+    { k: 'pkca60', h: 'PK CA/60', v: r => r.pkca60, f: f1, dir: -1 },
+    { k: 'pkga60', h: 'PK GA/60', v: r => r.pkga60, f: f2, dir: -1 },
+    { k: 'shgf', h: 'SH goals', v: r => r.shgf, f: f0, dir: 1, t: 'Shorthanded goals scored' },
+    { k: 'ppga', h: 'SH GA', v: r => r.ppga, f: f0, dir: -1, t: 'Shorthanded goals allowed while on the power play' },
+    { k: 'net', h: 'Net ST goals', v: r => r.net, f: v => (v > 0 ? '+' : '') + v, dir: 1, t: 'All special-teams goals for minus against' }];
+  const avg = k => rows.reduce((a, r) => a + (fin(r[k]) ? r[k] : 0), 0) / rows.length;
+  const pts = rows.filter(r => fin(r.ppxg60) && fin(r.pkxga60)).map(r => ({ id: r.id, x: r.ppxg60, y: r.pkxga60, tip: `<b>${esc(TM(r.id).name)}</b><div class='row'><span>PP xGF/60</span><b>${f2(r.ppxg60)}</b></div><div class='row'><span>PK xGA/60</span><b>${f2(r.pkxga60)}</b></div><div class='row'><span>PP% / PK%</span><b>${pct1(r.ppp)} / ${pct1(r.pkp)}</b></div>` }));
+  const pp = Object.values(P).filter(p => p.pptoi > 600).map(p => ({ ...p, pp60: per60(p.ppixg, p.pptoi) })).sort((a, b) => b.ppixg - a.ppixg).slice(0, 10);
+  body.innerHTML = `<div class="bar"><h2 class="grow">Special teams</h2></div>
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="card"><div class="card-h"><h3>Power play vs. penalty kill</h3><p>Chance quality, not just percentages · tap a logo</p></div>${scatterLogos({ pts, xl: 'Power play xGF/60', yl: 'Penalty kill xGA/60', invY: true, avgX: avg('ppxg60'), avgY: avg('pkxga60'), quad: ['Elite PK', 'Elite both', 'Weak both', 'Elite PP'] })}</div>
+      <div class="card"><div class="card-h"><h3>Most dangerous power-play shooters</h3><p>Individual expected goals on the PP</p></div><ol class="luck-ol">${pp.map(p => `<li><div class="ln">${plink(p.id, p.n)}<span class="muted"> ${esc(TM(p.tm).abbr)}</span><div class="muted" style="font-size:12px">${p.ppgoals} PP goals · ${f2(p.pp60)} ixG/60 on the PP · ${mmss(p.pptoi / p.gp)} PP TOI/GP</div></div><b class="num">${f1(p.ppixg)}</b></li>`).join('')}</ol>
+        <p class="muted" style="font-size:12px;margin:8px 0 0">PP% and PK% come from box scores. The chance-based numbers usually predict future special-teams results better than the percentages.</p></div>
+    </div>
+    <div class="card">${table('special', cols, rows, { sort: 'ppxg60', rowClick: 1, rowAttr: r => `data-teamopen="${r.id}"` })}</div>`;
+  RERENDER.special = renderSpecial;
+}
+
+/* ============================== SPLITS ============================== */
+const SPL = { team: null };
+const localDay = iso => ymd(new Date(iso));
+function splitBuckets(ids) {
+  const B = {}; const bk = k => B[k] || (B[k] = { toi: 0, cf: 0, ca: 0, xgf: 0, xga: 0, gf: 0, ga: 0, gp: 0 });
+  const k = A.calib, idSet = new Set(ids);
+  const byTeam = {}; for (const g of A.filtered) for (const t of [g.home.id, g.away.id]) if (idSet.has(t)) (byTeam[t] = byTeam[t] || []).push(g);
+  for (const [id, games] of Object.entries(byTeam)) {
+    games.sort((a, b) => a.date < b.date ? -1 : 1); let prevDay = null;
+    for (const g of games) {
+      const day = localDay(g.date), b2b = prevDay && daysBetween(prevDay, day) === 1; prevDay = day;
+      const home = g.home.id === id;
+      const keys = [home ? 'home' : 'road', b2b ? 'b2b' : 'rest'];
+      for (const kk of keys) { bk(kk).toi += g.toi; bk(kk).gp++; }
+      for (let p = 1; p <= 3; p++) bk('p' + p).toi += 1200;
+      if (g.toi > 3600) bk('ot').toi += g.toi - 3600;
+      // time spent leading, tied and trailing
+      const goals = g.shots.filter(s => s.t === 0).map(s => ({ t: (s.per - 1) * 1200 + s.sec, me: s.tm === id })).sort((a, b) => a.t - b.t);
+      let t0 = 0, diff = 0;
+      for (const gl of goals) { const st = diff > 0 ? 'lead' : diff < 0 ? 'trail' : 'tied'; bk(st).toi += Math.max(0, gl.t - t0); t0 = gl.t; diff += gl.me ? 1 : -1; }
+      bk(diff > 0 ? 'lead' : diff < 0 ? 'trail' : 'tied').toi += Math.max(0, g.toi - t0);
+      for (const s of g.shots) {
+        const mine = s.tm === id; const sd = mine ? s.sd : -s.sd;
+        const ks = [home ? 'home' : 'road', b2b ? 'b2b' : 'rest', s.per <= 3 ? 'p' + s.per : 'ot', sd > 0 ? 'lead' : sd < 0 ? 'trail' : 'tied'];
+        for (const kk of ks) { const o = bk(kk); if (mine) { o.cf++; if (s.t !== 3 && !s.en) o.xgf += s.xg * k; if (s.t === 0) o.gf++; } else { o.ca++; if (s.t !== 3 && !s.en) o.xga += s.xg * k; if (s.t === 0) o.ga++; } }
+      }
+    }
+  }
+  return B;
+}
+function renderSplits() {
+  const body = $('#spBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const { R } = aggregate();
+  const teams = Object.keys(R).sort((a, b) => (TM(a).name || '').localeCompare(TM(b).name || ''));
+  if (!SPL.team || !R[SPL.team]) SPL.team = teams[0];
+  const mine = splitBuckets([SPL.team]);
+  const lg = A.memo.spl || (A.memo.spl = splitBuckets(Object.keys(R)));
+  const groups = [['Home / road', [['home', 'Home'], ['road', 'Road']]], ['By period', [['p1', '1st'], ['p2', '2nd'], ['p3', '3rd'], ['ot', 'Overtime']]], ['Score state', [['lead', 'Leading'], ['tied', 'Tied'], ['trail', 'Trailing']]], ['Rest', [['rest', 'Rested'], ['b2b', '2nd of back-to-back']]]];
+  const cell = (b, key) => { if (!b) return '<td>–</td>'.repeat(9); const r = x => per60(x, b.toi); return `<td>${b.gp ? b.gp : '–'}</td><td>${b.toi ? f0(b.toi / 60) : '–'}</td><td>${pct1(div(b.cf, b.cf + b.ca))}</td><td><b>${pct1(div(b.xgf, b.xgf + b.xga))}</b></td><td>${pct1(div(b.gf, b.gf + b.ga))}</td><td>${f2(r(b.xgf))}</td><td>${f2(r(b.xga))}</td><td>${f2(r(b.gf))}</td><td>${f2(r(b.ga))}</td>`; };
+  const cards = groups.map(([title, parts]) => `<div class="card"><div class="card-h"><h3>${title}</h3><p>League average in grey · all situations</p></div><div class="twrap"><table><thead><tr><th class="l">Split</th><th>GP</th><th>Min</th><th>CF%</th><th>xGF%</th><th>GF%</th><th>xGF/60</th><th>xGA/60</th><th>GF/60</th><th>GA/60</th></tr></thead><tbody>
+    ${parts.map(([k, l]) => `<tr><td class="l"><b>${l}</b></td>${cell(mine[k])}</tr><tr class="lgrow"><td class="l">League</td>${cell(lg[k])}</tr>`).join('')}</tbody></table></div></div>`).join('');
+  body.innerHTML = `<div class="bar"><h2 class="grow">Splits</h2><select id="spTeam" aria-label="Team">${teams.map(t => `<option value="${t}" ${t === SPL.team ? 'selected' : ''}>${esc(TM(t).name)}</option>`).join('')}</select></div>
+    <div class="note">How ${esc(TM(SPL.team).name)} play in different situations. Score-state time is worked out from when goals were scored; "back-to-back" means they also played the day before (only games inside the loaded range are known).</div>
+    <div class="grid g2">${cards}</div>`;
+  $('#spTeam').onchange = e => { SPL.team = e.target.value; renderSplits(); };
+}
+
+/* ============================== ROOKIES ============================== */
+const RK = {};
+async function byAthlete(season) {
+  const key = 'ba:' + season, c = await DB.get(key);
+  if (c && Date.now() - c.t < 3 * 864e5) return c.m;
+  const m = {};
+  for (let page = 1; page <= 3; page++) {
+    const j = await getJSON(`https://site.web.api.espn.com/apis/common/v3/sports/hockey/nhl/statistics/byathlete?season=${season}&seasontype=2&limit=1000&page=${page}&isqualified=false`);
+    (j.athletes || []).forEach(a => { m[a.athlete.id] = [a.athlete.age ?? null, a.athlete.debutYear ?? null]; });
+    if (!j.pagination || page >= j.pagination.pages) break;
+  }
+  DB.set(key, { t: Date.now(), m });
+  return m;
+}
+async function careerRows(id) {
+  const key = 'cr:' + id, c = await DB.get(key);
+  if (c && Date.now() - c.t < 7 * 864e5) return c.r;
+  const st = await getJSON(ATH(id) + '/stats');
+  const cat = st && st.categories && st.categories[0];
+  const r = cat ? (cat.statistics || []).map(s => [s.season.year, parseFloat(s.stats[0]) || 0]) : [];
+  DB.set(key, { t: Date.now(), r });
+  return r;
+}
+async function loadRookies() {
+  const Y = A.season, body = $('#rkBody');
+  if (RK[Y] && RK[Y].done) return RK[Y];
+  if (RK[Y] && RK[Y].p) return RK[Y].p;
+  RK[Y] = { p: (async () => {
+    const { P, G } = aggregate();
+    let info = {}; try { info = await byAthlete(Y); } catch (e) {}
+    const yearsIn = Math.max(0, (Date.now() - new Date(Y - 1, 8, 15).getTime()) / (365.25 * 864e5));
+    const ids = [...Object.values(P).filter(p => p.gp > 0).map(p => p.id), ...Object.values(G).filter(x => x.gp > 0).map(x => x.id)];
+    const cands = ids.filter(id => { const inf = info[id]; if (!inf) return true; const [age, debut] = inf; if (debut && debut < Y - 3) return false; if (age && age - Math.floor(yearsIn) >= 27) return false; return true; });
+    const rookies = {};
+    await pool(cands, 8, async id => {
+      const rows = await careerRows(id).catch(() => null); if (!rows) return;
+      const prior = rows.filter(([y]) => y < Y).reduce((s, [, gp]) => s + gp, 0);
+      const inf = info[id]; const ageStart = inf && inf[0] ? inf[0] - Math.floor(yearsIn) : null;
+      if (prior <= 25 && (ageStart == null || ageStart < 26)) rookies[id] = { prior, age: inf ? inf[0] : null };
+    }, (d, t) => { const el = $('#rkProg'); if (el) el.textContent = `Checking career histories… ${d} / ${t}`; });
+    RK[Y] = { done: true, rookies };
+    return RK[Y];
+  })() };
+  return RK[Y].p;
+}
+async function renderRookies() {
+  const body = $('#rkBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  if (!(RK[A.season] && RK[A.season].done)) {
+    body.innerHTML = `<div class="empty"><div class="spinner"></div><span id="rkProg">Finding this season's rookies…</span><br><small>First time only: this checks each young player's career games. It's saved for a week after that.</small></div>`;
+    const season = A.season; await loadRookies(); if (A.season !== season || activeTab() !== 'rookies') return;
+  }
+  const { P, G } = aggregate(); const rk = RK[A.season].rookies;
+  const sk = Object.values(P).filter(p => rk[p.id] && p.gp > 0).map(p => ({ ...p, age: rk[p.id].age, pts: p.g + p.a, p60: per60(p.g + p.a, p.toi), ixg60: per60(p.ixg, p.toi), toig: p.toi / p.gp }));
+  const gks = Object.values(G).filter(x => rk[x.id] && x.gp > 0).map(x => ({ ...x, age: rk[x.id].age, svp: div(x.sv, x.sa), gsax: x.xga - x.gan }));
+  const maxGp = Math.max(1, ...sk.map(p => p.gp)), minGp = Math.max(1, Math.round(maxGp * .25));
+  const q = sk.filter(p => p.gp >= minGp);
+  const z = (arr, f) => { const v = arr.map(f).filter(fin), m = v.reduce((a, b) => a + b, 0) / (v.length || 1), s = Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (v.length || 1)) || 1; return x => fin(f(x)) ? (f(x) - m) / s : 0; };
+  const zp = z(q, p => p.pts), zr = z(q, p => p.p60), zx = z(q, p => p.ixg60), zt = z(q, p => p.toig);
+  sk.forEach(p => { p.score = p.gp >= minGp ? .4 * zp(p) + .25 * zr(p) + .15 * zx(p) + .2 * zt(p) : -9; });
+  const cols = [
+    { k: 'n', h: 'Rookie', l: 1, v: p => p.n, f: (v, p) => `<div class="tcell">${logoImg(p.tm, 18)}${plink(p.id, v)} <span class="muted">${esc(p.pos)}</span></div>` },
+    { k: 'score', h: 'Calder index', v: p => p.score, f: v => v <= -9 ? '–' : sgn2(v), dir: 1, t: 'Blend of points, points/60, ixG/60 and ice time, vs. other rookies' },
+    { k: 'age', h: 'Age', v: p => p.age, f: f0 }, { k: 'gp', h: 'GP', v: p => p.gp, f: f0 }, { k: 'toig', h: 'TOI/GP', v: p => p.toig, f: v => mmss(v) },
+    { k: 'g', h: 'G', v: p => p.g, f: f0 }, { k: 'a', h: 'A', v: p => p.a, f: f0 }, { k: 'pts', h: 'P', v: p => p.pts, f: v => `<b>${f0(v)}</b>` },
+    { k: 'p60', h: 'P/60', v: p => p.p60, f: f2, dir: 1 }, { k: 'ixg', h: 'ixG', v: p => p.ixg, f: f1, dir: 1 }, { k: 'ixg60', h: 'ixG/60', v: p => p.ixg60, f: f2, dir: 1 }, { k: 'pm', h: '+/-', v: p => p.pm, f: v => (v > 0 ? '+' : '') + v }];
+  // race chart: cumulative points by date for the top 6 by points
+  const top = [...sk].sort((a, b) => b.pts - a.pts).slice(0, 6);
+  const dates = [...new Set(A.filtered.map(g => localDay(g.date)))].sort(); const d0 = dates[0];
+  const series = top.map((p, i) => { let c = 0; const pts = [[0, 0]]; [...p.log].sort((a, b) => a.date < b.date ? -1 : 1).forEach(x => { c += x.g + x.a; pts.push([daysBetween(d0, localDay(x.date)), c]); }); return { name: p.n, color: `var(--c${i + 1})`, pts }; });
+  const xMax = Math.max(1, daysBetween(d0, dates[dates.length - 1])), yMax = Math.max(2, ...series.map(s => s.pts[s.pts.length - 1][1]));
+  const race = series.length ? lineChart({ series, x0: 0, x1: xMax, y0: 0, y1: yMax * 1.08, fx: v => parseYmd(addDays(d0, Math.round(v))).toLocaleDateString([], { month: 'short', day: 'numeric' }), fy: v => Number.isInteger(v) ? String(v) : '', step: true, H: 260 }) + `<div class="legend">${series.map(s => `<span><i class="lg-dot" style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>` : '<p class="muted">No rookie points yet.</p>';
+  const gcols = [{ k: 'n', h: 'Rookie goalie', l: 1, v: x => x.n, f: (v, x) => `<div class="tcell">${logoImg(x.tm, 18)}${plink(x.id, v)}</div>` }, { k: 'age', h: 'Age', v: x => x.age, f: f0 }, { k: 'gp', h: 'GP', v: x => x.gp, f: f0 }, { k: 'svp', h: 'SV%', v: x => x.svp, f: f3, dir: 1 }, { k: 'gsax', h: 'GSAx', v: x => x.gsax, f: sgn1, dir: 1 }];
+  body.innerHTML = `<div class="bar"><h2 class="grow">Rookie tracker</h2></div>
+    <div class="note">Rookies are players with 25 or fewer NHL games before this season who were under 26 when it started, the NHL's Calder Trophy rules. Numbers cover the loaded range.</div>
+    <div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Rookie points race</h3><p>Cumulative points · top 6 by points</p></div>${race}</div>
+    <div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Calder watch</h3><p>${sk.length} rookie skaters · index needs ${minGp}+ GP</p></div>${table('rookies', cols, sk, { sort: 'score' })}</div>
+    ${gks.length ? `<div class="card">${table('rkg', gcols, gks, { sort: 'gsax' })}</div>` : ''}`;
+  RERENDER.rookies = RERENDER.rkg = renderRookies;
+}
+
+/* ============================== MODEL TAB ============================== */
+function calibChart(series) {
+  const W = 520, H = 360, m = { l: 50, r: 14, t: 14, b: 42 }, mx = Math.max(.05, ...series.flatMap(s => s.pts.flatMap(p => [p[0], p[1]]))) * 1.08;
+  const sx = v => m.l + v / mx * (W - m.l - m.r), sy = v => H - m.b - v / mx * (H - m.t - m.b);
+  let g = ''; for (const t of ticks(0, mx, 5)) g += `<line class="gridl" x1="${sx(t)}" x2="${sx(t)}" y1="${m.t}" y2="${H - m.b}"/><text x="${sx(t)}" y="${H - m.b + 16}" text-anchor="middle">${(t * 100).toFixed(0)}%</text><line class="gridl" x1="${m.l}" x2="${W - m.r}" y1="${sy(t)}" y2="${sy(t)}"/><text x="${m.l - 6}" y="${sy(t) + 4}" text-anchor="end">${(t * 100).toFixed(0)}%</text>`;
+  const ser = series.map(s => `<polyline points="${s.pts.map(p => `${sx(p[0])},${sy(p[1])}`).join(' ')}" fill="none" stroke="${s.color}" stroke-width="2"/>${s.pts.map(p => `<circle cx="${sx(p[0])}" cy="${sy(p[1])}" r="5" fill="${s.color}" stroke="var(--surface)" stroke-width="2" data-tip="${esc(`<b>${s.name}</b><div class='row'><span>Predicted</span><b>${(p[0] * 100).toFixed(1)}%</b></div><div class='row'><span>Actual</span><b>${(p[1] * 100).toFixed(1)}%</b></div><div class='row'><span>Shots</span><b>${p[2]}</b></div>`)}"/>`).join('')}`).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}"><g class="axis">${g}</g><line class="ref" x1="${sx(0)}" y1="${sy(0)}" x2="${sx(mx)}" y2="${sy(mx)}"/>${ser}
+    <text x="${(m.l + W - m.r) / 2}" y="${H - 6}" text-anchor="middle" fill="var(--text-2)" font-size="12" font-weight="600">Predicted chance of a goal →</text><text transform="translate(13 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle" fill="var(--text-2)" font-size="12" font-weight="600">Actual goal rate →</text></svg>`;
+}
+async function renderModel() {
+  const body = $('#mdBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const M = A.model || {}, mt = M.metrics;
+  // --- xG model
+  let xgSec;
+  if (!M.W) {
+    xgSec = `<div class="card"><div class="card-h"><h3>Expected goals model</h3><p>Using the starter model</p></div><p style="margin:0">Training needs at least 6,000 unblocked shots; the loaded range has ${(M.n || 0).toLocaleString()}. Pick <b>Last 60 days</b> or <b>Full season</b> above to train it on real data.</p>${coefTable(null)}</div>`;
+  } else {
+    const row = (l, e) => `<tr><td class="l">${l}</td><td>${e.ll.toFixed(4)}</td><td>${e.auc.toFixed(3)}</td><td>${e.brier.toFixed(4)}</td><td>${f0(e.expected)} / ${e.goals}</td></tr>`;
+    xgSec = `<div class="card"><div class="card-h"><h3>Expected goals model</h3><div class="seg" id="mdUse"><button data-v="1" class="${A.useTrained ? 'on' : ''}">Trained on real data</button><button data-v="0" class="${!A.useTrained ? 'on' : ''}">Starter model</button></div></div>
+      <p style="margin:0 0 10px;color:var(--text-2)">Trained on <b>${M.n.toLocaleString()}</b> unblocked shots from <b>${M.games}</b> games. It's a logistic regression that learns how much each shot feature changes the odds of a goal, gently pulled toward the starter model so small samples don't go haywire. Every 5th game is held out for the report card, so the model is tested on shots it never saw.</p>
+      <div class="grid g2"><div><h3 class="cmp-sec" style="margin-top:0">Report card <span class="muted" style="font-weight:500;font-size:13px">${M.nTest.toLocaleString()} held-out shots</span></h3>
+        <div class="twrap"><table><thead><tr><th class="l">Model</th><th title="Lower is better">Log loss</th><th title="Higher is better: how well it ranks goals above non-goals">AUC</th><th title="Lower is better">Brier</th><th>xG / goals</th></tr></thead><tbody>${row('<b>Trained</b>', mt.trained)}${row('Starter', mt.handset)}${row('Distance only', mt.distance)}</tbody></table></div>
+        <p class="muted" style="font-size:12px">Log loss and Brier score measure how close each prediction was (lower is better). AUC is the chance a random goal got a higher xG than a random non-goal (0.5 is a coin flip). "Distance only" is the simplest possible model, as a baseline.</p></div>
+        <div><h3 class="cmp-sec" style="margin-top:0">Calibration</h3>${calibChart([{ name: 'Trained', color: 'var(--away)', pts: mt.trained.bins }, { name: 'Starter', color: 'var(--home)', pts: mt.handset.bins }])}<div class="legend"><span><i class="lg-dot" style="background:var(--away)"></i>Trained</span><span><i class="lg-dot" style="background:var(--home)"></i>Starter model</span><span>On the dashed line = perfectly calibrated</span></div></div></div>
+      ${coefTable(M.W)}</div>`;
+  }
+  // --- score effects
+  const sw = scoreWeights();
+  const states = [['-2', 'Down 2+'], ['-1', 'Down 1'], ['0', 'Tied'], ['1', 'Up 1'], ['2', 'Up 2+']];
+  const seRows = states.map(([sd, l]) => `<tr><td class="l">${l}</td>${['1', '0'].map(ha => { const k = ha + '|' + sd, sh = sw.share.cf[k]; return `<td>${fin(sh) ? pct1(sh) : '–'}</td><td class="muted">×${f2(sw.W.cf[k] ?? 1)}</td>`; }).join('')}</tr>`).join('');
+  const seSec = `<div class="card"><div class="card-h"><h3>Score effects</h3><div class="seg" id="mdAdj"><button data-v="1" class="${A.adj ? 'on' : ''}">Adjust even-strength stats</button><button data-v="0" class="${!A.adj ? 'on' : ''}">Raw</button></div></div>
+    <p style="margin:0 0 10px;color:var(--text-2)">Teams that are behind push for goals and outshoot their opponents; teams that are ahead sit back. The table shows each team's share of even-strength shot attempts in each score state in the loaded games, and the weight applied to its shots to cancel that out. The adjustment affects even-strength team stats, power rankings and predictions.</p>
+    <div class="twrap"><table><thead><tr><th class="l">Shooting team is…</th><th>Home CF%</th><th>Weight</th><th>Road CF%</th><th>Weight</th></tr></thead><tbody>${seRows}</tbody></table></div></div>`;
+  // --- predictions
+  const rt = ratings(); const graded = rt.preds.filter(p => p.hn >= 5 && p.an >= 5);
+  const acc = arr => div(arr.filter(p => (p.pH > .5) === p.hw).length, arr.length);
+  const brier = (arr, f) => div(arr.reduce((s, p) => s + (f(p) - (p.hw ? 1 : 0)) ** 2, 0), arr.length);
+  const withMk = graded.filter(p => fin(p.mk));
+  const homeRate = .54;
+  let predSec;
+  if (graded.length < 10) predSec = `<div class="card"><div class="card-h"><h3>Prediction tracker</h3></div><p class="muted" style="margin:0">Not enough games yet. Each team needs 5 games in the loaded range before its predictions are graded. Try <b>Full season</b>.</p></div>`;
+  else {
+    const cum = (f) => { let c = 0; return graded.map((p, i) => { c += f(p) ? 1 : 0; return [i + 1, c / (i + 1) * 100]; }).slice(9); };
+    const series = [{ name: 'Ice Lab', color: 'var(--away)', pts: cum(p => (p.pH > .5) === p.hw) }, { name: 'Always pick home', color: 'var(--muted)', pts: cum(p => p.hw) }];
+    if (withMk.length > 10) { let c = 0, n = 0; series.push({ name: 'Betting favorite', color: 'var(--home)', pts: graded.map((p, i) => { if (fin(p.mk)) { n++; if ((p.mk > .5) === p.hw) c++; } return [i + 1, n ? c / n * 100 : 50]; }).slice(9) }); }
+    const bins = [[.5, .55], [.55, .6], [.6, .65], [.65, .7], [.7, 1.01]].map(([lo, hi]) => { const g = graded.map(p => ({ p: Math.max(p.pH, 1 - p.pH), w: p.pH >= .5 ? p.hw : !p.hw })).filter(x => x.p >= lo && x.p < hi); return { lo, hi, n: g.length, pr: div(g.reduce((s, x) => s + x.p, 0), g.length), act: div(g.filter(x => x.w).length, g.length) }; }).filter(b => b.n);
+    const recent = [...rt.preds].reverse().slice(0, 25);
+    predSec = `<div class="card"><div class="card-h"><h3>Prediction tracker</h3><p>Every game re-predicted using only the games before it</p></div>
+      <div class="tiles" style="margin-bottom:12px"><div class="tile"><div class="k">Games graded</div><div class="v num">${graded.length}</div><div class="s">Teams with 5+ prior games</div></div>
+        <div class="tile"><div class="k">Ice Lab picks</div><div class="v num">${pct1(acc(graded))}%</div><div class="s">Brier ${f3(brier(graded, p => p.pH))}</div></div>
+        <div class="tile"><div class="k">Always pick home</div><div class="v num">${pct1(div(graded.filter(p => p.hw).length, graded.length))}%</div><div class="s">Brier ${f3(brier(graded, () => homeRate))}</div></div>
+        ${withMk.length ? `<div class="tile"><div class="k">Betting favorite</div><div class="v num">${pct1(div(withMk.filter(p => (p.mk > .5) === p.hw).length, withMk.length))}%</div><div class="s">Brier ${f3(brier(withMk, p => p.mk))} · Ice Lab ${f3(brier(withMk, p => p.pH))} on same ${withMk.length} games</div></div>` : ''}</div>
+      <div class="grid g2"><div><h3 class="cmp-sec" style="margin-top:0">Running pick accuracy</h3>${lineChart({ series, x0: 10, x1: graded.length, y0: 30, y1: 80, fx: v => `Game ${Math.round(v)}`, fy: v => f0(v) + '%', refY: 50, H: 240 })}<div class="legend">${series.map(s => `<span><i class="lg-dot" style="background:${s.color}"></i>${s.name}</span>`).join('')}</div></div>
+        <div><h3 class="cmp-sec" style="margin-top:0">When the model says…</h3><div class="twrap"><table><thead><tr><th class="l">Confidence</th><th>Games</th><th>Predicted</th><th>Actual</th></tr></thead><tbody>${bins.sort((a, b) => a.lo - b.lo).map(b => `<tr><td class="l">${f0(b.lo * 100)}–${f0(Math.min(100, b.hi * 100))}%</td><td>${b.n}</td><td>${pct1(b.pr)}%</td><td><b>${pct1(b.act)}%</b></td></tr>`).join('')}</tbody></table></div>
+          <p class="muted" style="font-size:12px">If the model is well calibrated, favorites it gives 60% should win about 60% of the time. Brier score: lower is better; 0.25 is a coin flip.</p></div></div>
+      <h3 class="cmp-sec">Most recent predictions</h3><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Ice Lab pick</th><th>Market</th><th class="l">Final</th><th>Result</th></tr></thead><tbody>${recent.map(p => { const pick = p.pH >= .5 ? p.h : p.a, pp = Math.max(p.pH, 1 - p.pH), ok = (p.pH >= .5) === p.hw; const mk = fin(p.mk) ? pct1(p.pH >= .5 ? p.mk : 1 - p.mk) + '%' : '–'; return `<tr class="click" data-game="${p.id}"><td class="l">${new Date(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.a, 16)}${esc(TM(p.a).abbr)} @ ${logoImg(p.h, 16)}${esc(TM(p.h).abbr)}</div></td><td class="l">${esc(TM(pick).abbr)} ${pct1(pp)}%${p.hn < 5 || p.an < 5 ? ' <span class="muted">(early)</span>' : ''}</td><td>${mk}</td><td class="l">${p.as}–${p.hs}${p.ot ? ' OT' : ''}</td><td>${ok ? '<b style="color:var(--good)">✓</b>' : '<b style="color:var(--neg)">✗</b>'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
+  }
+  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid">${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
+  const u = $('#mdUse'); if (u) u.onclick = e => { const b = e.target.closest('button'); if (!b) return; A.useTrained = b.dataset.v === '1'; for (const g of A.filtered) applyModel(g); recalib(); invalidate(); renderModel(); };
+  $('#mdAdj').onclick = e => { const b = e.target.closest('button'); if (!b) return; A.adj = b.dataset.v === '1'; invalidate(); renderModel(); };
+  // tonight's picks (current season only)
+  if (A.season === S.curSeason) {
+    try {
+      const sb = await getJSON(`${API}/scoreboard?dates=${todayStr()}`);
+      const up = (sb.events || []).filter(e => e.competitions[0].status.type.state === 'pre');
+      const rowsT = up.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); const pr = predictMatch(String(h.team.id), String(a.team.id)); if (!pr) return ''; const pick = pr.pH >= .5 ? h.team : a.team; return `<tr class="click" data-game="${e.id}"><td class="l"><div class="tcell">${logoImg(String(a.team.id), 16)}${esc(a.team.abbreviation)} @ ${logoImg(String(h.team.id), 16)}${esc(h.team.abbreviation)}</div></td><td class="l"><b>${esc(pick.abbreviation)}</b> ${pct1(Math.max(pr.pH, 1 - pr.pH))}%</td><td>${f2(pr.la)} – ${f2(pr.lh)}</td><td>${esc((c.odds && c.odds[0] && c.odds[0].details) || '–')}</td></tr>`; }).filter(Boolean).join('');
+      const el = $('#mdToday'); if (el && rowsT) el.innerHTML = `<div class="card"><div class="card-h"><h3>Tonight's picks</h3><p>From current team strength ratings</p></div><div class="twrap"><table><thead><tr><th class="l">Game</th><th class="l">Pick</th><th>Projected xG</th><th>Line</th></tr></thead><tbody>${rowsT}</tbody></table></div></div>`;
+    } catch (e) {}
+  }
+}
+function coefTable(W) {
+  const rows = FEATS.map(([k, l], i) => {
+    const w = W ? W[i] : DEFAULT_W[i];
+    const eff = k === 'bias' ? '' : k === 'dist2' ? 'bends the distance curve' : `${Math.exp(w) >= 1 ? '+' : ''}${f0((Math.exp(w) - 1) * 100)}% odds${k === 'dist' ? ' per 10 ft' : k === 'ang' ? ' per 10°' : ''}`;
+    const bw = Math.min(50, Math.abs(w) * 35);
+    return `<tr><td class="l">${esc(l)}</td>${W ? `<td class="num">${w.toFixed(3)}</td>` : ''}<td class="num muted">${DEFAULT_W[i].toFixed(3)}</td><td class="l">${k === 'bias' || k === 'dist2' ? '' : `<div class="rbar"><span class="mid"></span><i style="${w >= 0 ? `left:50%;width:${bw}%;background:var(--pos)` : `right:50%;width:${bw}%;background:var(--neg)`}"></i></div>`}</td><td class="l muted">${eff}</td></tr>`;
+  }).join('');
+  return `<h3 class="cmp-sec">What the model learned</h3><div class="twrap"><table><thead><tr><th class="l">Feature</th>${W ? '<th>Trained weight</th>' : ''}<th>Starter model</th><th class="l">Direction</th><th class="l">Effect on goal odds</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="muted" style="font-size:12px;margin:6px 0 0">Cross-ice, turnover and faceoff flags are detected from the events ESPN logs in the few seconds before a shot. ESPN doesn't record passes, so these are approximations.</p>`;
+}
+
 /* ============================== TABS / INIT ============================== */
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
 function renderActiveAnalytics() {
   const t = activeTab();
-  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare();
+  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel();
 }
 function setTab(t) {
   $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   $$('.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + t));
   if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
   window.scrollTo({ top: 0 });
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
@@ -2057,7 +2531,7 @@ $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(
     }
   } catch (e) {}
   const t = (location.hash || '').slice(1);
-  setTab(['scores', 'standings', 'teams', 'skaters', 'goalies', 'luck', 'compare', 'glossary'].includes(t) ? t : 'scores');
+  setTab(['scores', 'standings', 'power', 'teams', 'special', 'splits', 'skaters', 'rookies', 'goalies', 'luck', 'compare', 'model', 'glossary'].includes(t) ? t : 'scores');
 })();
 </script>
 </body>
