@@ -1,0 +1,80 @@
+# Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders.
+# Runs every 30 minutes from 10 AM to midnight Eastern, and on demand from the Actions tab.
+name: Update NHL lines
+
+on:
+  schedule:
+    - cron: '*/30 14-23 * * *'
+    - cron: '*/30 0-4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nhl-lines
+  cancel-in-progress: false
+
+jobs:
+  lines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch and parse today's lines
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const URL = 'https://rotogrinders.com/lineups/nhl';
+
+          function parseLines(html) {
+            const dec = s => s.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#0?39;|&apos;/g, "'").replace(/&quot;/g, '"')
+              .replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/\s+/g, ' ').trim();
+            const games = [];
+            for (const b of html.split(/class="module game-card"/).slice(1)) {
+              const cities = [...b.matchAll(/class="team-nameplate-city"[^>]*>([\s\S]*?)<\/span>/g)].map(m => dec(m[1]));
+              const mascots = [...b.matchAll(/class="team-nameplate-mascot"[^>]*>([\s\S]*?)<\/span>/g)].map(m => dec(m[1]));
+              const teams = cities.slice(0, 2).map((c, i) => `${c} ${mascots[i] || ''}`.trim());
+              const time = (b.match(/(\d{1,2}:\d{2}\s*[AP]M(?:\s*ET)?)/) || [])[1] || '';
+              const cards = b.split(/class="lineup-card"/).slice(1, 3).map(c => {
+                const head = c.split(/class="lineup-card-body/)[0] || '';
+                const body = c.split(/class="lineup-card-body/)[1] || '';
+                const gm = head.match(/player-nameplate-name"[^>]*>([\s\S]*?)<\/a>/);
+                const groups = []; let cur = null, m;
+                const re = /<span class="bold small[^"]*"[^>]*>\s*([^<]+?)\s*<\/span>|<li class="lineup-card-player"[^>]*>([\s\S]*?)<\/li>/g;
+                while ((m = re.exec(body))) {
+                  if (m[1]) { cur = { label: dec(m[1]), players: [] }; groups.push(cur); continue; }
+                  const name = (m[2].match(/player-nameplate-name"[^>]*>([\s\S]*?)<\/a>/) || [])[1];
+                  if (!name) continue;
+                  if (!cur) { cur = { label: 'Lineup', players: [] }; groups.push(cur); }
+                  cur.players.push({ n: dec(name), pos: (m[2].match(/data-position="([^"]+)"/) || [])[1] || '', pp: (m[2].match(/>\s*(PP\d)\s*</) || [])[1] || '' });
+                }
+                return { goalie: gm ? dec(gm[1]) : '', groups };
+              });
+              if (teams.length === 2 && cards.length) games.push({ time, away: teams[0], home: teams[1], teams: cards.map((c, i) => ({ team: teams[i], ...c })) });
+            }
+            return games;
+          }
+
+          (async () => {
+            const res = await fetch(URL, { headers: { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36', 'Accept': 'text/html' } });
+            if (!res.ok) { console.error(`RotoGrinders returned HTTP ${res.status}`); process.exit(1); }
+            const games = parseLines(await res.text());
+            const date = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+            let old = null; try { old = JSON.parse(fs.readFileSync('lines.json', 'utf8')); } catch (e) {}
+            if (old && old.date === date && JSON.stringify(old.games) === JSON.stringify(games)) { console.log('No changes.'); return; }
+            fs.writeFileSync('lines.json', JSON.stringify({ source: 'RotoGrinders', url: URL, date, updated: new Date().toISOString(), games }, null, 1));
+            console.log(`Saved ${games.length} games for ${date}.`);
+          })().catch(e => { console.error(e); process.exit(1); });
+          EOF
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add lines.json
+          git diff --cached --quiet || (git commit -m "Update NHL lines" && git push)
