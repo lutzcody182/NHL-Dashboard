@@ -1,3 +1,4 @@
+
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders.
 # Runs every 30 minutes from 10 AM to midnight Eastern, and on demand from the Actions tab.
 name: Update NHL lines
@@ -19,11 +20,11 @@ jobs:
   lines:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Fetch and parse today's lines
         run: |
@@ -61,9 +62,25 @@ jobs:
           }
 
           (async () => {
-            const res = await fetch(URL, { headers: { 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36', 'Accept': 'text/html' } });
-            if (!res.ok) { console.error(`RotoGrinders returned HTTP ${res.status}`); process.exit(1); }
-            const games = parseLines(await res.text());
+            const headers = {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Referer': 'https://rotogrinders.com/'
+            };
+            let html = null;
+            for (let attempt = 1; attempt <= 3 && html == null; attempt++) {
+              try {
+                const res = await fetch(URL, { headers });
+                const text = await res.text();
+                if (res.ok && text.includes('game-card')) { html = text; break; }
+                console.log(`Attempt ${attempt}: HTTP ${res.status}, ${text.length} bytes. Page starts with: ${text.slice(0, 300).replace(/\s+/g, ' ')}`);
+              } catch (e) { console.log(`Attempt ${attempt}: network error: ${e.message}`); }
+              await new Promise(r => setTimeout(r, 5000 * attempt));
+            }
+            if (html == null) { console.error('::error::Could not read the RotoGrinders lineups page (see the attempts above).'); process.exit(1); }
+            const games = parseLines(html);
+            if (!games.length) console.log('::warning::Page loaded but no games were found. There may be no games today, or the page layout changed.');
             const date = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
             let old = null; try { old = JSON.parse(fs.readFileSync('lines.json', 'utf8')); } catch (e) {}
             if (old && old.date === date && JSON.stringify(old.games) === JSON.stringify(games)) { console.log('No changes.'); return; }
@@ -77,4 +94,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
           git add lines.json
-          git diff --cached --quiet || (git commit -m "Update NHL lines" && git push)
+          if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
+          git commit -m "Update NHL lines"
+          git push || { echo "::error::Push failed. In the repo go to Settings > Actions > General > Workflow permissions, choose 'Read and write permissions', and run again."; exit 1; }
