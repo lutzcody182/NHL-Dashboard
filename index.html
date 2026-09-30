@@ -292,6 +292,29 @@ svg{display:block;max-width:100%}
 .recap-game{cursor:pointer}
 
 /* grouped navigation end */
+/* lineups */
+.lrow{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px dashed var(--border)}
+.lrow:last-child{border-bottom:0}
+.llbl{flex:none;width:26px;height:22px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);font-size:11px;font-weight:800;display:grid;place-items:center;color:var(--text-2)}
+.lplayers{display:flex;flex-wrap:wrap;gap:4px 10px;min-width:0;font-size:13px}
+.lchip{white-space:nowrap}
+.lu-col{min-width:0}
+.lu-g{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border)}
+.lu-g .hs{width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--surface);flex:none}
+.lu-h{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 4px;display:flex;justify-content:space-between;font-family:Inter,system-ui,sans-serif}
+.lu-h span{text-transform:none;letter-spacing:0;font-weight:500}
+.lu-list{list-style:none;margin:0;padding:0}
+.lu-list li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed var(--border);font-size:13px}
+.lu-list li:last-child{border-bottom:0}
+.lu-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lu-t{color:var(--text-2);white-space:nowrap}
+.pp{font-size:10px;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 3px}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:4px;vertical-align:1px;border:1px solid}
+.badge.ok{color:var(--good);border-color:var(--good);background:color-mix(in srgb,var(--good) 10%,transparent)}
+.badge.maybe{color:var(--gold-ink);border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}
+.badge.out{color:var(--neg);border-color:var(--neg);background:color-mix(in srgb,var(--neg) 10%,transparent);font-size:10px}
+.gline{display:block;font-size:11px;color:var(--text-2)}
+
 /* milestones */
 .msbox{border:1px solid color-mix(in srgb,var(--gold) 55%,var(--border));background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 12%,var(--surface)),var(--surface) 60%)}
 .msbox h2,.msbox h3{display:flex;align-items:center;gap:8px}
@@ -996,7 +1019,7 @@ async function loadScores(silent) {
     [h, a].forEach(x => addTeam(x.team));
     const live = st.state === 'in'; if (live) anyLive = true;
     const post = st.state === 'post';
-    const row = x => { const other = x === h ? a : h; const lose = post && +x.score < +other.score; const rec = (x.records && x.records[0] && x.records[0].summary) || ''; return `<div class="trow ${lose ? 'lose' : ''}">${logoImg(x.team.id, 30)}<div class="tn"><b>${esc(x.team.shortDisplayName || x.team.abbreviation)}</b><span>${esc(rec)}</span></div>${st.state !== 'pre' ? `<div class="sc num">${esc(x.score)}</div>` : ''}</div>`; };
+    const row = x => { const other = x === h ? a : h; const lose = post && +x.score < +other.score; const rec = (x.records && x.records[0] && x.records[0].summary) || ''; const pr = st.state === 'pre' ? ((x.probables || []).find(q => /goalie/i.test(q.name || '')) || null) : null; const gl = pr && pr.athlete ? `<span class="gline">G: ${esc((pr.athlete.fullName || pr.athlete.displayName || '').split(' ').slice(-1)[0])} ${/confirm/i.test((pr.status && pr.status.name) || '') ? '✓' : '(probable)'}</span>` : ''; return `<div class="trow ${lose ? 'lose' : ''}">${logoImg(x.team.id, 30)}<div class="tn"><b>${esc(x.team.shortDisplayName || x.team.abbreviation)}</b><span>${esc(rec)}</span>${gl}</div>${st.state !== 'pre' ? `<div class="sc num">${esc(x.score)}</div>` : ''}</div>`; };
     const odds = c.odds && c.odds[0];
     const bc = (c.broadcasts || []).flatMap(b => b.names || []).slice(0, 2).join(', ');
     const typ = e.season && e.season.type === 1 ? '<span class="pill">Preseason</span>' : e.season && e.season.type === 3 ? '<span class="pill">Playoffs</span>' : '';
@@ -1035,6 +1058,7 @@ async function openGame(id, silent) {
   renderGame();
   clearInterval(GC.timer);
   if (GC.g && GC.g.state === 'in') GC.timer = setInterval(() => { if (GC.id === id && !document.hidden) openGame(id, true); }, 30000);
+  else if (GC.g && GC.g.state === 'pre') GC.timer = setInterval(() => { if (GC.id === id && !document.hidden && $('#luBody')) renderLineups(GC.raw, GC.g); }, 120000);
 }
 
 function gameAdv(g, sit, k) {
@@ -1088,7 +1112,8 @@ function renderGame() {
 
   const vids = videosCard(s);
   if (pre || !g.shots.length) {
-    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
+    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
+    renderLineups(s, g);
     renderMatchup(s, g);
     return;
   }
@@ -1923,6 +1948,93 @@ document.addEventListener('click', e => {
   $$('.vid video').forEach(x => x.pause());
   b.outerHTML = `<video controls autoplay playsinline poster="${esc(v.dataset.poster)}" src="${esc(v.dataset.src)}"></video>`;
 });
+
+/* ============================== LINEUPS & STARTING GOALIES ============================== */
+function probableGoalies(ev) {
+  const out = {};
+  if (!ev) return out;
+  for (const c of ev.competitions[0].competitors) {
+    const p = (c.probables || []).find(q => /goalie/i.test(q.name || '')) || (c.probables || [])[0];
+    if (p && p.athlete) out[String(c.team.id)] = { id: String(p.athlete.id || p.playerId), n: p.athlete.fullName || p.athlete.displayName || 'Goalie', st: (p.status && (p.status.name || p.status.abbreviation)) || 'Probable' };
+  }
+  return out;
+}
+const gBadge = st => /confirm/i.test(st) ? `<span class="badge ok">✓ Confirmed</span>` : `<span class="badge maybe">◔ ${esc(st || 'Probable')}</span>`;
+const RGL = { data: null, t: 0 };
+async function getLinesFile() {
+  if (RGL.data !== null && Date.now() - RGL.t < 5 * 60e3) return RGL.data;
+  try { const r = await fetch('lines.json?t=' + Date.now(), { cache: 'no-store' }); RGL.data = r.ok ? await r.json() : false; } catch (e) { RGL.data = false; }
+  RGL.t = Date.now(); return RGL.data;
+}
+const normName = x => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+function linesFor(data, g, teamId) {
+  if (!data || !data.games) return null;
+  const etDay = iso => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  if (data.date && data.date !== etDay(g.date)) return null;
+  const full = normName(TM(teamId).name), mascot = normName((TM(teamId).name || '').split(' ').slice(-1)[0]);
+  const all = data.games.flatMap(x => x.teams || []);
+  return all.find(t => normName(t.team) === full) || all.find(t => mascot && normName(t.team).endsWith(mascot)) || null;
+}
+function linesHTML(rg, ids, updated) {
+  const who = p => { const id = ids[normName(p.n)]; return `<span class="lchip">${id ? plink(id, p.n) : esc(p.n)} <span class="muted">${esc(p.pos)}</span>${p.pp ? ` <span class="pp">${esc(p.pp)}</span>` : ''}</span>`; };
+  let fw = '', dm = '', other = '';
+  for (const gr of rg.groups) {
+    const lm = gr.label.match(/line\s*(\d)/i);
+    if (lm) fw += `<div class="lrow"><span class="llbl">L${lm[1]}</span><div class="lplayers">${gr.players.map(who).join('')}</div></div>`;
+    else if (/def/i.test(gr.label)) { for (let i = 0; i < gr.players.length; i += 2) dm += `<div class="lrow"><span class="llbl">D${i / 2 + 1}</span><div class="lplayers">${gr.players.slice(i, i + 2).map(who).join('')}</div></div>`; }
+    else if (gr.players.length) other += `<div class="lrow"><span class="llbl" style="width:auto;padding:0 6px">${esc(gr.label)}</span><div class="lplayers">${gr.players.map(who).join('')}</div></div>`;
+  }
+  return `<h4 class="lu-h">Forward lines <span>RotoGrinders · ${esc(updated)}</span></h4>${fw || '<p class="muted" style="margin:0;font-size:12px">Not posted yet.</p>'}<h4 class="lu-h">Defense pairs</h4>${dm || '<p class="muted" style="margin:0;font-size:12px">Not posted yet.</p>'}${other}`;
+}
+async function renderLineups(s, g) {
+  const box = () => $('#luBody'), gid = g.id, H = g.home.id, W = g.away.id;
+  let ev = null;
+  try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === gid) || null; } catch (e) {}
+  const probs = probableGoalies(ev);
+  const LF = await getLinesFile();
+  const lfTime = LF && LF.updated ? 'updated ' + new Date(LF.updated).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+  const inj = {}; (s.injuries || []).forEach(t => (t.injuries || []).forEach(i => { if (i.athlete) inj[String(i.athlete.id)] = i.status || 'Injured'; }));
+  const l5 = s.lastFiveGames || [];
+  // prefer the latest regular-season or playoff game from the past month; otherwise fall back to the latest game (e.g. preseason)
+  const lastGameOf = async t => {
+    const x = l5.find(q => q.team && String(q.team.id) === t);
+    const evs = ((x && x.events) || []).slice().sort((a, b) => new Date(b.gameDate) - new Date(a.gameDate)).slice(0, 5);
+    let first = null;
+    for (const e of evs) { let gm = null; try { gm = await getGame(String(e.id)); } catch (er) {} if (!gm) continue; if (!first) first = gm; if (gm.stype !== 1 && daysBetween(localDay(gm.date), localDay(g.date)) <= 30) return gm; }
+    return first;
+  };
+  const col = async t => {
+    const gm = await lastGameOf(t);
+    const rg = linesFor(LF, g, t);
+    let pg = probs[t];
+    if (!pg && rg && rg.goalie) pg = { id: null, n: rg.goalie, st: 'Projected by RotoGrinders' };
+    let G = null; if (pg && A.loadedKey && A.filtered.length) { const r = aggregate().G[pg.id]; if (r && r.gp) G = r; }
+    const goalie = pg ? `<div class="lu-g"><img class="hs" src="${pg.id ? headshot(pg.id) : ''}" alt="" onerror="this.style.visibility='hidden'"><div>${plink(pg.id, pg.n)} ${gBadge(pg.st)}<div class="muted" style="font-size:12px">${G ? `${G.gp} GP · ${f3(div(G.sv, G.sa))} SV% · ${sgn1(G.xga - G.gan)} GSAx (${A.season - 1}-${String(A.season).slice(2)} loaded range)` : 'Starting goalie'}</div></div></div>`
+      : `<div class="lu-g empty-g"><div class="hs"></div><div><b>Starter not announced yet</b><div class="muted" style="font-size:12px">Usually posted the morning of the game</div></div></div>`;
+    let sk = '', note = '';
+    const ids = {}; if (gm) Object.entries(gm.sk).forEach(([id, p]) => { ids[normName(p.n)] = id; });
+    if (A.loadedKey && A.filtered.length) Object.values(aggregate().P).forEach(p => { if (p.tm === t && !ids[normName(p.n)]) ids[normName(p.n)] = p.id; });
+    if (rg) { sk = linesHTML(rg, ids, lfTime); note = ''; }
+    else if (gm) {
+      const ps = Object.entries(gm.sk).filter(([, p]) => p.tm === t && p.toi > 0).map(([id, p]) => ({ id, ...p }));
+      const fw = ps.filter(p => p.pos !== 'D').sort((a, b) => b.toi - a.toi), dm = ps.filter(p => p.pos === 'D').sort((a, b) => b.toi - a.toi);
+      const row = p => `<li><span class="lu-n">${plink(p.id, p.n)} <span class="muted">${esc(p.pos)}</span>${inj[p.id] ? ` <span class="badge out">Out · ${esc(inj[p.id])}</span>` : ''}</span><span class="lu-t num">${mmss(p.toi)}${p.pp >= 90 ? ' <span class="pp">PP</span>' : ''}</span></li>`;
+      const gOpp = gm.home.id === t ? gm.away : gm.home, days = daysBetween(localDay(gm.date), localDay(g.date));
+      note = `From ${gm.stype === 1 ? 'a preseason game, ' : days > 45 ? 'last season, ' : ''}${new Date(gm.date).toLocaleDateString([], { month: 'short', day: 'numeric' })} ${gm.home.id === t ? 'vs' : '@'} ${esc(gOpp.abbr)}`;
+      sk = `<h4 class="lu-h">Forwards <span>ice time last game</span></h4><ol class="lu-list">${fw.map(row).join('')}</ol><h4 class="lu-h">Defense</h4><ol class="lu-list">${dm.map(row).join('')}</ol>`;
+      const outNow = Object.keys(inj).filter(id => ps.some(p => p.id === id)).length;
+      if (outNow) note += ` · ${outNow} of these players now listed as injured`;
+    } else sk = `<p class="muted" style="margin:8px 0 0">No recent game to project from.</p>`;
+    return `<div class="lu-col"><div class="tcell" style="margin-bottom:8px">${logoImg(t, 22)}<b>${esc(TM(t).name)}</b></div>${goalie}${sk}${note ? `<p class="muted" style="font-size:11px;margin:8px 0 0">${note}</p>` : ''}</div>`;
+  };
+  const [ca, ch] = await Promise.all([col(W), col(H)]);
+  if (!box() || GC.id !== gid) return;
+  const both = probs[W] && probs[H] && /confirm/i.test(probs[W].st) && /confirm/i.test(probs[H].st);
+  const haveLines = !!(linesFor(LF, g, W) || linesFor(LF, g, H));
+  box().innerHTML = `<div class="card"><div class="card-h"><h3>Lineups & starting goalies</h3><p>${both ? 'Both starters confirmed' : 'Checks for goalie confirmations every 2 minutes'} · updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p></div>
+    <div class="grid g2">${ca}${ch}</div>
+    <p class="muted" style="font-size:12px;margin:10px 0 0">${haveLines ? `Lines and defense pairs come from <a href="${esc((LF && LF.url) || 'https://rotogrinders.com/lineups/nhl')}" target="_blank" rel="noopener">RotoGrinders</a>, refreshed every 30 minutes by your GitHub job; PP1/PP2 are power-play units. Goalie confirmations come from ESPN.` : `Lines aren't posted for this game yet, so the skater lists show who dressed in each team's last game, ordered by ice time (PP = regular power-play time). Lines appear here once RotoGrinders posts them.`} The official lineup appears in the box score at puck drop.</p></div>`;
+}
 
 /* ============================== MATCHUP PREVIEW ============================== */
 async function getStandings(season) {
