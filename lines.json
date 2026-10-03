@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-03",
- "updated": "2026-10-03T20:40:29.402Z",
+ "updated": "2026-10-03T23:32:54.231Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -11,7 +11,7 @@
    "teams": [
     {
      "team": "Seattle Kraken",
-     "goalie": "Joey Daccord",
+     "goalie": "Philipp Grubauer",
      "groups": [
       {
        "label": "Line 1",
@@ -82,7 +82,7 @@
          "pp": ""
         },
         {
-         "n": "Curtis Douglas",
+         "n": "Ben Meyers",
          "pos": "W",
          "pp": ""
         },
@@ -117,12 +117,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Ryan Lindgren",
+         "n": "Cale Fleury",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Josh Mahura",
+         "n": "Ryan Lindgren",
          "pos": "D",
          "pp": ""
         }
@@ -132,7 +132,7 @@
     },
     {
      "team": "Edmonton Oilers",
-     "goalie": "Tristan Jarry",
+     "goalie": "Devon Levi",
      "groups": [
       {
        "label": "Line 1",
@@ -238,7 +238,7 @@
          "pp": ""
         },
         {
-         "n": "Shakir Mukhamadullin",
+         "n": "Ty Emberson",
          "pos": "D",
          "pp": ""
         },
@@ -656,6 +656,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Noah Ostlund",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Jack Quinn",
          "pos": "W",
          "pp": "PP1"
@@ -731,7 +736,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Matt Grzelcyk",
+         "n": "Zach Metsa",
          "pos": "D",
          "pp": ""
         },
@@ -920,14 +925,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Ville Koivunen",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Filip Hallander",
-         "pos": "W",
-         "pp": ""
+         "n": "Ben Kindel",
+         "pos": "C",
+         "pp": "PP1"
         }
        ]
       },
@@ -940,9 +940,14 @@
          "pp": ""
         },
         {
-         "n": "Ben Kindel",
+         "n": "Blake Lizotte",
          "pos": "C",
-         "pp": "PP1"
+         "pp": ""
+        },
+        {
+         "n": "Filip Hallander",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1179,11 +1184,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Jansen Harkins",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Conor Geekie",
          "pos": "W",
          "pp": "PP2"
@@ -1219,9 +1219,9 @@
          "pp": ""
         },
         {
-         "n": "Charle-Edouard D'Astous",
+         "n": "Emil Lilleberg",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Victor Hedman",
@@ -1247,11 +1247,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Eric Robinson",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Andrei Svechnikov",
          "pos": "W",
          "pp": "PP1"
@@ -1260,6 +1255,11 @@
          "n": "Sebastian Aho",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "William Carrier",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1307,13 +1307,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "William Carrier",
+         "n": "Eric Robinson",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Nicolas Deslauriers",
-         "pos": "W",
+         "n": "Jesperi Kotkaniemi",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -1347,14 +1347,14 @@
          "pp": "PP2"
         },
         {
+         "n": "Mike Reilly",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Shayne Gostisbehere",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Charles-Alexis Legault",
-         "pos": "D",
-         "pp": ""
         }
        ]
       }
@@ -1490,7 +1490,7 @@
    "teams": [
     {
      "team": "Utah Hockey Club",
-     "goalie": "Karel Vejmelka",
+     "goalie": "Sebastian Cossa",
      "groups": [
       {
        "label": "Line 1",
@@ -1617,6 +1617,11 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Matthew Knies",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Kent Johnson",
          "pos": "W",
          "pp": "PP1"
@@ -1642,7 +1647,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Conor Garland",
+         "n": "Dmitri Voronkov",
          "pos": "W",
          "pp": "PP2"
         }
@@ -1682,7 +1687,7 @@
          "pp": ""
         },
         {
-         "n": "Dmitri Voronkov",
+         "n": "Conor Garland",
          "pos": "W",
          "pp": "PP2"
         }
@@ -2049,12 +2054,12 @@
          "pp": ""
         },
         {
-         "n": "Joel Kiviranta",
+         "n": "Oskar Back",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Oskar Back",
+         "n": "Colin Blackwell",
          "pos": "W",
          "pp": ""
         }
@@ -2787,7 +2792,7 @@
        "players": [
         {
          "n": "Maxim Tsyplakov",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -2841,7 +2846,7 @@
     },
     {
      "team": "Vancouver Canucks",
-     "goalie": "",
+     "goalie": "Leevi Merilainen",
      "groups": [
       {
        "label": "Line 1",
@@ -2859,7 +2864,7 @@
         {
          "n": "Linus Karlsson",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -2894,7 +2899,7 @@
         {
          "n": "Max Sasson",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Arshdeep Bains",
