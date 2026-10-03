@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-03",
- "updated": "2026-10-03T17:49:19.615Z",
+ "updated": "2026-10-03T20:40:29.402Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2720,7 +2720,7 @@
    "teams": [
     {
      "team": "Calgary Flames",
-     "goalie": "Dustin Wolf",
+     "goalie": "Devin Cooley",
      "groups": [
       {
        "label": "Line 1",
@@ -2753,7 +2753,7 @@
         {
          "n": "Mikael Backlund",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Joel Farabee",
@@ -2766,9 +2766,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Connor Zary",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Brennan Othmann",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Yegor Sharangovich",
@@ -2969,7 +2969,7 @@
    "teams": [
     {
      "team": "Los Angeles Kings",
-     "goalie": "Darcy Kuemper",
+     "goalie": "Anton Forsberg",
      "groups": [
       {
        "label": "Line 1",
@@ -3027,7 +3027,7 @@
         {
          "n": "Erik Haula",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -3035,18 +3035,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Joel Armia",
+         "n": "Corey Perry",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Andre Lee",
+         "n": "Joel Armia",
          "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Samuel Helenius",
-         "pos": "C",
          "pp": ""
         }
        ]
