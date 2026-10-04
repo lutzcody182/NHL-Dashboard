@@ -1685,6 +1685,86 @@ const ord = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 's
 function pctRows(rows) {
   return rows.map(r => { const p = r.p; const pc = fin(p) ? Math.round(p * 100) : null; return `<div class="pctl"><span>${esc(r.l)}</span><div class="trk"><i style="width:${pc == null ? 0 : Math.max(3, pc)}%"></i></div><span class="pv num">${r.f(r.v)}</span><span class="pp">${pc == null ? '–' : ord(pc)}</span></div>`; }).join('');
 }
+/* ---- player shot heat map ---- */
+const HMG = { nx: 30, ny: 34, c: 2.5, bw: 6 };
+function densityGrid(shots, wfn) {
+  const { nx, ny, c, bw } = HMG, g = new Float64Array(nx * ny), R = Math.ceil(2.5 * bw / c), k2 = 2 * bw * bw;
+  for (const s of shots) {
+    const w = wfn ? wfn(s) : 1; if (!w || s.x == null) continue;
+    const ix = Math.floor((s.x - 25) / c), iy = Math.floor((s.y + 42.5) / c);
+    for (let i = Math.max(0, ix - R); i <= Math.min(nx - 1, ix + R); i++) for (let j = Math.max(0, iy - R); j <= Math.min(ny - 1, iy + R); j++) {
+      const dx = 25 + (i + .5) * c - s.x, dy = -42.5 + (j + .5) * c - s.y; g[i * ny + j] += w * Math.exp(-(dx * dx + dy * dy) / k2);
+    }
+  }
+  return g;
+}
+const HM_STOPS = [[0, [59, 130, 246]], [.4, [34, 197, 94]], [.7, [250, 204, 21]], [1, [239, 68, 68]]];
+function heatColor(t) {
+  let i = 0; while (i < HM_STOPS.length - 2 && t > HM_STOPS[i + 1][0]) i++;
+  const [a, ca] = HM_STOPS[i], [b, cb] = HM_STOPS[i + 1], u = Math.min(1, Math.max(0, (t - a) / (b - a)));
+  return `rgb(${ca.map((v, k) => Math.round(v + (cb[k] - v) * u)).join(',')})`;
+}
+function heatRects(g, mode) {
+  const { nx, ny, c } = HMG; let mx = 0; for (const v of g) mx = Math.max(mx, Math.abs(v)); if (!mx) return '';
+  let out = '';
+  for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {
+    const v = g[i * ny + j], t = Math.abs(v) / mx; if (t < .07) continue;
+    const fill = mode === 'diff' ? `var(${v > 0 ? '--neg' : '--pos'})` : heatColor(t);
+    const op = mode === 'diff' ? (t * .8).toFixed(2) : (.25 + .6 * t).toFixed(2);
+    out += `<rect x="${(25 + i * c).toFixed(1)}" y="${(-42.5 + j * c).toFixed(1)}" width="${c + .05}" height="${c + .05}" fill="${fill}" fill-opacity="${op}"/>`;
+  }
+  return out;
+}
+const ZONES = [['Inner slot', s => s.x >= 69 && s.x <= 89 && Math.abs(s.y) <= 9], ['Slot', s => s.x >= 54 && s.x <= 89 && Math.abs(s.y) <= 22], ['Wide / sharp angle', s => s.x >= 54], ['Point', () => true]];
+const zoneOf = s => ZONES.findIndex(z => z[1](s));
+// league per-position shot grids (memoized per loaded range)
+function leagueHeat(isD) {
+  const key = 'lgHeat' + (isD ? 'D' : 'F'); if (A.memo[key]) return A.memo[key];
+  const { P } = aggregate(); let toi = 0; const ids = new Set();
+  for (const p of Object.values(P)) if ((p.pos === "D") === isD && p.es > 0) { ids.add(p.id); toi += p.es; }
+  const shots = []; for (const g of A.filtered) for (const s of g.shots) if (s.t !== 3 && s.str === 0 && ids.has(s.pl)) shots.push(s);
+  return (A.memo[key] = { g: densityGrid(shots), toi, n: ids.size });
+}
+function leagueZoneSv() {
+  if (A.memo.zoneSv) return A.memo.zoneSv;
+  const z = ZONES.map(() => ({ sa: 0, ga: 0 }));
+  for (const g of A.filtered) for (const s of g.shots) if (s.t <= 1 && !s.en && s.x != null) { const q = z[zoneOf(s)]; q.sa++; if (s.t === 0) q.ga++; }
+  return (A.memo.zoneSv = z);
+}
+const goalDots = (shots, k) => shots.filter(s => s.t === 0).map(s => `<circle cx="${s.x}" cy="${s.y}" r="1.5" fill="#fff" stroke="#111" stroke-width=".5" data-tip="${esc(`🚨 Goal · ${esc(s.st)}<div class='row'><span>xG</span><b>${f2(s.xg * k)}</b></div><div class='row'><span>Distance</span><b>${f0(s.d)} ft</b></div>`)}"/>`).join('');
+const heatLegend = `<div class="legend"><span><i class="sw" style="background:linear-gradient(90deg,rgb(59,130,246),rgb(34,197,94),rgb(250,204,21),rgb(239,68,68))"></i>Fewer → more shots</span><span><i class="lg-dot" style="background:#fff;outline:1.5px solid #111"></i>Goal</span></div>`;
+PC.hm = 'heat';
+function skaterHeatCard(id, r, shots, k, isD) {
+  const segs = [['heat', 'Heat'], ['diff', 'vs. league'], ['dots', 'Dots']];
+  const seg = `<div class="seg" id="pcHm">${segs.map(([v, l]) => `<button data-v="${v}" class="${PC.hm === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  let pic, legend, sub;
+  if (PC.hm === 'dots') {
+    const marks = [...shots].sort((a, b) => (a.t === 0) - (b.t === 0)).map(s => { const r2 = 1.3 + 5.5 * Math.sqrt(s.xg * k); const tip = `${s.t === 0 ? '🚨 Goal' : s.t === 1 ? 'Shot on goal' : 'Missed'} · ${esc(s.st)}<div class='row'><span>xG</span><b>${f2(s.xg * k)}</b></div><div class='row'><span>Distance</span><b>${f0(s.d)} ft</b></div>`; return s.t === 0 ? `<circle cx="${s.x}" cy="${s.y}" r="${Math.max(r2, 2.4)}" fill="var(--home)" stroke="var(--text)" stroke-width=".6" data-tip="${esc(tip)}"/>` : s.t === 1 ? `<circle cx="${s.x}" cy="${s.y}" r="${r2}" fill="var(--accent)" fill-opacity=".5" data-tip="${esc(tip)}"/>` : `<circle cx="${s.x}" cy="${s.y}" r="${r2}" fill="none" stroke="var(--accent)" stroke-width=".6" data-tip="${esc(tip)}"/>`; }).join('');
+    pic = rinkSVG(true, marks); sub = `${shots.length} unblocked attempts · bigger = higher xG`;
+    legend = `<div class="legend"><span><i class="lg-dot" style="background:var(--home);outline:1.5px solid var(--text)"></i>Goal</span><span><i class="lg-dot" style="background:var(--accent);opacity:.5"></i>On goal</span><span style="color:var(--accent)"><i class="lg-ring"></i>Missed</span></div>`;
+  } else if (PC.hm === 'diff') {
+    const ev = shots.filter(s => s.str === 0), lg = leagueHeat(isD), mine = densityGrid(ev);
+    const evToi = r.es || r.toi;
+    const g = mine.map((v, i) => per60(v, evToi) - per60(lg.g[i], lg.toi));
+    pic = rinkSVG(true, goalDots(ev, k), heatRects(g, 'diff')); sub = `Even strength · per 60 minutes vs. the average ${isD ? 'defenseman' : 'forward'}`;
+    legend = `<div class="legend"><span><i class="sw" style="background:var(--neg);opacity:.7"></i>Shoots here more than average</span><span><i class="sw" style="background:var(--pos);opacity:.7"></i>Less than average</span></div>`;
+  } else {
+    pic = rinkSVG(true, goalDots(shots, k), heatRects(densityGrid(shots), 'heat')); sub = `${shots.length} unblocked attempts · ${shots.filter(s => s.t === 0).length} goals`;
+    legend = heatLegend;
+  }
+  const z = ZONES.map(() => ({ n: 0, g: 0, on: 0, xg: 0 }));
+  for (const s of shots) { const q = z[zoneOf(s)]; q.n++; q.xg += s.xg * k; if (s.t <= 1) q.on++; if (s.t === 0) q.g++; }
+  const zt = `<div class="twrap" style="margin-top:10px"><table><thead><tr><th class="l">Zone</th><th data-gloss="Unblocked shot attempts from this area.">Attempts</th><th data-gloss="Share of all his unblocked attempts that came from this area.">Share</th><th>G</th><th>xG</th><th>SH%</th></tr></thead><tbody>${z.map((q, i) => `<tr><td class="l">${ZONES[i][0]}</td><td>${q.n}</td><td>${pct1(div(q.n, shots.length))}%</td><td>${q.g}</td><td>${f1(q.xg)}</td><td>${q.on ? pct1(q.g / q.on) + '%' : '–'}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="card"><div class="card-h"><h3>Shot heat map</h3>${seg}</div><p class="muted" style="margin:-4px 0 6px;font-size:12px">${sub}</p>${shots.length ? pic + legend + zt : '<div class="empty">No shots in the loaded range.</div>'}</div>`;
+}
+function goalieHeatCard(id, k) {
+  const shots = []; for (const g of A.filtered) for (const s of g.shots) if (s.gl === id && s.t !== 3 && !s.en && s.x != null) shots.push(s);
+  if (!shots.length) return '';
+  const lz = leagueZoneSv(), z = ZONES.map(() => ({ sa: 0, ga: 0, xg: 0 }));
+  for (const s of shots) { const q = z[zoneOf(s)]; q.xg += s.xg * k; if (s.t <= 1) q.sa++; if (s.t === 0) q.ga++; }
+  const zt = `<div class="twrap" style="margin-top:10px"><table><thead><tr><th class="l">Zone</th><th>SA</th><th>GA</th><th>SV%</th><th data-gloss="League-wide save percentage on shots from this area, for comparison.">League SV%</th><th data-gloss="Expected goals faced from this area minus goals allowed. Positive is good.">GSAx</th></tr></thead><tbody>${z.map((q, i) => { const sv = q.sa ? 1 - q.ga / q.sa : NaN, lsv = lz[i].sa ? 1 - lz[i].ga / lz[i].sa : NaN; return `<tr><td class="l">${ZONES[i][0]}</td><td>${q.sa}</td><td>${q.ga}</td><td><b style="color:${fin(sv) && fin(lsv) ? `var(${sv >= lsv ? '--pos' : '--neg'})` : 'inherit'}">${f3(sv)}</b></td><td class="muted">${f3(lsv)}</td><td>${sgn1(q.xg - q.ga)}</td></tr>`; }).join('')}</tbody></table></div>`;
+  return `<div class="card"><div class="card-h"><h3>Where shots come from</h3><p>${shots.length} unblocked shots faced · ${shots.filter(s => s.t === 0).length} goals allowed</p></div>${rinkSVG(true, goalDots(shots, k), heatRects(densityGrid(shots), 'heat'))}${heatLegend}${zt}</div>`;
+}
 function renderPlayer() {
   const body = $('#pcBody'), D = PC.data; if (!D) return;
   const at = D.a.athlete || {}, id = PC.id;
@@ -1734,13 +1814,11 @@ function renderPlayer() {
         const shots = [];
         for (const g of A.filtered) for (const s of g.shots) if (s.pl === id && s.t !== 3 && s.x != null) shots.push(s);
         const k = A.calib || 1;
-        const marks = shots.sort((a, b) => (a.t === 0) - (b.t === 0)).map(s => { const r2 = 1.3 + 5.5 * Math.sqrt(s.xg * k); const tip = `${s.t === 0 ? '🚨 Goal' : s.t === 1 ? 'Shot on goal' : 'Missed'} · ${esc(s.st)}<div class='row'><span>xG</span><b>${f2(s.xg * k)}</b></div><div class='row'><span>Distance</span><b>${f0(s.d)} ft</b></div>`; return s.t === 0 ? `<circle cx="${s.x}" cy="${s.y}" r="${Math.max(r2, 2.4)}" fill="var(--home)" stroke="var(--text)" stroke-width=".6" data-tip="${esc(tip)}"/>` : s.t === 1 ? `<circle cx="${s.x}" cy="${s.y}" r="${r2}" fill="var(--accent)" fill-opacity=".5" data-tip="${esc(tip)}"/>` : `<circle cx="${s.x}" cy="${s.y}" r="${r2}" fill="none" stroke="var(--accent)" stroke-width=".6" data-tip="${esc(tip)}"/>`; }).join('');
         adv = `<div class="grid g2">
           <div class="card"><div class="card-h"><h3>Ice Lab advanced stats</h3><p>${esc(rangeLbl)} · ${r.gp} GP</p></div>
             <div class="tiles" style="margin-bottom:12px"><div class="tile"><div class="k">Points</div><div class="v num">${r.g + r.a}</div><div class="s">${r.g} G · ${r.a} A</div></div><div class="tile"><div class="k">ixG</div><div class="v num">${f1(r.ixg)}</div><div class="s">${sgn1(r.g - r.ixg)} vs actual</div></div><div class="tile"><div class="k">Shooting %</div><div class="v num">${pct1(div(r.g, r.sog))}</div><div class="s">${r.sog} shots on goal</div></div></div>
             <div class="muted" style="font-size:12px;margin-bottom:4px">Percentile vs. ${peers.length} ${isD ? 'defensemen' : 'forwards'} (min ${minGp} GP)</div>${pctRows(rows)}</div>
-          <div class="card"><div class="card-h"><h3>Shot map</h3><p>${shots.length} unblocked attempts · bigger = higher xG</p></div>${rinkSVG(true, marks)}
-            <div class="legend"><span><i class="lg-dot" style="background:var(--home);outline:1.5px solid var(--text)"></i>Goal</span><span><i class="lg-dot" style="background:var(--accent);opacity:.5"></i>On goal</span><span style="color:var(--accent)"><i class="lg-ring"></i>Missed</span></div></div></div>`;
+          ${skaterHeatCard(id, r, shots, k, isD)}</div>`;
       }
     } else {
       const r = G[id];
@@ -1756,7 +1834,7 @@ function renderPlayer() {
           { l: 'Goals against avg (lower is better)', v: g => -per60(g.ga, g.toi), f: v => f2(-v) },
           { l: 'Workload: shots / 60', v: g => per60(g.sa, g.toi), f: f1 }];
         adv = `<div class="card"><div class="card-h"><h3>Ice Lab advanced stats</h3><p>${esc(rangeLbl)} · ${r.gp} GP</p></div>
-          <div class="muted" style="font-size:12px;margin-bottom:4px">Percentile vs. ${peers.length} goalies (min ${minGp} GP)</div>${pctRows(M.map(m => ({ l: m.l, f: m.f, v: m.v(r), p: pctRank(m.v(r), peers.map(m.v)) })))}</div>`;
+          <div class="muted" style="font-size:12px;margin-bottom:4px">Percentile vs. ${peers.length} goalies (min ${minGp} GP)</div>${pctRows(M.map(m => ({ l: m.l, f: m.f, v: m.v(r), p: pctRank(m.v(r), peers.map(m.v)) })))}</div>${goalieHeatCard(id, A.calib || 1)}`;
       }
     }
   }
@@ -1802,6 +1880,7 @@ function renderPlayer() {
   }
   body.innerHTML = `<div class="grid">${hero}${seasonCard}${playerMilestones(D.st[2], isG)}${adv}${recent}${career}</div>`;
   const lb = $('#pcLoad'); if (lb) lb.onclick = async () => { lb.disabled = true; lb.textContent = 'Loading… this can take a minute'; await ensureData(); if (PC.id === id) renderPlayer(); };
+  const hm = $('#pcHm'); if (hm) hm.onclick = e => { const b = e.target.closest('button'); if (!b || b.dataset.v === PC.hm) return; PC.hm = b.dataset.v; renderPlayer(); };
   const sg = $('#pcSeg'); if (sg) sg.onclick = async e => {
     const b = e.target.closest('button'); if (!b || b.dataset.v === PC.st) return;
     PC.st = b.dataset.v;
