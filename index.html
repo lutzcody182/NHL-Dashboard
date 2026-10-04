@@ -422,6 +422,7 @@ ol.story{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}ol.story
 .gpick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.gpick button{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer}.gpick button.on{background:var(--accent);border-color:var(--accent);color:#fff}.gpick button.on span{color:#fff!important}
 ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}ol.gsteps li{display:flex;align-items:center;gap:6px}.gn{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;font-size:11px;font-weight:700}
 .duelbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--surface-2)}.duelbar i:first-child{background:var(--accent)}.duelbar i:last-child{background:color-mix(in srgb,var(--neg) 55%,var(--surface-2))}
+.uplist{display:grid;gap:6px;margin-top:12px}.uprow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;text-align:left;font:inherit;color:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer}.uprow:hover{border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -1043,6 +1044,40 @@ async function loadLeaders(evs, d) {
   box().innerHTML = html;
   const note = $('#leadNote'); if (note) note.textContent = `${games.length} game${games.length === 1 ? '' : 's'}${live ? ' · updates live' : ''} · tap a player to open the game`;
 }
+/* ---- daily upset summary (Today tab) ---- */
+function upsetTiles(games) {
+  const ups = games.filter(g => g.upset).sort((a, b) => a.winP - b.winP), big = ups[0];
+  const exp = games.reduce((s, g) => s + (1 - g.favP), 0);
+  return `<div class="tiles">
+    <div class="tile"><div class="k">Games rated</div><div class="v num">${games.length}</div><div class="s">${games.filter(g => g.src === 'Market').length} with betting lines</div></div>
+    <div class="tile"><div class="k">Upsets</div><div class="v num">${ups.length}</div><div class="s">${pct1(div(ups.length, games.length))}% of games · ${f1(exp)} expected</div></div>
+    <div class="tile"><div class="k">Favorites won</div><div class="v num">${pct1(div(games.length - ups.length, games.length))}%</div><div class="s">Avg favorite chance ${pct1(div(games.reduce((s, g) => s + g.favP, 0), games.length))}%</div></div>
+    <div class="tile"><div class="k">Biggest upset</div><div class="v num">${big ? pct1(big.winP) + '%' : '–'}</div><div class="s">${big ? `${esc(TM(big.winner).abbr)} over ${esc(TM(big.fav).abbr)}` : 'Favorites swept the day'}</div></div></div>`;
+}
+async function loadDayUpsets(evs, d) {
+  const box = () => $('#dayUpBody'), done = evs.filter(e => e.competitions[0].status.type.completed && !(e.season && e.season.type === 1));
+  if (!done.length) { if (box()) box().innerHTML = `<div class="card muted">The upset summary fills in as the day's games go final.</div>`; return; }
+  const rt = A.loadedKey && A.filtered.length ? ratings() : null, pre = {};
+  if (rt) for (const p of rt.preds) pre[p.id] = p;
+  const rows = (await pool(done, 6, async e => {
+    const id = String(e.id), c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
+    const H = String(h.team.id), Aw = String(a.team.id), hs = +h.score || 0, as = +a.score || 0;
+    let g = null; try { g = await getGame(id); } catch (err) {}
+    let ph = devig(g && g.ml), src = 'Market';
+    if (!fin(ph)) { const o = c.odds && c.odds[0]; if (o && o.homeTeamOdds && o.awayTeamOdds) ph = devig({ h: +o.homeTeamOdds.moneyLine, a: +o.awayTeamOdds.moneyLine }); }
+    if (!fin(ph) && pre[id] && pre[id].hn >= 5 && pre[id].an >= 5) { ph = pre[id].pH; src = 'Ice Lab'; }
+    if (!fin(ph)) return null;
+    const fav = ph >= .5 ? H : Aw, dog = fav === H ? Aw : H, winner = hs > as ? H : Aw;
+    return { id, h: H, a: Aw, hs, as, ot: !!(g && (g.ot || g.so)), src, fav, winner, favP: Math.max(ph, 1 - ph), upset: winner === dog, winP: winner === H ? ph : 1 - ph };
+  })).filter(Boolean);
+  if (d !== S.date || !box()) return;
+  if (!rows.length) { box().innerHTML = `<div class="card muted">No betting lines or Ice Lab ratings for these games yet, so there's nothing to grade. Ice Lab ratings kick in once teams have 5 games in the loaded analytics range.</div>`; return; }
+  const ups = rows.filter(r => r.upset).sort((x, y) => x.winP - y.winP);
+  const list = ups.length ? `<div class="uplist">${ups.map(r => `<button class="uprow" data-game="${esc(r.id)}">${logoImg(r.winner, 20)}<b>${esc(TM(r.winner).abbr)}</b><span class="muted">over</span>${logoImg(r.fav, 20)}<span>${esc(TM(r.fav).abbr)}</span><span class="num">${TM(r.a).abbr} ${r.as} @ ${TM(r.h).abbr} ${r.hs}${r.ot ? ' (OT)' : ''}</span><span class="heat" style="margin-left:auto;background:color-mix(in srgb,var(--neg) ${Math.round((.5 - r.winP) * 200)}%,transparent)">${pct1(r.winP)}%</span><span class="muted" style="font-size:12px">${r.src}</span></button>`).join('')}</div>` : '';
+  const pending = done.length - rows.length;
+  const html = `<div class="card">${upsetTiles(rows)}${list}<p class="muted" style="font-size:12px;margin:8px 0 0">Percent = the winner's pre-game chance. Uses the betting line when available, otherwise Ice Lab's ratings.${pending ? ` ${pending} final game${pending > 1 ? 's' : ''} couldn't be rated.` : ''}${done.length < evs.length ? ' Updates as more games finish.' : ''}</p></div>`;
+  S.up = { d, html }; box().innerHTML = html;
+}
 async function loadScores(silent) {
   const body = $('#scoresBody');
   const d = S.date, isToday = d === todayStr();
@@ -1071,9 +1106,11 @@ async function loadScores(silent) {
   }).join('');
   const cached = S.lead && S.lead.d === d ? S.lead.html : `<div class="empty"><div class="spinner"></div>Finding today's top performers…</div>`;
   body.innerHTML = `<div class="games">${cards}</div>
+    <section class="lead-sec"><div class="card-h"><h2>Upset watch</h2><p>${isToday ? "Today's" : "This day's"} favorites and underdogs</p></div><div id="dayUpBody">${S.up && S.up.d === d ? S.up.html : '<div class="card empty"><div class="spinner"></div>Checking for upsets…</div>'}</div></section>
     <section class="ms-sec" id="msSec">${S.ms && S.ms.d === d ? S.ms.html : ''}</section>
     <section class="lead-sec"><div class="card-h"><h2>${isToday ? "Today's" : 'Daily'} leaders</h2><p id="leadNote"></p></div><div id="leadersBody">${cached}</div></section>`;
   loadLeaders(evs, d);
+  loadDayUpsets(evs, d);
   clearInterval(S.timer);
   if (anyLive && isToday) S.timer = setInterval(() => { if ($('#tab-scores').classList.contains('on') && !document.hidden) loadScores(true); }, 30000);
 }
