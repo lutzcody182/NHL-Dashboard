@@ -421,6 +421,7 @@ footer{max-width:1280px;margin:0 auto;padding:10px 16px 30px;color:var(--muted);
 ol.story{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}ol.story li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:10px;background:var(--surface-2);border-left:3px solid var(--pos)}ol.story li.bad{border-left-color:var(--neg)}.sic{font-size:18px;line-height:1.2}
 .gpick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.gpick button{font:inherit;font-size:12.5px;padding:5px 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer}.gpick button.on{background:var(--accent);border-color:var(--accent);color:#fff}.gpick button.on span{color:#fff!important}
 ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}ol.gsteps li{display:flex;align-items:center;gap:6px}.gn{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;font-size:11px;font-weight:700}
+.duelbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--surface-2)}.duelbar i:first-child{background:var(--accent)}.duelbar i:last-child{background:color-mix(in srgb,var(--neg) 55%,var(--surface-2))}
 </style>
 </head>
 <body>
@@ -452,6 +453,7 @@ ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;g
       <button data-tab="compare" data-g="players">Compare</button>
       <button data-tab="birth" data-g="players">Birthplaces</button>
       <button data-tab="luck" data-g="league">Luck Watch</button>
+      <button data-tab="upsets" data-g="league">Upsets</button>
       <button data-tab="refs" data-g="league">Referees</button>
       <button data-tab="arenas" data-g="league">Arenas</button>
       <button data-tab="model" data-g="league">Model Lab</button>
@@ -491,6 +493,7 @@ ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;g
   <section class="tab" id="tab-travel"><div class="abar"></div><div id="trBody"></div></section>
   <section class="tab" id="tab-streaks"><div class="abar"></div><div id="skrBody"></div></section>
   <section class="tab" id="tab-faceoffs"><div class="abar"></div><div id="foBody"></div></section>
+  <section class="tab" id="tab-upsets"><div class="abar"></div><div id="upBody"></div></section>
   <section class="tab" id="tab-refs"><div class="abar"></div><div id="refBody"></div></section>
   <section class="tab" id="tab-arenas"><div class="abar"></div><div id="arBody"></div></section>
   <section class="tab" id="tab-birth"><div id="bpBody"></div></section>
@@ -1332,7 +1335,7 @@ async function ensureData(force) {
   const tok = ++A.token; A.loading = true; invalidate();
   const cancelled = () => tok !== A.token;
   renderAbar();
-  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody'];
+  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody'];
   bodyIds.forEach(b => { $('#' + b).innerHTML = `<div class="empty"><div class="spinner"></div>Crunching play-by-play… the first load of a big range can take a minute. It's much faster after that.</div>`; });
   try {
     const cal = await seasonCalendar(A.season); if (cancelled()) return;
@@ -3579,6 +3582,82 @@ function renderStreaks() {
 }
 
 /* ============================== FACEOFF LAB ============================== */
+/* ---- faceoff duels ---- */
+const FD = { pid: '' };
+function duelsCard() {
+  const pairs = {}, nm = {}, tm = {}, vol = {};
+  for (const g of A.filtered) for (const [, , wt, wid, lid] of (g.fo || [])) {
+    if (!wid || !lid) continue;
+    nm[wid] = g.nm[wid] || nm[wid]; nm[lid] = g.nm[lid] || nm[lid]; tm[wid] = wt; tm[lid] = wt === g.home.id ? g.away.id : g.home.id;
+    vol[wid] = (vol[wid] || 0) + 1; vol[lid] = (vol[lid] || 0) + 1;
+    const [a, b] = wid < lid ? [wid, lid] : [lid, wid], k = a + '|' + b;
+    const p = pairs[k] || (pairs[k] = { a, b, aw: 0, bw: 0 }); if (wid === a) p.aw++; else p.bw++;
+  }
+  const list = Object.values(pairs).map(p => ({ ...p, n: p.aw + p.bw }));
+  if (!list.length) return '';
+  const who = (id, w) => `<div class="tcell">${logoImg(tm[id], 16)}${plink(id, nm[id] || 'Unknown')}${w ? '' : ''}</div>`;
+  const bar = (aw, bw) => { const pa = aw / (aw + bw) * 100; return `<div class="duelbar" data-tip="${esc(`${aw}–${bw} · ${pct1(aw / (aw + bw))}% for the left player`)}"><i style="width:${pa}%"></i><i style="width:${100 - pa}%"></i></div>`; };
+  const row = (L, R, lw, rw) => `<tr><td class="l">${who(L)}</td><td><b class="num">${lw}–${rw}</b></td><td style="min-width:110px">${bar(lw, rw)}</td><td class="l">${who(R)}</td><td>${lw + rw}</td></tr>`;
+  const centers = Object.keys(vol).filter(id => vol[id] >= 15).sort((a, b) => (nm[a] || '').localeCompare(nm[b] || ''));
+  if (FD.pid && !vol[FD.pid]) FD.pid = '';
+  let rows, sub;
+  if (FD.pid) {
+    const mine = list.filter(p => p.a === FD.pid || p.b === FD.pid).map(p => p.a === FD.pid ? { o: p.b, w: p.aw, l: p.bw } : { o: p.a, w: p.bw, l: p.aw }).sort((x, y) => (y.w + y.l) - (x.w + x.l));
+    const tw = mine.reduce((s, x) => s + x.w, 0), tl = mine.reduce((s, x) => s + x.l, 0);
+    sub = `${esc(nm[FD.pid])}: ${tw}–${tl} (${pct1(div(tw, tw + tl))}%) against ${mine.length} opponents`;
+    rows = mine.slice(0, 25).map(x => row(FD.pid, x.o, x.w, x.l)).join('');
+  } else {
+    const mx = Math.max(...list.map(p => p.n)), minN = Math.max(6, Math.round(mx * .35));
+    const top = list.filter(p => p.n >= minN).sort((x, y) => y.n - x.n).slice(0, 25);
+    sub = `The most-played matchups in the loaded range (${minN}+ draws) · winner of the series on the left`;
+    rows = top.map(p => p.aw >= p.bw ? row(p.a, p.b, p.aw, p.bw) : row(p.b, p.a, p.bw, p.aw)).join('');
+  }
+  const sel = `<select id="fdPick" aria-label="Pick a center"><option value="">Biggest duels</option>${centers.map(id => `<option value="${esc(id)}" ${id === FD.pid ? 'selected' : ''}>${esc(nm[id] || id)} · ${esc(TM(tm[id]).abbr || '')}</option>`).join('')}</select>`;
+  return `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Faceoff duels</h3>${sel}</div><p class="muted" style="margin:-4px 0 8px;font-size:12px">${sub}</p>
+    <div class="twrap"><table><thead><tr><th class="l">Center</th><th data-gloss="Head-to-head faceoff record: wins for the player on the left, then wins for the player on the right.">Record</th><th></th><th class="l">Opponent</th><th data-gloss="Faceoffs taken against each other.">Draws</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="muted">No head-to-head draws yet.</td></tr>'}</tbody></table></div></div>`;
+}
+document.addEventListener('change', e => { if (e.target.id === 'fdPick') { FD.pid = e.target.value; renderFaceoffs(); } });
+
+/* ============================== UPSET TRACKER ============================== */
+function renderUpsets() {
+  const body = $('#upBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const rt = ratings();
+  const games = rt.preds.map(p => {
+    const useMk = fin(p.mk), ph = useMk ? p.mk : p.pH, ok = useMk || (p.hn >= 5 && p.an >= 5);
+    if (!ok) return null;
+    const fav = ph >= .5 ? p.h : p.a, dog = fav === p.h ? p.a : p.h, favP = Math.max(ph, 1 - ph), winner = p.hw ? p.h : p.a;
+    return { ...p, src: useMk ? 'Market' : 'Ice Lab', fav, dog, favP, winner, upset: winner === dog, winP: winner === p.h ? ph : 1 - ph };
+  }).filter(Boolean);
+  if (!games.length) { body.innerHTML = `<div class="empty">Not enough games yet. Upsets need betting lines or at least 5 games per team in the loaded range.</div>`; return; }
+  const ups = games.filter(g => g.upset).sort((a, b) => a.winP - b.winP);
+  const T = {}; const t = id => T[id] || (T[id] = { id, fw: 0, fl: 0, dw: 0, dl: 0 });
+  for (const g of games) { const f = t(g.fav), d = t(g.dog); if (g.upset) { f.fl++; d.dw++; } else { f.fw++; d.dl++; } }
+  const mkN = games.filter(g => g.src === 'Market').length;
+  const exp = games.reduce((s, g) => s + (1 - g.favP), 0);
+  const sc = g => `${TM(g.a).abbr} ${g.as} @ ${TM(g.h).abbr} ${g.hs}${g.ot ? ' (OT)' : ''}`;
+  const big = ups[0];
+  const tiles = `<div class="tiles" style="margin-bottom:14px">
+    <div class="tile"><div class="k">Games rated</div><div class="v num">${games.length}</div><div class="s">${mkN} with betting lines</div></div>
+    <div class="tile"><div class="k">Upsets</div><div class="v num">${ups.length}</div><div class="s">${pct1(div(ups.length, games.length))}% of games · ${f1(exp)} expected</div></div>
+    <div class="tile"><div class="k">Favorites won</div><div class="v num">${pct1(div(games.length - ups.length, games.length))}%</div><div class="s">Avg favorite chance ${pct1(div(games.reduce((s, g) => s + g.favP, 0), games.length))}%</div></div>
+    ${big ? `<div class="tile"><div class="k">Biggest upset</div><div class="v num">${pct1(big.winP)}%</div><div class="s">${esc(TM(big.winner).abbr)} over ${esc(TM(big.fav).abbr)}</div></div>` : ''}</div>`;
+  const list = ups.slice(0, 30).map((g, i) => `<tr class="click" data-game="${esc(g.id)}"><td>${i + 1}</td><td class="l">${new Date(g.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(g.winner, 18)}<b>${esc(TM(g.winner).abbr)}</b> <span class="muted">over</span> ${logoImg(g.fav, 18)}${esc(TM(g.fav).abbr)}</div></td><td class="l num">${esc(sc(g))}</td><td><span class="heat" style="background:color-mix(in srgb,var(--neg) ${Math.round((.5 - g.winP) * 200)}%,transparent)">${pct1(g.winP)}%</span></td><td class="l muted">${g.src}</td></tr>`).join('');
+  const listCard = `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Biggest upsets</h3><p>Ranked by how unlikely the win was · tap a game to open it</p></div>
+    ${ups.length ? `<div class="twrap"><table><thead><tr><th>#</th><th class="l">Date</th><th class="l">Upset</th><th class="l">Final</th><th data-gloss="The winner's pre-game chance to win: from the betting line when available, otherwise from Ice Lab's ratings using only earlier games.">Winner's chance</th><th class="l" data-gloss="Where the pre-game chance came from: the betting market (bookmaker margin removed) or Ice Lab's team ratings.">Source</th></tr></thead><tbody>${list}</tbody></table></div>` : '<p class="muted" style="margin:0">No upsets yet: favorites have won every rated game.</p>'}</div>`;
+  const rec = (w, l) => `${w}-${l}`;
+  const cols = [
+    { k: 'team', h: 'Team', l: 1, v: x => TM(x.id).abbr, f: (v, x) => `<div class="tcell">${logoImg(x.id)}<b>${esc(v)}</b></div>` },
+    { k: 'fr', h: 'As favorite', v: x => div(x.fw, x.fw + x.fl), f: (v, x) => `${rec(x.fw, x.fl)} <span class="muted">${x.fw + x.fl ? pct1(v) + '%' : ''}</span>`, dir: 1, t: 'Record in games the team was favored to win.' },
+    { k: 'dr', h: 'As underdog', v: x => div(x.dw, x.dw + x.dl), f: (v, x) => `${rec(x.dw, x.dl)} <span class="muted">${x.dw + x.dl ? pct1(v) + '%' : ''}</span>`, dir: 1, t: 'Record in games the team was expected to lose.' },
+    { k: 'uw', h: 'Upset wins', v: x => x.dw, f: f0, dir: 1, t: 'Wins as the underdog.' },
+    { k: 'ul', h: 'Upset losses', v: x => x.fl, f: f0, dir: -1, t: 'Losses as the favorite.' },
+    { k: 'net', h: 'Net upsets', v: x => x.dw - x.fl, f: v => (v > 0 ? '+' : '') + v, dir: 1, t: 'Upset wins minus upset losses. Positive means the team beats expectations.' }];
+  body.innerHTML = `<div class="bar"><h2 class="grow">Upset tracker</h2></div>${tiles}${listCard}
+    <div class="card"><div class="card-h"><h3>Favorites and underdogs</h3><p>W-L record by role · OT and shootout results count as wins and losses</p></div>${table('ups', cols, Object.values(T), { sort: 'net' })}</div>`;
+  RERENDER.ups = renderUpsets;
+}
+
 function renderFaceoffs() {
   const body = $('#foBody');
   if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
@@ -3607,7 +3686,7 @@ function renderFaceoffs() {
   const tcols = [{ k: 'team', h: 'Team', l: 1, v: x => TM(x.id).abbr, f: (v, x) => `<div class="tcell">${logoImg(x.id)}<b>${esc(v)}</b></div>` }, { k: 'w', h: 'FO%', v: x => div(x.w, x.n0), f: pct1, dir: 1 }, { k: 'oz', h: 'Off. zone', v: x => zp(x, 2), f: pct1, dir: 1 }, { k: 'nz', h: 'Neutral', v: x => zp(x, 1), f: pct1, dir: 1 }, { k: 'dz', h: 'Def. zone', v: x => zp(x, 0), f: pct1, dir: 1 }];
   body.innerHTML = `<div class="bar"><h2 class="grow">Faceoff lab</h2></div>
     <div class="tiles" style="margin-bottom:14px">${[[2, 'Offensive-zone win'], [1, 'Neutral-zone win'], [0, 'Defensive-zone win']].map(([z, l]) => `<div class="tile"><div class="k">${l}</div><div class="v num">${pct1(div(Z[z][0], Z[z][1]))}%</div><div class="s">lead to a shot attempt within 10 s</div></div>`).join('')}<div class="tile"><div class="k">Faceoffs logged</div><div class="v num">${any.toLocaleString()}</div></div></div>
-    <div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Faceoff takers</h3><p>Min ${minN} draws · zones from the player's point of view</p></div>${table('fo', cols, q, { sort: 'n0' })}</div>
+    ${duelsCard()}<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Faceoff takers</h3><p>Min ${minN} draws · zones from the player's point of view</p></div>${table('fo', cols, q, { sort: 'n0' })}</div>
     <div class="card">${table('fot', tcols, Object.values(T), { sort: 'w' })}</div>`;
   RERENDER.fo = RERENDER.fot = renderFaceoffs;
 }
@@ -3752,7 +3831,7 @@ markGloss(document.body);
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
 function renderActiveAnalytics() {
   const t = activeTab();
-  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas();
+  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets();
 }
 const LASTTAB = {};
 function setTab(t) {
@@ -3764,7 +3843,7 @@ function setTab(t) {
   if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
   window.scrollTo({ top: 0 });
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
