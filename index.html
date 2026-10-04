@@ -413,6 +413,8 @@ footer{max-width:1280px;margin:0 auto;padding:10px 16px 30px;color:var(--muted);
   .hero .ht img{width:44px;height:44px}
   main{padding:12px}
 }
+.has-gloss{text-decoration:underline dotted color-mix(in srgb,var(--muted) 70%,transparent);text-underline-offset:3px;text-decoration-thickness:1px}
+.tile .k.has-gloss,.lm-head span.has-gloss{cursor:help}
 </style>
 </head>
 <body>
@@ -949,7 +951,7 @@ function table(id, cols, rows, opt = {}) {
   const stats = {};
   for (const c of cols) if (c.dir) { const vs = rows.map(c.v).filter(fin); const mean = vs.reduce((a, b) => a + b, 0) / (vs.length || 1); const sd = Math.sqrt(vs.reduce((a, b) => a + (b - mean) ** 2, 0) / (vs.length || 1)); stats[c.k] = [mean, sd]; }
   const limit = opt.limit || Infinity, shown = sorted.slice(0, limit);
-  const th = cols.map(c => `<th data-k="${c.k}" class="${c.l ? 'l ' : ''}${c.k === st.k ? 'sorted' + (st.d > 0 ? ' asc' : '') : ''}" title="${esc(c.t || '')}">${c.h}</th>`).join('');
+  const th = cols.map(c => `<th data-k="${c.k}" class="${c.l ? 'l ' : ''}${c.k === st.k ? 'sorted' + (st.d > 0 ? ' asc' : '') : ''}" ${c.t ? `data-gloss="${esc(c.t)}"` : ''}>${c.h}</th>`).join('');
   const tb = shown.map((r, i) => `<tr class="${opt.rowClick ? 'click ' : ''}${opt.rowCls ? opt.rowCls(r, i) : ''}" ${opt.rowAttr ? opt.rowAttr(r) : ''}>${cols.map(c => {
     const v = c.v(r), txt = c.f ? c.f(v, r, i) : esc(v);
     const hs = c.dir && opt.heat !== false ? heatStyle(v, stats[c.k][0], stats[c.k][1], c.dir) : '';
@@ -3249,6 +3251,87 @@ function renderRecap() {
     <div class="card"><div class="card-h"><h3>Every game</h3></div><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Final</th><th>xG</th><th>Lead changes</th></tr></thead><tbody>${scored.map(x => { const g = x.g; return `<tr class="click" data-game="${g.id}"><td class="l">${new Date(g.date).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(g.away.id, 16)}${esc(g.away.abbr)} @ ${logoImg(g.home.id, 16)}${esc(g.home.abbr)}</div></td><td class="l">${g.away.score}–${g.home.score}${g.ot || g.so ? ' OT' : ''}</td><td>${f1(x.xa)}–${f1(x.xh)}</td><td>${x.tl.changes}</td></tr>`; }).join('')}</tbody></table></div></div>`;
   $('#rcWeek').onchange = e => { WK.start = e.target.value; renderRecap(); };
 }
+
+/* ============================== HEADER DEFINITIONS (hover glossary) ============================== */
+const GLOSS = {
+  // basics
+  'gp': 'Games played.', 'g': 'Goals.', 'a': 'Assists.', 'p': 'Points: goals plus assists.', 'pts': 'Points. In standings, 2 for a win and 1 for an overtime or shootout loss; for players, goals plus assists.',
+  'w': 'Wins.', 'l': 'Losses in regulation.', 'otl': 'Overtime or shootout losses (worth 1 point in the standings).', 'w-l-otl': 'Wins, regulation losses and overtime/shootout losses.', 'record': 'Wins, regulation losses and overtime/shootout losses.',
+  '+/-': 'Plus/minus: even-strength and shorthanded goals scored while the player was on the ice, minus goals allowed.', 'pim': 'Penalty minutes.', 'sog': 'Shots on goal.', 's': 'Shots on goal.', 'hit': 'Hits delivered.', 'blk': 'Shots blocked.',
+  'toi': 'Time on ice.', 'toi/gp': 'Average time on ice per game.', 'min': 'Minutes of ice time in this situation.', 'age': 'Current age.',
+  'p%': 'Points percentage: points earned out of points available.', 'points %': 'Points earned out of points available. .500 is average.', 'rw': 'Regulation wins (no overtime or shootout).', 'row': 'Wins in regulation or overtime (not shootouts). An NHL tiebreaker.',
+  'gf': 'Goals for.', 'ga': 'Goals against.', 'diff': 'Goal differential: goals for minus goals against. On the lineup-adjusted line, Ice Lab\'s win chance minus the market\'s, in percentage points.', 'home': 'Record at home.', 'away': 'Record on the road.', 'l10': 'Record over the last 10 games.', 'last 10': 'Results of the last 10 games, oldest to newest.', 'strk': 'Current streak: W = wins, L = losses, OT = overtime losses.',
+  'gaa': 'Goals-against average: goals allowed per 60 minutes.', 'sa': 'Shots on goal faced.', 'sv': 'Saves.', 'sv%': 'Save percentage: saves divided by shots on goal faced.', 'so': 'Shutouts.', 'gs': 'Games started.',
+  'sh%': 'Shooting percentage: goals divided by shots on goal.', 'shooting %': 'Goals divided by shots on goal.', 'gwg': 'Game-winning goals: the goal that put the winning team one ahead of the loser\'s final total.',
+  'ppg': 'Power-play goals.', 'ppa': 'Power-play assists.', 'shg': 'Shorthanded goals.', 'sha': 'Shorthanded assists.', 't': 'Total.',
+  // shot metrics
+  'cf%': 'Corsi share: the team\'s share of all shot attempts (on goal, missed and blocked). Above 50% means controlling play.',
+  'ff%': 'Fenwick share: share of unblocked shot attempts.', 'sf%': 'Share of shots on goal.', 'gf%': 'Share of actual goals scored.',
+  'xgf%': 'Expected goals share: the team\'s share of expected goals. The best single measure of how well a team is playing.',
+  'hdcf%': 'Share of high-danger chances: unblocked attempts from the inner slot or close-range rebounds.', 'scf%': 'Share of scoring chances: attempts from the wider "good look" area plus rebounds and rush shots.',
+  'xgf/60': 'Expected goals for per 60 minutes: how many goals the team\'s chances are worth.', 'xga/60': 'Expected goals against per 60 minutes: the quality of chances allowed (lower is better).',
+  'cf/60': 'Shot attempts for per 60 minutes.', 'ca/60': 'Shot attempts against per 60 minutes (lower is better).', 'gf/60': 'Goals for per 60 minutes.', 'ga/60': 'Goals against per 60 minutes (lower is better).',
+  'pdo': 'Shooting % plus save % (×100). About 100 is average; far above or below usually means luck that tends to even out.',
+  'gsax': 'Goals saved above expected: expected goals faced minus goals allowed (no empty-netters). Positive is better than an average goalie.', 'gsax/60': 'Goals saved above expected per 60 minutes.',
+  'g−xg': 'Finishing: actual goals minus expected goals. Positive means scoring more than the chances suggest.', 'g−ixg': 'Finishing: a player\'s goals minus his own expected goals. Positive means finishing above expectations.',
+  'xg': 'Expected goals: how many goals these shots should produce on average, from distance, angle, shot type and situation.', 'xga': 'Expected goals against: the expected value of the unblocked shots a goalie faced.',
+  'ixg': 'Individual expected goals: the expected value of a player\'s own unblocked shots.', 'ixg/60': 'Individual expected goals per 60 minutes.',
+  'icf': 'Individual shot attempts: every shot the player took, including misses and blocked shots.', 'icf/60': 'Individual shot attempts per 60 minutes.',
+  'p/60': 'Points per 60 minutes of ice time.', 'g/60': 'Goals per 60 minutes of ice time.', 'hd sv%': 'Save percentage on high-danger shots (inner slot and close rebounds).', 'hd sa': 'High-danger shots on goal faced.',
+  // special teams
+  'pp%': 'Power-play percentage: power-play goals divided by power-play opportunities.', 'pk%': 'Penalty-kill percentage: share of opponents\' power plays killed without allowing a goal.', 'pp opp': 'Power-play opportunities.',
+  'pp toi/gp': 'Power-play minutes per game.', 'pk toi/gp': 'Penalty-kill minutes per game.', 'pp xgf/60': 'Expected goals created per 60 minutes of power-play time.', 'pp cf/60': 'Shot attempts per 60 power-play minutes.', 'pp hd/60': 'High-danger chances per 60 power-play minutes.', 'pp gf/60': 'Goals per 60 power-play minutes.',
+  'pk xga/60': 'Expected goals allowed per 60 penalty-kill minutes (lower is better).', 'pk ca/60': 'Shot attempts allowed per 60 penalty-kill minutes.', 'pk ga/60': 'Goals allowed per 60 penalty-kill minutes.',
+  'sh goals': 'Shorthanded goals scored.', 'sh ga': 'Shorthanded goals allowed while on the power play.', 'net st goals': 'All special-teams goals for minus against.',
+  // ratings, schedule, model
+  'rating': 'Team strength rating: goals per game better (+) or worse (−) than an average team, adjusted for opponents and home ice.', 'own rating': 'This team\'s strength rating in goals per game versus average.',
+  'offense': 'Offensive rating: goals per game created above an average team.', 'defense': 'Defensive rating: goals per game prevented compared with an average team.', 'trend': 'Rating over the last 25 games.', 'identity': 'What drives this team, based on its offense and defense ranks.',
+  'played sos': 'Strength of schedule so far: average rating of opponents faced. Higher means tougher.', 'remaining sos': 'Average rating of opponents still on the schedule. Higher means tougher.', 'games left': 'Games remaining on the schedule.', 'next 10 opponents': 'Upcoming opponents, colored by strength (red = strong, blue = weak).',
+  'log loss': 'How far predictions were from what happened, punishing confident misses. Lower is better.', 'auc': 'Chance a random goal was rated higher than a random non-goal. 0.5 is a coin flip; higher is better.', 'brier': 'Average squared error of the predicted probabilities. Lower is better.',
+  'xg / goals': 'Total expected goals compared with actual goals. Close together means the model is well calibrated.', 'trained weight': 'How much this feature changes the odds of a goal, learned from the loaded games.', 'starter model': 'The pre-trained starting weight for this feature.', 'starter': 'The pre-trained starting weight for this feature.',
+  'feature': 'A shot detail the expected goals model uses.', 'direction': 'Whether this feature makes a goal more likely (blue) or less likely (red).', 'effect on goal odds': 'How much this feature changes the odds that a shot becomes a goal.',
+  'weight': 'Multiplier applied to shots in this score state to cancel out score effects.', 'home cf%': 'Home teams\' share of even-strength shot attempts in this score state.', 'road cf%': 'Road teams\' share of even-strength shot attempts in this score state.',
+  'confidence': 'How sure the model was about its pick.', 'predicted': 'Average win chance the model gave its picks in this group.', 'actual': 'How often those picks actually won.',
+  'ice lab pick': 'The team the model favored and its win chance, using only games played before this one.', 'market': 'The betting market\'s line and implied win chance, with the bookmaker margin removed.', 'result': 'Whether the pick was right.', 'projected xg': 'Expected goals for each side from the team strength ratings.', 'pick': 'The team the model favors and its win chance.',
+  // clutch, streaks, travel, refs, arenas, faceoffs, splits
+  'comeback wins': 'Wins after trailing at any point in the game.', 'from 2+ down': 'Wins after trailing by two or more goals.', 'blown leads': 'Losses (including OT/SO) after leading at any point.', 'blew 2+ lead': 'Losses after leading by two or more goals.',
+  'leading after 2': 'Record when leading after two periods (W-L-OTL).', 'tied after 2': 'Record when tied after two periods.', 'trailing after 2': 'Record when trailing after two periods.', 'one-goal games': 'Record in games decided by one goal.', 'ot/so': 'Record in games that went to overtime or a shootout.', '3rd-period goal diff': 'Third-period goals scored minus allowed.',
+  'go-ahead': 'Goals in the 3rd period or overtime that gave the team the lead.', 'tying': 'Goals in the 3rd period or overtime that tied the game.', 'ot goals': 'Overtime goals.',
+  'season miles': 'Estimated arena-to-arena travel for the full schedule.', 'miles so far': 'Estimated travel through games already played.', 'time zones crossed': 'Total time-zone changes over the schedule.', 'back-to-backs': 'Games played on consecutive days.', '3 in 4 nights': 'Games that were the third in four nights.', 'longest road trip': 'Most consecutive road games.',
+  'situation': 'The game situation being compared.', 'games': 'Number of games.', 'split': 'The game situation for this row.',
+  'penalties / game': 'Penalties called per game (both teams).', 'power plays / game': 'Power plays awarded per game (both teams).', 'pim / game': 'Penalty minutes per game (both teams).', 'home share of pps': 'Share of power plays awarded to the home team.', 'goals / game': 'Total goals per game (both teams).', 'home win %': 'How often the home team won.', 'ot %': 'Share of games that went past regulation.', 'their penalties / game': 'Each referee\'s average penalties called per game in the loaded range.',
+  'avg crowd': 'Average attendance at home games.', 'biggest': 'Largest crowd.', 'smallest': 'Smallest crowd.', 'capacity': 'Approximate listed hockey capacity.', 'fill %': 'Average crowd divided by capacity. Can top 100% with standing room.', 'sellouts': 'Home games at or above listed capacity.', 'home games': 'Home games with attendance data.',
+  'draws': 'Faceoffs taken.', 'fo%': 'Faceoff win percentage.', 'off. zone': 'Faceoff win % in the offensive zone.', 'neutral': 'Faceoff win % in the neutral zone.', 'def. zone': 'Faceoff win % in the defensive zone.', 'oz draws': 'Offensive-zone faceoffs taken: a sign of offensive usage.', 'dz draws': 'Defensive-zone faceoffs taken: a sign of defensive usage.', 'wins → shot': 'Share of faceoff wins followed by a shot attempt within 10 seconds.',
+  'calder index': 'Rookie ranking blending points, points per 60, expected goals per 60 and ice time, compared with other rookies.', 'lead changes': 'Times the lead switched teams.',
+  // tiles and line card
+  'projected score': 'Expected goals for each team after lineup and goalie adjustments.', 'win chance': 'Ice Lab\'s probability of winning.', 'fair line': 'The American odds that exactly match Ice Lab\'s win chance, with no bookmaker margin.',
+  'games graded': 'Games where both teams had 5+ prior games, so predictions are meaningful.', 'ice lab picks': 'How often Ice Lab\'s pick won.', 'always pick home': 'How often the home team won: the simplest baseline.', 'betting favorite': 'How often the betting favorite won.',
+  'shooting team is…': 'The shooting team\'s score situation: leading, tied or trailing.', 'model': 'Which prediction model this row grades.', 'over/under': 'The betting total for combined goals.', 'line': 'The betting line (favorite and price).', 'seasons': 'NHL seasons played.', 'points': 'Goals plus assists.'
+};
+const glossKey = t => String(t || '').replace(/[*▾▴]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+function glossFor(text) {
+  const k = glossKey(text); if (!k) return null;
+  if (GLOSS[k]) return GLOSS[k];
+  for (const pre of ['career ', 'ev ', 'league ']) if (k.startsWith(pre) && GLOSS[k.slice(pre.length)]) return GLOSS[k.slice(pre.length)];
+  const m = k.match(/^total ([\d.]+)$/); if (m) return `Chance the game goes over ${m[1]} total goals (overtime and shootout winners count).`;
+  if (/−1\.5$/.test(k)) return 'Puck line: chance the favorite wins by two or more goals.';
+  if (/ ml$/.test(k)) return 'Moneyline: the betting price to win the game.';
+  return null;
+}
+const glossTip = el => `<b>${esc(el.textContent.replace(/[▾▴]/g, '').trim())}</b><div style="margin-top:2px;max-width:260px">${esc(el.dataset.gloss)}</div>`;
+const GLOSS_SEL = 'th, .tile .k, .lm-head span';
+function markGloss(root) {
+  if (!root || !root.querySelectorAll) return;
+  const els = [...root.querySelectorAll(GLOSS_SEL)]; if (root.matches && root.matches(GLOSS_SEL)) els.push(root);
+  for (const el of els) {
+    if (el.dataset.glossDone) continue; el.dataset.glossDone = '1';
+    const def = el.getAttribute('title') || el.dataset.gloss || glossFor(el.textContent);
+    if (el.hasAttribute('title')) el.removeAttribute('title');
+    if (def) { el.dataset.gloss = def; el.classList.add('has-gloss'); if (!el.dataset.tip) el.dataset.tip = glossTip(el); }
+  }
+}
+new MutationObserver(ms => { for (const m of ms) m.addedNodes.forEach(n => { if (n.nodeType === 1) markGloss(n); }); }).observe(document.body, { childList: true, subtree: true });
+markGloss(document.body);
 
 /* ============================== TABS / INIT ============================== */
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
