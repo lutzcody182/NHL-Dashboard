@@ -3662,17 +3662,27 @@ document.addEventListener('change', e => { if (e.target.id === 'fdPick') { FD.pi
 
 /* ============================== BET TRACKER ============================== */
 // Stakes: underdogs (+odds) risk $100; favorites (-odds) risk enough to win $100. Same rule for over/under prices.
-const betRisk = o => o < 0 ? -o : 100, betWin = o => o < 0 ? 100 : o;
-const betRes = (o, r) => r === 'W' ? betWin(o) : r === 'L' ? -betRisk(o) : 0; // r: W, L or P (push)
-const money = v => (v < 0 ? '−$' : v > 0 ? '+$' : '$') + Math.abs(Math.round(v)).toLocaleString();
+// Stake by price: negative odds → bet enough to win $100 (−105 risks $105); positive odds → bet $100 (+130 wins $130).
+// Favorite vs underdog is decided by comparing the two prices: the lower one is the favorite (−115 vs −105 → −115 is the favorite).
+const betStake = o => o < 0 ? { risk: -o, win: 100 } : { risk: 100, win: o };
+const betRes = (st, r) => r === 'W' ? st.win : r === 'L' ? -st.risk : 0; // r: W, L or P (push)
+const favSide = (a, b) => a <= b; // lower price = favorite (an even line counts both sides as favorites)
+const money = v => (v < 0 ? '−$' : v > 0 ? '+$' : '$') + (Math.round(Math.abs(v) * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: Math.abs(v) % 1 > .004 && Math.abs(v) < 1e4 ? 2 : 0, maximumFractionDigits: 2 });
 const moneyCell = v => `<b style="color:${v > 0 ? 'var(--good)' : v < 0 ? 'var(--neg)' : 'inherit'}">${money(v)}</b>`;
-const BT = { team: '', all: false };
+const BT = { team: '', all: false, cteam: '' };
 function betGames() {
   return A.filtered.filter(g => g.final && (g.ml || g.tot)).map(g => {
     const hs = g.home.score, as = g.away.score, hw = hs > as, tot = hs + as;
     const o = { g, id: g.id, date: g.date, h: g.home.id, a: g.away.id, hs, as, ot: g.ot || g.so };
-    if (g.ml) { o.mlH = g.ml.h; o.mlA = g.ml.a; o.pH = betRes(g.ml.h, hw ? 'W' : 'L'); o.pA = betRes(g.ml.a, hw ? 'L' : 'W'); o.favH = g.ml.h < g.ml.a; }
-    if (g.tot && fin(g.tot.line)) { const r = tot > g.tot.line ? 'O' : tot < g.tot.line ? 'U' : 'P'; o.line = g.tot.line; o.oo = g.tot.o; o.uo = g.tot.u; o.tr = r; o.pO = betRes(g.tot.o, r === 'O' ? 'W' : r === 'U' ? 'L' : 'P'); o.pU = betRes(g.tot.u, r === 'U' ? 'W' : r === 'O' ? 'L' : 'P'); }
+    if (g.ml) {
+      o.mlH = g.ml.h; o.mlA = g.ml.a; o.fH = favSide(g.ml.h, g.ml.a); o.fA = favSide(g.ml.a, g.ml.h); o.favH = g.ml.h <= g.ml.a;
+      o.sH = betStake(g.ml.h); o.sA = betStake(g.ml.a); o.pH = betRes(o.sH, hw ? 'W' : 'L'); o.pA = betRes(o.sA, hw ? 'L' : 'W');
+    }
+    if (g.tot && fin(g.tot.line)) {
+      const r = tot > g.tot.line ? 'O' : tot < g.tot.line ? 'U' : 'P'; o.line = g.tot.line; o.oo = g.tot.o; o.uo = g.tot.u; o.tr = r;
+      o.sO = betStake(g.tot.o); o.sU = betStake(g.tot.u);
+      o.pO = betRes(o.sO, r === 'O' ? 'W' : r === 'U' ? 'L' : 'P'); o.pU = betRes(o.sU, r === 'U' ? 'W' : r === 'O' ? 'L' : 'P');
+    }
     return o;
   }).sort((x, y) => new Date(x.date) - new Date(y.date));
 }
@@ -3684,25 +3694,42 @@ function renderBets() {
   const ml = G.filter(x => x.mlH != null), tt = G.filter(x => x.tr);
   // strategies across the league
   const strat = [
-    ['Every favorite', ml, x => x.favH ? x.pH : x.pA, x => betRisk(x.favH ? x.mlH : x.mlA)],
-    ['Every underdog', ml, x => x.favH ? x.pA : x.pH, x => betRisk(x.favH ? x.mlA : x.mlH)],
-    ['Every home team', ml, x => x.pH, x => betRisk(x.mlH)],
-    ['Every road team', ml, x => x.pA, x => betRisk(x.mlA)],
-    ['Every over', tt, x => x.pO, x => betRisk(x.oo)],
-    ['Every under', tt, x => x.pU, x => betRisk(x.uo)]];
+    ['Every favorite', ml, x => x.favH ? x.pH : x.pA, x => (x.favH ? x.sH : x.sA).risk],
+    ['Every underdog', ml, x => x.favH ? x.pA : x.pH, x => (x.favH ? x.sA : x.sH).risk],
+    ['Every home team', ml, x => x.pH, x => x.sH.risk],
+    ['Every road team', ml, x => x.pA, x => x.sA.risk],
+    ['Every over', tt, x => x.pO, x => x.sO.risk],
+    ['Every under', tt, x => x.pU, x => x.sU.risk]];
   const S2 = strat.map(([l, list, pl, rk]) => { const p = list.reduce((s, x) => s + pl(x), 0), r = list.reduce((s, x) => s + rk(x), 0), w = list.filter(x => pl(x) > 0).length, ls = list.filter(x => pl(x) < 0).length; return { l, p, r, w, ls, n: list.length, roi: div(p, r) }; });
   const tiles = `<div class="tiles" style="margin-bottom:14px">${S2.map(s => `<div class="tile"><div class="k">${s.l}</div><div class="v num" style="color:${s.p > 0 ? 'var(--good)' : s.p < 0 ? 'var(--neg)' : 'inherit'}">${money(s.p)}</div><div class="s">${s.w}-${s.ls}${s.n - s.w - s.ls ? '-' + (s.n - s.w - s.ls) : ''} · ROI ${fin(s.roi) ? (s.roi > 0 ? '+' : '') + pct1(s.roi) + '%' : '–'}</div></div>`).join('')}</div>`;
   // running profit chart
   const run = (list, pl) => { let c = 0; return list.map((x, i) => { c += pl(x); return [i + 1, c]; }); };
-  const series = [
-    { name: 'Favorites', color: 'var(--accent)', pts: run(ml, x => x.favH ? x.pH : x.pA) }, { name: 'Underdogs', color: 'var(--home)', pts: run(ml, x => x.favH ? x.pA : x.pH) },
-    { name: 'Overs', color: '#1baf7a', pts: run(tt, x => x.pO) }, { name: 'Unders', color: '#9b59b6', pts: run(tt, x => x.pU) }].filter(s => s.pts.length);
-  const ys = series.flatMap(s => s.pts.map(p => p[1])), nMax = Math.max(...series.map(s => s.pts.length));
-  const chart = nMax >= 3 ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Running profit</h3><p>Betting the same side of every game, in order played</p></div>${lineChart({ series, x0: 1, x1: Math.max(2, nMax), y0: Math.min(0, ...ys) * 1.1 - 50, y1: Math.max(0, ...ys) * 1.1 + 50, fx: v => `Game ${Math.round(v)}`, fy: v => Math.abs(v) >= 1000 ? `${v < 0 ? '−' : ''}$${+(Math.abs(v) / 1000).toFixed(1)}k` : money(v), refY: 0, H: 240 })}<div class="legend">${series.map(s => `<span><i class="lg-dot" style="background:${s.color}"></i>${s.name}</span>`).join('')}</div></div>` : '';
+  const allTeams = [...new Set(G.flatMap(x => [x.h, x.a]))].sort((a, b) => (TM(a).abbr || '').localeCompare(TM(b).abbr || ''));
+  if (BT.cteam && !allTeams.includes(BT.cteam)) BT.cteam = '';
+  let series, sub, fx = v => `Game ${Math.round(v)}`, endNote = '';
+  if (BT.cteam) {
+    const id = BT.cteam, tg = G.filter(x => x.h === id || x.a === id), tml = tg.filter(x => x.mlH != null), ttt = tg.filter(x => x.tr);
+    const desc = x => `${new Date(x.date).toLocaleDateString([], { month: 'short', day: 'numeric' })} ${x.h === id ? 'vs' : '@'} ${esc(TM(x.h === id ? x.a : x.h).abbr)}`;
+    series = [
+      { name: `${TM(id).abbr} moneyline`, color: 'var(--accent)', pts: run(tml, x => x.h === id ? x.pH : x.pA) },
+      { name: 'Over in their games', color: '#1baf7a', pts: run(ttt, x => x.pO) },
+      { name: 'Under in their games', color: '#9b59b6', pts: run(ttt, x => x.pU) }].filter(s => s.pts.length);
+    fx = v => { const x = tml[Math.round(v) - 1] || ttt[Math.round(v) - 1]; return `Game ${Math.round(v)}${x ? ' · ' + desc(x) : ''}`; };
+    sub = `Betting ${esc(TM(id).name || TM(id).abbr)} every game, and the over or under in every game they played`;
+    endNote = `<div class="tiles" style="margin-top:10px">${series.map(s => `<div class="tile"><div class="k">${esc(s.name)}</div><div class="v num" style="color:${s.pts[s.pts.length - 1][1] > 0 ? 'var(--good)' : s.pts[s.pts.length - 1][1] < 0 ? 'var(--neg)' : 'inherit'}">${money(s.pts[s.pts.length - 1][1])}</div><div class="s">after ${s.pts.length} games · best ${money(Math.max(0, ...s.pts.map(p => p[1])))} · worst ${money(Math.min(0, ...s.pts.map(p => p[1])))}</div></div>`).join('')}</div>`;
+  } else {
+    series = [
+      { name: 'Favorites', color: 'var(--accent)', pts: run(ml, x => x.favH ? x.pH : x.pA) }, { name: 'Underdogs', color: 'var(--home)', pts: run(ml, x => x.favH ? x.pA : x.pH) },
+      { name: 'Overs', color: '#1baf7a', pts: run(tt, x => x.pO) }, { name: 'Unders', color: '#9b59b6', pts: run(tt, x => x.pU) }].filter(s => s.pts.length);
+    sub = 'Betting the same side of every game, in order played';
+  }
+  const ys = series.flatMap(s => s.pts.map(p => p[1])), nMax = Math.max(0, ...series.map(s => s.pts.length));
+  const csel = `<select id="btCTeam" aria-label="Running profit for a team"><option value="">All games</option>${allTeams.map(id => `<option value="${id}" ${id === BT.cteam ? 'selected' : ''}>${esc(TM(id).name || TM(id).abbr)}</option>`).join('')}</select>`;
+  const chart = `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Running profit</h3>${csel}</div><p class="muted" style="margin:-4px 0 8px;font-size:12px">${sub}</p>${nMax >= 2 ? lineChart({ series, x0: 1, x1: Math.max(2, nMax), xTicks: (() => { const st = Math.max(1, Math.ceil(nMax / 7)), out = []; for (let v = 1; v <= nMax - st / 2; v += st) out.push({ v, l: `Game ${v}` }); return out; })(), y0: Math.min(0, ...ys) * 1.1 - 50, y1: Math.max(0, ...ys) * 1.1 + 50, fx, fy: v => Math.abs(v) >= 1000 ? `${v < 0 ? '−' : ''}$${+(Math.abs(v) / 1000).toFixed(1)}k` : money(v), refY: 0, H: 240 }) + `<div class="legend">${series.map(s => `<span><i class="lg-dot" style="background:${s.color}"></i>${s.name}</span>`).join('')}</div>` : '<div class="empty">Needs at least 2 games with lines.</div>'}${endNote}</div>`;
   // per team
   const T = {}; const t = id => T[id] || (T[id] = { id, n: 0, w: 0, l: 0, p: 0, r: 0, fp: 0, dp: 0, on: 0, ow: 0, ol: 0, op: 0, or: 0, up: 0, ur: 0 });
-  for (const x of ml) for (const [id, pl, odds] of [[x.h, x.pH, x.mlH], [x.a, x.pA, x.mlA]]) { const r = t(id); r.n++; if (pl > 0) r.w++; else r.l++; r.p += pl; r.r += betRisk(odds); if (odds < 0) r.fp += pl; else r.dp += pl; }
-  for (const x of tt) for (const id of [x.h, x.a]) { const r = t(id); r.on++; if (x.tr === 'O') r.ow++; else if (x.tr === 'U') r.ol++; r.op += x.pO; r.or += betRisk(x.oo); r.up += x.pU; r.ur += betRisk(x.uo); }
+  for (const x of ml) for (const [id, pl, st, fav] of [[x.h, x.pH, x.sH, x.fH], [x.a, x.pA, x.sA, x.fA]]) { const r = t(id); r.n++; if (pl > 0) r.w++; else r.l++; r.p += pl; r.r += st.risk; if (fav) r.fp += pl; else r.dp += pl; }
+  for (const x of tt) for (const id of [x.h, x.a]) { const r = t(id); r.on++; if (x.tr === 'O') r.ow++; else if (x.tr === 'U') r.ol++; r.op += x.pO; r.or += x.sO.risk; r.up += x.pU; r.ur += x.sU.risk; }
   const cols = [
     { k: 'team', h: 'Team', l: 1, v: x => TM(x.id).abbr, f: (v, x) => `<div class="tcell">${logoImg(x.id)}<b>${esc(v)}</b></div>` },
     { k: 'rec', h: 'ML record', v: x => div(x.w, x.n), f: (v, x) => `${x.w}-${x.l}`, t: 'Win-loss record in games with a moneyline (overtime and shootouts count).' },
@@ -3728,10 +3755,11 @@ function renderBets() {
     <div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Final</th><th class="l" data-gloss="Road team's moneyline and what that bet would have won or lost.">Away ML</th><th class="l" data-gloss="Home team's moneyline and what that bet would have won or lost.">Home ML</th><th data-gloss="The betting total, the actual goals scored, and whether it went over or under.">Total</th><th data-gloss="What a bet on the over would have won or lost, with its price.">Over</th><th data-gloss="What a bet on the under would have won or lost, with its price.">Under</th></tr></thead><tbody>${rows}</tbody></table></div>
     ${log.length > 40 ? `<div style="margin-top:10px"><button class="btn" id="btAll">${BT.all ? 'Show fewer' : `Show all ${log.length} games`}</button></div>` : ''}</div>`;
   body.innerHTML = `<div class="bar"><h2 class="grow">Bet tracker</h2></div>
-    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Underdogs: $100 bet. Favorites: bet enough to win $100 (−120 means $120 to win $100). Over/under bets follow the same rule using their own prices (−110 assumed when ESPN doesn't list one). Moneylines include overtime and shootouts; totals count the shootout winner's extra goal, and a total that lands exactly on the line is a push. Lines are ESPN's listed odds (${esc(G.find(x => x.g.bookN) ? G.find(x => x.g.bookN).g.bookN : 'its default sportsbook')}).</p>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Minus prices: bet enough to win $100 (−120 means $120 to win $100). Plus prices: bet $100 (+130 wins $130). In each game the lower price is the favorite and the other side is the underdog, so at −115 / −105 the −115 team is the favorite ($115 to win $100) and the −105 team is the underdog ($105 to win $100). Over/under bets use the same rule with their own prices (−110 assumed when ESPN doesn't list one). Moneylines include overtime and shootouts; totals count the shootout winner's extra goal, and a total that lands exactly on the line is a push. Lines are ESPN's listed odds (${esc(G.find(x => x.g.bookN) ? G.find(x => x.g.bookN).g.bookN : 'its default sportsbook')}).</p>
     ${tiles}${chart}${teamCard}${logCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For tracking and fun only, not betting advice.</p>`;
   RERENDER.btT = renderBets;
+  const cs = $('#btCTeam'); if (cs) cs.onchange = () => { BT.cteam = cs.value; renderBets(); };
   const sel = $('#btTeam'); if (sel) sel.onchange = () => { BT.team = sel.value; BT.all = false; renderBets(); };
   const all = $('#btAll'); if (all) all.onclick = () => { BT.all = !BT.all; renderBets(); };
 }
