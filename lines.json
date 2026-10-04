@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-04",
- "updated": "2026-10-04T18:00:38.647Z",
+ "updated": "2026-10-04T21:15:40.484Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -165,7 +165,7 @@
         {
          "n": "Michael Brandsegg-Nygard",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Viktor Arvidsson",
@@ -200,11 +200,6 @@
         {
          "n": "Nate Danielson",
          "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Carter Mazur",
-         "pos": "W",
          "pp": ""
         },
         {
@@ -1002,7 +997,7 @@
    "teams": [
     {
      "team": "Vegas Golden Knights",
-     "goalie": "Carter Hart",
+     "goalie": "Adin Hill",
      "groups": [
       {
        "label": "Line 1",
