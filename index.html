@@ -3374,17 +3374,15 @@ $('#groups').onclick = e => { const b = e.target.closest('button'); if (!b) retu
     const sb = await getJSON(`${API}/scoreboard`);
     S.curSeason = (sb.season && sb.season.year) || (sb.leagues && sb.leagues[0] && sb.leagues[0].season && sb.leagues[0].season.year);
   } catch (e) {}
-  if (!S.curSeason) { const d = new Date(); S.curSeason = d.getMonth() >= 7 ? d.getFullYear() + 1 : d.getFullYear(); }
+  // never fall behind the calendar: from August on, the new season (e.g. 2026-27 = 2027) is current
+  { const d = new Date(), byDate = d.getMonth() >= 7 ? d.getFullYear() + 1 : d.getFullYear(); S.curSeason = Math.max(S.curSeason || 0, byDate); }
   ST.season = S.curSeason;
   $('#stSeason').innerHTML = [S.curSeason, S.curSeason - 1, S.curSeason - 2].map(y => `<option value="${y}">${y - 1}-${String(y).slice(2)}</option>`).join('');
-  A.season = S.curSeason;
+  $('#stSeason').value = S.curSeason;
+  A.season = S.curSeason; // always open on the current season
   try {
-    const js = await getJSON(`${API2}/standings?level=3`); let maxGp = 0;
-    (function walk(n) { if (n.standings && n.standings.entries) n.standings.entries.forEach(e => { addTeam(e.team); maxGp = Math.max(maxGp, sv(e, 'gamesPlayed') || 0); }); (n.children || []).forEach(walk); })(js);
-    if (maxGp < 8) {
-      A.season = S.curSeason - 1;
-      A.note = `<b>The ${S.curSeason - 1}-${String(S.curSeason).slice(2)} season is only a few games old</b>, so analytics are showing the final 30 days of last season's regular season (${S.curSeason - 2}-${String(S.curSeason - 1).slice(2)}). Pick <b>Full season</b> for the whole year (first load takes a minute or two), or switch seasons above.`;
-    }
+    const js = await getJSON(`${API2}/standings?level=3`);
+    (function walk(n) { if (n.standings && n.standings.entries) n.standings.entries.forEach(e => addTeam(e.team)); (n.children || []).forEach(walk); })(js);
   } catch (e) {}
   const t = (location.hash || '').slice(1);
   setTab([...document.querySelectorAll('#tabs button')].map(b => b.dataset.tab).includes(t) ? t : 'scores');
