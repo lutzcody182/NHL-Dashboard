@@ -455,6 +455,7 @@ ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;g
       <button data-tab="birth" data-g="players">Birthplaces</button>
       <button data-tab="luck" data-g="league">Luck Watch</button>
       <button data-tab="upsets" data-g="league">Upsets</button>
+      <button data-tab="bets" data-g="league">Bet Tracker</button>
       <button data-tab="refs" data-g="league">Referees</button>
       <button data-tab="arenas" data-g="league">Arenas</button>
       <button data-tab="model" data-g="league">Model Lab</button>
@@ -494,6 +495,7 @@ ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;g
   <section class="tab" id="tab-travel"><div class="abar"></div><div id="trBody"></div></section>
   <section class="tab" id="tab-streaks"><div class="abar"></div><div id="skrBody"></div></section>
   <section class="tab" id="tab-faceoffs"><div class="abar"></div><div id="foBody"></div></section>
+  <section class="tab" id="tab-bets"><div class="abar"></div><div id="btBody"></div></section>
   <section class="tab" id="tab-upsets"><div class="abar"></div><div id="upBody"></div></section>
   <section class="tab" id="tab-refs"><div class="abar"></div><div id="refBody"></div></section>
   <section class="tab" id="tab-arenas"><div class="abar"></div><div id="arBody"></div></section>
@@ -573,7 +575,7 @@ ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;g
 /* ============================== utilities ============================== */
 const API = 'https://site.api.espn.com/apis/site/v2/sports/hockey/nhl';
 const API2 = 'https://site.api.espn.com/apis/v2/sports/hockey/nhl';
-const VER = 7; // bump to invalidate cached processed games
+const VER = 8; // bump to invalidate cached processed games
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -729,6 +731,9 @@ function processGame(s) {
     bx[String(t.team.id)] = { ppg: g('powerPlayGoals'), ppo: g('powerPlayOpportunities'), shg: g('shortHandedGoals'), pen: g('penalties'), pim: g('penaltyMinutes') };
   }
   const pk = (s.pickcenter && s.pickcenter[0]) || null;
+  const oddsNum = v => { const n = parseFloat(v); return isFinite(n) && n !== 0 ? n : null; };
+  const tot = pk && isFinite(parseFloat(pk.overUnder)) ? { line: parseFloat(pk.overUnder), o: oddsNum(pk.overOdds) ?? -110, u: oddsNum(pk.underOdds) ?? -110 } : null;
+  const bookN = pk && pk.provider && pk.provider.name || '';
   const ml = pk && pk.homeTeamOdds && pk.awayTeamOdds && isFinite(pk.homeTeamOdds.moneyLine) && isFinite(pk.awayTeamOdds.moneyLine) ? { h: +pk.homeTeamOdds.moneyLine, a: +pk.awayTeamOdds.moneyLine } : null;
 
   // events
@@ -848,7 +853,7 @@ function processGame(s) {
   const g = {
     v: VER, id: String(s.header.id), date: comp.date, stype, final: !!st.completed, state: st.state, detail: st.shortDetail || st.detail || '',
     home: { ...home, score: +cH.score || 0 }, away: { ...away, score: +cA.score || 0 },
-    toi, ot: lastPer > 3, so, shots, sk, gk, nm, bx, ml, fo, off, att: +gi.attendance || 0, ven: (gi.venue && gi.venue.fullName) || '', neutral: !!comp.neutralSite
+    toi, ot: lastPer > 3, so, shots, sk, gk, nm, bx, ml, tot, bookN, fo, off, att: +gi.attendance || 0, ven: (gi.venue && gi.venue.fullName) || '', neutral: !!comp.neutralSite
   };
   if (A.W && A.useTrained) applyModel(g);
   return g;
@@ -1372,7 +1377,7 @@ async function ensureData(force) {
   const tok = ++A.token; A.loading = true; invalidate();
   const cancelled = () => tok !== A.token;
   renderAbar();
-  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody'];
+  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody'];
   bodyIds.forEach(b => { $('#' + b).innerHTML = `<div class="empty"><div class="spinner"></div>Crunching play-by-play… the first load of a big range can take a minute. It's much faster after that.</div>`; });
   try {
     const cal = await seasonCalendar(A.season); if (cancelled()) return;
@@ -3655,6 +3660,82 @@ function duelsCard() {
 }
 document.addEventListener('change', e => { if (e.target.id === 'fdPick') { FD.pid = e.target.value; renderFaceoffs(); } });
 
+/* ============================== BET TRACKER ============================== */
+// Stakes: underdogs (+odds) risk $100; favorites (-odds) risk enough to win $100. Same rule for over/under prices.
+const betRisk = o => o < 0 ? -o : 100, betWin = o => o < 0 ? 100 : o;
+const betRes = (o, r) => r === 'W' ? betWin(o) : r === 'L' ? -betRisk(o) : 0; // r: W, L or P (push)
+const money = v => (v < 0 ? '−$' : v > 0 ? '+$' : '$') + Math.abs(Math.round(v)).toLocaleString();
+const moneyCell = v => `<b style="color:${v > 0 ? 'var(--good)' : v < 0 ? 'var(--neg)' : 'inherit'}">${money(v)}</b>`;
+const BT = { team: '', all: false };
+function betGames() {
+  return A.filtered.filter(g => g.final && (g.ml || g.tot)).map(g => {
+    const hs = g.home.score, as = g.away.score, hw = hs > as, tot = hs + as;
+    const o = { g, id: g.id, date: g.date, h: g.home.id, a: g.away.id, hs, as, ot: g.ot || g.so };
+    if (g.ml) { o.mlH = g.ml.h; o.mlA = g.ml.a; o.pH = betRes(g.ml.h, hw ? 'W' : 'L'); o.pA = betRes(g.ml.a, hw ? 'L' : 'W'); o.favH = g.ml.h < g.ml.a; }
+    if (g.tot && fin(g.tot.line)) { const r = tot > g.tot.line ? 'O' : tot < g.tot.line ? 'U' : 'P'; o.line = g.tot.line; o.oo = g.tot.o; o.uo = g.tot.u; o.tr = r; o.pO = betRes(g.tot.o, r === 'O' ? 'W' : r === 'U' ? 'L' : 'P'); o.pU = betRes(g.tot.u, r === 'U' ? 'W' : r === 'O' ? 'L' : 'P'); }
+    return o;
+  }).sort((x, y) => new Date(x.date) - new Date(y.date));
+}
+function renderBets() {
+  const body = $('#btBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const G = betGames();
+  if (!G.length) { body.innerHTML = `<div class="empty">No betting lines found for the loaded games. ESPN only posts lines for some games, and games saved before this update need a reload: click <b>Clear cache</b> above.</div>`; return; }
+  const ml = G.filter(x => x.mlH != null), tt = G.filter(x => x.tr);
+  // strategies across the league
+  const strat = [
+    ['Every favorite', ml, x => x.favH ? x.pH : x.pA, x => betRisk(x.favH ? x.mlH : x.mlA)],
+    ['Every underdog', ml, x => x.favH ? x.pA : x.pH, x => betRisk(x.favH ? x.mlA : x.mlH)],
+    ['Every home team', ml, x => x.pH, x => betRisk(x.mlH)],
+    ['Every road team', ml, x => x.pA, x => betRisk(x.mlA)],
+    ['Every over', tt, x => x.pO, x => betRisk(x.oo)],
+    ['Every under', tt, x => x.pU, x => betRisk(x.uo)]];
+  const S2 = strat.map(([l, list, pl, rk]) => { const p = list.reduce((s, x) => s + pl(x), 0), r = list.reduce((s, x) => s + rk(x), 0), w = list.filter(x => pl(x) > 0).length, ls = list.filter(x => pl(x) < 0).length; return { l, p, r, w, ls, n: list.length, roi: div(p, r) }; });
+  const tiles = `<div class="tiles" style="margin-bottom:14px">${S2.map(s => `<div class="tile"><div class="k">${s.l}</div><div class="v num" style="color:${s.p > 0 ? 'var(--good)' : s.p < 0 ? 'var(--neg)' : 'inherit'}">${money(s.p)}</div><div class="s">${s.w}-${s.ls}${s.n - s.w - s.ls ? '-' + (s.n - s.w - s.ls) : ''} · ROI ${fin(s.roi) ? (s.roi > 0 ? '+' : '') + pct1(s.roi) + '%' : '–'}</div></div>`).join('')}</div>`;
+  // running profit chart
+  const run = (list, pl) => { let c = 0; return list.map((x, i) => { c += pl(x); return [i + 1, c]; }); };
+  const series = [
+    { name: 'Favorites', color: 'var(--accent)', pts: run(ml, x => x.favH ? x.pH : x.pA) }, { name: 'Underdogs', color: 'var(--home)', pts: run(ml, x => x.favH ? x.pA : x.pH) },
+    { name: 'Overs', color: '#1baf7a', pts: run(tt, x => x.pO) }, { name: 'Unders', color: '#9b59b6', pts: run(tt, x => x.pU) }].filter(s => s.pts.length);
+  const ys = series.flatMap(s => s.pts.map(p => p[1])), nMax = Math.max(...series.map(s => s.pts.length));
+  const chart = nMax >= 3 ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Running profit</h3><p>Betting the same side of every game, in order played</p></div>${lineChart({ series, x0: 1, x1: Math.max(2, nMax), y0: Math.min(0, ...ys) * 1.1 - 50, y1: Math.max(0, ...ys) * 1.1 + 50, fx: v => `Game ${Math.round(v)}`, fy: v => Math.abs(v) >= 1000 ? `${v < 0 ? '−' : ''}$${+(Math.abs(v) / 1000).toFixed(1)}k` : money(v), refY: 0, H: 240 })}<div class="legend">${series.map(s => `<span><i class="lg-dot" style="background:${s.color}"></i>${s.name}</span>`).join('')}</div></div>` : '';
+  // per team
+  const T = {}; const t = id => T[id] || (T[id] = { id, n: 0, w: 0, l: 0, p: 0, r: 0, fp: 0, dp: 0, on: 0, ow: 0, ol: 0, op: 0, or: 0, up: 0, ur: 0 });
+  for (const x of ml) for (const [id, pl, odds] of [[x.h, x.pH, x.mlH], [x.a, x.pA, x.mlA]]) { const r = t(id); r.n++; if (pl > 0) r.w++; else r.l++; r.p += pl; r.r += betRisk(odds); if (odds < 0) r.fp += pl; else r.dp += pl; }
+  for (const x of tt) for (const id of [x.h, x.a]) { const r = t(id); r.on++; if (x.tr === 'O') r.ow++; else if (x.tr === 'U') r.ol++; r.op += x.pO; r.or += betRisk(x.oo); r.up += x.pU; r.ur += betRisk(x.uo); }
+  const cols = [
+    { k: 'team', h: 'Team', l: 1, v: x => TM(x.id).abbr, f: (v, x) => `<div class="tcell">${logoImg(x.id)}<b>${esc(v)}</b></div>` },
+    { k: 'rec', h: 'ML record', v: x => div(x.w, x.n), f: (v, x) => `${x.w}-${x.l}`, t: 'Win-loss record in games with a moneyline (overtime and shootouts count).' },
+    { k: 'p', h: 'ML profit', v: x => x.p, f: moneyCell, dir: 1, t: 'Profit from betting this team\'s moneyline every game: $100 on it as an underdog, or enough to win $100 as a favorite.' },
+    { k: 'roi', h: 'ML ROI', v: x => div(x.p, x.r), f: v => fin(v) ? (v > 0 ? '+' : '') + pct1(v) + '%' : '–', dir: 1, t: 'Moneyline profit divided by total amount risked.' },
+    { k: 'fp', h: 'As favorite', v: x => x.fp, f: moneyCell, t: 'Moneyline profit in games this team was favored.' },
+    { k: 'dp', h: 'As underdog', v: x => x.dp, f: moneyCell, t: 'Moneyline profit in games this team was the underdog.' },
+    { k: 'ou', h: 'Over-Under', v: x => div(x.ow, x.ow + x.ol), f: (v, x) => `${x.ow}-${x.ol}${x.on - x.ow - x.ol ? '-' + (x.on - x.ow - x.ol) : ''}`, t: 'How often this team\'s games went over the total, then under, then pushes.' },
+    { k: 'op', h: 'Over profit', v: x => x.op, f: moneyCell, dir: 1, t: 'Profit from betting the over in every game this team played.' },
+    { k: 'up', h: 'Under profit', v: x => x.up, f: moneyCell, dir: 1, t: 'Profit from betting the under in every game this team played.' }];
+  const teamCard = `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>By team</h3><p>If you bet on this team (or its games' over/under) every game</p></div>${table('btT', cols, Object.values(T), { sort: 'p' })}</div>`;
+  // game log
+  if (BT.team && !T[BT.team]) BT.team = '';
+  const log = G.filter(x => !BT.team || x.h === BT.team || x.a === BT.team).slice().reverse();
+  const shown = BT.all ? log : log.slice(0, 40);
+  const side = (id, odds, pl) => odds == null ? '<span class="muted">–</span>' : `<div class="tcell">${logoImg(id, 16)}${esc(TM(id).abbr)} <span class="muted">${fmtML(odds)}</span></div><div>${moneyCell(pl)}</div>`;
+  const rows = shown.map(x => `<tr class="click" data-game="${esc(x.id)}"><td class="l">${new Date(x.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l num">${esc(TM(x.a).abbr)} ${x.as} @ ${esc(TM(x.h).abbr)} ${x.hs}${x.ot ? ' <span class="muted">OT</span>' : ''}</td>
+    <td class="l">${side(x.a, x.mlA, x.pA)}</td><td class="l">${side(x.h, x.mlH, x.pH)}</td>
+    <td>${x.tr ? `${x.line} <span class="muted">→ ${x.hs + x.as}</span> <b>${x.tr === 'O' ? 'Over' : x.tr === 'U' ? 'Under' : 'Push'}</b>` : '<span class="muted">–</span>'}</td>
+    <td>${x.tr ? `${moneyCell(x.pO)} <span class="muted">${fmtML(x.oo)}</span>` : '–'}</td><td>${x.tr ? `${moneyCell(x.pU)} <span class="muted">${fmtML(x.uo)}</span>` : '–'}</td></tr>`).join('');
+  const teams = Object.keys(T).sort((a, b) => (TM(a).abbr || '').localeCompare(TM(b).abbr || ''));
+  const logCard = `<div class="card"><div class="card-h"><h3>Game log</h3><select id="btTeam" aria-label="Filter by team"><option value="">All teams</option>${teams.map(id => `<option value="${id}" ${id === BT.team ? 'selected' : ''}>${esc(TM(id).name || TM(id).abbr)}</option>`).join('')}</select></div>
+    <div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Final</th><th class="l" data-gloss="Road team's moneyline and what that bet would have won or lost.">Away ML</th><th class="l" data-gloss="Home team's moneyline and what that bet would have won or lost.">Home ML</th><th data-gloss="The betting total, the actual goals scored, and whether it went over or under.">Total</th><th data-gloss="What a bet on the over would have won or lost, with its price.">Over</th><th data-gloss="What a bet on the under would have won or lost, with its price.">Under</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${log.length > 40 ? `<div style="margin-top:10px"><button class="btn" id="btAll">${BT.all ? 'Show fewer' : `Show all ${log.length} games`}</button></div>` : ''}</div>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Bet tracker</h2></div>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Underdogs: $100 bet. Favorites: bet enough to win $100 (−120 means $120 to win $100). Over/under bets follow the same rule using their own prices (−110 assumed when ESPN doesn't list one). Moneylines include overtime and shootouts; totals count the shootout winner's extra goal, and a total that lands exactly on the line is a push. Lines are ESPN's listed odds (${esc(G.find(x => x.g.bookN) ? G.find(x => x.g.bookN).g.bookN : 'its default sportsbook')}).</p>
+    ${tiles}${chart}${teamCard}${logCard}
+    <p class="muted" style="font-size:12px;margin:10px 0 0">For tracking and fun only, not betting advice.</p>`;
+  RERENDER.btT = renderBets;
+  const sel = $('#btTeam'); if (sel) sel.onchange = () => { BT.team = sel.value; BT.all = false; renderBets(); };
+  const all = $('#btAll'); if (all) all.onclick = () => { BT.all = !BT.all; renderBets(); };
+}
+
 /* ============================== UPSET TRACKER ============================== */
 function renderUpsets() {
   const body = $('#upBody');
@@ -3868,7 +3949,7 @@ markGloss(document.body);
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
 function renderActiveAnalytics() {
   const t = activeTab();
-  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets();
+  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets();
 }
 const LASTTAB = {};
 function setTab(t) {
@@ -3880,7 +3961,7 @@ function setTab(t) {
   if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
   window.scrollTo({ top: 0 });
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
