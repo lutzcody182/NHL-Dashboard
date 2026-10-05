@@ -429,6 +429,7 @@ ol.plist{list-style:none;margin:0;padding:0;display:grid;gap:6px}ol.plist li{dis
 .dpers{display:flex;align-items:center;gap:12px;margin-bottom:10px}.dico{font-size:30px}.dname{font-size:20px;font-weight:800}
 .dbrow{display:grid;grid-template-columns:62px 1fr 48px;gap:8px;align-items:center;font-size:12px;margin:4px 0}.dbar{position:relative;height:12px;background:var(--surface-2);border-radius:6px}.dbar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--accent);opacity:.8}.dbar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text)}
 ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}ul.gmwhy li{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:8px;background:var(--surface-2)}
+.sst{position:relative;height:22px;min-width:180px;background:var(--surface-2);border-radius:11px}.sst .mid{position:absolute;left:50%;top:3px;bottom:3px;width:1px;background:var(--text-2);opacity:.5}.sst i{position:absolute;top:2px;width:18px;height:18px;margin-left:-9px;border-radius:50%;font-style:normal;font-size:10px;font-weight:800;display:grid;place-items:center;color:#fff}.sst i.trail{background:var(--away)}.sst i.tied{background:var(--text-2)}.sst i.lead{background:var(--home)}
 </style>
 </head>
 <body>
@@ -447,6 +448,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
       <button data-tab="recap" data-g="today">Weekly Recap</button>
       <button data-tab="power" data-g="teams">Power Rankings</button>
       <button data-tab="teams" data-g="teams">Team Analytics</button>
+      <button data-tab="profiles" data-g="teams">Shot Profiles</button>
       <button data-tab="special" data-g="teams">Special Teams</button>
       <button data-tab="splits" data-g="teams">Splits</button>
       <button data-tab="periods" data-g="teams">Periods</button>
@@ -502,6 +504,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
   <section class="tab" id="tab-sos"><div class="abar"></div><div id="sosBody"></div></section>
   <section class="tab" id="tab-travel"><div class="abar"></div><div id="trBody"></div></section>
   <section class="tab" id="tab-streaks"><div class="abar"></div><div id="skrBody"></div></section>
+  <section class="tab" id="tab-profiles"><div class="abar"></div><div id="sprBody"></div></section>
   <section class="tab" id="tab-props"><div class="abar"></div><div id="prBody"></div></section>
   <section class="tab" id="tab-periods"><div class="abar"></div><div id="pdBody"></div></section>
   <section class="tab" id="tab-faceoffs"><div class="abar"></div><div id="foBody"></div></section>
@@ -1388,7 +1391,7 @@ async function ensureData(force) {
   const tok = ++A.token; A.loading = true; invalidate();
   const cancelled = () => tok !== A.token;
   renderAbar();
-  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody', 'prBody', 'pdBody'];
+  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody', 'prBody', 'pdBody', 'sprBody'];
   bodyIds.forEach(b => { $('#' + b).innerHTML = `<div class="empty"><div class="spinner"></div>Crunching play-by-play… the first load of a big range can take a minute. It's much faster after that.</div>`; });
   try {
     const cal = await seasonCalendar(A.season); if (cancelled()) return;
@@ -3033,7 +3036,7 @@ function renderSpecial() {
       <div class="card"><div class="card-h"><h3>Most dangerous power-play shooters</h3><p>Individual expected goals on the PP</p></div><ol class="luck-ol">${pp.map(p => `<li><div class="ln">${plink(p.id, p.n)}<span class="muted"> ${esc(TM(p.tm).abbr)}</span><div class="muted" style="font-size:12px">${p.ppgoals} PP goals · ${f2(p.pp60)} ixG/60 on the PP · ${mmss(p.pptoi / p.gp)} PP TOI/GP</div></div><b class="num">${f1(p.ppixg)}</b></li>`).join('')}</ol>
         <p class="muted" style="font-size:12px;margin:8px 0 0">PP% and PK% come from box scores. The chance-based numbers usually predict future special-teams results better than the percentages.</p></div>
     </div>
-    <div class="card">${table('special', cols, rows, { sort: 'ppxg60', rowClick: 1, rowAttr: r => `data-teamopen="${r.id}"` })}</div>`;
+    <div class="card">${table('special', cols, rows, { sort: 'ppxg60', rowClick: 1, rowAttr: r => `data-teamopen="${r.id}"` })}</div>${pkPressureCard(R)}`;
   RERENDER.special = renderSpecial;
 }
 
@@ -4335,6 +4338,109 @@ async function renderGameModelPreview(s, g) {
     <p class="muted" style="font-size:12px;margin:8px 0 0">Points = how much each factor moves ${esc(g.home.abbr)}'s win chance. The model was last trained ${new Date(M.t).toLocaleDateString()}; retrain it in Model Lab to include the newest games. For fun and analysis, not betting advice.</p></div>`;
 }
 
+/* ============================== SHOT PROFILES ============================== */
+function renderProfiles() {
+  const body = $('#sprBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const { R } = aggregate();
+  const rows = Object.values(R).filter(r => r.gp && r.ev > 0).map(r => {
+    const b = r.evs;
+    return { id: r.id, gp: r.gp, ffOn: per60(b.ff, r.ev), qOn: div(b.xgf, b.ff), ffAg: per60(b.fa, r.ev), qAg: div(b.xga, b.fa), xgf60: per60(b.xgf, r.ev), xga60: per60(b.xga, r.ev), hdOn: div(b.hdf, b.ff), hdAg: div(b.hda, b.fa) };
+  });
+  if (rows.length < 4) { body.innerHTML = `<div class="empty">Need a few more teams with games in the loaded range.</div>`; return; }
+  const avg = k => rows.reduce((s, r) => s + (fin(r[k]) ? r[k] : 0), 0) / rows.length;
+  const aFF = avg('ffOn'), aQ = avg('qOn'), aFA = avg('ffAg'), aQA = avg('qAg');
+  const tipO = r => `<b>${esc(TM(r.id).name)}</b><div class='row'><span>Unblocked attempts / 60</span><b>${f1(r.ffOn)}</b></div><div class='row'><span>xG per attempt</span><b>${f3(r.qOn)}</b></div><div class='row'><span>High-danger share</span><b>${pct1(r.hdOn)}%</b></div><div class='row'><span>xG / 60</span><b>${f2(r.xgf60)}</b></div>`;
+  const tipD = r => `<b>${esc(TM(r.id).name)}</b><div class='row'><span>Attempts allowed / 60</span><b>${f1(r.ffAg)}</b></div><div class='row'><span>xG per attempt allowed</span><b>${f3(r.qAg)}</b></div><div class='row'><span>High-danger share allowed</span><b>${pct1(r.hdAg)}%</b></div><div class='row'><span>xGA / 60</span><b>${f2(r.xga60)}</b></div>`;
+  const offTag = r => r.ffOn >= aFF && r.qOn >= aQ ? '🔥 Elite: lots of good looks' : r.ffOn >= aFF ? '📦 Volume: shoots from everywhere' : r.qOn >= aQ ? '🎯 Snipers: few but dangerous' : '🧊 Struggling to create';
+  const defTag = r => r.ffAg <= aFA && r.qAg <= aQA ? '🧱 Lockdown: few and harmless' : r.ffAg <= aFA ? '🎲 Few shots, but dangerous ones' : r.qAg <= aQA ? '☂️ Lots of shots, mostly harmless' : '🚨 Leaky: many and dangerous';
+  const offChart = scatterLogos({ pts: rows.filter(r => fin(r.ffOn) && fin(r.qOn)).map(r => ({ id: r.id, x: r.ffOn, y: r.qOn, tip: tipO(r) + `<div style='margin-top:4px'>${offTag(r)}</div>` })), xl: 'Shot quantity: unblocked attempts per 60', yl: 'Shot quality: xG per attempt', fx: f0, fy: f3, avgX: aFF, avgY: aQ, quad: ['🎯 Snipers', '🔥 Elite', '🧊 Struggling', '📦 Volume'] });
+  const defChart = scatterLogos({ pts: rows.filter(r => fin(r.ffAg) && fin(r.qAg)).map(r => ({ id: r.id, x: r.ffAg, y: r.qAg, tip: tipD(r) + `<div style='margin-top:4px'>${defTag(r)}</div>` })), xl: 'Shots allowed: attempts against per 60', yl: 'Danger allowed: xG per attempt against', fx: f0, fy: f3, avgX: aFA, avgY: aQA, quad: ['🎲 Few but dangerous', '🚨 Leaky', '🧱 Lockdown', '☂️ Many but harmless'] });
+  const cols = [
+    { k: 'team', h: 'Team', l: 1, v: r => TM(r.id).abbr, f: (v, r) => `<div class="tcell">${logoImg(r.id)}<b>${esc(v)}</b></div>` },
+    { k: 'ffOn', h: 'Attempts / 60', v: r => r.ffOn, f: f1, dir: 1, t: 'Even-strength unblocked shot attempts per 60 minutes: shot quantity.' },
+    { k: 'qOn', h: 'xG / attempt', v: r => r.qOn, f: f3, dir: 1, t: 'Average expected-goal value of each unblocked attempt: shot quality.' },
+    { k: 'hdOn', h: 'HD share', v: r => r.hdOn, f: pct1, dir: 1, t: 'Share of attempts that were high-danger chances.' },
+    { k: 'otag', h: 'Offense style', l: 1, v: r => offTag(r), f: v => `<span style="font-size:12.5px">${v}</span>` },
+    { k: 'ffAg', h: 'Allowed / 60', v: r => r.ffAg, f: f1, dir: -1, t: 'Even-strength unblocked attempts allowed per 60 minutes: shot suppression.' },
+    { k: 'qAg', h: 'xG / attempt allowed', v: r => r.qAg, f: f3, dir: -1, t: 'Average expected-goal value of each attempt allowed: how dangerous the chances against are.' },
+    { k: 'hdAg', h: 'HD share allowed', v: r => r.hdAg, f: pct1, dir: -1, t: 'Share of attempts against that were high-danger chances.' },
+    { k: 'dtag', h: 'Defense style', l: 1, v: r => defTag(r), f: v => `<span style="font-size:12.5px">${v}</span>` }];
+  body.innerHTML = `<div class="bar"><h2 class="grow">Shot profiles</h2></div>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Even strength. Two teams can have the same expected goals in very different ways: lots of ordinary shots, or a few great ones. Lines mark the league average. Tap a logo to open the team.</p>
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="card"><div class="card-h"><h3>Offense: quality vs. quantity</h3><p>Up and right = more and better shots</p></div>${offChart}</div>
+      <div class="card"><div class="card-h"><h3>Defense: suppression vs. danger allowed</h3><p>Down and left = fewer and safer shots against</p></div>${defChart}</div></div>
+    <div class="card" style="margin-bottom:14px">${table('spr', cols, rows, { sort: 'qOn' })}</div>
+    ${scoreStateCard()}`;
+  RERENDER.spr = renderProfiles; RERENDER.sst = renderProfiles;
+}
+
+/* ---- score-state personalities ---- */
+function scoreStateCard() {
+  const k = A.calib || 1, T = {};
+  const t = id => T[id] || (T[id] = { id, s: { lead: [0, 0, 0, 0], tied: [0, 0, 0, 0], trail: [0, 0, 0, 0] } }); // [cf, ca, xgf, xga]
+  for (const g of A.filtered) for (const s of g.shots) {
+    if (s.str !== 0 || s.en || s.sd == null) continue;
+    const opp = s.tm === g.home.id ? g.away.id : g.home.id;
+    const stF = s.sd > 0 ? 'lead' : s.sd < 0 ? 'trail' : 'tied', stA = s.sd > 0 ? 'trail' : s.sd < 0 ? 'lead' : 'tied';
+    const F = t(s.tm).s[stF], Ag = t(opp).s[stA];
+    F[0]++; Ag[1]++; if (s.t !== 3) { F[2] += s.xg * k; Ag[3] += s.xg * k; }
+  }
+  const sh = a => div(a[0], a[0] + a[1]), xs = a => div(a[2], a[2] + a[3]);
+  const rows = Object.values(T).map(r => ({ id: r.id, lead: sh(r.s.lead), tied: sh(r.s.tied), trail: sh(r.s.trail), xlead: xs(r.s.lead), xtied: xs(r.s.tied), xtrail: xs(r.s.trail), n: r.s.lead[0] + r.s.lead[1] + r.s.trail[0] + r.s.trail[1] }))
+    .filter(r => fin(r.lead) && fin(r.tied) && fin(r.trail) && r.n >= 40).map(r => ({ ...r, dl: r.lead - r.tied, dt: r.trail - r.tied }));
+  if (rows.length < 4) return '';
+  const avgDl = rows.reduce((s, r) => s + r.dl, 0) / rows.length, avgDt = rows.reduce((s, r) => s + r.dt, 0) / rows.length;
+  const persona = r => {
+    const l = r.dl - avgDl, tr = r.dt - avgDt;
+    if (l <= -.04 && r.xlead < .45) return ['🐢', 'Turtles with a lead', 'Sits back much more than other teams once ahead'];
+    if (l >= .04) return ['🏃', 'Keeps pushing', 'Keeps attacking with a lead instead of sitting back'];
+    if (tr >= .04 && r.tied < .5) return ['⏰', 'Wakes up when trailing', 'Only really takes over once behind'];
+    if (tr <= -.04) return ['😶', 'Flat when trailing', 'Pushes back less than other teams when behind'];
+    if (Math.abs(l) < .02 && Math.abs(tr) < .02) return ['🧭', 'Steady in every state', 'Plays about the same no matter the score'];
+    return ['⚖️', 'Typical score effects', 'Sits back a bit when ahead, pushes when behind, like most teams'];
+  };
+  const pos = v => clamp((v - .3) / .4, 0, 1) * 100;
+  const track = r => `<div class="sst"><b class="mid"></b><i class="trail" style="left:${pos(r.trail)}%" data-tip="${esc(`Trailing: ${pct1(r.trail)}% of shot attempts`)}">T</i><i class="tied" style="left:${pos(r.tied)}%" data-tip="${esc(`Tied: ${pct1(r.tied)}% of shot attempts`)}">=</i><i class="lead" style="left:${pos(r.lead)}%" data-tip="${esc(`Leading: ${pct1(r.lead)}% of shot attempts`)}">L</i></div>`;
+  const cols = [
+    { k: 'team', h: 'Team', l: 1, v: r => TM(r.id).abbr, f: (v, r) => `<div class="tcell">${logoImg(r.id)}<b>${esc(v)}</b></div>` },
+    { k: 'trk', h: 'Shot share by score (30% → 70%)', l: 1, v: r => r.tied, f: (v, r) => track(r), t: 'Even-strength shot attempt share when trailing (T), tied (=) and leading (L). 50% is the middle line.' },
+    { k: 'trail', h: 'Trailing CF%', v: r => r.trail, f: pct1, dir: 1 }, { k: 'tied', h: 'Tied CF%', v: r => r.tied, f: pct1, dir: 1 }, { k: 'lead', h: 'Leading CF%', v: r => r.lead, f: pct1, dir: 1 },
+    { k: 'dl', h: 'Lead shift', v: r => r.dl * 100, f: sgn1, t: 'Change in shot share when leading compared with tied, in points. Most teams drop: they sit back.' },
+    { k: 'xlead', h: 'Leading xGF%', v: r => r.xlead, f: pct1, dir: 1, t: 'Expected-goals share while leading: does sitting back still keep the danger down?' },
+    { k: 'per', h: 'Personality', l: 1, v: r => persona(r)[1], f: (v, r) => { const p = persona(r); return `<span data-tip="${esc(p[2])}">${p[0]} ${esc(p[1])}</span>`; } }];
+  return `<div class="card"><div class="card-h"><h3>Score-state personalities</h3><p>How each team changes with the score · even strength</p></div>
+    <p class="muted" style="margin:-4px 0 10px;font-size:12px">League average: teams' shot share moves ${sgn1(avgDl * 100)} points when leading and ${sgn1(avgDt * 100)} when trailing, compared with tied. Personalities compare each team with that normal pattern.</p>
+    ${table('sst', cols, rows, { sort: 'dl', heat: false })}</div>`;
+}
+
+/* ---- penalty kill pressure (Special Teams tab) ---- */
+function pkPressureCard(R) {
+  const rows = Object.values(R).filter(r => r.pko >= 3 && r.sh > 0).map(r => {
+    const b = r.pkb, pkp = 1 - div(r.pkga, r.pko), xpk = 1 - div(b.xga, r.pko);
+    return { id: r.id, pko: r.pko, pkga: r.pkga, pkp, xpk, luck: pkp - xpk, xga60: per60(b.xga, r.sh), ca60: per60(b.ca, r.sh), hd60: per60(b.hda, r.sh), gsax: b.xga - b.ga, q: div(b.xga, b.fa) };
+  }).filter(r => fin(r.pkp) && fin(r.xga60));
+  if (rows.length < 4) return '';
+  const aX = rows.reduce((s, r) => s + r.xga60, 0) / rows.length, aP = rows.reduce((s, r) => s + r.pkp, 0) / rows.length;
+  const tag = r => r.xga60 <= aX && r.pkp >= aP ? '✅ Truly strong' : r.xga60 > aX && r.pkp >= aP ? '🍀 Lucky: due to slip' : r.xga60 <= aX ? '📈 Unlucky: due to improve' : '🚨 Struggling';
+  const chart = scatterLogos({ pts: rows.map(r => ({ id: r.id, x: r.xga60, y: r.pkp * 100, tip: `<b>${esc(TM(r.id).name)}</b><div class='row'><span>PK%</span><b>${pct1(r.pkp)}%</b></div><div class='row'><span>Expected PK%</span><b>${pct1(r.xpk)}%</b></div><div class='row'><span>xGA / 60 on the PK</span><b>${f2(r.xga60)}</b></div><div class='row'><span>Goalie GSAx on the PK</span><b>${sgn1(r.gsax)}</b></div><div style='margin-top:4px'>${tag(r)}</div>` })), xl: 'Chances allowed on the PK: xGA per 60 (left is better)', yl: 'PK%', fx: f1, fy: f0, avgX: aX, avgY: aP * 100, quad: ['✅ Truly strong', '🍀 Lucky', '📈 Unlucky', '🚨 Struggling'] });
+  const cols = [
+    { k: 'team', h: 'Team', l: 1, v: r => TM(r.id).abbr, f: (v, r) => `<div class="tcell">${logoImg(r.id)}<b>${esc(v)}</b></div>` },
+    { k: 'pkp', h: 'PK%', v: r => r.pkp, f: pct1, dir: 1 },
+    { k: 'xpk', h: 'Expected PK%', v: r => r.xpk, f: pct1, dir: 1, t: 'What the PK% would be if goals had matched the chances allowed: 1 minus expected goals against per opportunity.' },
+    { k: 'luck', h: 'PK luck', v: r => r.luck * 100, f: sgn1, t: 'PK% minus expected PK%, in points. Big positive numbers usually come back down.' },
+    { k: 'xga60', h: 'xGA / 60', v: r => r.xga60, f: f2, dir: -1, t: 'Expected goals allowed per 60 minutes of penalty killing: the quality and quantity of chances given up.' },
+    { k: 'ca60', h: 'Attempts / 60', v: r => r.ca60, f: f1, dir: -1, t: 'Shot attempts allowed per 60 penalty-kill minutes: how much pressure the kill faces.' },
+    { k: 'hd60', h: 'HD / 60', v: r => r.hd60, f: f1, dir: -1, t: 'High-danger chances allowed per 60 penalty-kill minutes.' },
+    { k: 'gsax', h: 'Goalie GSAx', v: r => r.gsax, f: sgn1, dir: 1, t: 'Goals saved above expected by the goalies while shorthanded: how much the goalie is carrying the kill.' },
+    { k: 'tag', h: 'Verdict', l: 1, v: r => tag(r), f: v => `<span style="font-size:12.5px">${v}</span>` }];
+  RERENDER.pkp = renderSpecial;
+  return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Penalty kill pressure</h3><p>Is the PK% backed up by the chances allowed?</p></div>
+    <p class="muted" style="margin:-4px 0 10px;font-size:12px">A PK% propped up by hot goaltending while allowing lots of dangerous chances tends to fall apart. Lines mark league averages.</p>
+    <div class="grid g2"><div>${chart}</div><div>${table('pkp', cols, rows, { sort: 'luck', heat: true })}</div></div></div>`;
+}
+
 /* ============================== UPSET TRACKER ============================== */
 function renderUpsets() {
   const body = $('#upBody');
@@ -4548,7 +4654,7 @@ markGloss(document.body);
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
 function renderActiveAnalytics() {
   const t = activeTab();
-  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets(); else if (t === 'props') renderProps(); else if (t === 'periods') renderPeriods();
+  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets(); else if (t === 'props') renderProps(); else if (t === 'periods') renderPeriods(); else if (t === 'profiles') renderProfiles();
 }
 const LASTTAB = {};
 function setTab(t) {
@@ -4560,7 +4666,7 @@ function setTab(t) {
   if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
   window.scrollTo({ top: 0 });
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
