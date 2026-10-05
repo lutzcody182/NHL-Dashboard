@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-04",
- "updated": "2026-10-04T21:15:40.484Z",
+ "updated": "2026-10-05T00:04:41.396Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -510,11 +510,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Matvei Gridin",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Morgan Frost",
          "pos": "C",
          "pp": "PP1"
@@ -523,6 +518,11 @@
          "n": "Matt Coronato",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Yegor Sharangovich",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -530,14 +530,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Samuel Honzek",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Mikael Backlund",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Matvei Gridin",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "Joel Farabee",
@@ -550,14 +550,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Brennan Othmann",
-         "pos": "C",
+         "n": "Connor Zary",
+         "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Yegor Sharangovich",
+         "n": "Samuel Honzek",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Ryan Strome",
@@ -600,14 +600,14 @@
          "pp": ""
         },
         {
+         "n": "Yan Kuznetsov",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Simon Nemec",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Joel Hanley",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Zayne Parekh",
@@ -759,11 +759,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Lars Eller",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Brady Tkachuk",
          "pos": "W",
          "pp": "PP1"
@@ -772,6 +767,11 @@
          "n": "Sam Reinhart",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Brad Marchand",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -819,6 +819,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Lars Eller",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Garnet Hathaway",
          "pos": "W",
          "pp": ""
@@ -834,14 +839,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Aaron Ekblad",
+         "n": "Dmitry Kulikov",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Gustav Forsling",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Seth Jones",
@@ -854,9 +859,9 @@
          "pp": ""
         },
         {
-         "n": "Dmitry Kulikov",
+         "n": "Uvis Balinskis",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Radko Gudas",
