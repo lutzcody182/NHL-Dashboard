@@ -1,6 +1,8 @@
+
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
 # (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
-# odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). Both also run on demand from the Actions tab.
+# odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
+# pre-game picks with DraftKings prices to picks.json and grades finished games. Both also run on demand from the Actions tab.
 name: Update NHL lines
 
 on:
@@ -113,6 +115,7 @@ jobs:
           node-version: 22
 
       - name: Fetch DraftKings anytime goal scorer odds
+        continue-on-error: true
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: |
@@ -154,12 +157,122 @@ jobs:
           })().catch(err => { console.log('::error::' + err.message); process.exit(1); });
           EOF
 
-      - name: Commit props.json if it changed
+      - name: Restore saved game data
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: espn-games-${{ github.run_id }}
+          restore-keys: espn-games-
+
+      - name: Install page runner
+        run: npm install --prefix "$RUNNER_TEMP/tk" jsdom@24 --no-audit --no-fund --silent
+
+      - name: Save and grade goal scorer picks
+        run: |
+          cat > "$RUNNER_TEMP/track.js" <<'EOF'
+          // Goal scorer pick tracker: runs the dashboard's own model (from index.html) headlessly,
+          // saves today's pre-game picks with DraftKings prices to picks.json, and grades finished ones.
+          const fs = require('fs');
+          const { JSDOM } = require('jsdom');
+          const ET = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, '');
+          const readJSON = (f, dflt) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return dflt; } };
+          const log = (...a) => console.log(...a);
+
+          async function boot(fetchImpl) {
+            const html = fs.readFileSync('index.html', 'utf8');
+            const dom = new JSDOM(html.replace(/<link[^>]+fonts[^>]*>/g, ''), { runScripts: 'outside-only', url: 'https://example.org/' });
+            const w = dom.window;
+            w.fetch = async (u, o) => {
+              const url = String(u);
+              if (!/^https?:/.test(url)) { // local files: lines.json, props.json
+                const f = url.split('?')[0]; const ok = fs.existsSync(f);
+                return { ok, status: ok ? 200 : 404, json: async () => JSON.parse(fs.readFileSync(f, 'utf8')) };
+              }
+              return fetchImpl(url, o);
+            };
+            w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
+            w.addEventListener('error', e => log('page error:', e.message));
+            const script = html.split('<script>')[1].split('</script>')[0];
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
+            return w.__t;
+          }
+
+          async function run({ fetchImpl = fetch, now = new Date(), preload } = {}) {
+            const T = await boot(fetchImpl);
+            await new Promise(r => setTimeout(r, 4000)); // let the page find the current season
+            if (!T.S.curSeason) { const d = new Date(); T.S.curSeason = d.getMonth() >= 7 ? d.getFullYear() + 1 : d.getFullYear(); }
+            T.A.season = T.S.curSeason; T.A.range = 'season'; T.A.types = 'reg'; T.A.note = '';
+            // saved processed games from earlier runs (GitHub cache) so only new games are downloaded
+            const cache = readJSON('.cache/games.json', []);
+            let pre = 0; for (const g of cache) if (g && g.v === T.VER && g.final) { T.A.games.set(g.id, g); T.addTeam(g.home); T.addTeam(g.away); pre++; }
+            log(`Loaded ${pre} saved games from cache.`);
+            if (preload) await preload(T); else await T.ensureData(true);
+            log(`Model data: ${T.A.filtered.length} completed games this season.`);
+            fs.mkdirSync('.cache', { recursive: true });
+            fs.writeFileSync('.cache/games.json', JSON.stringify([...T.A.games.values()].filter(g => g && g.final)));
+
+            const picks = readJSON('picks.json', { picks: [] });
+            const byKey = new Map(picks.picks.map(p => [p.k, p]));
+
+            // 1) today's pre-game picks
+            const today = ET(now);
+            let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
+            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null);
+            let added = 0, updated = 0;
+            if (sb && T.A.filtered.length) {
+              const { S } = T.gsGetState();
+              for (const e of sb.events || []) {
+                const c = e.competitions[0];
+                if (c.status.type.state !== 'pre' || new Date(e.date) <= now) continue; // only games that haven't started
+                const h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
+                const H = String(h.team.id), Aw = String(a.team.id); T.addTeam(h.team); T.addTeam(a.team);
+                const gLike = { date: e.date, home: { id: H }, away: { id: Aw } }, probs = T.probableGoalies(e), dkm = T.dkPriceMap(PF, e.date, H, Aw);
+                if (!dkm) { log(`${a.team.abbreviation} @ ${h.team.abbreviation}: no DraftKings prices yet`); continue; }
+                for (const [t, o] of [[H, Aw], [Aw, H]]) {
+                  const ro = T.gsRoster(S, LF, gLike, t), gl = T.gsGoalie(S, probs, LF, gLike, o);
+                  for (const pid of ro.ids) {
+                    const r = T.gsLambda(S, pid, o, gl && gl.id); if (!r) continue;
+                    const dk = T.dkLookup(dkm, S.P[pid].n); if (dk == null) continue;
+                    const imp = T.amImplied(dk), ev = T.betEV(r.p, dk), k = `${e.id}|${pid}`;
+                    const rec = { k, date: today, gid: String(e.id), start: e.date, pid, n: S.P[pid].n, pos: S.P[pid].pos, tm: t, opp: o, gl: gl ? gl.n : '', glSt: gl ? gl.st || '' : '', p: +r.p.toFixed(4), dk, imp: +imp.toFixed(4), edge: +(r.p - imp).toFixed(4), ev: +ev.ev.toFixed(2), roi: +ev.roi.toFixed(4), res: null, saved: now.toISOString() };
+                    if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
+                  }
+                }
+              }
+            }
+            log(`Picks saved: ${added} new, ${updated} refreshed.`);
+
+            // 2) grade finished games
+            let graded = 0;
+            const open = [...byKey.values()].filter(p => p.res == null && new Date(p.start) < new Date(now - 4 * 3600e3));
+            const gids = [...new Set(open.map(p => p.gid))];
+            for (const gid of gids) {
+              let g = null; try { g = await T.getGame(gid); } catch (e) { log(`Game ${gid}: ${e.message}`); }
+              if (!g || !g.final) continue;
+              for (const p of open.filter(x => x.gid === gid)) {
+                const s = g.sk[p.pid];
+                if (!s || !(s.toi > 0)) { p.res = 'V'; p.goals = 0; } // didn't play: sportsbooks void the bet
+                else { p.goals = s.g; p.res = s.g > 0 ? 'W' : 'L'; }
+                p.profit = p.res === 'W' ? (p.dk < 0 ? 100 : p.dk) : p.res === 'L' ? -(p.dk < 0 ? -p.dk : 100) : 0;
+                graded++;
+              }
+            }
+            log(`Graded ${graded} picks.`);
+            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev) };
+            fs.writeFileSync('picks.json', JSON.stringify(out));
+            return out;
+          }
+          module.exports = { run };
+          if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::error::' + (e.stack || e.message)); process.exit(1); });
+          EOF
+          NODE_PATH="$RUNNER_TEMP/tk/node_modules" node "$RUNNER_TEMP/track.js"
+
+      - name: Commit props.json and picks.json if they changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
-          git add props.json
+          git add props.json picks.json
           if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
-          git commit -m "Update DraftKings goal scorer odds"
+          git commit -m "Update DraftKings goal scorer odds and pick tracker"
           git pull --rebase --quiet || true
           git push
