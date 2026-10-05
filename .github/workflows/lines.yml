@@ -1,11 +1,14 @@
-# Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders.
-# Runs every 30 minutes from 10 AM to midnight Eastern, and on demand from the Actions tab.
+# Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
+# (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
+# odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). Both also run on demand from the Actions tab.
 name: Update NHL lines
 
 on:
   schedule:
     - cron: '*/30 14-23 * * *'
     - cron: '*/30 0-4 * * *'
+    - cron: '7 15 * * *'
+    - cron: '7 21 * * *'
   workflow_dispatch:
 
 permissions:
@@ -17,6 +20,7 @@ concurrency:
 
 jobs:
   lines:
+    if: github.event.schedule != '7 15 * * *' && github.event.schedule != '7 21 * * *'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -95,4 +99,67 @@ jobs:
           git add lines.json
           if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
           git commit -m "Update NHL lines"
+          git pull --rebase --quiet || true
           git push || { echo "::error::Push failed. In the repo go to Settings > Actions > General > Workflow permissions, choose 'Read and write permissions', and run again."; exit 1; }
+
+  props:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '7 15 * * *' || github.event.schedule == '7 21 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Fetch DraftKings anytime goal scorer odds
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const KEY = process.env.ODDS_API_KEY;
+          if (!KEY) { console.log('::error::No ODDS_API_KEY secret. Add it under Settings > Secrets and variables > Actions.'); process.exit(1); }
+          const BASE = 'https://api.the-odds-api.com/v4/sports/icehockey_nhl';
+          const get = async url => {
+            const r = await fetch(url);
+            const left = r.headers.get('x-requests-remaining'), used = r.headers.get('x-requests-used');
+            if (left) console.log(`Odds API requests used: ${used}, remaining: ${left}`);
+            if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`);
+            return { data: await r.json(), left };
+          };
+          (async () => {
+            // events list (does not count against the quota)
+            const { data: events } = await get(`${BASE}/events?apiKey=${KEY}`);
+            const now = Date.now(), soon = events.filter(e => { const t = new Date(e.commence_time).getTime(); return t > now - 3600e3 && t < now + 30 * 3600e3; });
+            console.log(`${events.length} upcoming events, ${soon.length} in the next 30 hours`);
+            const games = []; let remaining = null;
+            for (const e of soon) {
+              try {
+                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&regions=us&markets=player_goal_scorer_anytime&bookmakers=draftkings&oddsFormat=american`);
+                remaining = left ?? remaining;
+                const bk = (data.bookmakers || []).find(b => b.key === 'draftkings');
+                const mk = bk && (bk.markets || []).find(m => m.key === 'player_goal_scorer_anytime');
+                const players = ((mk && mk.outcomes) || [])
+                  .filter(o => !/^no$/i.test(o.name || ''))
+                  .map(o => ({ n: o.description || o.name, price: o.price }))
+                  .filter(o => o.n && Number.isFinite(o.price));
+                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players });
+                console.log(`${e.away_team} @ ${e.home_team}: ${players.length} players`);
+              } catch (err) { console.log(`::warning::${e.away_team} @ ${e.home_team}: ${err.message}`); }
+            }
+            const out = { source: 'DraftKings via The Odds API', updated: new Date().toISOString(), remaining, games };
+            fs.writeFileSync('props.json', JSON.stringify(out));
+            console.log(`Saved ${games.reduce((s, g) => s + g.players.length, 0)} player prices for ${games.length} games.`);
+          })().catch(err => { console.log('::error::' + err.message); process.exit(1); });
+          EOF
+
+      - name: Commit props.json if it changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add props.json
+          if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
+          git commit -m "Update DraftKings goal scorer odds"
+          git pull --rebase --quiet || true
+          git push
