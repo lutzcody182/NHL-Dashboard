@@ -428,6 +428,7 @@ ol.plist{list-style:none;margin:0;padding:0;display:grid;gap:6px}ol.plist li{dis
 .hcbars{display:grid;gap:4px}.hcrow{display:grid;grid-template-columns:62px 1fr 44px 120px;gap:8px;align-items:center;font-size:12px}.hcbar{position:relative;height:12px;background:var(--surface-2);border-radius:6px}.hcbar i{position:absolute;top:0;bottom:0;border-radius:6px}.hcbar b{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--text-2)}.hclab{font-size:11.5px;white-space:nowrap}
 .dpers{display:flex;align-items:center;gap:12px;margin-bottom:10px}.dico{font-size:30px}.dname{font-size:20px;font-weight:800}
 .dbrow{display:grid;grid-template-columns:62px 1fr 48px;gap:8px;align-items:center;font-size:12px;margin:4px 0}.dbar{position:relative;height:12px;background:var(--surface-2);border-radius:6px}.dbar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--accent);opacity:.8}.dbar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text)}
+ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}ul.gmwhy li{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:8px;background:var(--surface-2)}
 </style>
 </head>
 <body>
@@ -1206,9 +1207,10 @@ function renderGame() {
 
   const vids = videosCard(s);
   if (pre || !g.shots.length) {
-    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="lmBody"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
+    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="lmBody"></div><div id="gmBody"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
     renderLineups(s, g);
     renderMatchup(s, g);
+    renderGameModelPreview(s, g);
     return;
   }
   const adv = gameAdv(g, GC.sit, k), a = adv[A_.id], h = adv[H_.id];
@@ -3222,16 +3224,21 @@ async function renderModel() {
           <p class="muted" style="font-size:12px">If the model is well calibrated, favorites it gives 60% should win about 60% of the time. Brier score: lower is better; 0.25 is a coin flip.</p></div></div>
       <h3 class="cmp-sec">Most recent predictions</h3><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Ice Lab pick</th><th>Market</th><th class="l">Final</th><th>Result</th></tr></thead><tbody>${recent.map(p => { const pick = p.pH >= .5 ? p.h : p.a, pp = Math.max(p.pH, 1 - p.pH), ok = (p.pH >= .5) === p.hw; const mk = fin(p.mk) ? pct1(p.pH >= .5 ? p.mk : 1 - p.mk) + '%' : '–'; return `<tr class="click" data-game="${p.id}"><td class="l">${new Date(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.a, 16)}${esc(TM(p.a).abbr)} @ ${logoImg(p.h, 16)}${esc(TM(p.h).abbr)}</div></td><td class="l">${esc(TM(pick).abbr)} ${pct1(pp)}%${p.hn < 5 || p.an < 5 ? ' <span class="muted">(early)</span>' : ''}</td><td>${mk}</td><td class="l">${p.as}–${p.hs}${p.ot ? ' OT' : ''}</td><td>${ok ? '<b style="color:var(--good)">✓</b>' : '<b style="color:var(--neg)">✗</b>'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
   }
-  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid">${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid"><div id="gmSec"></div>${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
   const u = $('#mdUse'); if (u) u.onclick = e => { const b = e.target.closest('button'); if (!b) return; A.useTrained = b.dataset.v === '1'; for (const g of A.filtered) applyModel(g); recalib(); invalidate(); renderModel(); };
+  renderGameModelCard();
   $('#mdAdj').onclick = e => { const b = e.target.closest('button'); if (!b) return; A.adj = b.dataset.v === '1'; invalidate(); renderModel(); };
   // tonight's picks (current season only)
   if (A.season === S.curSeason) {
     try {
       const sb = await getJSON(`${API}/scoreboard?dates=${todayStr()}`);
       const up = (sb.events || []).filter(e => e.competitions[0].status.type.state === 'pre');
-      const rowsT = up.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); const pr = predictMatch(String(h.team.id), String(a.team.id)); if (!pr) return ''; const pick = pr.pH >= .5 ? h.team : a.team; return `<tr class="click" data-game="${e.id}"><td class="l"><div class="tcell">${logoImg(String(a.team.id), 16)}${esc(a.team.abbreviation)} @ ${logoImg(String(h.team.id), 16)}${esc(h.team.abbreviation)}</div></td><td class="l"><b>${esc(pick.abbreviation)}</b> ${pct1(Math.max(pr.pH, 1 - pr.pH))}%</td><td>${f2(pr.la)} – ${f2(pr.lh)}</td><td>${esc((c.odds && c.odds[0] && c.odds[0].details) || '–')}</td></tr>`; }).filter(Boolean).join('');
-      const el = $('#mdToday'); if (el && rowsT) el.innerHTML = `<div class="card"><div class="card-h"><h3>Tonight's picks</h3><p>From current team strength ratings</p></div><div class="twrap"><table><thead><tr><th class="l">Game</th><th class="l">Pick</th><th>Projected xG</th><th>Line</th></tr></thead><tbody>${rowsT}</tbody></table></div></div>`;
+      await gmLoadSaved();
+      const rowsT = up.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); const pr = predictMatch(String(h.team.id), String(a.team.id)); if (!pr) return ''; const pick = pr.pH >= .5 ? h.team : a.team;
+        let v2 = '<span class="muted">train in Model Lab</span>';
+        if (GM.model) { const pg = probableGoalies(e), H = String(h.team.id), Aw = String(a.team.id); const o = c.odds && c.odds[0]; const ml = o && o.homeTeamOdds && o.awayTeamOdds && isFinite(o.homeTeamOdds.moneyLine) && isFinite(o.awayTeamOdds.moneyLine) ? { h: +o.homeTeamOdds.moneyLine, a: +o.awayTeamOdds.moneyLine } : null; const r = gmPredict(H, Aw, e.date, (pg[H] && pg[H].id) || gmUsualGoalie(GM.model.S, H), (pg[Aw] && pg[Aw].id) || gmUsualGoalie(GM.model.S, Aw), ml); if (r) { const p = fin(r.pb) ? r.pb : r.p, t2 = p >= .5 ? h.team : a.team; v2 = `<b>${esc(t2.abbreviation)}</b> ${pct1(Math.max(p, 1 - p))}%${r.parts[0] ? ` <span class="muted" style="font-size:12px">· ${esc(r.parts[0].l.toLowerCase())}</span>` : ''}`; } }
+        return `<tr class="click" data-game="${e.id}"><td class="l"><div class="tcell">${logoImg(String(a.team.id), 16)}${esc(a.team.abbreviation)} @ ${logoImg(String(h.team.id), 16)}${esc(h.team.abbreviation)}</div></td><td class="l"><b>${esc(pick.abbreviation)}</b> ${pct1(Math.max(pr.pH, 1 - pr.pH))}%</td><td class="l">${v2}</td><td>${f2(pr.la)} – ${f2(pr.lh)}</td><td>${esc((c.odds && c.odds[0] && c.odds[0].details) || '–')}</td></tr>`; }).filter(Boolean).join('');
+      const el = $('#mdToday'); if (el && rowsT) el.innerHTML = `<div class="card"><div class="card-h"><h3>Tonight's picks</h3><p>Ratings-only pick and the game model v2 pick (with its biggest factor)</p></div><div class="twrap"><table><thead><tr><th class="l">Game</th><th class="l">Ratings pick</th><th class="l">Game model v2</th><th>Projected xG</th><th>Line</th></tr></thead><tbody>${rowsT}</tbody></table></div></div>`;
     } catch (e) {}
   }
 }
@@ -4084,6 +4091,248 @@ function distanceLeaderCard() {
   const lst = arr => `<ol class="plist">${arr.map(p => `<li><span class="tcell">${logoImg(p.tm, 16)}${plink(p.id, p.nm || 'Unknown')}</span><span class="num">${f1(avg(p))} ft</span></li>`).join('')}</ol>`;
   return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Shot distance personalities</h3><p>Average distance of unblocked attempts · min 20 attempts</p></div>
     <div class="grid g3"><div><h4 class="cmp-sec" style="margin-top:0">🥅 Crease crashers (F)</h4>${lst(close)}</div><div><h4 class="cmp-sec" style="margin-top:0">🅿️ Parking-lot snipers (F)</h4>${lst(far)}</div><div><h4 class="cmp-sec" style="margin-top:0">🚪 Pinching defensemen</h4>${lst(dclose)}</div></div></div>`;
+}
+
+/* ============================== GAME MODEL v2 (self-learning) ==============================
+   One logistic regression for "does the home team win?", fed by everything Ice Lab tracks, built walk-forward
+   (each game only sees what was known before puck drop), trained on last season + this season,
+   graded on the most recent games it never trained on, and keeping only the inputs that improve it. */
+const GM_FEATS = [
+  // [key, label, group, describe one unit]
+  ['bias', 'Home ice', 'base', 'Built-in home advantage'],
+  ['base', 'Team strength ratings', 'base', 'Ratings-based win chance (log-odds)'],
+  ['rest', 'Rest days (difference)', 'rest', 'per extra day of rest vs. the opponent'],
+  ['hb2b', 'Home team on a back-to-back', 'rest', 'when the home team played yesterday'],
+  ['ab2b', 'Road team on a back-to-back', 'rest', 'when the road team played yesterday'],
+  ['atz', 'Road team crossed 2+ time zones', 'travel', 'road team just flew across 2+ time zones'],
+  ['htz', 'Home team back from 2+ time zones away', 'travel', 'home team just flew home across 2+ time zones'],
+  ['goalie', 'Starting goalie quality', 'goalie', 'per 0.5 goals saved above expected per 60'],
+  ['st', 'Special teams', 'special', 'per 0.25 net power-play goals per game'],
+  ['pen', 'Discipline (penalties)', 'discipline', 'per 1 fewer penalty per game than the opponent'],
+  ['form', 'Recent form (last 10)', 'form', 'per 5 points of last-10 xGF% above season level'],
+  ['hcook', 'Home team\'s home cooking', 'homecook', 'per 5 points of home-vs-road xGF% gap'],
+  ['acook', 'Road team\'s home cooking', 'homecook', 'per 5 points of the road team\'s home-vs-road gap']];
+const GM_GROUPS = [['rest', 'Rest & back-to-backs'], ['travel', 'Time zones / travel'], ['goalie', 'Starting goalie'], ['special', 'Special teams'], ['discipline', 'Discipline'], ['form', 'Recent form'], ['homecook', 'Home cooking']];
+const GM = { model: null, loading: false, prog: '' };
+const logit = p => Math.log(p / (1 - p));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function gmStateNew() { return { T: {}, Gk: {}, mu: 2.9, last: null }; }
+function gmTeam(S, id) {
+  return S.T[id] || (S.T[id] = { id, off: S.mu, def: S.mu, n: 0, last: null, tz: null, rec: [], sxf: 0, sxa: 0, hxf: 0, hxa: 0, rxf: 0, rxa: 0, ppg: 0, ppga: 0, pen: 0, gp: 0, sgp: 0 });
+}
+// features for a game about to be played, from the state before it
+function gmFeatures(S, hId, aId, dateIso, gH, gA) {
+  const h = gmTeam(S, hId), a = gmTeam(S, aId);
+  const lh = Math.max(.3, h.off + a.def - S.mu), la = Math.max(.3, a.off + h.def - S.mu);
+  const base = logit(clamp(winProb(lh, la), .02, .98));
+  const gap = t => t.last ? Math.round((new Date(dateIso) - new Date(t.last)) / 864e5) : 4;
+  const rH = clamp(gap(h), 1, 4), rA = clamp(gap(a), 1, 4);
+  const ar = arenaOf(hId), tzHere = ar ? ar[2] : null;
+  const tzJump = t => tzHere != null && t.tz != null ? Math.abs(tzHere - t.tz) : 0;
+  const gq = gid => { const q = gid && S.Gk[gid]; return q ? (q.xga - q.ga) / (q.toi / 3600 + 15) : 0; };
+  const stv = t => (t.ppg - t.ppga) / (t.gp + 10);
+  const penv = t => t.gp ? (t.pen + 3.5 * 10) / (t.gp + 10) : 3.5;
+  const share = (f, x) => f + x > 0 ? f / (f + x) : .5;
+  const formv = t => { if (t.rec.length < 5) return 0; const f = t.rec.reduce((s, r) => s + r[0], 0), x = t.rec.reduce((s, r) => s + r[1], 0); return share(f, x) - share(t.sxf + 5, t.sxa + 5); };
+  const cook = t => { const hs = share(t.hxf + 15, t.hxa + 15), rs = share(t.rxf + 15, t.rxa + 15); return hs - rs; };
+  const x = [1, base, rH - rA, rH === 1 ? 1 : 0, rA === 1 ? 1 : 0, tzJump(a) >= 2 ? 1 : 0, tzJump(h) >= 2 && h.tz != null ? 1 : 0,
+    (gq(gH) - gq(gA)) / .5, (stv(h) - stv(a)) / .25, penv(a) - penv(h), (formv(h) - formv(a)) / .05, cook(h) / .05, cook(a) / .05];
+  return { x, ready: h.n >= 5 && a.n >= 5, lh, la };
+}
+function gmUsualGoalie(S, tid) { const t = S.T[tid]; if (!t || !t.gks) return null; let best = null, bt = -1; for (const [id, v] of Object.entries(t.gks)) if (v > bt) { bt = v; best = id; } return best; }
+function gmStarter(g, tid) { let best = null, bt = -1; for (const [id, p] of Object.entries(g.gk || {})) if (p.tm === tid && p.toi > bt) { bt = p.toi; best = id; } return best; }
+// update state with a finished game
+function gmUpdate(S, g) {
+  const H = g.home.id, Aw = g.away.id, h = gmTeam(S, H), a = gmTeam(S, Aw), BL = .7;
+  const o = { [H]: { x: 0, gl: 0 }, [Aw]: { x: 0, gl: 0 } };
+  for (const s of g.shots) { if (s.t === 3 || s.en || !o[s.tm]) continue; o[s.tm].x += s.xg; if (s.t === 0) o[s.tm].gl++; }
+  const vh = BL * o[H].x + (1 - BL) * o[H].gl, va = BL * o[Aw].x + (1 - BL) * o[Aw].gl;
+  const al = t => Math.max(.06, 1 / (t.n + 8));
+  const nh = { off: h.off + al(h) * (vh - (a.def - S.mu) - h.off), def: h.def + al(h) * (va - (a.off - S.mu) - h.def) };
+  const na = { off: a.off + al(a) * (va - (h.def - S.mu) - a.off), def: a.def + al(a) * (vh - (h.off - S.mu) - a.def) };
+  Object.assign(h, nh); Object.assign(a, na);
+  const ar = arenaOf(H), tz = ar ? ar[2] : null;
+  for (const [t, me, op, home] of [[h, H, Aw, 1], [a, Aw, H, 0]]) {
+    t.n++; t.gp++; t.last = g.date; if (tz != null) t.tz = tz;
+    const xf = o[me].x, xa = o[op].x;
+    t.rec.push([xf, xa]); if (t.rec.length > 10) t.rec.shift();
+    t.sxf += xf; t.sxa += xa; if (home) { t.hxf += xf; t.hxa += xa; } else { t.rxf += xf; t.rxa += xa; }
+    const bm = (g.bx || {})[me] || {}, bo = (g.bx || {})[op] || {};
+    t.ppg += bm.ppg || 0; t.ppga += bo.ppg || 0; t.pen += bm.pen || 0;
+  }
+  for (const s of g.shots) { if (s.t === 3 || s.en || !s.gl) continue; const q = S.Gk[s.gl] || (S.Gk[s.gl] = { xga: 0, ga: 0, toi: 0 }); q.xga += s.xg; if (s.t === 0) q.ga++; }
+  S.Gn = S.Gn || {};
+  for (const t of [h, a]) if (t.gks) for (const k in t.gks) t.gks[k] *= .9; // recent starts count most
+  for (const [id, p] of Object.entries(g.gk || {})) {
+    const q = S.Gk[id] || (S.Gk[id] = { xga: 0, ga: 0, toi: 0 }); q.toi += p.toi || 0; S.Gn[id] = p.n || S.Gn[id];
+    const t = S.T[p.tm]; if (t) { t.gks = t.gks || {}; t.gks[id] = (t.gks[id] || 0) + (p.toi || 0); }
+  }
+  S.last = g.date;
+}
+// new season: pull everything halfway back toward average
+function gmNewSeason(S) {
+  for (const t of Object.values(S.T)) {
+    t.off = S.mu + .5 * (t.off - S.mu); t.def = S.mu + .5 * (t.def - S.mu); t.n = Math.min(t.n, 10);
+    for (const k of ['sxf', 'sxa', 'hxf', 'hxa', 'rxf', 'rxa', 'ppg', 'ppga', 'pen', 'gp']) t[k] *= .5;
+    t.rec = []; t.last = null;
+  }
+  for (const q of Object.values(S.Gk)) { q.xga *= .5; q.ga *= .5; q.toi *= .5; }
+}
+function gmBuild(games) {
+  const S = gmStateNew(), rows = [];
+  let tot = 0, n = 0; for (const g of games) for (const t of [g.home.id, g.away.id]) { let x = 0, gl = 0; for (const s of g.shots) if (s.tm === t && s.t !== 3 && !s.en) { x += s.xg; if (s.t === 0) gl++; } tot += .7 * x + .3 * gl; n++; }
+  S.mu = n ? tot / n : 2.9;
+  for (const g of games) {
+    if (S.last && (new Date(g.date) - new Date(S.last)) / 864e5 > 60) gmNewSeason(S);
+    const f = gmFeatures(S, g.home.id, g.away.id, g.date, gmStarter(g, g.home.id), gmStarter(g, g.away.id));
+    if (f.ready) rows.push({ x: f.x, y: g.home.score > g.away.score ? 1 : 0, mk: devig(g.ml), id: g.id, date: g.date });
+    gmUpdate(S, g);
+  }
+  return { S, rows };
+}
+const gmMask = keep => GM_FEATS.map(([, , grp]) => grp === 'base' || keep.includes(grp));
+function gmFit(rows, mask, lambda = 8) {
+  const idx = mask.map((m, i) => m ? i : -1).filter(i => i >= 0);
+  const sub = rows.map(r => ({ x: idx.map(i => r.x[i]), y: r.y }));
+  const w0 = idx.map(i => i === 1 ? 1 : 0);
+  const w = fitLogit(sub, w0, lambda);
+  const W = GM_FEATS.map(() => 0); idx.forEach((i, j) => W[i] = w[j]); return W;
+}
+const gmProb = (W, x) => { let z = 0; for (let i = 0; i < W.length; i++) z += W[i] * x[i]; return clamp(sigm(z), .01, .99); };
+function gmScore(rows, pf) {
+  let ll = 0, br = 0, hit = 0; for (const r of rows) { const p = clamp(pf(r), 1e-6, 1 - 1e-6); ll -= r.y ? Math.log(p) : Math.log(1 - p); br += (p - r.y) ** 2; if ((p >= .5) === !!r.y) hit++; }
+  return { n: rows.length, ll: ll / rows.length, brier: br / rows.length, acc: hit / rows.length };
+}
+function gmTrain(games) {
+  games = [...games].filter(g => g.final && g.shots && g.shots.length).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const { S, rows } = gmBuild(games);
+  if (rows.length < 150) return { error: `Only ${rows.length} usable games. Needs at least 150.` };
+  const cut = Math.floor(rows.length * .7), train = rows.slice(0, cut), test = rows.slice(cut);
+  const allGroups = GM_GROUPS.map(g => g[0]);
+  // old model = ratings + home ice only
+  const Wbase = gmFit(train, gmMask([])), Wall = gmFit(train, gmMask(allGroups));
+  const sBase = gmScore(test, r => gmProb(Wbase, r.x)), sAll = gmScore(test, r => gmProb(Wall, r.x));
+  // ablation: drop one group at a time from the full model
+  const abl = {};
+  for (const grp of allGroups) { const W = gmFit(train, gmMask(allGroups.filter(x => x !== grp))); abl[grp] = gmScore(test, r => gmProb(W, r.x)).ll - sAll.ll; }
+  const keep = allGroups.filter(grp => abl[grp] > .001);
+  const Wkeep = gmFit(train, gmMask(keep)), sKeep = gmScore(test, r => gmProb(Wkeep, r.x));
+  // market comparison + blend (games with lines only)
+  const mTest = test.filter(r => fin(r.mk)), mTrain = train.filter(r => fin(r.mk));
+  let market = null, blend = null, Wb = null;
+  if (mTest.length >= 30) {
+    market = gmScore(mTest, r => r.mk);
+    const own = mTest.length ? gmScore(mTest, r => gmProb(Wkeep, r.x)) : null;
+    if (mTrain.length >= 100) {
+      const br = rs => rs.map(r => ({ x: [1, logit(gmProb(Wkeep, r.x)), logit(clamp(r.mk, .02, .98))], y: r.y }));
+      Wb = fitLogit(br(mTrain), [0, .5, .5], 2);
+      blend = gmScore(mTest, r => sigm(Wb[0] + Wb[1] * logit(gmProb(Wkeep, r.x)) + Wb[2] * logit(clamp(r.mk, .02, .98))));
+    }
+    market = { ...market, own };
+  }
+  // final weights: kept inputs, refit on every game
+  const W = gmFit(rows, gmMask(keep)), Wfull = gmFit(rows, gmMask(allGroups));
+  const seasons = new Set(games.map(g => { const d = new Date(g.date); return d.getMonth() >= 7 ? d.getFullYear() + 1 : d.getFullYear(); }));
+  return { W, Wfull, Wb, keep, abl, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, t: Date.now() };
+}
+// predict an upcoming game, with a factor-by-factor breakdown
+function gmPredict(hId, aId, dateIso, gH, gA, ml) {
+  const M = GM.model; if (!M) return null;
+  const f = gmFeatures(M.S, hId, aId, dateIso, gH, gA), W = M.W;
+  const p = gmProb(W, f.x);
+  const parts = GM_FEATS.map(([k, l], i) => { if (!W[i] || i < 2 || !f.x[i]) return null; const x0 = [...f.x]; x0[i] = 0; return { k, l, d: p - gmProb(W, x0) }; }).filter(Boolean).sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+  const mk = devig(ml);
+  const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
+  return { p, pb, mk, parts, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
+}
+async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W) GM.model = m; } catch (e) {} return GM.model; }
+async function gmCollect(onProg) {
+  const seasons = [S.curSeason - 1, S.curSeason], today = todayStr(), ids = [];
+  for (const y of seasons) {
+    const cal = await seasonCalendar(y), dates = cal.filter(d => d <= today);
+    const days = await pool(dates, 8, getDay, (d, t) => onProg(`Finding ${y - 1}-${String(y).slice(2)} games`, d, t));
+    days.forEach(list => (list || []).forEach(e => { if (e.done && (e.t === 2 || e.t === 3)) ids.push(e.id); }));
+  }
+  const uniq = [...new Set(ids)];
+  const games = await pool(uniq, 6, id => getGame(id).catch(() => null), (d, t) => onProg('Loading games (saved after the first time)', d, t));
+  return games.filter(g => g && g.final);
+}
+async function gmRun(force) {
+  if (GM.loading) return;
+  GM.loading = true; GM.err = '';
+  const prog = (l, d, t) => { GM.prog = `${l}… ${d.toLocaleString()} / ${t.toLocaleString()}`; const e = $('#gmProg'); if (e) e.textContent = GM.prog; const f = $('#gmFill'); if (f) f.style.width = (t ? d / t * 100 : 0) + '%'; };
+  try {
+    const games = await gmCollect(prog);
+    GM.prog = 'Training and testing…'; const e = $('#gmProg'); if (e) e.textContent = GM.prog; await sleep(30);
+    const m = gmTrain(games);
+    if (m.error) GM.err = m.error; else { GM.model = m; DB.set('gm2', m); }
+  } catch (err) { GM.err = err.message || String(err); }
+  GM.loading = false;
+  if (activeTab() === 'model') renderGameModelCard();
+}
+const gmPct = v => fin(v) ? (v * 100).toFixed(1) + '%' : '–';
+async function renderGameModelCard() {
+  const box = $('#gmSec'); if (!box) return;
+  await gmLoadSaved();
+  const M = GM.model;
+  if (GM.loading) { box.innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><p>Training…</p></div><div class="prog"><div class="lbl" id="gmProg">${esc(GM.prog || 'Starting…')}</div><div class="track"><div class="fill" id="gmFill"></div></div></div><p class="muted" style="font-size:12px;margin:8px 0 0">The first run downloads last season and this season (about 1,400 games), which can take several minutes. You can switch tabs; it keeps going. Later runs only fetch new games.</p></div>`; return; }
+  if (!M) {
+    box.innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><p>Not trained yet</p></div>
+      <p style="margin:0 0 10px">The game model learns from every game of last season and this season how much each factor actually matters: team strength, rest and back-to-backs, time zones, the starting goalie, special teams, discipline, recent form and home cooking. It then tests itself on the most recent games it didn't train on and keeps only the factors that improve its predictions.</p>
+      ${GM.err ? `<p style="color:var(--neg)">${esc(GM.err)}</p>` : ''}<button class="btn primary" id="gmGo">Train the game model</button>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">First run: several minutes (about 1,400 games). After that it's saved in your browser and retrains in seconds.</p></div>`;
+    $('#gmGo').onclick = () => { gmRun(); renderGameModelCard(); };
+    return;
+  }
+  const age = (Date.now() - M.t) / 36e5;
+  const sc = (l, s, note) => s ? `<tr><td class="l">${l}</td><td>${s.n}</td><td><b>${gmPct(s.acc)}</b></td><td>${s.ll.toFixed(4)}</td><td>${s.brier.toFixed(4)}</td><td class="l muted">${note || ''}</td></tr>` : '';
+  const better = M.sKeep.ll < M.sBase.ll;
+  const inputs = GM_FEATS.map(([k, l, grp, desc], i) => {
+    if (i < 2) return '';
+    const kept = M.keep.includes(grp), w = (kept ? M.W : M.Wfull)[i];
+    const eff = (sigm(w) - .5) * 100;
+    const d = M.abl[grp];
+    return `<tr><td class="l">${esc(l)}</td><td class="l muted" style="font-size:12px">${esc(desc)}</td><td>${kept ? `<b style="color:${eff > 0 ? 'var(--home)' : eff < 0 ? 'var(--away)' : 'inherit'}">${eff >= 0 ? '+' : ''}${eff.toFixed(1)} pts</b>` : `<span class="muted" data-tip="${esc('What the model learned when it tried this factor. It was left out because it didn\'t improve predictions on the test games.')}">${eff >= 0 ? '+' : ''}${eff.toFixed(1)} pts</span>`}</td><td>${fin(d) ? (d > 0 ? '+' : '') + (d * 1000).toFixed(2) : '–'}</td><td>${kept ? '<span class="badge ok">✓ Used</span>' : '<span class="badge maybe">Not used</span>'}</td></tr>`;
+  }).join('');
+  const grpRows = GM_GROUPS.map(([g, l]) => `${l}: ${M.keep.includes(g) ? '✓' : '✗'}`).join(' · ');
+  box.innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><button class="btn" id="gmRe">Retrain with latest games</button></div>
+    <p style="margin:0 0 10px">Trained on <b>${M.nRows.toLocaleString()}</b> games from ${M.seasons.map(y => `${y - 1}-${String(y).slice(2)}`).join(' and ')} · last trained ${age < 1 ? 'under an hour' : age < 48 ? Math.round(age) + ' hours' : Math.round(age / 24) + ' days'} ago. ${better ? `On games it never saw, its win chances were closer to what actually happened than the old ratings-only model (lower log loss).` : `On the test games it didn't beat the ratings-only model, so treat its extra factors with caution.`} Pick accuracy swings a lot over a few hundred games; log loss is the fairer grade because it rewards getting the chances right, not just the winner.</p>
+    <div class="tiles" style="margin-bottom:12px">
+      <div class="tile"><div class="k">Game model v2</div><div class="v num">${gmPct(M.sKeep.acc)}</div><div class="s">picks right · log loss ${M.sKeep.ll.toFixed(3)} · ${M.nTest} test games</div></div>
+      <div class="tile"><div class="k">Old model</div><div class="v num">${gmPct(M.sBase.acc)}</div><div class="s">picks right · log loss ${M.sBase.ll.toFixed(3)}</div></div>
+      ${M.market ? `<div class="tile"><div class="k">Betting market</div><div class="v num">${gmPct(M.market.acc)}</div><div class="s">log loss ${M.market.ll.toFixed(3)} · ${M.market.n} test games with lines</div></div>` : ''}
+      ${M.blend ? `<div class="tile"><div class="k">v2 + market</div><div class="v num">${gmPct(M.blend.acc)}</div><div class="s">log loss ${M.blend.ll.toFixed(3)} · blend learned in training</div></div>` : ''}</div>
+    <h3 class="cmp-sec">Report card <span class="muted" style="font-weight:500;font-size:13px">tested on ${new Date(M.testFrom).toLocaleDateString()} – ${new Date(M.testTo).toLocaleDateString()}</span></h3>
+    <div class="twrap"><table><thead><tr><th class="l">Model</th><th>Games</th><th data-gloss="How often the team it favored won.">Accuracy</th><th data-gloss="How far the predicted chances were from what happened, punishing confident misses. Lower is better.">Log loss</th><th data-gloss="Average squared error of the predicted win chances. Lower is better.">Brier</th><th class="l"></th></tr></thead><tbody>
+      ${sc('Old model: ratings + home ice', M.sBase)}${sc('Every factor', M.sAll)}${sc('<b>Game model v2</b> (factors that helped)', M.sKeep, 'what Ice Lab uses')}${M.market ? sc('Betting market', M.market, 'margin removed') + (M.market.own ? sc('Game model v2 on the same games', M.market.own) : '') : ''}${M.blend ? sc('Game model v2 + market', M.blend, 'used when a line is posted') : ''}</tbody></table></div>
+    <h3 class="cmp-sec">What it takes into account</h3>
+    <p class="muted" style="font-size:12px;margin:-4px 0 8px">Effect = change in win chance for a typical amount of each factor, starting from an even game. "Test impact" = how much worse the predictions got with that factor's group removed (×1,000 log loss); positive means it helps. Factors are used only if they help.</p>
+    <div class="twrap"><table><thead><tr><th class="l">Factor</th><th class="l">Unit</th><th>Effect</th><th data-gloss="Increase in test log loss (×1,000) when this group of factors is removed. Positive = the factor makes predictions better.">Test impact</th><th>Status</th></tr></thead><tbody>${inputs}</tbody></table></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">${grpRows}. Every factor is built only from what was known before each game (walk-forward), and ratings carry over from last season pulled halfway back toward average. Starting goalies use whoever started; for upcoming games the confirmed or probable starter is used when ESPN lists one.</p></div>`;
+  $('#gmRe').onclick = () => { gmRun(true); renderGameModelCard(); };
+}
+// preview card for an upcoming game
+async function renderGameModelPreview(s, g) {
+  const box = () => $('#gmBody'); if (!box()) return;
+  await gmLoadSaved();
+  if (!GM.model) { box().innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3></div><p class="muted" style="margin:0">Train the game model in <b>League → Model Lab</b> to see its prediction here, with a breakdown of every factor.</p></div>`; return; }
+  let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === g.id) || null; } catch (e) {}
+  const pg = probableGoalies(ev), M = GM.model;
+  const gH = (pg[g.home.id] && pg[g.home.id].id) || gmUsualGoalie(M.S, g.home.id), gA = (pg[g.away.id] && pg[g.away.id].id) || gmUsualGoalie(M.S, g.away.id);
+  const pk = (s.pickcenter && s.pickcenter[0]) || null;
+  const ml = pk && pk.homeTeamOdds && pk.awayTeamOdds && isFinite(pk.homeTeamOdds.moneyLine) && isFinite(pk.awayTeamOdds.moneyLine) ? { h: +pk.homeTeamOdds.moneyLine, a: +pk.awayTeamOdds.moneyLine } : null;
+  const r = gmPredict(g.home.id, g.away.id, g.date || new Date().toISOString(), gH, gA, ml);
+  if (!r || !box()) return;
+  const meter = (l, p) => fin(p) ? `<div class="pred-row"><span>${l}</span><div class="meter"><i style="width:${(1 - p) * 100}%;background:var(--away)"></i><i style="width:${p * 100}%;background:var(--home)"></i></div><span class="num">${f0((1 - p) * 100)}% – ${f0(p * 100)}%</span></div>` : '';
+  const parts = r.parts.slice(0, 6).map(x => { const favH = x.d >= 0; return `<li><span>${esc(x.l)}</span><b style="color:var(${favH ? '--home' : '--away'})">${favH ? '+' : '−'}${Math.abs(x.d * 100).toFixed(1)} pts ${esc(favH ? g.home.abbr : g.away.abbr)}</b></li>`; }).join('');
+  const gName = (id, t) => pg[t] ? `${esc(pg[t].n)} ${gBadge(pg[t].st)}` : id ? `${esc((M.S.Gn || {})[id] || 'Usual starter')} <span class="muted">(not announced yet: assumes his usual starter)</span>` : '<span class="muted">unknown</span>';
+  box().innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><p>Learns from every factor that helped in testing</p></div>
+    <div style="display:flex;justify-content:space-between;font-weight:700"><span>${esc(g.away.abbr)}</span><span>${esc(g.home.abbr)}</span></div>
+    ${meter('Game model v2', r.p)}${fin(r.pb) ? meter('v2 + market', r.pb) : ''}${fin(r.mk) ? meter('Betting market', r.mk) : ''}
+    <div class="grid g2" style="margin-top:10px"><div><h4 class="cmp-sec" style="margin-top:0">Why</h4>${parts ? `<ul class="gmwhy">${parts}</ul>` : '<p class="muted" style="margin:0">Mostly team strength and home ice.</p>'}</div>
+    <div><h4 class="cmp-sec" style="margin-top:0">Goalies used</h4><p style="margin:0 0 4px;font-size:13px">${esc(g.away.abbr)}: ${gName(gA, g.away.id)}</p><p style="margin:0;font-size:13px">${esc(g.home.abbr)}: ${gName(gH, g.home.id)}</p></div></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Points = how much each factor moves ${esc(g.home.abbr)}'s win chance. The model was last trained ${new Date(M.t).toLocaleDateString()}; retrain it in Model Lab to include the newest games. For fun and analysis, not betting advice.</p></div>`;
 }
 
 /* ============================== UPSET TRACKER ============================== */
