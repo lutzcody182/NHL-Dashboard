@@ -4714,7 +4714,7 @@ async function renderScorers() {
   for (let i = 0; i < 8; i++) { try { sb = await getJSON(`${API}/scoreboard?dates=${d}`); } catch (e) { sb = null; } if (GS.date || (sb && (sb.events || []).some(e => e.competitions[0].status.type.state === 'pre'))) break; d = addDays(d, 1); }
   if (activeTab() !== 'scorers') return;
   const evs = ((sb && sb.events) || []);
-  const LF = await getLinesFile(), PF = await getPropsFile();
+  const LF = await getLinesFile(), PF = await getPropsFile(), PK = await getPicksFile();
   const rows = [];
   for (const e of evs) {
     const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
@@ -4759,12 +4759,14 @@ async function renderScorers() {
       <div class="ctl"><label>Game</label><select id="gsGame"><option value="">All games</option>${gameOpts}</select></div>
       <div class="ctl"><label>Team</label><select id="gsTeam"><option value="">All</option>${teamsTonight.map(t => `<option value="${t}" ${t === GS.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores tonight, built zone by zone from where he shoots, how dangerous those shots are, his finishing, how much the opponent gives up in those areas, and how the opposing goalie handles shots from there. Hover a chance for the breakdown. Lineups come from RotoGrinders when posted (otherwise each team's last game); goalies are the confirmed or probable starter when ESPN lists one. Uses the analytics range above; <b>Full season</b> gives the best samples.</p>
-    ${dkCard}${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${btCard}
+    ${dkCard}${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${pickTrackerCard(PK)}${btCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For fun and analysis, not betting advice.</p>`;
   RERENDER.gs = renderScorers;
   $('#gsDate').onchange = e => { GS.date = e.target.value.replace(/-/g, ''); GS.game = ''; GS.team = ''; renderScorers(); };
   $('#gsGame').onchange = e => { GS.game = e.target.value; renderScorers(); };
   $('#gsTeam').onchange = e => { GS.team = e.target.value; renderScorers(); };
+  const ks = $('#pkStrat'); if (ks) ks.onchange = () => { PKF.strat = ks.value; PKF.all = false; renderScorers(); };
+  const ka = $('#pkAll'); if (ka) ka.onclick = () => { PKF.all = !PKF.all; renderScorers(); };
 }
 // preview card: most likely scorers in one game
 async function renderScorerPreview(g) {
@@ -4777,6 +4779,55 @@ async function renderScorerPreview(g) {
     return `<div><div class="tcell" style="margin-bottom:6px">${logoImg(t, 18)}<b>${esc(TM(t).abbr)}</b> <span class="muted" style="font-size:12px">vs. ${gl ? esc(gl.n) : 'unknown goalie'}</span></div><ol class="plist">${list.map(x => `<li><span>${plink(x.pid, S.P[x.pid].n)}</span><span class="num" data-tip="${esc(`<b>${esc(S.P[x.pid].n)}</b>${gsWhy(x.r, gl && gl.n).html}`)}"><b>${pct1(x.r.p)}%</b> <span class="muted">${fairAmerican(x.r.p)}</span>${(() => { const dk = dkLookup(dkm, S.P[x.pid].n); if (dk == null) return ''; const e = x.r.p - amImplied(dk); return ` <span style="font-size:12px">· DK ${fmtML(dk)} <b style="color:${e > 0 ? 'var(--good)' : 'var(--neg)'}">${e > 0 ? '+' : ''}${(e * 100).toFixed(1)}</b></span>`; })()}</span></li>`).join('') || '<li class="muted">No data yet</li>'}</ol></div>`; };
   if (!box()) return;
   box().innerHTML = `<div class="card"><div class="card-h"><h3>🎯 Most likely goal scorers</h3><p>Chance to score · fair odds · DraftKings price and edge (pts) when posted</p></div><div class="grid g2">${col(g.away.id, g.home.id)}${col(g.home.id, g.away.id)}</div><p class="muted" style="font-size:12px;margin:8px 0 0">Full list in <b>Players → Goal Scorers</b>.</p></div>`;
+}
+
+/* ---- goal scorer profit tracker (picks.json, saved and graded by the GitHub job) ---- */
+const PKF = { data: null, t: 0, strat: 'pos', all: false };
+async function getPicksFile() {
+  if (PKF.data !== null && Date.now() - PKF.t < 5 * 60e3) return PKF.data;
+  try { const r = await fetch('picks.json?t=' + Date.now(), { cache: 'no-store' }); PKF.data = r.ok ? await r.json() : false; } catch (e) { PKF.data = false; }
+  PKF.t = Date.now(); return PKF.data;
+}
+const pkRisk = o => o < 0 ? -o : 100, pkWin = o => o < 0 ? 100 : o;
+const pkProfit = p => p.res === 'W' ? pkWin(p.dk) : p.res === 'L' ? -pkRisk(p.dk) : 0;
+const PK_STRATS = [
+  ['pos', 'Every positive edge', ps => ps.filter(p => p.edge > 0)],
+  ['e5', 'Edge 5+ pts', ps => ps.filter(p => p.edge >= .05)],
+  ['e10', 'Edge 10+ pts', ps => ps.filter(p => p.edge >= .10)],
+  ['top3', 'Top 3 each day', ps => { const by = {}; ps.filter(p => p.edge > 0).forEach(p => (by[p.date] = by[p.date] || []).push(p)); return Object.values(by).flatMap(l => l.sort((a, b) => b.roi - a.roi).slice(0, 3)); }],
+  ['all', 'Every priced player (baseline)', ps => ps]];
+function pickTrackerCard(PK) {
+  if (!PK) return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 Profit tracker</h3></div><p class="muted" style="margin:0">Not started yet. Once the GitHub job runs with the updated workflow, it saves each day's picks with DraftKings prices before the games and grades them the next morning. Results build up here.</p></div>`;
+  const ps = (PK.picks || []).filter(p => p.dk != null && fin(p.edge));
+  const done = ps.filter(p => p.res === 'W' || p.res === 'L'), pending = ps.filter(p => p.res == null), voids = ps.filter(p => p.res === 'V').length;
+  const stats = list => { const g = list.filter(p => p.res === 'W' || p.res === 'L'); const pr = g.reduce((s, p) => s + pkProfit(p), 0), risk = g.reduce((s, p) => s + pkRisk(p.dk), 0), w = g.filter(p => p.res === 'W').length; return { n: g.length, w, ls: g.length - w, profit: pr, roi: div(pr, risk), pend: list.filter(p => p.res == null).length }; };
+  const S = PK_STRATS.map(([k, l, f]) => ({ k, l, list: f(ps), ...stats(f(ps)) }));
+  const tiles = `<div class="tiles" style="margin-bottom:12px">${S.map(s => `<div class="tile"><div class="k">${esc(s.l)}</div><div class="v num" style="color:${s.profit > 0 ? 'var(--good)' : s.profit < 0 ? 'var(--neg)' : 'inherit'}">${money(s.profit)}</div><div class="s">${s.w}-${s.ls} · ROI ${fin(s.roi) ? (s.roi > 0 ? '+' : '') + pct1(s.roi) + '%' : '–'}${s.pend ? ` · ${s.pend} pending` : ''}</div></div>`).join('')}</div>`;
+  // running profit by bet, in date order
+  const run = list => { let c = 0; return list.filter(p => p.res === 'W' || p.res === 'L').sort((a, b) => a.start < b.start ? -1 : 1).map((p, i) => { c += pkProfit(p); return [i + 1, c]; }); };
+  const colors = { pos: 'var(--accent)', e5: 'var(--home)', e10: '#1baf7a', top3: '#9b59b6', all: 'var(--text-2)' };
+  const series = S.map(s => ({ name: s.l, color: colors[s.k], pts: run(s.list) })).filter(s => s.pts.length);
+  const ys = series.flatMap(s => s.pts.map(p => p[1])), nMax = Math.max(0, ...series.map(s => s.pts.length));
+  const chart = nMax >= 2 ? lineChart({ series, x0: 1, x1: Math.max(2, nMax), xTicks: (() => { const st = Math.max(1, Math.ceil(nMax / 7)), o = []; for (let v = 1; v <= nMax - st / 2; v += st) o.push({ v, l: `Bet ${v}` }); return o; })(), y0: Math.min(0, ...ys) * 1.1 - 50, y1: Math.max(0, ...ys) * 1.1 + 50, fx: v => `Bet ${Math.round(v)}`, fy: v => Math.abs(v) >= 1000 ? `${v < 0 ? '−' : ''}$${+(Math.abs(v) / 1000).toFixed(1)}k` : money(v), refY: 0, H: 240 }) + `<div class="legend">${series.map(s => `<span><i class="lg-dot" style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>` : '<div class="empty">The running profit chart appears after the first graded bets.</div>';
+  // results by edge size
+  const eb = [[-1, 0, 'Negative edge'], [0, .05, '0–5 pts'], [.05, .10, '5–10 pts'], [.10, .15, '10–15 pts'], [.15, 1, '15+ pts']].map(([lo, hi, l]) => { const g = done.filter(p => p.edge >= lo && p.edge < hi); const st = stats(g); return { lab: l, ...st, p: div(g.reduce((s, x) => s + x.p, 0), g.length), imp: div(g.reduce((s, x) => s + x.imp, 0), g.length), hit: div(st.w, st.n) }; }).filter(b => b.n);
+  const ebT = eb.length ? `<div class="twrap"><table><thead><tr><th class="l">Edge</th><th>Bets</th><th>Ice Lab chance</th><th>DK implied</th><th>Actually scored</th><th>Profit</th><th>ROI</th></tr></thead><tbody>${eb.map(b => `<tr><td class="l">${b.lab}</td><td>${b.n}</td><td>${pct1(b.p)}%</td><td>${pct1(b.imp)}%</td><td><b>${pct1(b.hit)}%</b></td><td>${moneyCell(b.profit)}</td><td>${fin(b.roi) ? (b.roi > 0 ? '+' : '') + pct1(b.roi) + '%' : '–'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted" style="margin:0">No graded bets yet.</p>';
+  // calibration
+  const cb = [[0, .1], [.1, .15], [.15, .2], [.2, .25], [.25, .3], [.3, .4], [.4, 1.01]].map(([lo, hi]) => { const g = done.filter(p => p.p >= lo && p.p < hi); return { lo, hi, n: g.length, p: div(g.reduce((s, x) => s + x.p, 0), g.length), imp: div(g.reduce((s, x) => s + x.imp, 0), g.length), hit: div(g.filter(x => x.res === 'W').length, g.length) }; }).filter(b => b.n);
+  const cbT = cb.length ? `<div class="twrap"><table><thead><tr><th class="l">Ice Lab chance</th><th>Players</th><th>Avg Ice Lab</th><th>Avg DK implied</th><th>Actually scored</th></tr></thead><tbody>${cb.map(b => `<tr><td class="l">${Math.round(b.lo * 100)}–${b.hi > 1 ? 100 : Math.round(b.hi * 100)}%</td><td>${b.n}</td><td>${pct1(b.p)}%</td><td>${pct1(b.imp)}%</td><td><b>${pct1(b.hit)}%</b></td></tr>`).join('')}</tbody></table></div>` : '';
+  // pick log for the chosen strategy
+  const cur = S.find(s => s.k === PKF.strat) || S[0];
+  const logList = [...cur.list].sort((a, b) => a.start > b.start ? -1 : a.start < b.start ? 1 : b.roi - a.roi), shown = PKF.all ? logList : logList.slice(0, 40);
+  const resCell = p => p.res === 'W' ? `<b style="color:var(--good)">✓ Scored${p.goals > 1 ? ` (${p.goals})` : ''}</b>` : p.res === 'L' ? '<span style="color:var(--neg)">✗ No goal</span>' : p.res === 'V' ? '<span class="muted">Void (didn\'t play)</span>' : '<span class="muted">Pending</span>';
+  const logRows = shown.map(p => `<tr><td class="l">${parseYmd(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.tm, 16)}${plink(p.pid, p.n)}</div></td><td class="l"><span class="muted">vs.</span> ${esc(TM(p.opp).abbr || '')}${p.gl ? ` <span class="muted" style="font-size:12px">${esc(p.gl)}</span>` : ''}</td><td>${pct1(p.p)}%</td><td><b>${fmtML(p.dk)}</b></td><td style="color:${p.edge > 0 ? 'var(--good)' : 'var(--neg)'}">${p.edge > 0 ? '+' : ''}${(p.edge * 100).toFixed(1)}</td><td class="l">${resCell(p)}</td><td>${p.res === 'W' || p.res === 'L' ? moneyCell(pkProfit(p)) : '–'}</td></tr>`).join('');
+  const logT = `<div class="card-h" style="margin-top:14px"><h3>Pick log</h3><select id="pkStrat">${S.map(s => `<option value="${s.k}" ${s.k === cur.k ? 'selected' : ''}>${esc(s.l)}</option>`).join('')}</select></div>
+    ${logRows ? `<div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Player</th><th class="l">Opponent</th><th>Ice Lab</th><th>DK</th><th>Edge</th><th class="l">Result</th><th>Profit</th></tr></thead><tbody>${logRows}</tbody></table></div>${logList.length > 40 ? `<button class="btn" id="pkAll" style="margin-top:8px">${PKF.all ? 'Show fewer' : `Show all ${logList.length}`}</button>` : ''}` : '<p class="muted" style="margin:0">No picks in this strategy yet.</p>'}`;
+  return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 Profit tracker</h3><p>${done.length} graded bets · ${pending.length} pending${voids ? ` · ${voids} void` : ''} · updated ${PK.updated ? new Date(PK.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</p></div>
+    <p class="muted" style="margin:-4px 0 10px;font-size:12px">Picks are saved by the GitHub job before each game (around 11 AM and 5 PM Eastern, using the latest pre-game price) and graded the next morning. Bet sizes follow your rule: $100 on plus odds, bet to win $100 on minus odds. Players who don't play are void, as at DraftKings.</p>
+    ${tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit</h3>${chart}
+    <div class="grid" style="margin-top:14px"><div><h3 class="cmp-sec" style="margin-top:0">Results by edge size</h3>${ebT}<p class="muted" style="font-size:12px;margin:6px 0 0">If the model finds real value, bigger edges should score more often than DraftKings expects and make more money.</p></div><div><h3 class="cmp-sec" style="margin-top:0">Calibration</h3>${cbT || '<p class="muted" style="margin:0">Needs graded bets.</p>'}<p class="muted" style="font-size:12px;margin:6px 0 0">Do players the model gives 25% actually score about 25% of the time?</p></div></div>
+    ${logT}
+    <p class="muted" style="font-size:12px;margin:10px 0 0">Goal scorer bets swing a lot: most lose and a few plus-money hits carry the results. Give it a few hundred bets before judging.</p></div>`;
 }
 
 /* ============================== UPSET TRACKER ============================== */
