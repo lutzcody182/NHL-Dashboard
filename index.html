@@ -463,6 +463,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
       <button data-tab="props" data-g="players">Player Props</button>
       <button data-tab="compare" data-g="players">Compare</button>
       <button data-tab="birth" data-g="players">Birthplaces</button>
+      <button data-tab="quads" data-g="league">Quadrants</button>
       <button data-tab="luck" data-g="league">Luck Watch</button>
       <button data-tab="upsets" data-g="league">Upsets</button>
       <button data-tab="bets" data-g="league">Bet Tracker</button>
@@ -504,6 +505,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
   <section class="tab" id="tab-sos"><div class="abar"></div><div id="sosBody"></div></section>
   <section class="tab" id="tab-travel"><div class="abar"></div><div id="trBody"></div></section>
   <section class="tab" id="tab-streaks"><div class="abar"></div><div id="skrBody"></div></section>
+  <section class="tab" id="tab-quads"><div class="abar"></div><div id="qdBody"></div></section>
   <section class="tab" id="tab-profiles"><div class="abar"></div><div id="sprBody"></div></section>
   <section class="tab" id="tab-props"><div class="abar"></div><div id="prBody"></div></section>
   <section class="tab" id="tab-periods"><div class="abar"></div><div id="pdBody"></div></section>
@@ -1391,7 +1393,7 @@ async function ensureData(force) {
   const tok = ++A.token; A.loading = true; invalidate();
   const cancelled = () => tok !== A.token;
   renderAbar();
-  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody', 'prBody', 'pdBody', 'sprBody'];
+  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody', 'prBody', 'pdBody', 'sprBody', 'qdBody'];
   bodyIds.forEach(b => { $('#' + b).innerHTML = `<div class="empty"><div class="spinner"></div>Crunching play-by-play… the first load of a big range can take a minute. It's much faster after that.</div>`; });
   try {
     const cal = await seasonCalendar(A.season); if (cancelled()) return;
@@ -1530,7 +1532,7 @@ function aggregate() {
       if (s.gl && s.t !== 3 && !s.en) { const q = G[s.gl] || (G[s.gl] = { id: s.gl, n: g.nm[s.gl] || 'Unknown', tm: ag, gp: 0, toi: 0, sa: 0, ga: 0, sv: 0, xga: 0, gan: 0, ub: 0, hdsa: 0, hdga: 0 }); q.xga += xg; q.ub++; if (s.t === 0) q.gan++; if ((s.f & 4) && s.t <= 1) { q.hdsa++; if (s.t === 0) q.hdga++; } }
     }
     for (const id of [g.home.id, g.away.id]) team(id).log.push(per[id]);
-    for (const [id, p] of Object.entries(g.sk)) { const r = pl(id, g); r.n = p.n; r.tm = p.tm; r.pos = p.pos || r.pos; if (p.toi > 0) { r.gp++; r.log.push({ date: g.date, g: p.g, a: p.a }); } r.toi += p.toi; r.es += p.es; r.pptoi += p.pp; r.g += p.g; r.a += p.a; r.sog += p.sog; r.ht += p.ht; r.bs += p.bs; r.pm += p.pm; }
+    for (const [id, p] of Object.entries(g.sk)) { const r = pl(id, g); r.n = p.n; r.tm = p.tm; r.pos = p.pos || r.pos; if (p.toi > 0) { r.gp++; r.log.push({ date: g.date, g: p.g, a: p.a }); } r.toi += p.toi; r.es += p.es; r.pptoi += p.pp; r.g += p.g; r.a += p.a; r.sog += p.sog; r.ht += p.ht; r.bs += p.bs; r.tk = (r.tk || 0) + (p.tk || 0); r.gv = (r.gv || 0) + (p.gv || 0); r.pm += p.pm; }
     const winT = g.home.score > g.away.score ? g.home.id : g.away.id, starter = {};
     for (const [id, p] of Object.entries(g.gk)) if (p.toi > 0 && (!starter[p.tm] || p.toi > g.gk[starter[p.tm]].toi)) starter[p.tm] = id;
     for (const [id, p] of Object.entries(g.gk)) { if (!(p.toi > 0)) continue; const q = G[id] || (G[id] = { id, n: p.n, tm: p.tm, gp: 0, toi: 0, sa: 0, ga: 0, sv: 0, xga: 0, gan: 0, ub: 0, hdsa: 0, hdga: 0 }); q.n = p.n; q.tm = p.tm; q.gp++; q.toi += p.toi; q.sa += p.sa; q.ga += p.ga; q.sv += p.sv; (q.log = q.log || []).push({ date: g.date, gid: g.id, ga: p.ga, sa: p.sa, dec: starter[p.tm] === id ? (p.tm === winT ? 'W' : (g.ot || g.so) ? 'OTL' : 'L') : null, full: p.toi >= 3500 }); }
@@ -4441,6 +4443,111 @@ function pkPressureCard(R) {
     <div class="grid g2"><div>${chart}</div><div>${table('pkp', cols, rows, { sort: 'luck', heat: true })}</div></div></div>`;
 }
 
+/* ============================== QUADRANTS ============================== */
+const QD = { view: 'teams', team: '', minGp: null };
+// dot scatter for players/goalies, with quadrant labels and names on the standouts
+function quadDots({ pts, xl, yl, fx = f2, fy = f2, avgX, avgY, quad, labelN = 8, hl }) {
+  const W = 640, H = 460, m = { l: 58, r: 18, t: 18, b: 46 };
+  if (!pts.length) return '<div class="empty">Not enough players yet.</div>';
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const px = (x1 - x0) * .08 || 1, py = (y1 - y0) * .08 || 1; x0 -= px; x1 += px; y0 -= py; y1 += py;
+  const sx = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r), sy = v => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
+  let g = '';
+  for (const t of ticks(x0, x1, 6)) g += `<line class="gridl" x1="${sx(t)}" x2="${sx(t)}" y1="${m.t}" y2="${H - m.b}"/><text x="${sx(t)}" y="${H - m.b + 16}" text-anchor="middle">${fx(t)}</text>`;
+  for (const t of ticks(y0, y1, 6)) g += `<line class="gridl" x1="${m.l}" x2="${W - m.r}" y1="${sy(t)}" y2="${sy(t)}"/><text x="${m.l - 6}" y="${sy(t) + 4}" text-anchor="end">${fy(t)}</text>`;
+  let ref = '';
+  if (fin(avgX)) ref += `<line class="ref" x1="${sx(avgX)}" x2="${sx(avgX)}" y1="${m.t}" y2="${H - m.b}"/>`;
+  if (fin(avgY)) ref += `<line class="ref" x1="${m.l}" x2="${W - m.r}" y1="${sy(avgY)}" y2="${sy(avgY)}"/>`;
+  const [tl, tr, bl, br] = quad;
+  const q = `<text class="qlab" x="${m.l + 8}" y="${m.t + 16}">${tl}</text><text class="qlab" x="${W - m.r - 8}" y="${m.t + 16}" text-anchor="end">${tr}</text><text class="qlab" x="${m.l + 8}" y="${H - m.b - 8}">${bl}</text><text class="qlab" x="${W - m.r - 8}" y="${H - m.b - 8}" text-anchor="end">${br}</text>`;
+  // label the players farthest from the average (or the highlighted team's players)
+  const sdx = Math.sqrt(xs.reduce((s, v) => s + (v - avgX) ** 2, 0) / xs.length) || 1, sdy = Math.sqrt(ys.reduce((s, v) => s + (v - avgY) ** 2, 0) / ys.length) || 1;
+  const far = new Set((hl ? pts.filter(p => p.tm === hl) : [...pts].sort((a, b) => Math.hypot((b.x - avgX) / sdx, (b.y - avgY) / sdy) - Math.hypot((a.x - avgX) / sdx, (a.y - avgY) / sdy)).slice(0, labelN)).map(p => p.id));
+  const ordered = [...pts].sort((a, b) => (far.has(a.id) || (hl && a.tm === hl)) - (far.has(b.id) || (hl && b.tm === hl)));
+  const dots = ordered.map(p => {
+    const on = !hl || p.tm === hl, cx = sx(p.x), cy = sy(p.y), lab = far.has(p.id);
+    const col = TM(p.tm).color ? '#' + TM(p.tm).color : 'var(--accent)';
+    return `<g data-tip="${esc(p.tip)}" data-player="${esc(p.id)}" style="cursor:pointer;opacity:${on ? 1 : .18}"><circle cx="${cx}" cy="${cy}" r="9" fill="transparent"/><circle cx="${cx}" cy="${cy}" r="${lab ? 5 : 4}" fill="${col}" fill-opacity=".8" stroke="var(--surface)" stroke-width="1.2"/>${lab ? `<text x="${cx + 7}" y="${cy + 4}" font-size="11" font-weight="600" fill="var(--text)" paint-order="stroke" stroke="var(--surface)" stroke-width="3">${esc(String(p.n).split(' ').slice(-1)[0])}</text>` : ''}</g>`;
+  }).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(xl)} vs ${esc(yl)}"><g class="axis">${g}</g>${ref}${q}${dots}
+    <text x="${(m.l + W - m.r) / 2}" y="${H - 8}" text-anchor="middle" fill="var(--text-2)" font-size="12" font-weight="600">${esc(xl)} →</text>
+    <text transform="translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle" fill="var(--text-2)" font-size="12" font-weight="600">${esc(yl)} →</text></svg>`;
+}
+const qCard = (title, sub, chart, note) => `<div class="card"><div class="card-h"><h3>${title}</h3><p>${sub}</p></div>${chart}${note ? `<p class="muted" style="font-size:12px;margin:6px 0 0">${note}</p>` : ''}</div>`;
+const qAvg = (arr, f) => { const v = arr.map(f).filter(fin); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : NaN; };
+const qRow = (l, v) => `<div class='row'><span>${l}</span><b>${v}</b></div>`;
+
+function quadTeams() {
+  const { R } = aggregate(), rt = ratings(), k = A.calib || 1;
+  const ids = Object.keys(R).filter(id => R[id].gp);
+  // home/road, discipline, pace, schedule from the loaded games
+  const X = {}; const x = id => X[id] || (X[id] = { hf: 0, ha: 0, rf: 0, ra: 0, pen: 0, pdr: 0, gp: 0, opp: 0, oppN: 0 });
+  for (const g of A.filtered) {
+    if (!g.final) continue;
+    let xh = 0, xa = 0; for (const s of g.shots) { if (s.t === 3 || s.en) continue; if (s.tm === g.home.id) xh += s.xg * k; else xa += s.xg * k; }
+    const H = x(g.home.id), Aw = x(g.away.id), bh = (g.bx || {})[g.home.id] || {}, ba = (g.bx || {})[g.away.id] || {};
+    if (!g.neutral) { H.hf += xh; H.ha += xa; Aw.rf += xa; Aw.ra += xh; }
+    H.gp++; Aw.gp++; H.pen += bh.pen || 0; H.pdr += ba.pen || 0; Aw.pen += ba.pen || 0; Aw.pdr += bh.pen || 0;
+    const ro = t => rt.T[t] ? rt.T[t].off - rt.T[t].def : NaN;
+    if (fin(ro(g.away.id))) { H.opp += ro(g.away.id); H.oppN++; } if (fin(ro(g.home.id))) { Aw.opp += ro(g.home.id); Aw.oppN++; }
+  }
+  const T = ids.map(id => { const r = R[id], ev = teamDerived(r, 'ev'), al = teamDerived(r, 'all'), q = x(id); return { id, r, ev, al, q, home: div(q.hf, q.hf + q.ha), road: div(q.rf, q.rf + q.ra), pace: ev.cf60 + ev.ca60, penT: div(q.pen, q.gp), penD: div(q.pdr, q.gp), sos: div(q.opp, q.oppN) }; });
+  const nm = t => esc(TM(t.id).name);
+  const mk = (title, sub, f, opts, note) => { const pts = T.map(t => ({ id: t.id, ...f(t) })).filter(p => fin(p.x) && fin(p.y)); if (pts.length < 4) return ''; return qCard(title, sub, scatterLogos({ pts, ...opts, avgX: opts.avgX ?? qAvg(pts, p => p.x), avgY: opts.avgY ?? qAvg(pts, p => p.y) }), note); };
+  return `<div class="grid g2">
+    ${mk('Results vs. process', 'Points % against even-strength xGF%', t => ({ x: t.ev.xgp * 100, y: t.ev.ptsp, tip: `<b>${nm(t)}</b>${qRow('Points %', f3(t.ev.ptsp))}${qRow('EV xGF%', pct1(t.ev.xgp))}${qRow('Record', t.ev.rec)}` }), { xl: 'Process: even-strength xGF%', yl: 'Results: points %', fx: f0, fy: f3, avgX: 50, quad: ['🍀 Living on luck', '🏆 Legit contenders', '🔧 Rebuilding', '📈 Better than their record'] }, 'Teams far above their xGF% tend to slide; teams below it tend to climb.')}
+    ${mk('Shooting vs. goaltending luck', 'Team shooting % against team save % (all situations)', t => ({ x: t.al.shp * 100, y: t.al.svp * 100, tip: `<b>${nm(t)}</b>${qRow('Shooting %', pct1(t.al.shp))}${qRow('Save %', f3(t.al.svp))}${qRow('PDO', f1(t.al.pdo))}` }), { xl: 'Shooting %', yl: 'Save %', fx: f1, fy: f1, quad: ['🧤 Hot goalie carrying them', '🎰 Everything\'s going in', '🥶 Snakebitten', '🏒 Hot sticks, cold goalie'] }, 'Both numbers swing a lot in small samples and usually drift back toward average.')}
+    ${mk('Home vs. road', 'Expected goals share at home and on the road', t => ({ x: t.home * 100, y: t.road * 100, tip: `<b>${nm(t)}</b>${qRow('Home xGF%', pct1(t.home))}${qRow('Road xGF%', pct1(t.road))}` }), { xl: 'Home xGF%', yl: 'Road xGF%', fx: f0, fy: f0, avgX: 50, avgY: 50, quad: ['🧳 Road warriors', '🌍 Good everywhere', '🥀 Bad everywhere', '🍲 Home cooking'] })}
+    ${mk('Pace vs. control', 'Total shot attempts per 60 (both teams) against shot share · even strength', t => ({ x: t.pace, y: t.ev.cfp * 100, tip: `<b>${nm(t)}</b>${qRow('Attempts / 60, both teams', f1(t.pace))}${qRow('CF%', pct1(t.ev.cfp))}` }), { xl: 'Pace: total attempts per 60', yl: 'Control: CF%', fx: f0, fy: f0, avgY: 50, quad: ['🪨 Grind-it-out winners', '🏃 Track-meet winners', '🐌 Slow and outplayed', '💨 Track-meet losers'] })}
+    ${mk('Discipline', 'Penalties taken against penalties drawn, per game', t => ({ x: t.penT, y: t.penD, tip: `<b>${nm(t)}</b>${qRow('Penalties taken / game', f2(t.penT))}${qRow('Penalties drawn / game', f2(t.penD))}` }), { xl: 'Penalties taken per game', yl: 'Penalties drawn per game', fx: f1, fy: f1, quad: ['😇 Clean and baiting', '🎭 Undisciplined but draws calls', '🙏 Saints', '🚔 Penalty box regulars'] }, 'Left is cleaner; up means they draw more power plays.')}
+    ${mk('Schedule check', 'Average strength of opponents faced against points %', t => ({ x: t.sos, y: t.ev.ptsp, tip: `<b>${nm(t)}</b>${qRow('Schedule strength', sgn2(t.sos))}${qRow('Points %', f3(t.ev.ptsp))}` }), { xl: 'Schedule strength (opponents\' rating)', yl: 'Points %', fx: sgn2, fy: f3, quad: ['🍰 Fattened on weak teams', '💪 Battle-tested and winning', '😬 Easy schedule, still struggling', '🌪️ Tough schedule, struggling'] }, 'Opponent strength uses current Ice Lab team ratings (goals per game better or worse than average).')}
+  </div>`;
+}
+function quadPlayers() {
+  const { P } = aggregate();
+  const all = Object.values(P).filter(p => p.gp > 0 && p.toi > 0);
+  const maxGp = Math.max(0, ...all.map(p => p.gp)); if (QD.minGp == null || QD.minGp > maxGp) QD.minGp = Math.max(1, Math.min(10, Math.floor(maxGp / 3)));
+  const sk = all.filter(p => p.gp >= QD.minGp && p.toi / p.gp >= 300);
+  const F = sk.filter(p => p.pos !== 'D'), Dm = sk.filter(p => p.pos === 'D');
+  const nm = p => `<b>${esc(p.n)}</b> · ${esc(TM(p.tm).abbr)} ${esc(p.pos || '')}`;
+  const base = p => ({ id: p.id, n: p.n, tm: p.tm });
+  const mk = (title, sub, list, f, opts, note) => { const pts = list.map(p => ({ ...base(p), ...f(p) })).filter(p => fin(p.x) && fin(p.y)); if (pts.length < 6) return qCard(title, sub, '<div class="empty">Not enough players yet.</div>'); return qCard(title, sub, quadDots({ pts, ...opts, avgX: opts.avgX ?? qAvg(pts, p => p.x), avgY: opts.avgY ?? qAvg(pts, p => p.y), hl: QD.team }), note); };
+  return `<div class="grid g2">
+    ${mk('Scorers: finishing vs. chances', 'Forwards and defensemen', sk, p => ({ x: per60(p.ixg, p.toi), y: p.g - p.ixg, tip: `${nm(p)}${qRow('ixG / 60', f2(per60(p.ixg, p.toi)))}${qRow('Goals', p.g)}${qRow('Goals − ixG', sgn1(p.g - p.ixg))}` }), { xl: 'Chances: individual xG per 60', yl: 'Finishing: goals minus xG', fx: f1, fy: f1, avgY: 0, quad: ['🍀 Lucky bounces', '⭐ Elite and finishing', '😴 Quiet', '😤 Getting chances, snakebitten'] }, 'Snakebitten players with lots of chances are classic "due" candidates.')}
+    ${mk('Playmakers vs. shooters', 'Forwards', F, p => ({ x: per60(p.sog, p.toi), y: per60(p.a, p.toi), tip: `${nm(p)}${qRow('Shots / 60', f1(per60(p.sog, p.toi)))}${qRow('Assists / 60', f2(per60(p.a, p.toi)))}` }), { xl: 'Shots on goal per 60', yl: 'Assists per 60', fx: f1, fy: f1, quad: ['🧠 Pure passer', '🌟 Do-it-all', '🪵 Depth player', '🔫 Pure shooter'] })}
+    ${mk('Usage vs. production', 'Forwards and defensemen', sk, p => ({ x: p.toi / p.gp / 60, y: per60(p.g + p.a, p.toi), tip: `${nm(p)}${qRow('TOI / game', mmss(p.toi / p.gp))}${qRow('Points / 60', f2(per60(p.g + p.a, p.toi)))}${qRow('Points', p.g + p.a)}` }), { xl: 'Ice time per game (minutes)', yl: 'Points per 60', fx: f0, fy: f1, quad: ['🚀 Deserves more minutes', '⭐ Stars', '🪵 Depth role', '🥵 Overused'] }, 'Top-left players produce well in limited minutes; bottom-right get big minutes without much offense (often defensive roles).')}
+    ${mk('Defensemen: offense vs. defense', 'Defensemen', Dm, p => ({ x: per60(p.g + p.a, p.toi), y: per60(p.bs + (p.tk || 0), p.toi), tip: `${nm(p)}${qRow('Points / 60', f2(per60(p.g + p.a, p.toi)))}${qRow('Blocks / 60', f1(per60(p.bs, p.toi)))}${qRow('Takeaways / 60', f1(per60(p.tk || 0, p.toi)))}` }), { xl: 'Offense: points per 60', yl: 'Defensive plays: blocks + takeaways per 60', fx: f1, fy: f1, quad: ['🧱 Shutdown', '🔄 Two-way', '😕 Struggling', '🎯 Offensive specialist'] }, 'ESPN doesn\'t publish who is on the ice for each shot, so defense here is measured by the player\'s own blocks and takeaways.')}
+    ${mk('Physical profile', 'Forwards and defensemen', sk, p => ({ x: per60(p.ht, p.toi), y: per60(p.bs, p.toi), tip: `${nm(p)}${qRow('Hits / 60', f1(per60(p.ht, p.toi)))}${qRow('Blocks / 60', f1(per60(p.bs, p.toi)))}` }), { xl: 'Hits per 60', yl: 'Blocked shots per 60', fx: f0, fy: f0, quad: ['🛡️ Shot blocker', '💥 Wrecking ball', '🎨 Finesse', '🔨 Hitter'] })}
+  </div>`;
+}
+function quadGoalies() {
+  const { G } = aggregate();
+  const all = Object.values(G).filter(g => g.gp > 0 && g.toi > 0), maxGp = Math.max(0, ...all.map(g => g.gp)), minGp = Math.max(1, Math.min(8, Math.floor(maxGp / 3)));
+  const gs = all.filter(g => g.gp >= minGp);
+  const nm = g => `<b>${esc(g.n)}</b> · ${esc(TM(g.tm).abbr)}`;
+  const base = g => ({ id: g.id, n: g.n, tm: g.tm });
+  const mk = (title, sub, f, opts, note) => { const pts = gs.map(g => ({ ...base(g), ...f(g) })).filter(p => fin(p.x) && fin(p.y)); if (pts.length < 4) return qCard(title, sub, '<div class="empty">Not enough goalies yet.</div>'); return qCard(title, sub, quadDots({ pts, ...opts, avgX: opts.avgX ?? qAvg(pts, p => p.x), avgY: opts.avgY ?? qAvg(pts, p => p.y), labelN: 12, hl: QD.team }), note); };
+  return `<div class="grid g2">
+    ${mk('Goalies: workload vs. quality', `Min ${minGp} games`, g => ({ x: per60(g.sa, g.toi), y: per60(g.xga - g.gan, g.toi), tip: `${nm(g)}${qRow('Shots faced / 60', f1(per60(g.sa, g.toi)))}${qRow('GSAx / 60', sgn2(per60(g.xga - g.gan, g.toi)))}${qRow('SV%', f3(div(g.sv, g.sa)))}` }), { xl: 'Workload: shots faced per 60', yl: 'Quality: goals saved above expected per 60', fx: f0, fy: sgn2, avgY: 0, quad: ['🛋️ Sheltered and solid', '🦸 Workhorse and elite', '😟 Sheltered but struggling', '🥵 Overworked and struggling'] }, 'Top-right goalies are bailing out their defense; bottom-right are getting buried.')}
+    ${mk('Goalies: high-danger vs. everything else', `Min ${minGp} games`, g => { const hd = 1 - div(g.hdga, g.hdsa), oth = div((g.sa - g.hdsa) - (g.ga - g.hdga), g.sa - g.hdsa); return { x: hd * 100, y: oth * 100, tip: `${nm(g)}${qRow('High-danger SV%', f3(hd))}${qRow('Other SV%', f3(oth))}${qRow('HD shots faced', g.hdsa)}` }; }, { xl: 'High-danger save %', yl: 'Save % on all other shots', fx: f0, fy: f1, quad: ['🙃 Stops the easy ones only', '🏆 Complete', '😬 Rough', '🧤 Makes the big saves'] }, 'High-danger save % is noisy until a goalie has faced a lot of chances.')}
+  </div>`;
+}
+function renderQuads() {
+  const body = $('#qdBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const { R } = aggregate();
+  const teams = Object.keys(R).sort((a, b) => (TM(a).abbr || '').localeCompare(TM(b).abbr || ''));
+  const seg = `<div class="seg" id="qdSeg">${[['teams', 'Teams'], ['players', 'Players'], ['goalies', 'Goalies']].map(([v, l]) => `<button data-v="${v}" class="${QD.view === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  const filt = QD.view === 'teams' ? '' : `<div class="ctl"><label>Highlight team</label><select id="qdTeam"><option value="">None</option>${teams.map(t => `<option value="${t}" ${t === QD.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>${QD.view === 'players' ? `<div class="ctl"><label>Min GP</label><input id="qdMin" type="number" min="1" value="${QD.minGp || 1}" style="width:64px"></div>` : ''}`;
+  const inner = QD.view === 'players' ? quadPlayers() : QD.view === 'goalies' ? quadGoalies() : quadTeams();
+  body.innerHTML = `<div class="bar"><h2 class="grow">Quadrants</h2>${filt}${seg}</div>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Each chart splits the league into four types using two measures. Dashed lines mark the league average (or 50% / zero where that's the natural middle). Hover for numbers; tap a ${QD.view === 'teams' ? 'logo to open the team' : 'dot to open the player'}.${QD.view !== 'teams' ? ' The players farthest from average are labeled; pick a team to highlight its players instead.' : ''}</p>${inner}`;
+  $('#qdSeg').onclick = e => { const b = e.target.closest('button'); if (b) { QD.view = b.dataset.v; renderQuads(); } };
+  const ts = $('#qdTeam'); if (ts) ts.onchange = () => { QD.team = ts.value; renderQuads(); };
+  const mn = $('#qdMin'); if (mn) mn.onchange = () => { QD.minGp = Math.max(1, +mn.value || 1); renderQuads(); };
+}
+
 /* ============================== UPSET TRACKER ============================== */
 function renderUpsets() {
   const body = $('#upBody');
@@ -4654,7 +4761,7 @@ markGloss(document.body);
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
 function renderActiveAnalytics() {
   const t = activeTab();
-  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets(); else if (t === 'props') renderProps(); else if (t === 'periods') renderPeriods(); else if (t === 'profiles') renderProfiles();
+  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets(); else if (t === 'props') renderProps(); else if (t === 'periods') renderPeriods(); else if (t === 'profiles') renderProfiles(); else if (t === 'quads') renderQuads();
 }
 const LASTTAB = {};
 function setTab(t) {
@@ -4666,7 +4773,7 @@ function setTab(t) {
   if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
   window.scrollTo({ top: 0 });
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
