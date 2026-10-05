@@ -4860,21 +4860,36 @@ const mbIdbDo = (db, mode, fn) => new Promise((res, rej) => { try { const t = db
 function mbInit() {
   if (MBS.ready) return MBS.ready;
   MBS.ready = (async () => {
+    // 1) the site's own database: large space, not shared with the ~5 MB site storage your other github.io projects use
+    try {
+      const db = await mbIdb(); await mbIdbDo(db, 'readwrite', s => s.put(1, '__t'));
+      let v = await mbIdbDo(db, 'readonly', s => s.get(MB_KEY));
+      if (!Array.isArray(v) || !v.length) { try { const old = JSON.parse(localStorage.getItem(MB_KEY) || '[]'); if (Array.isArray(old) && old.length) { v = old; await mbIdbDo(db, 'readwrite', s => s.put(v, MB_KEY)); } } catch (e) {} }
+      MBS.db = db; MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'idb'; return;
+    } catch (e) { MBS.err.idb = mbErr(e); }
     try { const t = '__icelab_t'; localStorage.setItem(t, '1'); localStorage.removeItem(t); const v = JSON.parse(localStorage.getItem(MB_KEY) || '[]'); MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'local'; return; } catch (e) { MBS.err.local = mbErr(e); }
-    try { const db = await mbIdb(); await mbIdbDo(db, 'readwrite', s => s.put(1, '__t')); const v = await mbIdbDo(db, 'readonly', s => s.get(MB_KEY)); MBS.db = db; MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'idb'; return; } catch (e) { MBS.err.idb = mbErr(e); }
     try { const c = await caches.open('icelab-mybets'); await c.put('/__t', new Response('1')); const r = await c.match('/mybets.json'); const v = r ? await r.json() : []; MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'cache'; return; } catch (e) { MBS.err.cache = mbErr(e); }
     MBS.mode = 'memory';
   })();
   return MBS.ready;
 }
 function mbLoad() { return MBS.cache.map(b => ({ ...b })); }
+async function mbWrite(mode) {
+  const json = JSON.stringify(MBS.cache);
+  if (mode === 'idb') { if (!MBS.db) MBS.db = await mbIdb(); await mbIdbDo(MBS.db, 'readwrite', s => s.put(MBS.cache, MB_KEY)); }
+  else if (mode === 'local') localStorage.setItem(MB_KEY, json);
+  else if (mode === 'cache') { const c = await caches.open('icelab-mybets'); await c.put('/mybets.json', new Response(json, { headers: { 'Content-Type': 'application/json' } })); }
+  else throw new Error('no storage');
+}
 function mbSave(list) {
   MBS.cache = list.map(b => ({ ...b }));
-  const fail = e => { MBS.err.save = mbErr(e); alertBox('Saving failed: ' + MBS.err.save + '. Use Export backup.'); };
-  if (MBS.mode === 'local') { try { localStorage.setItem(MB_KEY, JSON.stringify(list)); } catch (e) { fail(e); } return true; }
-  if (MBS.mode === 'idb') { mbIdbDo(MBS.db, 'readwrite', s => s.put(MBS.cache, MB_KEY)).catch(fail); return true; }
-  if (MBS.mode === 'cache') { caches.open('icelab-mybets').then(c => c.put('/mybets.json', new Response(JSON.stringify(MBS.cache), { headers: { 'Content-Type': 'application/json' } }))).catch(fail); return true; }
-  if (!MBS.warned) { MBS.warned = true; alertBox('Saved for now, but this browser is blocking storage, so bets disappear when the page closes. Use Export backup.'); }
+  (async () => {
+    // try the current place first, then fall back to the others (e.g. site storage full → database)
+    const order = [MBS.mode, 'idb', 'local', 'cache'].filter((m, i, a) => m && m !== 'memory' && a.indexOf(m) === i);
+    for (const m of order) { try { await mbWrite(m); if (m !== MBS.mode) MBS.mode = m; return; } catch (e) { MBS.err[m] = mbErr(e); } }
+    MBS.mode = 'memory';
+    if (!MBS.warned) { MBS.warned = true; alertBox('This browser won\'t let the site save, so bets disappear when the page closes. Use Export backup.'); }
+  })();
   return true;
 }
 async function mbDiag() {
