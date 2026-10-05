@@ -4591,7 +4591,7 @@ function renderQuads() {
    how much the opponent lets teams shoot from there × how dangerous his shots there are × how the opposing
    goalie does on shots from there, all pulled toward league averages when samples are small, then times his
    overall finishing skill. A single calibration constant makes the totals match real goals. */
-const GS = { date: null, game: '', team: '', cache: null };
+const GS = { date: null, game: '', team: '', q: '', cache: null };
 function gsState(games) {
   const P = {}, Gk = {}, D = {}, L = { posA: { F: [0, 0, 0, 0], D: [0, 0, 0, 0] }, posX: { F: [0, 0, 0, 0], D: [0, 0, 0, 0] }, posT: { F: 0, D: 0 }, zGa: [0, 0, 0, 0], zXg: [0, 0, 0, 0], allow: [0, 0, 0, 0], teamGames: 0 };
   const pl = (id, g) => P[id] || (P[id] = { id, n: g.nm[id] || 'Unknown', tm: null, pos: 'F', gp: 0, toi: 0, rec: [], att: [0, 0, 0, 0], xg: [0, 0, 0, 0], g: 0, ixg: 0, last: null });
@@ -4759,7 +4759,7 @@ async function renderScorers() {
   const dkCard = !PF ? `<div class="note">DraftKings odds aren't set up yet (no props.json found). Once the GitHub job runs with your API key, prices and edges show up here.</div>`
     : !withDk.length ? `<div class="note">${esc(dkAge)}. No DraftKings goal scorer prices matched these games yet. They're usually posted the day of the game; the job updates about 11 AM and 5 PM Eastern.</div>`
     : `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Biggest edges tonight</h3><p>${esc(dkAge)}</p></div>
-      ${best.length ? `<div class="edges">${best.map(r => `<div class="edge"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)}${r.gl ? ' · ' + esc(r.gl.n) : ''}</div><div class="eg"><span>DK <b>${fmtML(r.dk)}</b></span><span>Fair <b>${fairAmerican(r.p)}</b></span></div><div class="eg"><span>Ice Lab <b>${pct1(r.p)}%</b></span><span>DK ${pct1(r.dkImp)}%</span></div><div class="eg"><b style="color:var(--good)">+${(r.edgeP * 100).toFixed(1)} pts</b>${moneyCell(r.ev)}</div><button class="btn sm mybet" data-mybet="${r.idx}" data-key="${esc(r.gid + '|' + r.pid)}">＋ Bet</button></div>`).join('')}</div>` : '<p class="muted" style="margin:0">No positive edges right now: DraftKings\' prices are at or above Ice Lab\'s chances for everyone.</p>'}
+      ${best.length ? `<div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)}${r.gl ? ' · ' + esc(r.gl.n) : ''}</div><div class="eg"><span>DK <b>${fmtML(r.dk)}</b></span><span>Fair <b>${fairAmerican(r.p)}</b></span></div><div class="eg"><span>Ice Lab <b>${pct1(r.p)}%</b></span><span>DK ${pct1(r.dkImp)}%</span></div><div class="eg"><b style="color:var(--good)">+${(r.edgeP * 100).toFixed(1)} pts</b>${moneyCell(r.ev)}</div><button class="btn sm mybet" data-mybet="${r.idx}" data-key="${esc(r.gid + '|' + r.pid)}">＋ Bet</button></div>`).join('')}</div>` : '<p class="muted" style="margin:0">No positive edges right now: DraftKings\' prices are at or above Ice Lab\'s chances for everyone.</p>'}
       <p class="muted" style="font-size:12px;margin:8px 0 0">Ranked by expected return on the amount risked, using your bet sizes. Expected profit assumes Ice Lab's chance is right, which is the big if. Edges on players with few games or an unconfirmed goalie are shakier.</p></div>`;
   const btCard = bt ? `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Report card</h3><p>Tested on ${bt.n.toLocaleString()} player-games it never saw (${new Date(bt.from).toLocaleDateString()} – ${new Date(bt.to).toLocaleDateString()})</p></div>
       <div class="tiles" style="margin-bottom:10px"><div class="tile"><div class="k">Predicted scorers</div><div class="v num">${f0(bt.expected)}</div><div class="s">vs. ${bt.actual} who actually scored</div></div>
@@ -4769,15 +4769,19 @@ async function renderScorers() {
   body.innerHTML = `<div class="bar"><h2 class="grow">Goal scorer odds</h2>
       <div class="ctl"><label>Date</label><input type="date" id="gsDate" value="${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}"></div>
       <div class="ctl"><label>Game</label><select id="gsGame"><option value="">All games</option>${gameOpts}</select></div>
-      <div class="ctl"><label>Team</label><select id="gsTeam"><option value="">All</option>${teamsTonight.map(t => `<option value="${t}" ${t === GS.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div></div>
+      <div class="ctl"><label>Team</label><select id="gsTeam"><option value="">All</option>${teamsTonight.map(t => `<option value="${t}" ${t === GS.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>
+      <div class="ctl"><label>Player</label><input id="gsQ" type="search" placeholder="Search a name" value="${esc(GS.q)}" autocomplete="off"></div></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores tonight, built zone by zone from where he shoots, how dangerous those shots are, his finishing, how much the opponent gives up in those areas, and how the opposing goalie handles shots from there. Hover a chance for the breakdown. Lineups come from RotoGrinders when posted (otherwise each team's last game); goalies are the confirmed or probable starter when ESPN lists one. Uses the analytics range above; <b>Full season</b> gives the best samples.</p>
-    ${dkCard}${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${pickTrackerCard(PK)}${btCard}
+    ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${pickTrackerCard(PK)}${btCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For fun and analysis, not betting advice.</p>`;
   RERENDER.gs = renderScorers;
   $('#gsDate').onchange = e => { GS.date = e.target.value.replace(/-/g, ''); GS.game = ''; GS.team = ''; renderScorers(); };
   $('#gsGame').onchange = e => { GS.game = e.target.value; renderScorers(); };
   $('#gsTeam').onchange = e => { GS.team = e.target.value; renderScorers(); };
   mbMarkButtons();
+  // live name search (no reload): hides non-matching rows and edge cards
+  const applyQ = () => { const q = normName(GS.q); let shown = 0; $$('#gsBody2 [data-pname]').forEach(el => { const on = !q || el.dataset.pname.includes(q); el.style.display = on ? '' : 'none'; if (on && el.tagName === 'TR') shown++; }); const nm = $('#gsNoMatch'); if (nm) nm.hidden = !(q && !shown); };
+  const qi = $('#gsQ'); if (qi) { qi.oninput = () => { GS.q = qi.value; applyQ(); }; applyQ(); }
   const ks = $('#pkStrat'); if (ks) ks.onchange = () => { PKF.strat = ks.value; PKF.all = false; renderScorers(); };
   const ka = $('#pkAll'); if (ka) ka.onclick = () => { PKF.all = !PKF.all; renderScorers(); };
 }
