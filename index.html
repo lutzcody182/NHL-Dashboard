@@ -437,6 +437,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
 .mbact{display:flex;gap:6px;align-items:center}.mbact select{font:inherit;font-size:12px;padding:3px 6px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;z-index:1100;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 @media (max-width:520px){.mbgrid{grid-template-columns:1fr}}
+.gstat{font-size:11px;margin-top:2px}.gs-ok{color:var(--good);font-weight:700}.gs-maybe{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -4698,9 +4699,10 @@ function gsRoster(S, LF, gLike, tid) {
   return { ids: Object.values(S.P).filter(p => p.tm === tid && p.last === last).map(p => p.id), src: 'their last game' };
 }
 function gsGoalie(S, probs, LF, gLike, tid) {
-  if (probs[tid] && probs[tid].id && S.Gk[probs[tid].id]) return { id: probs[tid].id, n: probs[tid].n, st: probs[tid].st };
+  // the confirmed/probable starter ESPN lists always wins, even if he has no games in the loaded range (then he's treated as league average)
+  if (probs[tid] && (probs[tid].id || probs[tid].n)) { const id = probs[tid].id || (Object.values(S.Gk).find(q => normName(q.n) === normName(probs[tid].n)) || {}).id || null; return { id, n: probs[tid].n, st: probs[tid].st || 'Probable', noData: !(id && S.Gk[id]) }; }
   const lf = linesFor(LF, gLike, tid);
-  if (lf && lf.goalie) { const hit = Object.values(S.Gk).find(q => normName(q.n) === normName(lf.goalie)); if (hit) return { id: hit.id, n: hit.n, st: 'Projected by RotoGrinders' }; }
+  if (lf && lf.goalie) { const hit = Object.values(S.Gk).find(q => normName(q.n) === normName(lf.goalie)); return hit ? { id: hit.id, n: hit.n, st: 'Projected by RotoGrinders' } : { id: null, n: lf.goalie, st: 'Projected by RotoGrinders', noData: true }; }
   const d = S.D[tid]; if (d && d.lastG && S.Gk[d.lastG]) return { id: d.lastG, n: S.Gk[d.lastG].n, st: 'Last starter (not announced)' };
   return null;
 }
@@ -4738,7 +4740,7 @@ async function renderScorers() {
   const gameOpts = evs.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); return `<option value="${e.id}" ${String(e.id) === GS.game ? 'selected' : ''}>${esc(a.team.abbreviation)} @ ${esc(h.team.abbreviation)}</option>`; }).join('');
   const cols = [
     { k: 'n', h: 'Player', l: 1, v: r => r.n, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}${plink(r.pid, v)} <span class="muted">${esc(r.pos)}</span></div>` },
-    { k: 'opp', h: 'Vs. goalie', l: 1, v: r => r.gl ? r.gl.n : '', f: (v, r) => `<div class="tcell">${logoImg(r.opp, 16)}${r.gl ? esc(r.gl.n) : '<span class="muted">unknown</span>'}${r.gl && !/confirm/i.test(r.gl.st || '') ? ' <span class="muted" style="font-size:11px">(not confirmed)</span>' : ''}</div>` },
+    { k: 'opp', h: 'Vs. goalie', l: 1, v: r => r.gl ? r.gl.n : '', f: (v, r) => `<div class="tcell">${logoImg(r.opp, 16)}${r.gl ? esc(r.gl.n) : '<span class="muted">unknown</span>'}</div>${r.gl ? `<div class="gstat">${/confirm/i.test(r.gl.st || '') ? '<span class="gs-ok">✓ Confirmed</span>' : /rotogrinders/i.test(r.gl.st || '') ? '<span class="gs-maybe">Projected</span>' : /last starter/i.test(r.gl.st || '') ? '<span class="gs-maybe">Not announced: last starter</span>' : `<span class="gs-maybe">${esc(r.gl.st || 'Probable')}</span>`}${r.gl.noData ? ' <span class="muted" data-tip="No games for this goalie in the loaded range, so he\'s treated as a league-average goalie.">· no data</span>' : ''}</div>` : ''}` },
     { k: 'p', h: 'Chance to score', v: r => r.p, f: (v, r) => `<b data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${pct1(v)}%</b>`, dir: 1, t: 'Estimated chance he scores at least one goal tonight (any situation).' },
     { k: 'fair', h: 'Fair odds', v: r => r.p, f: (v, r) => fairAmerican(r.p), t: 'The American odds that exactly match this chance, with no bookmaker margin. A sportsbook price longer than this means the model sees value.' },
     { k: 'dk', h: 'DraftKings', v: r => r.dk, f: v => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>`, t: 'DraftKings anytime goal scorer price.' },
