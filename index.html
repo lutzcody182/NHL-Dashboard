@@ -423,6 +423,8 @@ ol.story{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:8px}ol.story
 ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}ol.gsteps li{display:flex;align-items:center;gap:6px}.gn{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;color:#fff;font-size:11px;font-weight:700}
 .duelbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--surface-2)}.duelbar i:first-child{background:var(--accent)}.duelbar i:last-child{background:color-mix(in srgb,var(--neg) 55%,var(--surface-2))}
 .uplist{display:grid;gap:6px;margin-top:12px}.uprow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;text-align:left;font:inherit;color:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer}.uprow:hover{border-color:var(--accent)}
+ol.plist{list-style:none;margin:0;padding:0;display:grid;gap:6px}ol.plist li{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:8px;background:var(--surface-2)}
+.pstrip{display:flex;gap:3px}.pstrip i{width:11px;height:11px;border-radius:3px;background:var(--surface-2);border:1px solid var(--border)}.pstrip i.hit{background:var(--good);border-color:var(--good)}
 </style>
 </head>
 <body>
@@ -443,6 +445,7 @@ ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;g
       <button data-tab="teams" data-g="teams">Team Analytics</button>
       <button data-tab="special" data-g="teams">Special Teams</button>
       <button data-tab="splits" data-g="teams">Splits</button>
+      <button data-tab="periods" data-g="teams">Periods</button>
       <button data-tab="clutch" data-g="teams">Clutch</button>
       <button data-tab="sos" data-g="teams">Schedule Strength</button>
       <button data-tab="travel" data-g="teams">Travel</button>
@@ -451,6 +454,7 @@ ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;g
       <button data-tab="rookies" data-g="players">Rookies</button>
       <button data-tab="streaks" data-g="players">Streaks</button>
       <button data-tab="faceoffs" data-g="players">Faceoffs</button>
+      <button data-tab="props" data-g="players">Player Props</button>
       <button data-tab="compare" data-g="players">Compare</button>
       <button data-tab="birth" data-g="players">Birthplaces</button>
       <button data-tab="luck" data-g="league">Luck Watch</button>
@@ -494,6 +498,8 @@ ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;g
   <section class="tab" id="tab-sos"><div class="abar"></div><div id="sosBody"></div></section>
   <section class="tab" id="tab-travel"><div class="abar"></div><div id="trBody"></div></section>
   <section class="tab" id="tab-streaks"><div class="abar"></div><div id="skrBody"></div></section>
+  <section class="tab" id="tab-props"><div class="abar"></div><div id="prBody"></div></section>
+  <section class="tab" id="tab-periods"><div class="abar"></div><div id="pdBody"></div></section>
   <section class="tab" id="tab-faceoffs"><div class="abar"></div><div id="foBody"></div></section>
   <section class="tab" id="tab-bets"><div class="abar"></div><div id="btBody"></div></section>
   <section class="tab" id="tab-upsets"><div class="abar"></div><div id="upBody"></div></section>
@@ -1377,7 +1383,7 @@ async function ensureData(force) {
   const tok = ++A.token; A.loading = true; invalidate();
   const cancelled = () => tok !== A.token;
   renderAbar();
-  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody'];
+  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody', 'prBody', 'pdBody'];
   bodyIds.forEach(b => { $('#' + b).innerHTML = `<div class="empty"><div class="spinner"></div>Crunching play-by-play… the first load of a big range can take a minute. It's much faster after that.</div>`; });
   try {
     const cal = await seasonCalendar(A.season); if (cancelled()) return;
@@ -3669,7 +3675,7 @@ const betRes = (st, r) => r === 'W' ? st.win : r === 'L' ? -st.risk : 0; // r: W
 const favSide = (a, b) => a <= b; // lower price = favorite (an even line counts both sides as favorites)
 const money = v => (v < 0 ? '−$' : v > 0 ? '+$' : '$') + (Math.round(Math.abs(v) * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: Math.abs(v) % 1 > .004 && Math.abs(v) < 1e4 ? 2 : 0, maximumFractionDigits: 2 });
 const moneyCell = v => `<b style="color:${v > 0 ? 'var(--good)' : v < 0 ? 'var(--neg)' : 'inherit'}">${money(v)}</b>`;
-const BT = { team: '', all: false, cteam: '' };
+const BT = { team: '', all: false, cteam: '', steam: '' };
 function betGames() {
   return A.filtered.filter(g => g.final && (g.ml || g.tot)).map(g => {
     const hs = g.home.score, as = g.away.score, hw = hs > as, tot = hs + as;
@@ -3756,12 +3762,190 @@ function renderBets() {
     ${log.length > 40 ? `<div style="margin-top:10px"><button class="btn" id="btAll">${BT.all ? 'Show fewer' : `Show all ${log.length} games`}</button></div>` : ''}</div>`;
   body.innerHTML = `<div class="bar"><h2 class="grow">Bet tracker</h2></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Minus prices: bet enough to win $100 (−120 means $120 to win $100). Plus prices: bet $100 (+130 wins $130). In each game the lower price is the favorite and the other side is the underdog, so at −115 / −105 the −115 team is the favorite ($115 to win $100) and the −105 team is the underdog ($105 to win $100). Over/under bets use the same rule with their own prices (−110 assumed when ESPN doesn't list one). Moneylines include overtime and shootouts; totals count the shootout winner's extra goal, and a total that lands exactly on the line is a push. Lines are ESPN's listed odds (${esc(G.find(x => x.g.bookN) ? G.find(x => x.g.bookN).g.bookN : 'its default sportsbook')}).</p>
-    ${tiles}${chart}${teamCard}${logCard}
+    ${tiles}${chart}${situationsCard(G)}${teamCard}${logCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For tracking and fun only, not betting advice.</p>`;
   RERENDER.btT = renderBets;
+  const ss = $('#btSTeam'); if (ss) ss.onchange = () => { BT.steam = ss.value; renderBets(); };
   const cs = $('#btCTeam'); if (cs) cs.onchange = () => { BT.cteam = cs.value; renderBets(); };
   const sel = $('#btTeam'); if (sel) sel.onchange = () => { BT.team = sel.value; BT.all = false; renderBets(); };
   const all = $('#btAll'); if (all) all.onclick = () => { BT.all = !BT.all; renderBets(); };
+}
+
+/* ---- schedule context per team-game: rest, previous result, road streak (from loaded games) ---- */
+function schedCtx() {
+  if (A.memo.sched) return A.memo.sched;
+  const by = {}, out = {};
+  for (const g of A.filtered) if (g.final) for (const tm of [g.home.id, g.away.id]) (by[tm] = by[tm] || []).push(g);
+  for (const [tm, list] of Object.entries(by)) {
+    list.sort((a, b) => new Date(a.date) - new Date(b.date));
+    let road = 0;
+    list.forEach((g, i) => {
+      const home = g.home.id === tm, prev = list[i - 1];
+      road = home ? 0 : road + 1;
+      const rest = prev ? Math.round((new Date(g.date) - new Date(prev.date)) / 864e5) : null;
+      const prevW = prev ? (prev.home.id === tm ? prev.home.score > prev.away.score : prev.away.score > prev.home.score) : null;
+      out[g.id + '|' + tm] = { rest, prevW, road };
+    });
+  }
+  return (A.memo.sched = out);
+}
+const SITS = [
+  ['all', 'Every bet', () => true],
+  ['home', 'Home', c => c.home], ['road', 'Road', c => !c.home],
+  ['fav', 'Favorite', c => c.fav], ['dog', 'Underdog', c => !c.fav],
+  ['bigfav', 'Big favorite (−200 or shorter)', c => c.odds <= -200], ['homedog', 'Home underdog', c => c.home && !c.fav], ['roadfav', 'Road favorite', c => !c.home && c.fav],
+  ['b2b', 'On a back-to-back', c => c.rest === 1], ['oppb2b', 'Opponent on a back-to-back', c => c.oRest === 1 && c.rest !== 1],
+  ['restadv', 'More rest than opponent', c => c.rest != null && c.oRest != null && c.rest > c.oRest], ['rested', '3+ days of rest', c => c.rest >= 3],
+  ['afterW', 'After a win', c => c.prevW === true], ['afterL', 'After a loss', c => c.prevW === false],
+  ['roadtrip', '3rd+ straight road game', c => c.road >= 3]];
+function situationsCard(G) {
+  const sc = schedCtx(), rows = {};
+  SITS.forEach(([k]) => rows[k] = { n: 0, w: 0, p: 0, r: 0, tn: 0, ow: 0, ul: 0, op: 0, up: 0 });
+  for (const x of G) for (const side of ['h', 'a']) {
+    const id = side === 'h' ? x.h : x.a, opp = side === 'h' ? x.a : x.h;
+    if (BT.steam && id !== BT.steam) continue;
+    const me = sc[x.id + '|' + id] || {}, op = sc[x.id + '|' + opp] || {};
+    const hasMl = x.mlH != null;
+    const c = { home: side === 'h', fav: hasMl ? (side === 'h' ? x.mlH <= x.mlA : x.mlA < x.mlH) : false, odds: hasMl ? (side === 'h' ? x.mlH : x.mlA) : NaN, rest: me.rest, oRest: op.rest, prevW: me.prevW, road: me.road || 0 };
+    for (const [k, , test] of SITS) {
+      if (!hasMl && ['fav', 'dog', 'bigfav', 'homedog', 'roadfav'].includes(k)) continue;
+      if (!test(c)) continue;
+      const r = rows[k];
+      if (hasMl) { const pl = side === 'h' ? x.pH : x.pA, st = side === 'h' ? x.sH : x.sA; r.n++; if (pl > 0) r.w++; r.p += pl; r.r += st.risk; }
+      if (x.tr) { r.tn++; if (x.tr === 'O') r.ow++; else if (x.tr === 'U') r.ul++; r.op += x.pO; r.up += x.pU; }
+    }
+  }
+  const pctTxt = v => fin(v) ? (v > 0 ? '+' : '') + pct1(v) + '%' : '–';
+  const body = SITS.map(([k, l]) => { const r = rows[k]; if (!r.n && !r.tn) return ''; const roi = div(r.p, r.r);
+    return `<tr${k === 'all' ? ' style="font-weight:700"' : ''}><td class="l">${l}</td><td>${r.n ? `${r.w}-${r.n - r.w}` : '–'}</td><td>${r.n ? moneyCell(r.p) : '–'}</td><td><span class="heat" style="${fin(roi) && r.n >= 5 ? `background:color-mix(in srgb,var(${roi > 0 ? '--pos' : '--neg'}) ${Math.min(60, Math.round(Math.abs(roi) * 200))}%,transparent)` : ''}">${pctTxt(roi)}</span></td><td>${r.tn ? `${r.ow}-${r.ul}${r.tn - r.ow - r.ul ? '-' + (r.tn - r.ow - r.ul) : ''}` : '–'}</td><td>${r.tn ? moneyCell(r.op) : '–'}</td><td>${r.tn ? moneyCell(r.up) : '–'}</td></tr>`; }).join('');
+  const teams = [...new Set(G.flatMap(x => [x.h, x.a]))].sort((a, b) => (TM(a).abbr || '').localeCompare(TM(b).abbr || ''));
+  const sel = `<select id="btSTeam" aria-label="Situations for a team"><option value="">All teams</option>${teams.map(id => `<option value="${id}" ${id === BT.steam ? 'selected' : ''}>${esc(TM(id).name || TM(id).abbr)}</option>`).join('')}</select>`;
+  return `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Situational splits</h3>${sel}</div>
+    <p class="muted" style="margin:-4px 0 8px;font-size:12px">${BT.steam ? `Betting ${esc(TM(BT.steam).name || TM(BT.steam).abbr)} in each situation` : 'Betting every team in each situation (each game counts once per team)'} · ROI shaded once there are 5+ bets</p>
+    <div class="twrap"><table><thead><tr><th class="l">Situation</th><th data-gloss="Moneyline wins and losses in this situation.">ML record</th><th data-gloss="Moneyline profit using your bet sizes.">ML profit</th><th data-gloss="Moneyline profit divided by the amount risked.">ML ROI</th><th data-gloss="How often the game went over the total, then under, then pushes.">Over-Under</th><th data-gloss="Profit from betting the over in these games.">Over profit</th><th data-gloss="Profit from betting the under in these games.">Under profit</th></tr></thead><tbody>${body}</tbody></table></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Rest and streaks come from the games loaded in the range above, so pick <b>Full season</b> for complete back-to-back and road-trip info.</p></div>`;
+}
+
+/* ============================== PLAYER PROPS ============================== */
+const PROPS = [
+  ['p05', 'Points 0.5+', 'pts', .5], ['p15', 'Points 1.5+', 'pts', 1.5], ['g05', 'Goals 0.5+', 'g', .5], ['a05', 'Assists 0.5+', 'a', .5],
+  ['s15', 'Shots on goal 1.5+', 'sog', 1.5], ['s25', 'Shots on goal 2.5+', 'sog', 2.5], ['s35', 'Shots on goal 3.5+', 'sog', 3.5], ['s45', 'Shots on goal 4.5+', 'sog', 4.5],
+  ['h15', 'Hits 1.5+', 'ht', 1.5], ['h25', 'Hits 2.5+', 'ht', 2.5], ['b15', 'Blocked shots 1.5+', 'bs', 1.5],
+  ['sv225', 'Goalie saves 22.5+', 'sv', 22.5, 1], ['sv255', 'Goalie saves 25.5+', 'sv', 25.5, 1], ['sv285', 'Goalie saves 28.5+', 'sv', 28.5, 1]];
+const PRP = { prop: 'p05', team: '', minGp: 5, q: '' };
+function renderProps() {
+  const body = $('#prBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const [pk, pl, stat, line, isG] = PROPS.find(p => p[0] === PRP.prop) || PROPS[0];
+  const logs = {};
+  for (const g of [...A.filtered].sort((a, b) => new Date(a.date) - new Date(b.date))) {
+    const src = isG ? g.gk : g.sk;
+    for (const [id, p] of Object.entries(src || {})) {
+      if (!(p.toi > 0) || (isG && p.toi < 2400)) continue;
+      const v = stat === 'pts' ? p.g + p.a : p[stat]; if (!fin(v)) continue;
+      const o = logs[id] || (logs[id] = { id, n: p.n, tm: p.tm, pos: p.pos || 'G', vals: [] }); o.tm = p.tm; o.vals.push({ v, date: g.date, gid: g.id, opp: p.tm === g.home.id ? g.away.id : g.home.id });
+    }
+  }
+  const rows = Object.values(logs).map(o => {
+    const hits = o.vals.map(x => x.v > line), n = hits.length, last = (k) => hits.slice(-k);
+    let streak = 0; const lastHit = hits[n - 1]; for (let i = n - 1; i >= 0 && hits[i] === lastHit; i--) streak++;
+    const l10 = last(10), l5 = last(5);
+    return { ...o, gp: n, avg: o.vals.reduce((s, x) => s + x.v, 0) / n, rate: hits.filter(Boolean).length / n, l10: l10.filter(Boolean).length / l10.length, l10n: l10.length, l10h: l10.filter(Boolean).length, l5: l5.filter(Boolean).length / l5.length, l5h: l5.filter(Boolean).length, l5n: l5.length, streak: lastHit ? streak : -streak, strip: o.vals.slice(-10) };
+  });
+  const maxGp = Math.max(0, ...rows.map(r => r.gp)); if (PRP.minGp > maxGp) PRP.minGp = Math.max(1, Math.min(5, maxGp));
+  const shown = rows.filter(r => r.gp >= PRP.minGp && (!PRP.team || r.tm === PRP.team) && (!PRP.q || r.n.toLowerCase().includes(PRP.q.toLowerCase())));
+  const fmtR = v => fin(v) ? pct1(v) + '%' : '–';
+  const strip = r => `<div class="pstrip">${r.strip.map(x => `<i class="${x.v > line ? 'hit' : ''}" data-tip="${esc(`${new Date(x.date).toLocaleDateString([], { month: 'short', day: 'numeric' })} vs ${TM(x.opp).abbr}: ${x.v}`)}"></i>`).join('')}</div>`;
+  const cols = [
+    { k: 'n', h: isG ? 'Goalie' : 'Player', l: 1, v: r => r.n, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}${plink(r.id, v)} <span class="muted">${esc(isG ? '' : r.pos)}</span></div>` },
+    { k: 'gp', h: 'GP', v: r => r.gp, f: f0 },
+    { k: 'avg', h: 'Avg', v: r => r.avg, f: f2, t: `Average ${pl.replace(/ \d.*$/, '').toLowerCase()} per game in the loaded range.` },
+    { k: 'rate', h: 'Hit rate', v: r => r.rate, f: (v, r) => `<b>${fmtR(v)}</b>`, dir: 1, t: `Share of games he went over the line (${pl}).` },
+    { k: 'l10', h: 'Last 10', v: r => r.l10, f: (v, r) => `${r.l10h}/${r.l10n}`, dir: 1, t: 'Games over the line in his last 10.' },
+    { k: 'l5', h: 'Last 5', v: r => r.l5, f: (v, r) => `${r.l5h}/${r.l5n}`, dir: 1, t: 'Games over the line in his last 5.' },
+    { k: 'streak', h: 'Streak', v: r => r.streak, f: v => v > 0 ? `<b style="color:var(--good)">${v} over</b>` : `<span style="color:var(--neg)">${-v} under</span>`, t: 'Current run of games over (or under) the line.' },
+    { k: 'strip', h: 'Last 10 games', l: 1, v: r => r.l10, f: (v, r) => strip(r), t: 'Each square is a game, oldest to newest. Filled = went over the line. Hover for the number.' }];
+  const teams = Object.values(TEAMS).filter(t => rows.some(r => r.tm === t.id)).sort((a, b) => (a.abbr || '').localeCompare(b.abbr || ''));
+  const hot = [...shown].filter(r => r.l10n >= 5).sort((a, b) => b.l10 - a.l10 || b.rate - a.rate).slice(0, 5);
+  body.innerHTML = `<div class="bar"><h2 class="grow">Player props</h2>
+      <div class="ctl"><label>Prop</label><select id="prProp">${PROPS.map(p => `<option value="${p[0]}" ${p[0] === pk ? 'selected' : ''}>${p[1]}</option>`).join('')}</select></div>
+      <div class="ctl"><label>Team</label><select id="prTeam"><option value="">All</option>${teams.map(t => `<option value="${t.id}" ${t.id === PRP.team ? 'selected' : ''}>${esc(t.abbr)}</option>`).join('')}</select></div>
+      <div class="ctl"><label>Min GP</label><input id="prMin" type="number" min="1" max="${maxGp}" value="${PRP.minGp}" style="width:64px"></div>
+      <div class="ctl"><label>Search</label><input id="prQ" type="search" value="${esc(PRP.q)}" placeholder="Name"></div></div>
+    <p class="muted" style="margin:0 0 12px;font-size:13px">How often each player cleared <b>${esc(pl)}</b> in the loaded range. These are common sportsbook prop lines, not the exact line posted for each game.${isG ? ' Goalies count only games they played at least 40 minutes.' : ''}</p>
+    ${hot.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Hottest right now</h3><p>Best hit rate over the last 10 games</p></div><div class="tiles">${hot.map(r => `<div class="tile"><div class="k">${esc(TM(r.tm).abbr)}</div><div class="v" style="font-size:16px">${plink(r.id, r.n)}</div><div class="s">${r.l10h}/${r.l10n} last 10 · ${fmtR(r.rate)} season</div></div>`).join('')}</div></div>` : ''}
+    <div class="card">${table('pr', cols, shown, { sort: 'rate', heat: true })}</div>`;
+  RERENDER.pr = renderProps;
+  $('#prProp').onchange = e => { PRP.prop = e.target.value; renderProps(); };
+  $('#prTeam').onchange = e => { PRP.team = e.target.value; renderProps(); };
+  $('#prMin').onchange = e => { PRP.minGp = Math.max(1, +e.target.value || 1); renderProps(); };
+  $('#prQ').oninput = e => { PRP.q = e.target.value; clearTimeout(PRP.t); PRP.t = setTimeout(() => { renderProps(); const q = $('#prQ'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }, 250); };
+}
+
+/* ============================== PERIOD-BY-PERIOD SCORING ============================== */
+function renderPeriods() {
+  const body = $('#pdBody');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  const k = A.calib || 1, T = {}, L = { gp: 0, per: [0, 0, 0, 0], p1any: 0, firstW: 0, firstN: 0, otG: 0 };
+  const t = id => T[id] || (T[id] = { id, gp: 0, gf: [0, 0, 0, 0], ga: [0, 0, 0, 0], xf: [0, 0, 0], xa: [0, 0, 0], pw: [0, 0, 0], pl: [0, 0, 0], pt: [0, 0, 0], first: 0, firstW: 0, oppFirst: 0, oppFirstW: 0, otGp: 0, otW: 0, p1any: 0, w: 0 });
+  for (const g of A.filtered) {
+    if (!g.final) continue;
+    const H = g.home.id, Aw = g.away.id, th = t(H), ta = t(Aw); th.gp++; ta.gp++; L.gp++;
+    const goals = g.shots.filter(s => s.t === 0).sort((a, b) => a.per - b.per || a.sec - b.sec);
+    const pg = { [H]: [0, 0, 0, 0], [Aw]: [0, 0, 0, 0] };
+    for (const s of goals) { const pi = Math.min(3, s.per - 1); if (pg[s.tm]) pg[s.tm][pi]++; L.per[pi]++; }
+    for (const s of g.shots) if (s.t !== 3 && !s.en && s.per <= 3) { const pi = s.per - 1; if (s.tm === H) { th.xf[pi] += s.xg * k; ta.xa[pi] += s.xg * k; } else { ta.xf[pi] += s.xg * k; th.xa[pi] += s.xg * k; } }
+    const hw = g.home.score > g.away.score;
+    if (hw) th.w++; else ta.w++;
+    for (const [me, op, r] of [[H, Aw, th], [Aw, H, ta]]) {
+      for (let i = 0; i < 4; i++) { r.gf[i] += pg[me][i]; r.ga[i] += pg[op][i]; }
+      for (let i = 0; i < 3; i++) { if (pg[me][i] > pg[op][i]) r.pw[i]++; else if (pg[me][i] < pg[op][i]) r.pl[i]++; else r.pt[i]++; }
+      if (pg[me][0] + pg[op][0] > 0) r.p1any++;
+      if (g.ot || g.so) { r.otGp++; if ((me === H) === hw) r.otW++; }
+    }
+    if (pg[H][0] + pg[Aw][0] > 0) L.p1any++;
+    if (g.ot || g.so) L.otG++;
+    const fg = goals[0];
+    if (fg && T[fg.tm]) { const opp = fg.tm === H ? ta : th, mine = T[fg.tm]; mine.first++; opp.oppFirst++; const won = (fg.tm === H) === hw; if (won) { mine.firstW++; L.firstW++; } else opp.oppFirstW++; L.firstN++; }
+  }
+  const rows = Object.values(T).filter(r => r.gp);
+  const per = (r, i, side) => div(r[side][i], r.gp);
+  const diff = (r, i) => (r.gf[i] - r.ga[i]) / r.gp;
+  const rec = (r, i) => `${r.pw[i]}-${r.pl[i]}-${r.pt[i]}`;
+  const cols = [
+    { k: 'team', h: 'Team', l: 1, v: r => TM(r.id).abbr, f: (v, r) => `<div class="tcell">${logoImg(r.id)}<b>${esc(v)}</b></div>` },
+    { k: 'gp', h: 'GP', v: r => r.gp, f: f0 },
+    { k: 'd1', h: '1st diff', v: r => diff(r, 0), f: v => sgn2(v), dir: 1, t: 'First-period goals for minus against, per game.' },
+    { k: 'd2', h: '2nd diff', v: r => diff(r, 1), f: v => sgn2(v), dir: 1, t: 'Second-period goals for minus against, per game.' },
+    { k: 'd3', h: '3rd diff', v: r => diff(r, 2), f: v => sgn2(v), dir: 1, t: 'Third-period goals for minus against, per game (includes empty-net goals).' },
+    { k: 'gf1', h: '1st GF/G', v: r => per(r, 0, 'gf'), f: f2, dir: 1, t: 'First-period goals scored per game.' },
+    { k: 'ga1', h: '1st GA/G', v: r => per(r, 0, 'ga'), f: f2, dir: -1, t: 'First-period goals allowed per game.' },
+    { k: 'r1', h: '1st record', v: r => div(r.pw[0], r.gp), f: (v, r) => rec(r, 0), t: 'First periods won, lost and tied.' },
+    { k: 'r3', h: '3rd record', v: r => div(r.pw[2], r.gp), f: (v, r) => rec(r, 2), t: 'Third periods won, lost and tied.' },
+    { k: 'x1', h: '1st xGF%', v: r => div(r.xf[0], r.xf[0] + r.xa[0]), f: pct1, dir: 1, t: 'Share of first-period expected goals: who controls the start of games.' },
+    { k: 'x3', h: '3rd xGF%', v: r => div(r.xf[2], r.xf[2] + r.xa[2]), f: pct1, dir: 1, t: 'Share of third-period expected goals (score effects apply: teams protecting leads tend to give up chances).' },
+    { k: 'fs', h: 'Scores first', v: r => div(r.first, r.gp), f: pct1, dir: 1, t: 'Share of games this team scored the first goal.' },
+    { k: 'fw', h: 'Win % scoring first', v: r => div(r.firstW, r.first), f: (v, r) => r.first ? `${pct1(v)}% <span class="muted">(${r.firstW}-${r.first - r.firstW})</span>` : '–', dir: 1, t: 'Win rate in games they scored first.' },
+    { k: 'cw', h: 'Win % allowing first', v: r => div(r.oppFirstW, r.oppFirst), f: (v, r) => r.oppFirst ? `${pct1(v)}% <span class="muted">(${r.oppFirstW}-${r.oppFirst - r.oppFirstW})</span>` : '–', dir: 1, t: 'Win rate in games the opponent scored first: a comeback measure.' },
+    { k: 'p1', h: '1st-period goal %', v: r => div(r.p1any, r.gp), f: pct1, t: 'Share of this team\'s games with at least one goal in the first period (either team).' },
+    { k: 'ot', h: 'OT/SO record', v: r => div(r.otW, r.otGp), f: (v, r) => r.otGp ? `${r.otW}-${r.otGp - r.otW}` : '–', t: 'Record in games decided in overtime or a shootout.' }];
+  const top = (fn, n = 5) => [...rows].sort((a, b) => fn(b) - fn(a)).slice(0, n);
+  const lst = (arr, fn) => `<ol class="plist">${arr.map(r => `<li><span class="tcell">${logoImg(r.id, 18)}<b>${esc(TM(r.id).abbr)}</b></span><span class="num">${fn(r)}</span></li>`).join('')}</ol>`;
+  const g = L.gp || 1, gpg = L.per.map(v => v / g);
+  const mx = Math.max(...gpg, .1);
+  const bars = ['1st', '2nd', '3rd', 'OT'].map((l, i) => `<div class="hbar"><span>${l}</span><div class="hb"><i style="width:${gpg[i] / mx * 100}%"></i></div><span class="num">${f2(gpg[i])}</span></div>`).join('');
+  body.innerHTML = `<div class="bar"><h2 class="grow">Period-by-period scoring</h2></div>
+    <div class="tiles" style="margin-bottom:14px">
+      <div class="tile"><div class="k">Goals per game</div><div class="v num">${f2(L.per.reduce((a, b) => a + b, 0) / g)}</div><div class="s">1st ${f2(gpg[0])} · 2nd ${f2(gpg[1])} · 3rd ${f2(gpg[2])}</div></div>
+      <div class="tile"><div class="k">1st-period goal</div><div class="v num">${pct1(L.p1any / g)}%</div><div class="s">of games had one (1st period over 0.5)</div></div>
+      <div class="tile"><div class="k">Scoring first wins</div><div class="v num">${pct1(div(L.firstW, L.firstN))}%</div><div class="s">${L.firstW} of ${L.firstN} games</div></div>
+      <div class="tile"><div class="k">Went to OT/SO</div><div class="v num">${pct1(L.otG / g)}%</div><div class="s">${L.otG} of ${L.gp} games</div></div></div>
+    <div class="grid g3" style="margin-bottom:14px">
+      <div class="card"><div class="card-h"><h3>Fast starters</h3><p>1st-period goal diff per game</p></div>${lst(top(r => diff(r, 0)), r => sgn2(diff(r, 0)))}</div>
+      <div class="card"><div class="card-h"><h3>Strong closers</h3><p>3rd-period goal diff per game</p></div>${lst(top(r => diff(r, 2)), r => sgn2(diff(r, 2)))}</div>
+      <div class="card"><div class="card-h"><h3>League goals by period</h3><p>Per game, both teams</p></div>${bars}</div></div>
+    <div class="card"><div class="card-h"><h3>Every team by period</h3><p>Loaded range · records are periods won-lost-tied</p></div>${table('pd', cols, rows, { sort: 'd1' })}</div>`;
+  RERENDER.pd = renderPeriods;
 }
 
 /* ============================== UPSET TRACKER ============================== */
@@ -3977,7 +4161,7 @@ markGloss(document.body);
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
 function renderActiveAnalytics() {
   const t = activeTab();
-  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets();
+  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets(); else if (t === 'props') renderProps(); else if (t === 'periods') renderPeriods();
 }
 const LASTTAB = {};
 function setTab(t) {
@@ -3989,7 +4173,7 @@ function setTab(t) {
   if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
   window.scrollTo({ top: 0 });
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
