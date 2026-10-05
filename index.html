@@ -461,6 +461,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
       <button data-tab="streaks" data-g="players">Streaks</button>
       <button data-tab="faceoffs" data-g="players">Faceoffs</button>
       <button data-tab="props" data-g="players">Player Props</button>
+      <button data-tab="scorers" data-g="players">Goal Scorers</button>
       <button data-tab="compare" data-g="players">Compare</button>
       <button data-tab="birth" data-g="players">Birthplaces</button>
       <button data-tab="quads" data-g="league">Quadrants</button>
@@ -507,6 +508,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
   <section class="tab" id="tab-streaks"><div class="abar"></div><div id="skrBody"></div></section>
   <section class="tab" id="tab-quads"><div class="abar"></div><div id="qdBody"></div></section>
   <section class="tab" id="tab-profiles"><div class="abar"></div><div id="sprBody"></div></section>
+  <section class="tab" id="tab-scorers"><div class="abar"></div><div id="gsBody2"></div></section>
   <section class="tab" id="tab-props"><div class="abar"></div><div id="prBody"></div></section>
   <section class="tab" id="tab-periods"><div class="abar"></div><div id="pdBody"></div></section>
   <section class="tab" id="tab-faceoffs"><div class="abar"></div><div id="foBody"></div></section>
@@ -1212,10 +1214,11 @@ function renderGame() {
 
   const vids = videosCard(s);
   if (pre || !g.shots.length) {
-    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="lmBody"></div><div id="gmBody"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
+    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="lmBody"></div><div id="gmBody"></div><div id="gsPrev"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
     renderLineups(s, g);
     renderMatchup(s, g);
     renderGameModelPreview(s, g);
+    renderScorerPreview(g);
     return;
   }
   const adv = gameAdv(g, GC.sit, k), a = adv[A_.id], h = adv[H_.id];
@@ -1393,7 +1396,7 @@ async function ensureData(force) {
   const tok = ++A.token; A.loading = true; invalidate();
   const cancelled = () => tok !== A.token;
   renderAbar();
-  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody', 'prBody', 'pdBody', 'sprBody', 'qdBody'];
+  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody', 'prBody', 'pdBody', 'sprBody', 'qdBody', 'gsBody2'];
   bodyIds.forEach(b => { $('#' + b).innerHTML = `<div class="empty"><div class="spinner"></div>Crunching play-by-play… the first load of a big range can take a minute. It's much faster after that.</div>`; });
   try {
     const cal = await seasonCalendar(A.season); if (cancelled()) return;
@@ -4572,6 +4575,177 @@ function renderQuads() {
   const mn = $('#qdMin'); if (mn) mn.onchange = () => { QD.minGp = Math.max(1, +mn.value || 1); renderQuads(); };
 }
 
+/* ============================== GOAL SCORER MODEL ==============================
+   Chance a skater scores in a game = 1 − e^(−λ), where λ (expected goals tonight) adds up, zone by zone
+   (inner slot, slot, wide, point): how often he shoots from there per minute × his projected minutes ×
+   how much the opponent lets teams shoot from there × how dangerous his shots there are × how the opposing
+   goalie does on shots from there, all pulled toward league averages when samples are small, then times his
+   overall finishing skill. A single calibration constant makes the totals match real goals. */
+const GS = { date: null, game: '', team: '', cache: null };
+function gsState(games) {
+  const P = {}, Gk = {}, D = {}, L = { posA: { F: [0, 0, 0, 0], D: [0, 0, 0, 0] }, posX: { F: [0, 0, 0, 0], D: [0, 0, 0, 0] }, posT: { F: 0, D: 0 }, zGa: [0, 0, 0, 0], zXg: [0, 0, 0, 0], allow: [0, 0, 0, 0], teamGames: 0 };
+  const pl = (id, g) => P[id] || (P[id] = { id, n: g.nm[id] || 'Unknown', tm: null, pos: 'F', gp: 0, toi: 0, rec: [], att: [0, 0, 0, 0], xg: [0, 0, 0, 0], g: 0, ixg: 0, last: null });
+  const gk = id => Gk[id] || (Gk[id] = { id, ga: [0, 0, 0, 0], xga: [0, 0, 0, 0], sa: 0, tm: null, n: '', last: null, gp: 0 });
+  const dt = id => D[id] || (D[id] = { allow: [0, 0, 0, 0], gp: 0, lastG: null });
+  for (const g of games) {
+    for (const [id, p] of Object.entries(g.sk || {})) { if (!(p.toi > 0)) continue; const r = pl(id, g); r.n = p.n; r.tm = p.tm; r.pos = p.pos === 'D' ? 'D' : 'F'; r.gp++; r.toi += p.toi; r.rec.push(p.toi); if (r.rec.length > 10) r.rec.shift(); r.last = g.date; L.posT[r.pos] += p.toi; }
+    for (const [id, p] of Object.entries(g.gk || {})) { if (!(p.toi > 0)) continue; const q = gk(id); q.n = p.n; q.tm = p.tm; q.gp++; if (p.toi >= 1800) { q.last = g.date; const t = dt(p.tm); if (!t.lastG || g.date >= t.lastGd) { t.lastG = id; t.lastGd = g.date; } } }
+    for (const t of [g.home.id, g.away.id]) dt(t).gp++;
+    L.teamGames += 2;
+    for (const s of g.shots) {
+      if (s.t === 3 || s.x == null || s.en) continue;
+      const z = zoneOf(s), opp = s.tm === g.home.id ? g.away.id : g.home.id;
+      dt(opp).allow[z]++; L.allow[z]++;
+      if (s.pl && P[s.pl]) { const r = P[s.pl]; r.att[z]++; r.xg[z] += s.xg; r.ixg += s.xg; if (s.t === 0) r.g++; L.posA[r.pos][z]++; L.posX[r.pos][z] += s.xg; }
+      if (s.gl) { const q = gk(s.gl); q.xga[z] += s.xg; q.sa++; if (s.t === 0) q.ga[z]++; }
+      L.zXg[z] += s.xg; if (s.t === 0) L.zGa[z]++;
+    }
+  }
+  return { P, Gk, D, L, c: 1 };
+}
+// expected goals for one skater against a given goalie and defense
+function gsLambda(S, pid, oppId, goalieId, toiOverride) {
+  const r = S.P[pid]; if (!r || !r.gp) return null;
+  const L = S.L, pos = r.pos, hrs = r.toi / 3600, K = 2;
+  const toiExp = toiOverride || (r.rec.length ? r.rec.reduce((a, b) => a + b, 0) / r.rec.length : r.toi / r.gp);
+  const d = S.D[oppId], q = goalieId && S.Gk[goalieId];
+  const fin = clamp((r.g + 8) / (r.ixg + 8), .75, 1.35);
+  const zones = [0, 1, 2, 3].map(z => {
+    const lgRate = L.posT[pos] > 0 ? L.posA[pos][z] / (L.posT[pos] / 3600) : 0;
+    const a60 = (r.att[z] + lgRate * K) / (hrs + K);
+    const lgQ = L.posA[pos][z] ? L.posX[pos][z] / L.posA[pos][z] : .05;
+    const qz = (r.xg[z] + lgQ * 10) / (r.att[z] + 10);
+    const lgAllow = L.teamGames ? L.allow[z] / L.teamGames : 0;
+    const dz = d && d.gp && lgAllow ? Math.sqrt(((d.allow[z] + lgAllow * 5) / (d.gp + 5)) / lgAllow) : 1;
+    const Lz = L.zXg[z] ? L.zGa[z] / L.zXg[z] : 1;
+    const gz = q ? ((q.ga[z] + 8 * Lz) / (q.xga[z] + 8)) / (Lz || 1) : 1;
+    const att = a60 * toiExp / 3600 * dz;
+    return { z, att, q: qz, dz, gz, lam: att * qz * Lz * gz };
+  });
+  const lam = zones.reduce((s, x) => s + x.lam, 0) * fin * S.c;
+  const base = zones.reduce((s, x) => s + x.att / x.dz * x.q * (L.zXg[x.z] ? L.zGa[x.z] / L.zXg[x.z] : 1), 0) * fin * S.c; // same player vs average goalie & defense
+  return { lam, p: 1 - Math.exp(-lam), base, edge: base > 0 ? lam / base - 1 : 0, zones, fin, toiExp, shots: zones.reduce((s, x) => s + x.att, 0) };
+}
+const fairAmerican = p => !(p > 0 && p < 1) ? '–' : p >= .5 ? String(-Math.round(100 * p / (1 - p))) : '+' + Math.round(100 * (1 - p) / p);
+// walk-forward test on the most recent 30% of loaded games
+function gsBacktest(games) {
+  games = [...games].filter(g => g.final).sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (games.length < 40) return null;
+  const cut = Math.floor(games.length * .7), train = games.slice(0, cut), test = games.slice(cut);
+  const S = gsState(train);
+  // calibrate on the training games themselves
+  let lamSum = 0, goalSum = 0;
+  for (const g of train) for (const [id, p] of Object.entries(g.sk)) { if (!(p.toi > 0)) continue; const opp = p.tm === g.home.id ? g.away.id : g.home.id; const r = gsLambda(S, id, opp, gmStarter(g, opp), p.toi); if (r) { lamSum += r.lam; goalSum += p.g; } }
+  S.c = lamSum ? goalSum / lamSum : 1;
+  const bins = [[0, .05], [.05, .1], [.1, .15], [.15, .2], [.2, .25], [.25, .3], [.3, .4], [.4, 1.01]].map(([lo, hi]) => ({ lo, hi, n: 0, p: 0, hit: 0 }));
+  let n = 0, br = 0, brB = 0, hits = 0, pSum = 0;
+  for (const g of test) for (const [id, p] of Object.entries(g.sk)) {
+    if (!(p.toi > 0) || !S.P[id] || S.P[id].gp < 3) continue;
+    const opp = p.tm === g.home.id ? g.away.id : g.home.id, r = gsLambda(S, id, opp, gmStarter(g, opp)); if (!r) continue;
+    const y = p.g > 0 ? 1 : 0, rr = S.P[id], pb = 1 - Math.exp(-((rr.g + .12 * 5) / (rr.gp + 5)));
+    n++; br += (r.p - y) ** 2; brB += (pb - y) ** 2; hits += y; pSum += r.p;
+    const b = bins.find(b => r.p >= b.lo && r.p < b.hi); if (b) { b.n++; b.p += r.p; b.hit += y; }
+  }
+  if (!n) return null;
+  return { n, games: test.length, brier: br / n, brierBase: brB / n, actual: hits, expected: pSum, bins: bins.filter(b => b.n), c: S.c, from: test[0].date, to: test[test.length - 1].date };
+}
+function gsGetState() {
+  const key = A.loadedKey + '|' + A.filtered.length;
+  if (GS.cache && GS.cache.key === key) return GS.cache;
+  const games = [...A.filtered].filter(g => g.final).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const S = gsState(games);
+  let lamSum = 0, goalSum = 0;
+  for (const g of games) for (const [id, p] of Object.entries(g.sk)) { if (!(p.toi > 0)) continue; const opp = p.tm === g.home.id ? g.away.id : g.home.id; const r = gsLambda(S, id, opp, gmStarter(g, opp), p.toi); if (r) { lamSum += r.lam; goalSum += p.g; } }
+  S.c = lamSum ? goalSum / lamSum : 1;
+  GS.cache = { key, S, bt: gsBacktest(games) };
+  return GS.cache;
+}
+// who is dressing tonight: RotoGrinders lines if posted, else the team's last game
+function gsRoster(S, LF, gLike, tid) {
+  const lf = linesFor(LF, gLike, tid);
+  const byName = {}; Object.values(S.P).forEach(p => { if (p.tm === tid) byName[normName(p.n)] = p.id; });
+  if (lf) { const ids = lf.groups.flatMap(gr => gr.players).map(p => byName[normName(p.n)]).filter(Boolean); if (ids.length >= 8) return { ids: [...new Set(ids)], src: 'RotoGrinders lines' }; }
+  let last = null; for (const p of Object.values(S.P)) if (p.tm === tid && (!last || p.last > last)) last = p.last;
+  return { ids: Object.values(S.P).filter(p => p.tm === tid && p.last === last).map(p => p.id), src: 'their last game' };
+}
+function gsGoalie(S, probs, LF, gLike, tid) {
+  if (probs[tid] && probs[tid].id && S.Gk[probs[tid].id]) return { id: probs[tid].id, n: probs[tid].n, st: probs[tid].st };
+  const lf = linesFor(LF, gLike, tid);
+  if (lf && lf.goalie) { const hit = Object.values(S.Gk).find(q => normName(q.n) === normName(lf.goalie)); if (hit) return { id: hit.id, n: hit.n, st: 'Projected by RotoGrinders' }; }
+  const d = S.D[tid]; if (d && d.lastG && S.Gk[d.lastG]) return { id: d.lastG, n: S.Gk[d.lastG].n, st: 'Last starter (not announced)' };
+  return null;
+}
+const ZN = ['inner slot', 'slot', 'wide/sharp angle', 'point'];
+function gsWhy(r, goalieName) {
+  const lamZ = r.zones.map(z => z.lam), tot = lamZ.reduce((a, b) => a + b, 0) || 1, top = [...r.zones].sort((a, b) => b.lam - a.lam)[0];
+  const lines = r.zones.map(z => `<div class='row'><span>${ZN[z.z]}</span><b>${f1(z.att)} shots · ${pct1(z.lam / tot)}% of his chance</b></div>`).join('');
+  const gEdge = top.gz >= 1.08 ? `${esc(goalieName || 'The goalie')} has been weak on ${ZN[top.z]} shots (allows ${pct1(top.gz - 1)}% more than expected)` : top.gz <= .92 ? `${esc(goalieName || 'The goalie')} has been strong on ${ZN[top.z]} shots (${pct1(1 - top.gz)}% fewer goals than expected)` : `Goalie is about average on ${ZN[top.z]} shots`;
+  const dEdge = top.dz >= 1.06 ? `the opponent allows a lot of ${ZN[top.z]} looks` : top.dz <= .94 ? `the opponent limits ${ZN[top.z]} looks` : '';
+  return { html: `<div style='margin:4px 0'>Most of his chance comes from the <b>${ZN[top.z]}</b>.</div>${lines}<div style='margin-top:4px'>${gEdge}${dEdge ? '; ' + dEdge : ''}. Finishing skill ×${f2(r.fin)} · projected ${mmss(r.toiExp)} of ice time.</div>`, short: `${ZN[top.z]}${top.gz >= 1.08 ? ' · goalie weak there' : top.gz <= .92 ? ' · goalie strong there' : ''}` };
+}
+async function renderScorers() {
+  const body = $('#gsBody2');
+  if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
+  body.innerHTML = `<div class="empty"><div class="spinner"></div>Finding tonight's games…</div>`;
+  const { S, bt } = gsGetState();
+  // find the date: chosen, or today, or the next day with games
+  let d = GS.date || todayStr(), sb = null;
+  for (let i = 0; i < 8; i++) { try { sb = await getJSON(`${API}/scoreboard?dates=${d}`); } catch (e) { sb = null; } if (GS.date || (sb && (sb.events || []).some(e => e.competitions[0].status.type.state === 'pre'))) break; d = addDays(d, 1); }
+  if (activeTab() !== 'scorers') return;
+  const evs = ((sb && sb.events) || []);
+  const LF = await getLinesFile();
+  const rows = [];
+  for (const e of evs) {
+    const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
+    const H = String(h.team.id), Aw = String(a.team.id); addTeam(h.team); addTeam(a.team);
+    if (GS.game && GS.game !== String(e.id)) continue;
+    const gLike = { date: e.date, home: { id: H }, away: { id: Aw } }, probs = probableGoalies(e);
+    for (const [t, o] of [[H, Aw], [Aw, H]]) {
+      if (GS.team && GS.team !== t) continue;
+      const ro = gsRoster(S, LF, gLike, t), gl = gsGoalie(S, probs, LF, gLike, o);
+      for (const pid of ro.ids) { const r = gsLambda(S, pid, o, gl && gl.id); if (!r || S.P[pid].gp < 1) continue; rows.push({ pid, n: S.P[pid].n, pos: S.P[pid].pos, tm: t, opp: o, gid: String(e.id), gl, src: ro.src, ...r, why: gsWhy(r, gl && gl.n) }); }
+    }
+  }
+  const gameOpts = evs.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); return `<option value="${e.id}" ${String(e.id) === GS.game ? 'selected' : ''}>${esc(a.team.abbreviation)} @ ${esc(h.team.abbreviation)}</option>`; }).join('');
+  const cols = [
+    { k: 'n', h: 'Player', l: 1, v: r => r.n, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}${plink(r.pid, v)} <span class="muted">${esc(r.pos)}</span></div>` },
+    { k: 'opp', h: 'Vs. goalie', l: 1, v: r => r.gl ? r.gl.n : '', f: (v, r) => `<div class="tcell">${logoImg(r.opp, 16)}${r.gl ? esc(r.gl.n) : '<span class="muted">unknown</span>'}${r.gl && !/confirm/i.test(r.gl.st || '') ? ' <span class="muted" style="font-size:11px">(not confirmed)</span>' : ''}</div>` },
+    { k: 'p', h: 'Chance to score', v: r => r.p, f: (v, r) => `<b data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${pct1(v)}%</b>`, dir: 1, t: 'Estimated chance he scores at least one goal tonight (any situation).' },
+    { k: 'fair', h: 'Fair odds', v: r => r.p, f: (v, r) => fairAmerican(r.p), t: 'The American odds that exactly match this chance, with no bookmaker margin. A sportsbook price longer than this means the model sees value.' },
+    { k: 'shots', h: 'Proj. attempts', v: r => r.shots, f: f1, t: 'Projected unblocked shot attempts tonight.' },
+    { k: 'edge', h: 'Matchup edge', v: r => r.edge, f: v => `<span style="color:${v > .03 ? 'var(--good)' : v < -.03 ? 'var(--neg)' : 'inherit'}">${v >= 0 ? '+' : ''}${pct1(v)}%</span>`, dir: 1, t: 'How much tonight\'s goalie and opponent raise or lower his expected goals compared with an average goalie and defense.' },
+    { k: 'why', h: 'Where it comes from', l: 1, v: r => r.why.short, f: (v, r) => `<span class="muted" style="font-size:12.5px" data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${esc(v)}</span>` }];
+  const teamsTonight = [...new Set(rows.map(r => r.tm))];
+  const btCard = bt ? `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Report card</h3><p>Tested on ${bt.n.toLocaleString()} player-games it never saw (${new Date(bt.from).toLocaleDateString()} – ${new Date(bt.to).toLocaleDateString()})</p></div>
+      <div class="tiles" style="margin-bottom:10px"><div class="tile"><div class="k">Predicted scorers</div><div class="v num">${f0(bt.expected)}</div><div class="s">vs. ${bt.actual} who actually scored</div></div>
+      <div class="tile"><div class="k">Brier score</div><div class="v num">${bt.brier.toFixed(4)}</div><div class="s">vs. ${bt.brierBase.toFixed(4)} using only each player's goals per game (lower is better)</div></div></div>
+      <div class="twrap"><table><thead><tr><th class="l">Predicted chance</th><th>Player-games</th><th>Average predicted</th><th>Actually scored</th></tr></thead><tbody>${bt.bins.map(b => `<tr><td class="l">${Math.round(b.lo * 100)}–${b.hi > 1 ? '100' : Math.round(b.hi * 100)}%</td><td>${b.n}</td><td>${pct1(b.p / b.n)}%</td><td><b>${pct1(b.hit / b.n)}%</b></td></tr>`).join('')}</tbody></table></div>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Built from the first 70% of the loaded games and graded on the rest, using the goalie who actually started. Close "average predicted" and "actually scored" columns mean the chances are trustworthy.</p></div>` : `<p class="muted" style="margin-top:12px">The report card appears once 40+ games are loaded. Pick <b>Full season</b> above for the best results.</p>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Goal scorer odds</h2>
+      <div class="ctl"><label>Date</label><input type="date" id="gsDate" value="${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}"></div>
+      <div class="ctl"><label>Game</label><select id="gsGame"><option value="">All games</option>${gameOpts}</select></div>
+      <div class="ctl"><label>Team</label><select id="gsTeam"><option value="">All</option>${teamsTonight.map(t => `<option value="${t}" ${t === GS.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div></div>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores tonight, built zone by zone from where he shoots, how dangerous those shots are, his finishing, how much the opponent gives up in those areas, and how the opposing goalie handles shots from there. Hover a chance for the breakdown. Lineups come from RotoGrinders when posted (otherwise each team's last game); goalies are the confirmed or probable starter when ESPN lists one. Uses the analytics range above; <b>Full season</b> gives the best samples.</p>
+    ${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: 'p', heat: false })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${btCard}
+    <p class="muted" style="font-size:12px;margin:10px 0 0">For fun and analysis, not betting advice.</p>`;
+  RERENDER.gs = renderScorers;
+  $('#gsDate').onchange = e => { GS.date = e.target.value.replace(/-/g, ''); GS.game = ''; GS.team = ''; renderScorers(); };
+  $('#gsGame').onchange = e => { GS.game = e.target.value; renderScorers(); };
+  $('#gsTeam').onchange = e => { GS.team = e.target.value; renderScorers(); };
+}
+// preview card: most likely scorers in one game
+async function renderScorerPreview(g) {
+  const box = () => $('#gsPrev'); if (!box()) return;
+  if (!A.loadedKey || !A.filtered.length) { box().innerHTML = ''; return; }
+  const { S } = gsGetState();
+  let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === g.id) || null; } catch (e) {}
+  const LF = await getLinesFile(), probs = probableGoalies(ev), gLike = { date: g.date, home: { id: g.home.id }, away: { id: g.away.id } };
+  const col = (t, o) => { const ro = gsRoster(S, LF, gLike, t), gl = gsGoalie(S, probs, LF, gLike, o); const list = ro.ids.map(pid => ({ pid, r: gsLambda(S, pid, o, gl && gl.id) })).filter(x => x.r).sort((a, b) => b.r.p - a.r.p).slice(0, 5);
+    return `<div><div class="tcell" style="margin-bottom:6px">${logoImg(t, 18)}<b>${esc(TM(t).abbr)}</b> <span class="muted" style="font-size:12px">vs. ${gl ? esc(gl.n) : 'unknown goalie'}</span></div><ol class="plist">${list.map(x => `<li><span>${plink(x.pid, S.P[x.pid].n)}</span><span class="num" data-tip="${esc(`<b>${esc(S.P[x.pid].n)}</b>${gsWhy(x.r, gl && gl.n).html}`)}"><b>${pct1(x.r.p)}%</b> <span class="muted">${fairAmerican(x.r.p)}</span></span></li>`).join('') || '<li class="muted">No data yet</li>'}</ol></div>`; };
+  if (!box()) return;
+  box().innerHTML = `<div class="card"><div class="card-h"><h3>🎯 Most likely goal scorers</h3><p>Chance to score · fair odds · hover for why</p></div><div class="grid g2">${col(g.away.id, g.home.id)}${col(g.home.id, g.away.id)}</div><p class="muted" style="font-size:12px;margin:8px 0 0">Full list in <b>Players → Goal Scorers</b>.</p></div>`;
+}
+
 /* ============================== UPSET TRACKER ============================== */
 function renderUpsets() {
   const body = $('#upBody');
@@ -4785,7 +4959,7 @@ markGloss(document.body);
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
 function renderActiveAnalytics() {
   const t = activeTab();
-  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets(); else if (t === 'props') renderProps(); else if (t === 'periods') renderPeriods(); else if (t === 'profiles') renderProfiles(); else if (t === 'quads') renderQuads();
+  if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets(); else if (t === 'props') renderProps(); else if (t === 'periods') renderPeriods(); else if (t === 'profiles') renderProfiles(); else if (t === 'quads') renderQuads(); else if (t === 'scorers') renderScorers();
 }
 const LASTTAB = {};
 function setTab(t) {
@@ -4797,7 +4971,7 @@ function setTab(t) {
   if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
   window.scrollTo({ top: 0 });
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
