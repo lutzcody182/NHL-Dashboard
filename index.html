@@ -4842,16 +4842,27 @@ function pickTrackerCard(PK) {
 }
 
 /* ============================== MY BETS (personal goal scorer bet log) ==============================
-   Saved in this browser (localStorage). Export/Import moves the log between devices or backs it up. */
+   Saved in this browser (site storage, or its database if that's full or blocked). Export/Import moves the log between devices or backs it up. */
 const MB_KEY = 'icelab-mybets';
 const MB = { all: false, month: '' };
-// storage: localStorage if the browser allows it, otherwise IndexedDB, otherwise memory only (with a warning)
-const MBS = { mode: null, cache: [], ready: null };
+// storage: localStorage if the browser allows it, then its own IndexedDB database, then Cache Storage; memory only as a last resort
+const MBS = { mode: null, cache: [], ready: null, err: {} };
+const mbErr = e => (e && (e.name || '') + (e && e.message ? ': ' + e.message : '')) || String(e);
+function mbIdb() {
+  return new Promise((res, rej) => {
+    let r; try { r = indexedDB.open('icelab-mybets', 1); } catch (e) { rej(e); return; }
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error || new Error('open failed')); r.onblocked = () => rej(new Error('blocked by another tab'));
+    setTimeout(() => rej(new Error('timed out')), 4000);
+  });
+}
+const mbIdbDo = (db, mode, fn) => new Promise((res, rej) => { try { const t = db.transaction('kv', mode), q = fn(t.objectStore('kv')); t.oncomplete = () => res(q.result); t.onerror = () => rej(t.error || q.error); t.onabort = () => rej(t.error || new Error('aborted')); } catch (e) { rej(e); } });
 function mbInit() {
   if (MBS.ready) return MBS.ready;
   MBS.ready = (async () => {
-    try { const t = '__icelab_t'; localStorage.setItem(t, '1'); localStorage.removeItem(t); const v = JSON.parse(localStorage.getItem(MB_KEY) || '[]'); MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'local'; return; } catch (e) {}
-    try { await DB.set('__t', 1); if ((await DB.get('__t')) === 1) { const v = await DB.get(MB_KEY); MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'idb'; return; } } catch (e) {}
+    try { const t = '__icelab_t'; localStorage.setItem(t, '1'); localStorage.removeItem(t); const v = JSON.parse(localStorage.getItem(MB_KEY) || '[]'); MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'local'; return; } catch (e) { MBS.err.local = mbErr(e); }
+    try { const db = await mbIdb(); await mbIdbDo(db, 'readwrite', s => s.put(1, '__t')); const v = await mbIdbDo(db, 'readonly', s => s.get(MB_KEY)); MBS.db = db; MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'idb'; return; } catch (e) { MBS.err.idb = mbErr(e); }
+    try { const c = await caches.open('icelab-mybets'); await c.put('/__t', new Response('1')); const r = await c.match('/mybets.json'); const v = r ? await r.json() : []; MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'cache'; return; } catch (e) { MBS.err.cache = mbErr(e); }
     MBS.mode = 'memory';
   })();
   return MBS.ready;
@@ -4859,10 +4870,19 @@ function mbInit() {
 function mbLoad() { return MBS.cache.map(b => ({ ...b })); }
 function mbSave(list) {
   MBS.cache = list.map(b => ({ ...b }));
-  if (MBS.mode === 'local') { try { localStorage.setItem(MB_KEY, JSON.stringify(list)); return true; } catch (e) { MBS.mode = 'memory'; } }
-  else if (MBS.mode === 'idb') { DB.set(MB_KEY, MBS.cache).catch(() => {}); return true; }
+  const fail = e => { MBS.err.save = mbErr(e); alertBox('Saving failed: ' + MBS.err.save + '. Use Export backup.'); };
+  if (MBS.mode === 'local') { try { localStorage.setItem(MB_KEY, JSON.stringify(list)); } catch (e) { fail(e); } return true; }
+  if (MBS.mode === 'idb') { mbIdbDo(MBS.db, 'readwrite', s => s.put(MBS.cache, MB_KEY)).catch(fail); return true; }
+  if (MBS.mode === 'cache') { caches.open('icelab-mybets').then(c => c.put('/mybets.json', new Response(JSON.stringify(MBS.cache), { headers: { 'Content-Type': 'application/json' } }))).catch(fail); return true; }
   if (!MBS.warned) { MBS.warned = true; alertBox('Saved for now, but this browser is blocking storage, so bets disappear when the page closes. Use Export backup.'); }
   return true;
+}
+async function mbDiag() {
+  const out = [`Page: ${location.protocol}//${location.host}${location.pathname}`, `Inside another page/app: ${window.top !== window ? 'yes' : 'no'}`, `Cookies: ${navigator.cookieEnabled ? 'on' : 'off'}`];
+  for (const [k, l] of [['local', 'Site storage'], ['idb', 'Database'], ['cache', 'Cache storage'], ['save', 'Last save']]) if (MBS.err[k]) out.push(`${l}: ${MBS.err[k]}`);
+  try { const est = await navigator.storage.estimate(); out.push(`Space used: ${(est.usage / 1e6).toFixed(1)} MB of ${(est.quota / 1e6).toFixed(0)} MB`); } catch (e) {}
+  try { let n = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n += k.length + (localStorage.getItem(k) || '').length; } out.push(`Site storage in use (shared with your other github.io projects): ${(n * 2 / 1e6).toFixed(2)} MB of about 5 MB`); } catch (e) {}
+  return out;
 }
 mbInit();
 const mbToWin = (stake, odds) => odds > 0 ? stake * odds / 100 : stake * 100 / -odds;
@@ -4962,7 +4982,7 @@ async function renderMyBets() {
     <td class="l"><div class="mbact"><button class="btn sm" data-mbedit="${b.id}" title="Edit odds or amount">Edit</button><select data-mbres="${b.id}" title="Set the result yourself"><option value="">${b.res ? 'Change…' : 'Settle…'}</option><option value="W">Won</option><option value="L">Lost</option><option value="V">Void</option><option value="P">Back to pending</option></select><button class="btn sm" data-mbdel="${b.id}" title="Delete this bet">✕</button></div></td></tr>`).join('');
   body.innerHTML = `<div class="bar"><h2 class="grow">My bets</h2><button class="btn" id="mbExport">⬇ Export backup</button><label class="btn" style="cursor:pointer">⬆ Import<input type="file" id="mbImport" accept=".json,application/json" hidden></label></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Log a bet from <b>Players → Goal Scorers</b> with the <b>＋ Bet</b> button, enter the odds you got and how much you bet, and it's tracked here all season. Results settle automatically from ESPN box scores the morning after (a player who doesn't play is void, like at the sportsbook), or you can settle one yourself. ${graded ? `<b>${graded} bet${graded > 1 ? 's' : ''} just settled.</b>` : ''}</p>
-    ${MBS.mode === 'memory' ? `<div class="note" style="border-color:var(--neg)"><b>This browser is blocking storage for the site, so bets you log here are lost when the page closes.</b> This happens in private/incognito windows, when cookies and site data are blocked, or when the page is opened inside another app's preview instead of your own site. Open your GitHub Pages address in a normal browser window to save bets. Until then, use <b>Export backup</b> before closing.</div>` : `<div class="note">Your bets are saved in this browser on this device. Use <b>Export backup</b> now and then, and <b>Import</b> to move them to another computer or phone.</div>`}
+    ${MBS.mode === 'memory' ? `<div class="note" style="border-color:var(--neg)"><b>This browser is blocking storage for the site, so bets you log here are lost when the page closes.</b> <span id="mbDiag" class="muted" style="display:block;font-size:12px;margin-top:6px;white-space:pre-line"></span> This happens in private/incognito windows, when cookies and site data are blocked, or when the page is opened inside another app's preview instead of your own site. Open your GitHub Pages address in a normal browser window to save bets. Until then, use <b>Export backup</b> before closing.</div>` : `<div class="note">Your bets are saved in this browser on this device. Use <b>Export backup</b> now and then, and <b>Import</b> to move them to another computer or phone.</div>`}
     ${list.length ? `${tiles}<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Running profit</h3><p>Settled bets in date order</p></div>${chart}</div>
     <div class="grid g2" style="margin-bottom:14px"><div class="card"><div class="card-h"><h3>By month</h3></div>${moRows ? `<div class="twrap"><table><thead><tr><th class="l">Month</th><th>Record</th><th>Bet</th><th>Profit</th><th>ROI</th></tr></thead><tbody>${moRows}</tbody></table></div>` : '<p class="muted" style="margin:0">No settled bets yet.</p>'}</div>
     <div class="card"><div class="card-h"><h3>By odds</h3></div>${obRows ? `<div class="twrap"><table><thead><tr><th class="l">Odds</th><th>Record</th><th>Bet</th><th>Profit</th><th>ROI</th></tr></thead><tbody>${obRows}</tbody></table></div>` : '<p class="muted" style="margin:0">No settled bets yet.</p>'}</div></div>
@@ -4970,6 +4990,7 @@ async function renderMyBets() {
     ${all.length > 50 ? `<button class="btn" id="mbAllBtn" style="margin-top:8px">${MB.all ? 'Show fewer' : `Show all ${all.length}`}</button>` : ''}</div>`
     : `<div class="empty">No bets logged yet. Go to <b>Players → Goal Scorers</b> and tap <b>＋ Bet</b> next to a player you bet on.</div>`}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For tracking only. Please bet responsibly.</p>`;
+  if (MBS.mode === 'memory') mbDiag().then(d => { const el = $('#mbDiag'); if (el) el.textContent = 'Details to send Claude:\n' + d.join('\n'); });
   const save = fn => { const l = mbLoad(); fn(l); mbSave(l); renderMyBets(); };
   $$('[data-mbedit]').forEach(el => el.onclick = () => { const b = mbLoad().find(x => x.id === el.dataset.mbedit); if (b) mbOpenForm(b, b.id); });
   $$('[data-mbdel]').forEach(el => el.onclick = () => { const b = mbLoad().find(x => x.id === el.dataset.mbdel); if (!b) return; if (el.dataset.sure) save(l => l.splice(l.findIndex(x => x.id === b.id), 1)); else { el.dataset.sure = '1'; el.textContent = 'Delete?'; setTimeout(() => { if (document.body.contains(el)) { el.textContent = '✕'; delete el.dataset.sure; } }, 3000); } });
