@@ -3832,7 +3832,7 @@ const PROPS = [
   ['s15', 'Shots on goal 1.5+', 'sog', 1.5], ['s25', 'Shots on goal 2.5+', 'sog', 2.5], ['s35', 'Shots on goal 3.5+', 'sog', 3.5], ['s45', 'Shots on goal 4.5+', 'sog', 4.5],
   ['h15', 'Hits 1.5+', 'ht', 1.5], ['h25', 'Hits 2.5+', 'ht', 2.5], ['b15', 'Blocked shots 1.5+', 'bs', 1.5],
   ['sv225', 'Goalie saves 22.5+', 'sv', 22.5, 1], ['sv255', 'Goalie saves 25.5+', 'sv', 25.5, 1], ['sv285', 'Goalie saves 28.5+', 'sv', 28.5, 1]];
-const PRP = { prop: 'p05', team: '', minGp: 5, q: '' };
+const PRP = { prop: 'p05', team: '', minGp: null, q: '' };
 function renderProps() {
   const body = $('#prBody');
   if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
@@ -3852,7 +3852,10 @@ function renderProps() {
     const l10 = last(10), l5 = last(5);
     return { ...o, gp: n, avg: o.vals.reduce((s, x) => s + x.v, 0) / n, rate: hits.filter(Boolean).length / n, l10: l10.filter(Boolean).length / l10.length, l10n: l10.length, l10h: l10.filter(Boolean).length, l5: l5.filter(Boolean).length / l5.length, l5h: l5.filter(Boolean).length, l5n: l5.length, streak: lastHit ? streak : -streak, strip: o.vals.slice(-10) };
   });
-  const maxGp = Math.max(0, ...rows.map(r => r.gp)); if (PRP.minGp > maxGp) PRP.minGp = Math.max(1, Math.min(5, maxGp));
+  const maxGp = Math.max(0, ...rows.map(r => r.gp));
+  // default: about a third of the most games anyone has played (so early in the season every team shows up); the box overrides it
+  const autoMin = Math.max(1, Math.min(5, Math.floor(maxGp / 3)));
+  if (PRP.minGp == null || PRP.minGp > maxGp) PRP.minGp = autoMin;
   const shown = rows.filter(r => r.gp >= PRP.minGp && (!PRP.team || r.tm === PRP.team) && (!PRP.q || r.n.toLowerCase().includes(PRP.q.toLowerCase())));
   const fmtR = v => fin(v) ? pct1(v) + '%' : '–';
   const strip = r => `<div class="pstrip">${r.strip.map(x => `<i class="${x.v > line ? 'hit' : ''}" data-tip="${esc(`${new Date(x.date).toLocaleDateString([], { month: 'short', day: 'numeric' })} vs ${TM(x.opp).abbr}: ${x.v}`)}"></i>`).join('')}</div>`;
