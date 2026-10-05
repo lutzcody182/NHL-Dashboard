@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-05",
- "updated": "2026-10-05T19:09:49.552Z",
+ "updated": "2026-10-05T21:22:45.020Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -69,7 +69,7 @@
         {
          "n": "Noah Cates",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -82,8 +82,8 @@
          "pp": ""
         },
         {
-         "n": "Alex Bump",
-         "pos": "W",
+         "n": "Denver Barkey",
+         "pos": "C",
          "pp": "PP2"
         },
         {
@@ -600,17 +600,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Nikolas Matinpalo",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Tyler Kleven",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Cameron Crotty",
          "pos": "D",
          "pp": ""
         },
@@ -618,6 +608,16 @@
          "n": "Carter Yakemchuk",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Nikolas Matinpalo",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Cameron Crotty",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -849,7 +849,7 @@
          "pp": ""
         },
         {
-         "n": "Nolan Allan",
+         "n": "Sam Dickinson",
          "pos": "D",
          "pp": ""
         },
