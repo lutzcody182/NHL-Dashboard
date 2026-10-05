@@ -425,6 +425,9 @@ ol.gsteps{list-style:none;padding:0;margin:0 0 8px;display:flex;flex-wrap:wrap;g
 .uplist{display:grid;gap:6px;margin-top:12px}.uprow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;text-align:left;font:inherit;color:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer}.uprow:hover{border-color:var(--accent)}
 ol.plist{list-style:none;margin:0;padding:0;display:grid;gap:6px}ol.plist li{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:8px;background:var(--surface-2)}
 .pstrip{display:flex;gap:3px}.pstrip i{width:11px;height:11px;border-radius:3px;background:var(--surface-2);border:1px solid var(--border)}.pstrip i.hit{background:var(--good);border-color:var(--good)}
+.hcbars{display:grid;gap:4px}.hcrow{display:grid;grid-template-columns:62px 1fr 44px 120px;gap:8px;align-items:center;font-size:12px}.hcbar{position:relative;height:12px;background:var(--surface-2);border-radius:6px}.hcbar i{position:absolute;top:0;bottom:0;border-radius:6px}.hcbar b{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--text-2)}.hclab{font-size:11.5px;white-space:nowrap}
+.dpers{display:flex;align-items:center;gap:12px;margin-bottom:10px}.dico{font-size:30px}.dname{font-size:20px;font-weight:800}
+.dbrow{display:grid;grid-template-columns:62px 1fr 48px;gap:8px;align-items:center;font-size:12px;margin:4px 0}.dbar{position:relative;height:12px;background:var(--surface-2);border-radius:6px}.dbar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--accent);opacity:.8}.dbar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text)}
 </style>
 </head>
 <body>
@@ -1676,6 +1679,7 @@ function renderSkaters() {
     <div class="card">${table('sk', cols, rows, { sort: 'pts', limit: SK.limit })}
       ${rows.length > SK.limit ? `<div style="text-align:center;margin-top:10px"><button class="btn" id="skMore">Show more (${rows.length - SK.limit} left)</button></div>` : ''}
       <div class="tbl-legend"><span><i class="sw" style="background:color-mix(in srgb,var(--pos) 38%,transparent)"></i>Above average among shown players</span><span><i class="sw" style="background:color-mix(in srgb,var(--neg) 38%,transparent)"></i>Below average</span></div></div>`;
+  body.insertAdjacentHTML('beforeend', distanceLeaderCard());
   RERENDER.sk = renderSkaters;
   let tmr; $('#skQ').oninput = e => { clearTimeout(tmr); tmr = setTimeout(() => { SK.q = e.target.value; SK.limit = 50; renderSkaters(); const q = $('#skQ'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 250); };
   $('#skTeam').onchange = e => { SK.team = e.target.value; SK.limit = 50; renderSkaters(); };
@@ -2204,7 +2208,7 @@ function renderPlayer() {
           <div class="card"><div class="card-h"><h3>Ice Lab advanced stats</h3><p>${esc(rangeLbl)} · ${r.gp} GP</p></div>
             <div class="tiles" style="margin-bottom:12px"><div class="tile"><div class="k">Points</div><div class="v num">${r.g + r.a}</div><div class="s">${r.g} G · ${r.a} A</div></div><div class="tile"><div class="k">ixG</div><div class="v num">${f1(r.ixg)}</div><div class="s">${sgn1(r.g - r.ixg)} vs actual</div></div><div class="tile"><div class="k">Shooting %</div><div class="v num">${pct1(div(r.g, r.sog))}</div><div class="s">${r.sog} shots on goal</div></div></div>
             <div class="muted" style="font-size:12px;margin-bottom:4px">Percentile vs. ${peers.length} ${isD ? 'defensemen' : 'forwards'} (min ${minGp} GP)</div>${pctRows(rows)}</div>
-          ${skaterHeatCard(id, r, shots, k, isD)}</div>${chemistryCard(id)}`;
+          ${skaterHeatCard(id, r, shots, k, isD)}</div>${distanceCard(id)}${chemistryCard(id)}`;
       }
     } else {
       const r = G[id];
@@ -3075,7 +3079,7 @@ function renderSplits() {
     ${parts.map(([k, l]) => `<tr><td class="l"><b>${l}</b></td>${cell(mine[k])}</tr><tr class="lgrow"><td class="l">League</td>${cell(lg[k])}</tr>`).join('')}</tbody></table></div></div>`).join('');
   body.innerHTML = `<div class="bar"><h2 class="grow">Splits</h2><select id="spTeam" aria-label="Team">${teams.map(t => `<option value="${t}" ${t === SPL.team ? 'selected' : ''}>${esc(TM(t).name)}</option>`).join('')}</select></div>
     <div class="note">How ${esc(TM(SPL.team).name)} play in different situations. Score-state time is worked out from when goals were scored; "back-to-back" means they also played the day before (only games inside the loaded range are known).</div>
-    <div class="grid g2">${cards}</div>`;
+    <div class="grid g2">${cards}</div>${homeCookingCard()}`;
   $('#spTeam').onchange = e => { SPL.team = e.target.value; renderSplits(); };
 }
 
@@ -3335,7 +3339,7 @@ async function renderTravel() {
         <p class="muted" style="font-size:12px;margin:8px 0 0">Points % is points earned out of points available. Numbers below .500 and 50% mean teams do worse in that situation.</p></div>
       <div class="card"><div class="card-h"><h3>Season travel</h3><p>Estimated miles</p></div><div class="hbars">${bars}</div></div>
     </div>
-    <div class="card">${table('travel', cols, rows, { sort: 'tot', rowClick: 1, rowAttr: r => `data-teamopen="${r.id}"` })}</div>`;
+    <div class="card">${table('travel', cols, rows, { sort: 'tot', rowClick: 1, rowAttr: r => `data-teamopen="${r.id}"` })}</div>${tzHangoverCard(sch)}`;
   RERENDER.travel = renderTravel;
 }
 
@@ -3949,6 +3953,137 @@ function renderPeriods() {
       <div class="card"><div class="card-h"><h3>League goals by period</h3><p>Per game, both teams</p></div>${bars}</div></div>
     <div class="card"><div class="card-h"><h3>Every team by period</h3><p>Loaded range · records are periods won-lost-tied</p></div>${table('pd', cols, rows, { sort: 'd1' })}</div>`;
   RERENDER.pd = renderPeriods;
+}
+
+/* ============================== HOME COOKING INDEX ============================== */
+function homeCookingCard() {
+  const k = A.calib || 1, T = {};
+  const t = id => T[id] || (T[id] = { id, h: { gp: 0, pts: 0, xf: 0, xa: 0, gf: 0, ga: 0 }, r: { gp: 0, pts: 0, xf: 0, xa: 0, gf: 0, ga: 0 } });
+  for (const g of A.filtered) {
+    if (!g.final || g.neutral) continue;
+    let xh = 0, xa = 0; for (const s of g.shots) { if (s.t === 3 || s.en) continue; if (s.tm === g.home.id) xh += s.xg * k; else xa += s.xg * k; }
+    const hw = g.home.score > g.away.score, otl = g.ot || g.so;
+    const H = t(g.home.id).h, R = t(g.away.id).r;
+    H.gp++; R.gp++; H.pts += hw ? 2 : otl ? 1 : 0; R.pts += !hw ? 2 : otl ? 1 : 0;
+    H.xf += xh; H.xa += xa; R.xf += xa; R.xa += xh; H.gf += g.home.score; H.ga += g.away.score; R.gf += g.away.score; R.ga += g.home.score;
+  }
+  const rows = Object.values(T).filter(x => x.h.gp && x.r.gp).map(x => {
+    const hx = div(x.h.xf, x.h.xf + x.h.xa), rx = div(x.r.xf, x.r.xf + x.r.xa), hp = div(x.h.pts, 2 * x.h.gp), rp = div(x.r.pts, 2 * x.r.gp);
+    return { ...x, hx, rx, hp, rp, idx: (hx - rx) * 100, pdiff: hp - rp };
+  });
+  if (rows.length < 4) return '';
+  const lgH = div(rows.reduce((s, r) => s + r.h.xf, 0), rows.reduce((s, r) => s + r.h.xf + r.h.xa, 0));
+  const lgHp = div(rows.reduce((s, r) => s + r.h.pts, 0), rows.reduce((s, r) => s + 2 * r.h.gp, 0));
+  const sorted = [...rows].sort((a, b) => b.idx - a.idx), mx = Math.max(5, ...rows.map(r => Math.abs(r.idx)));
+  const label = r => r.idx >= 6 ? '🍲 Home cooking' : r.idx <= -4 ? '🧳 Road warriors' : Math.abs(r.idx) < 1.5 ? '⚖️ Same anywhere' : '';
+  const bars = sorted.map(r => { const w = Math.abs(r.idx) / mx * 50; return `<div class="hcrow" data-tip="${esc(`<b>${esc(TM(r.id).name)}</b><div class='row'><span>Home xGF%</span><b>${pct1(r.hx)}</b></div><div class='row'><span>Road xGF%</span><b>${pct1(r.rx)}</b></div><div class='row'><span>Home points %</span><b>${f3(r.hp)}</b></div><div class='row'><span>Road points %</span><b>${f3(r.rp)}</b></div>`)}"><span class="tcell">${logoImg(r.id, 16)}${esc(TM(r.id).abbr)}</span><div class="hcbar"><i style="${r.idx >= 0 ? `left:50%;width:${w}%;background:var(--home)` : `left:${50 - w}%;width:${w}%;background:var(--away)`}"></i><b></b></div><span class="num">${sgn1(r.idx)}</span><span class="muted hclab">${label(r)}</span></div>`; }).join('');
+  const cols = [
+    { k: 'team', h: 'Team', l: 1, v: r => TM(r.id).abbr, f: (v, r) => `<div class="tcell">${logoImg(r.id)}<b>${esc(v)}</b></div>` },
+    { k: 'idx', h: 'Home cooking index', v: r => r.idx, f: sgn1, dir: 1, t: 'Home xGF% minus road xGF%, in percentage points. How much better the team plays at home, judged by the chances it creates and allows rather than wins.' },
+    { k: 'hx', h: 'Home xGF%', v: r => r.hx, f: pct1, dir: 1 }, { k: 'rx', h: 'Road xGF%', v: r => r.rx, f: pct1, dir: 1 },
+    { k: 'hp', h: 'Home points %', v: r => r.hp, f: f3, dir: 1, t: 'Points earned out of points available at home.' }, { k: 'rp', h: 'Road points %', v: r => r.rp, f: f3, dir: 1, t: 'Points earned out of points available on the road.' },
+    { k: 'hrec', h: 'Home GF-GA', v: r => r.h.gf - r.h.ga, f: (v, r) => `${r.h.gf}-${r.h.ga}` }, { k: 'rrec', h: 'Road GF-GA', v: r => r.r.gf - r.r.ga, f: (v, r) => `${r.r.gf}-${r.r.ga}` },
+    { k: 'gp', h: 'Home / road GP', v: r => r.h.gp + r.r.gp, f: (v, r) => `${r.h.gp} / ${r.r.gp}` }];
+  RERENDER.hc = renderSplits;
+  return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>🍲 Home cooking index</h3><p>League home teams: ${pct1(lgH)}% xGF · ${f3(lgHp)} points %</p></div>
+    <p class="muted" style="margin:-4px 0 10px;font-size:12px">How much better each team plays at home than on the road, by share of expected goals. Orange = better at home, blue = better on the road. Neutral-site games are left out.</p>
+    <div class="grid g2"><div class="hcbars">${bars}</div><div>${table('hc', cols, rows, { sort: 'idx' })}</div></div></div>`;
+}
+
+/* ============================== TIME ZONE HANGOVER ============================== */
+function tzHangoverCard(sch) {
+  const k = A.calib || 1, byId = new Map(A.filtered.map(g => [g.id, g]));
+  const B = {}, T = {};
+  const b = n => B[n] || (B[n] = { gp: 0, pts: 0, xf: 0, xa: 0, w: 0 });
+  const t = id => T[id] || (T[id] = { id, hg: 0, hpts: 0, hxf: 0, hxa: 0, hw: 0, ng: 0, npts: 0, nxf: 0, nxa: 0 });
+  for (const [id, games] of Object.entries(sch)) {
+    const home = arenaOf(id); let tz = home ? home[2] : -5;
+    games.forEach(g => {
+      const dest = arenaOf(g.h) || home, dz = (dest ? dest[2] : tz) - tz; tz = dest ? dest[2] : tz;
+      const lg = byId.get(g.id); if (!lg) return;
+      const me = lg.home.id === id ? lg.home : lg.away, op = lg.home.id === id ? lg.away : lg.home;
+      let xf = 0, xa = 0; for (const s of lg.shots) { if (s.t === 3 || s.en) continue; if (s.tm === id) xf += s.xg * k; else xa += s.xg * k; }
+      const win = me.score > op.score, pts = win ? 2 : (lg.ot || lg.so) ? 1 : 0;
+      const keys = Math.abs(dz) >= 2 ? ['hang', dz > 0 ? 'east' : 'west'] : Math.abs(dz) === 1 ? ['one'] : ['none'];
+      keys.forEach(n => { const x = b(n); x.gp++; x.pts += pts; x.xf += xf; x.xa += xa; if (win) x.w++; });
+      const r = t(id);
+      if (Math.abs(dz) >= 2) { r.hg++; r.hpts += pts; r.hxf += xf; r.hxa += xa; if (win) r.hw++; } else { r.ng++; r.npts += pts; r.nxf += xf; r.nxa += xa; }
+    });
+  }
+  if (!B.hang) return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>🥱 Time zone hangover</h3></div><p class="muted" style="margin:0">No games yet in the loaded range right after a team crossed 2+ time zones.</p></div>`;
+  const row = (n, l) => { const x = B[n]; if (!x) return ''; return `<tr><td class="l">${l}</td><td>${x.gp}</td><td><b>${f3(div(x.pts, 2 * x.gp))}</b></td><td>${pct1(div(x.w, x.gp))}%</td><td>${pct1(div(x.xf, x.xf + x.xa))}</td></tr>`; };
+  const rows = Object.values(T).filter(r => r.hg).map(r => ({ ...r, hp: div(r.hpts, 2 * r.hg), np: div(r.npts, 2 * r.ng), hx: div(r.hxf, r.hxf + r.hxa), nx: div(r.nxf, r.nxf + r.nxa) })).map(r => ({ ...r, drop: r.hp - r.np, xdrop: (r.hx - r.nx) * 100 }));
+  const cols = [
+    { k: 'team', h: 'Team', l: 1, v: r => TM(r.id).abbr, f: (v, r) => `<div class="tcell">${logoImg(r.id)}<b>${esc(v)}</b></div>` },
+    { k: 'hg', h: 'Hangover games', v: r => r.hg, f: f0, t: 'Games played right after crossing 2+ time zones (including flying home from a trip).' },
+    { k: 'hrec', h: 'Record', v: r => div(r.hw, r.hg), f: (v, r) => `${r.hw}-${r.hg - r.hw}`, t: 'Wins and losses (including OT/SO losses) in hangover games.' },
+    { k: 'hp', h: 'Points %', v: r => r.hp, f: f3, dir: 1, t: 'Points % in hangover games.' },
+    { k: 'np', h: 'Other games', v: r => r.np, f: f3, t: 'Points % in all other games, for comparison.' },
+    { k: 'drop', h: 'Hangover effect', v: r => r.drop, f: v => fin(v) ? (v > 0 ? '+' : '') + f3(v) : '–', dir: 1, t: 'Points % in hangover games minus all other games. Negative = the jet lag hurts.' },
+    { k: 'xdrop', h: 'xGF% change', v: r => r.xdrop, f: sgn1, dir: 1, t: 'Expected-goals share in hangover games minus other games, in percentage points.' }];
+  RERENDER.tzh = renderTravel;
+  const all = B.none || B.one ? { gp: (B.none?.gp || 0) + (B.one?.gp || 0), pts: (B.none?.pts || 0) + (B.one?.pts || 0) } : null;
+  const eff = all ? div(B.hang.pts, 2 * B.hang.gp) - div(all.pts, 2 * all.gp) : NaN;
+  return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>🥱 Time zone hangover</h3><p>First game after crossing 2+ time zones vs. everything else</p></div>
+    <p style="margin:-2px 0 10px">League-wide, teams earn <b>${fin(eff) ? (eff >= 0 ? '+' : '') + f3(eff) : '–'}</b> points % in hangover games compared with normal games.</p>
+    <div class="grid g2"><div class="twrap"><table><thead><tr><th class="l">Situation</th><th>Games</th><th>Points %</th><th>Win %</th><th>xGF%</th></tr></thead><tbody>
+      ${row('none', 'Same time zone')}${row('one', 'Crossed 1 time zone')}${row('hang', 'Crossed 2+ time zones')}${row('east', '↳ Flew east 2+')}${row('west', '↳ Flew west 2+')}</tbody></table>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Flying east is usually tougher on the body clock. Includes home games right after a long trip back.</p></div>
+      <div>${table('tzh', cols, rows, { sort: 'drop' })}</div></div></div>`;
+}
+
+/* ============================== SHOT DISTANCE PERSONALITY ============================== */
+const DIST_BANDS = [[0, 10], [10, 20], [20, 30], [30, 40], [40, 50], [50, 65]];
+function distProfiles() {
+  if (A.memo.dist) return A.memo.dist;
+  const P = {}, lg = { F: { n: 0, sum: 0, b: DIST_BANDS.map(() => 0) }, D: { n: 0, sum: 0, b: DIST_BANDS.map(() => 0) } };
+  const { P: AP } = aggregate();
+  for (const g of A.filtered) for (const s of g.shots) {
+    if (!s.pl || s.t === 3 || s.d == null || s.d > 100) continue;
+    const pos = AP[s.pl] && AP[s.pl].pos === 'D' ? 'D' : 'F';
+    const o = P[s.pl] || (P[s.pl] = { id: s.pl, n: 0, sum: 0, b: DIST_BANDS.map(() => 0), g: 0, gsum: 0, pos, nm: g.nm[s.pl], tm: s.tm });
+    const bi = Math.min(DIST_BANDS.length - 1, DIST_BANDS.findIndex(([a, c]) => s.d >= a && s.d < c) >= 0 ? DIST_BANDS.findIndex(([a, c]) => s.d >= a && s.d < c) : DIST_BANDS.length - 1);
+    o.n++; o.sum += s.d; o.b[bi]++; if (s.t === 0) { o.g++; o.gsum += s.d; } o.tm = s.tm;
+    const L = lg[pos]; L.n++; L.sum += s.d; L.b[bi]++;
+  }
+  return (A.memo.dist = { P, lg });
+}
+function distPersona(id) {
+  const { P } = distProfiles(), me = P[id]; if (!me || me.n < 10) return null;
+  const peers = Object.values(P).filter(p => p.pos === me.pos && p.n >= 20).map(p => p.sum / p.n);
+  const avg = me.sum / me.n, pc = pctRank(avg, peers);
+  const persona = !fin(pc) ? ['🎯', 'Mixed range'] : pc <= .1 ? ['🥅', 'Crease crasher'] : pc <= .3 ? ['🔪', 'Slot dweller'] : pc < .7 ? ['🎛️', 'Mid-range mixer'] : pc < .9 ? ['📏', 'Perimeter shooter'] : ['🅿️', 'Parking-lot sniper'];
+  return { me, avg, pc, persona, peers: peers.length };
+}
+function distanceCard(id) {
+  const d = distPersona(id); if (!d) return '';
+  const { lg } = distProfiles(), L = lg[d.me.pos], lavg = L.sum / L.n;
+  // dartboard on a half rink: rings around the net shaded by his share of shots vs his position's league share
+  const shares = d.me.b.map(v => v / d.me.n), lsh = L.b.map(v => v / L.n), mxd = Math.max(...shares.map((s, i) => Math.abs(s - lsh[i])), .02);
+  const rings = DIST_BANDS.map(([a, c], i) => {
+    const op = (.08 + .72 * Math.abs(shares[i] - lsh[i]) / mxd).toFixed(2), more = shares[i] >= lsh[i];
+    const tip = `<b>${a}–${c} ft</b><div class='row'><span>His shots</span><b>${pct1(shares[i])}%</b></div><div class='row'><span>League ${d.me.pos === 'D' ? 'D' : 'F'}</span><b>${pct1(lsh[i])}%</b></div>`;
+    return `<path d="${arcPath(a, c, -89.9, 89.9)}" fill="var(${more ? '--home' : '--accent'})" fill-opacity="${op}" stroke="var(--surface)" stroke-width=".5" data-tip="${esc(tip)}"/>`;
+  }).reverse().join('');
+  const circ = (r, col, dash) => `<path d="M89 ${(-r).toFixed(2)} A${r.toFixed(2)} ${r.toFixed(2)} 0 0 0 89 ${r.toFixed(2)}" fill="none" stroke="${col}" stroke-width="${dash ? .7 : 1}" ${dash ? 'stroke-dasharray="2 1.5"' : ''}/>`;
+  const marks = circ(d.avg, 'var(--text)', false) + circ(lavg, 'var(--text)', true);
+  const lbls = DIST_BANDS.map(([, c]) => `<text x="${89 - c + 1}" y="-1" transform="scale(1,-1)" font-size="2.6" fill="var(--text-2)">${c}</text>`).join('');
+  const gAvg = d.me.g ? d.me.gsum / d.me.g : NaN;
+  const bars = DIST_BANDS.map(([a, c], i) => `<div class="dbrow"><span>${a}–${c} ft</span><div class="dbar"><i style="width:${shares[i] * 100 / Math.max(...shares, ...lsh) * 1}%"></i><b style="left:${lsh[i] * 100 / Math.max(...shares, ...lsh)}%"></b></div><span class="num">${pct1(shares[i])}%</span></div>`).join('');
+  return `<div class="card"><div class="card-h"><h3>Shot distance personality</h3><p>${d.me.n} unblocked attempts</p></div>
+    <div class="dpers"><span class="dico">${d.persona[0]}</span><div><div class="dname">${d.persona[1]}</div><div class="muted" style="font-size:13px">Average shot from <b>${f1(d.avg)} ft</b> vs. ${f1(lavg)} ft for ${d.me.pos === 'D' ? 'defensemen' : 'forwards'} · ${fin(d.pc) ? `farther than ${Math.round(d.pc * 100)}% of them` : ''}${fin(gAvg) ? ` · goals from ${f1(gAvg)} ft on average` : ''}</div></div></div>
+    <div class="grid g2" style="align-items:center">${rinkSVG(true, marks + lbls, rings)}<div>${bars}<div class="legend" style="margin-top:6px"><span><i class="sw" style="background:var(--home)"></i>Shoots from here more than league</span><span><i class="sw" style="background:var(--accent)"></i>Less</span><span>│ League share</span></div></div></div>
+    <p class="muted" style="font-size:12px;margin:6px 0 0">Rings show distance from the net. Solid line = his average shot distance, dashed = league average for his position.</p></div>`;
+}
+function distanceLeaderCard() {
+  const { P } = distProfiles(), rows = Object.values(P).filter(p => p.n >= 20);
+  if (rows.length < 10) return '';
+  const avg = p => p.sum / p.n;
+  const close = [...rows].filter(p => p.pos === 'F').sort((a, b) => avg(a) - avg(b)).slice(0, 5), far = [...rows].filter(p => p.pos === 'F').sort((a, b) => avg(b) - avg(a)).slice(0, 5);
+  const dclose = [...rows].filter(p => p.pos === 'D').sort((a, b) => avg(a) - avg(b)).slice(0, 5);
+  const lst = arr => `<ol class="plist">${arr.map(p => `<li><span class="tcell">${logoImg(p.tm, 16)}${plink(p.id, p.nm || 'Unknown')}</span><span class="num">${f1(avg(p))} ft</span></li>`).join('')}</ol>`;
+  return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Shot distance personalities</h3><p>Average distance of unblocked attempts · min 20 attempts</p></div>
+    <div class="grid g3"><div><h4 class="cmp-sec" style="margin-top:0">🥅 Crease crashers (F)</h4>${lst(close)}</div><div><h4 class="cmp-sec" style="margin-top:0">🅿️ Parking-lot snipers (F)</h4>${lst(far)}</div><div><h4 class="cmp-sec" style="margin-top:0">🚪 Pinching defensemen</h4>${lst(dclose)}</div></div></div>`;
 }
 
 /* ============================== UPSET TRACKER ============================== */
