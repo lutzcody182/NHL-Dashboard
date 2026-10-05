@@ -1,4 +1,3 @@
-
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
 # (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
 # odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
@@ -193,7 +192,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
             return w.__t;
           }
 
@@ -224,19 +223,12 @@ jobs:
               for (const e of sb.events || []) {
                 const c = e.competitions[0];
                 if (c.status.type.state !== 'pre' || new Date(e.date) <= now) continue; // only games that haven't started
-                const h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
-                const H = String(h.team.id), Aw = String(a.team.id); T.addTeam(h.team); T.addTeam(a.team);
-                const gLike = { date: e.date, home: { id: H }, away: { id: Aw } }, probs = T.probableGoalies(e), dkm = T.dkPriceMap(PF, e.date, H, Aw);
-                if (!dkm) { log(`${a.team.abbreviation} @ ${h.team.abbreviation}: no DraftKings prices yet`); continue; }
-                for (const [t, o] of [[H, Aw], [Aw, H]]) {
-                  const ro = T.gsRoster(S, LF, gLike, t), gl = T.gsGoalie(S, probs, LF, gLike, o);
-                  for (const pid of ro.ids) {
-                    const r = T.gsLambda(S, pid, o, gl && gl.id); if (!r) continue;
-                    const dk = T.dkLookup(dkm, S.P[pid].n); if (dk == null) continue;
-                    const imp = T.amImplied(dk), ev = T.betEV(r.p, dk), k = `${e.id}|${pid}`;
-                    const rec = { k, date: today, gid: String(e.id), start: e.date, pid, n: S.P[pid].n, pos: S.P[pid].pos, tm: t, opp: o, gl: gl ? gl.n : '', glSt: gl ? gl.st || '' : '', p: +r.p.toFixed(4), dk, imp: +imp.toFixed(4), edge: +(r.p - imp).toFixed(4), ev: +ev.ev.toFixed(2), roi: +ev.roi.toFixed(4), res: null, saved: now.toISOString() };
-                    if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
-                  }
+                const rows = T.gsTonight(S, e, LF, PF).filter(r => r.dk != null);
+                if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
+                for (const r of rows) {
+                  const k = `${e.id}|${r.pid}`;
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', p: +r.p.toFixed(4), dk: r.dk, imp: +r.dkImp.toFixed(4), edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
+                  if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
               }
             }
