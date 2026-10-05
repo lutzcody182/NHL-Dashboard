@@ -4444,7 +4444,31 @@ function pkPressureCard(R) {
 }
 
 /* ============================== QUADRANTS ============================== */
-const QD = { view: 'teams', team: '', minGp: null };
+const QD = { view: 'all', team: '', minGp: null };
+// pull title + chart (nothing else) out of rendered cards
+function graphsOnly(html, from) {
+  const tmp = document.createElement('div'); tmp.innerHTML = html;
+  return [...tmp.querySelectorAll('svg.chart')].filter(s => s.querySelector('.qlab')).map(svg => {
+    const card = svg.closest('.card'), t = card && card.querySelector('h3');
+    return { title: t ? t.textContent.trim() : '', from, svg: svg.outerHTML };
+  });
+}
+// every other quadrant chart on the site, taken from the tabs they live on (they stay there too)
+function siteQuadGraphs() {
+  const out = [];
+  for (const [id, fn, from] of [['teamsBody', renderTeams, 'Team Analytics'], ['stBody', renderSpecial, 'Special Teams'], ['sprBody', renderProfiles, 'Shot Profiles']]) {
+    try { fn(); const el = $('#' + id); if (el) out.push(...graphsOnly(el.innerHTML, from)); } catch (e) {}
+  }
+  return out;
+}
+const graphCard = g => `<div class="card"><div class="card-h"><h3>${esc(g.title)}</h3>${g.from !== 'Quadrants' ? `<p>Also on ${esc(g.from)}</p>` : ''}</div>${g.svg}</div>`;
+function quadAll() {
+  const sec = (title, list) => list.length ? `<h3 class="cmp-sec">${title}</h3><div class="grid g2" style="margin-bottom:14px">${list.map(graphCard).join('')}</div>` : '';
+  const site = siteQuadGraphs();
+  return sec('Teams', graphsOnly(quadTeams(), 'Quadrants').concat(site.filter(g => g.from === 'Team Analytics' || g.from === 'Shot Profiles'))) +
+    sec('Special teams', site.filter(g => g.from === 'Special Teams')) +
+    sec('Players', graphsOnly(quadPlayers(), 'Quadrants')) + sec('Goalies', graphsOnly(quadGoalies(), 'Quadrants'));
+}
 // dot scatter for players/goalies, with quadrant labels and names on the standouts
 function quadDots({ pts, xl, yl, fx = f2, fy = f2, avgX, avgY, quad, labelN = 8, hl }) {
   const W = 640, H = 460, m = { l: 58, r: 18, t: 18, b: 46 };
@@ -4538,11 +4562,11 @@ function renderQuads() {
   if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
   const { R } = aggregate();
   const teams = Object.keys(R).sort((a, b) => (TM(a).abbr || '').localeCompare(TM(b).abbr || ''));
-  const seg = `<div class="seg" id="qdSeg">${[['teams', 'Teams'], ['players', 'Players'], ['goalies', 'Goalies']].map(([v, l]) => `<button data-v="${v}" class="${QD.view === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  const seg = `<div class="seg" id="qdSeg">${[['all', 'All'], ['teams', 'Teams'], ['players', 'Players'], ['goalies', 'Goalies']].map(([v, l]) => `<button data-v="${v}" class="${QD.view === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   const filt = QD.view === 'teams' ? '' : `<div class="ctl"><label>Highlight team</label><select id="qdTeam"><option value="">None</option>${teams.map(t => `<option value="${t}" ${t === QD.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>${QD.view === 'players' ? `<div class="ctl"><label>Min GP</label><input id="qdMin" type="number" min="1" value="${QD.minGp || 1}" style="width:64px"></div>` : ''}`;
-  const inner = QD.view === 'players' ? quadPlayers() : QD.view === 'goalies' ? quadGoalies() : quadTeams();
+  const inner = QD.view === 'all' ? quadAll() : QD.view === 'players' ? quadPlayers() : QD.view === 'goalies' ? quadGoalies() : quadTeams();
   body.innerHTML = `<div class="bar"><h2 class="grow">Quadrants</h2>${filt}${seg}</div>
-    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Each chart splits the league into four types using two measures. Dashed lines mark the league average (or 50% / zero where that's the natural middle). Hover for numbers; tap a ${QD.view === 'teams' ? 'logo to open the team' : 'dot to open the player'}.${QD.view !== 'teams' ? ' The players farthest from average are labeled; pick a team to highlight its players instead.' : ''}</p>${inner}`;
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Each chart splits the league into four types using two measures. Dashed lines mark the league average (or 50% / zero where that's the natural middle). Hover for numbers; tap a logo to open the team or a dot to open the player.${QD.view === 'all' ? ' <b>All</b> shows every quadrant chart on the site in one place, including the ones on Team Analytics, Special Teams and Shot Profiles (they also stay on those tabs). The other buttons add notes and filters.' : QD.view !== 'teams' ? ' The players farthest from average are labeled; pick a team to highlight its players instead.' : ''}</p>${inner}`;
   $('#qdSeg').onclick = e => { const b = e.target.closest('button'); if (b) { QD.view = b.dataset.v; renderQuads(); } };
   const ts = $('#qdTeam'); if (ts) ts.onchange = () => { QD.team = ts.value; renderQuads(); };
   const mn = $('#qdMin'); if (mn) mn.onchange = () => { QD.minGp = Math.max(1, +mn.value || 1); renderQuads(); };
