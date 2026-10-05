@@ -4845,8 +4845,26 @@ function pickTrackerCard(PK) {
    Saved in this browser (localStorage). Export/Import moves the log between devices or backs it up. */
 const MB_KEY = 'icelab-mybets';
 const MB = { all: false, month: '' };
-function mbLoad() { try { const v = JSON.parse(localStorage.getItem(MB_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
-function mbSave(list) { try { localStorage.setItem(MB_KEY, JSON.stringify(list)); return true; } catch (e) { alertBox('Couldn\'t save: this browser is blocking storage for the site.'); return false; } }
+// storage: localStorage if the browser allows it, otherwise IndexedDB, otherwise memory only (with a warning)
+const MBS = { mode: null, cache: [], ready: null };
+function mbInit() {
+  if (MBS.ready) return MBS.ready;
+  MBS.ready = (async () => {
+    try { const t = '__icelab_t'; localStorage.setItem(t, '1'); localStorage.removeItem(t); const v = JSON.parse(localStorage.getItem(MB_KEY) || '[]'); MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'local'; return; } catch (e) {}
+    try { await DB.set('__t', 1); if ((await DB.get('__t')) === 1) { const v = await DB.get(MB_KEY); MBS.cache = Array.isArray(v) ? v : []; MBS.mode = 'idb'; return; } } catch (e) {}
+    MBS.mode = 'memory';
+  })();
+  return MBS.ready;
+}
+function mbLoad() { return MBS.cache.map(b => ({ ...b })); }
+function mbSave(list) {
+  MBS.cache = list.map(b => ({ ...b }));
+  if (MBS.mode === 'local') { try { localStorage.setItem(MB_KEY, JSON.stringify(list)); return true; } catch (e) { MBS.mode = 'memory'; } }
+  else if (MBS.mode === 'idb') { DB.set(MB_KEY, MBS.cache).catch(() => {}); return true; }
+  if (!MBS.warned) { MBS.warned = true; alertBox('Saved for now, but this browser is blocking storage, so bets disappear when the page closes. Use Export backup.'); }
+  return true;
+}
+mbInit();
 const mbToWin = (stake, odds) => odds > 0 ? stake * odds / 100 : stake * 100 / -odds;
 const mbProfit = b => b.res === 'W' ? mbToWin(b.stake, b.odds) : b.res === 'L' ? -b.stake : 0;
 const mbDefaultStake = odds => odds < 0 ? -odds : 100; // your rule: $100 on plus odds, bet to win $100 on minus odds
@@ -4886,9 +4904,10 @@ function mbOpenForm(seed, editId) {
   };
 }
 // mark "logged" buttons on the Goal Scorers tab
-function mbMarkButtons() { const keys = new Set(mbLoad().map(b => b.gid + '|' + b.pid)); $$('[data-mybet]').forEach(el => { const on = keys.has(el.dataset.key); el.classList.toggle('on', on); el.textContent = on ? '✓ Bet' : '＋ Bet'; }); }
-document.addEventListener('click', e => {
+async function mbMarkButtons() { await mbInit(); const keys = new Set(mbLoad().map(b => b.gid + '|' + b.pid)); $$('[data-mybet]').forEach(el => { const on = keys.has(el.dataset.key); el.classList.toggle('on', on); el.textContent = on ? '✓ Bet' : '＋ Bet'; }); }
+document.addEventListener('click', async e => {
   const btn = e.target.closest('[data-mybet]'); if (!btn) return;
+  await mbInit();
   const r = (GS.rows || [])[+btn.dataset.mybet]; if (!r) return;
   const existing = mbLoad().find(b => b.gid === r.gid && b.pid === r.pid);
   if (existing) { mbOpenForm(existing, existing.id); return; }
@@ -4908,6 +4927,7 @@ async function mbGrade() {
 }
 async function renderMyBets() {
   const body = $('#mbBody');
+  await mbInit();
   const graded = await mbGrade();
   if (activeTab() !== 'mybets') return;
   const list = mbLoad();
@@ -4942,7 +4962,7 @@ async function renderMyBets() {
     <td class="l"><div class="mbact"><button class="btn sm" data-mbedit="${b.id}" title="Edit odds or amount">Edit</button><select data-mbres="${b.id}" title="Set the result yourself"><option value="">${b.res ? 'Change…' : 'Settle…'}</option><option value="W">Won</option><option value="L">Lost</option><option value="V">Void</option><option value="P">Back to pending</option></select><button class="btn sm" data-mbdel="${b.id}" title="Delete this bet">✕</button></div></td></tr>`).join('');
   body.innerHTML = `<div class="bar"><h2 class="grow">My bets</h2><button class="btn" id="mbExport">⬇ Export backup</button><label class="btn" style="cursor:pointer">⬆ Import<input type="file" id="mbImport" accept=".json,application/json" hidden></label></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Log a bet from <b>Players → Goal Scorers</b> with the <b>＋ Bet</b> button, enter the odds you got and how much you bet, and it's tracked here all season. Results settle automatically from ESPN box scores the morning after (a player who doesn't play is void, like at the sportsbook), or you can settle one yourself. ${graded ? `<b>${graded} bet${graded > 1 ? 's' : ''} just settled.</b>` : ''}</p>
-    <div class="note">Your bets are saved in this browser on this device. Use <b>Export backup</b> now and then, and <b>Import</b> to move them to another computer or phone.</div>
+    ${MBS.mode === 'memory' ? `<div class="note" style="border-color:var(--neg)"><b>This browser is blocking storage for the site, so bets you log here are lost when the page closes.</b> This happens in private/incognito windows, when cookies and site data are blocked, or when the page is opened inside another app's preview instead of your own site. Open your GitHub Pages address in a normal browser window to save bets. Until then, use <b>Export backup</b> before closing.</div>` : `<div class="note">Your bets are saved in this browser on this device. Use <b>Export backup</b> now and then, and <b>Import</b> to move them to another computer or phone.</div>`}
     ${list.length ? `${tiles}<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Running profit</h3><p>Settled bets in date order</p></div>${chart}</div>
     <div class="grid g2" style="margin-bottom:14px"><div class="card"><div class="card-h"><h3>By month</h3></div>${moRows ? `<div class="twrap"><table><thead><tr><th class="l">Month</th><th>Record</th><th>Bet</th><th>Profit</th><th>ROI</th></tr></thead><tbody>${moRows}</tbody></table></div>` : '<p class="muted" style="margin:0">No settled bets yet.</p>'}</div>
     <div class="card"><div class="card-h"><h3>By odds</h3></div>${obRows ? `<div class="twrap"><table><thead><tr><th class="l">Odds</th><th>Record</th><th>Bet</th><th>Profit</th><th>ROI</th></tr></thead><tbody>${obRows}</tbody></table></div>` : '<p class="muted" style="margin:0">No settled bets yet.</p>'}</div></div>
