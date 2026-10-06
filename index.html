@@ -438,6 +438,16 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;z-index:1100;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 @media (max-width:520px){.mbgrid{grid-template-columns:1fr}}
 .gstat{font-size:11px;margin-top:2px}.gs-ok{color:var(--good);font-weight:700}.gs-maybe{color:var(--muted)}
+.tape .tp-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:4px 0 14px;padding:12px;border-radius:14px;background:linear-gradient(90deg,color-mix(in srgb,var(--away) 14%,transparent),transparent 45%,transparent 55%,color-mix(in srgb,var(--home) 14%,transparent))}
+.tp-team{display:flex;align-items:center;gap:10px}.tp-right{justify-content:flex-end;text-align:right}.tp-name{font-weight:800;font-size:17px;line-height:1.15}.tp-vs{font-weight:900;font-size:22px;letter-spacing:.06em;color:var(--muted)}
+.tp-row{display:grid;grid-template-columns:minmax(0,1fr) 200px minmax(0,1fr);align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}.tp-row:last-of-type{border-bottom:0}
+.tp-l{text-align:center;font-size:12.5px;font-weight:700;color:var(--text-2);white-space:nowrap}
+.tp-side{display:flex;align-items:center;gap:8px}.tp-a{justify-content:flex-end}.tp-h{justify-content:flex-start}
+.tp-v{font-weight:700;font-variant-numeric:tabular-nums;min-width:52px}.tp-a .tp-v{text-align:right}.tp-r{font-size:11px;color:var(--muted);min-width:30px}.tp-a .tp-r{text-align:right}
+.tp-bar{flex:1;max-width:160px;height:8px;border-radius:4px;background:var(--surface-2);display:flex;overflow:hidden}.tp-a .tp-bar{justify-content:flex-end}.tp-a .tp-bar i{background:var(--away);opacity:.45}.tp-h .tp-bar i{background:var(--home);opacity:.45}
+.tp-side.win .tp-v{font-size:15px}.tp-a.win .tp-bar i{opacity:1}.tp-h.win .tp-bar i{opacity:1}.tp-a.win .tp-v{color:var(--away)}.tp-h.win .tp-v{color:var(--home)}
+.tp-mini .tp-v{font-weight:600;min-width:0}.tp-verdict{margin-top:12px;text-align:center;font-weight:800;font-size:15px;padding:8px;border-radius:10px;background:var(--surface-2)}
+@media (max-width:560px){.tp-bar{display:none}.tp-row{grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr);gap:6px}.tp-l{white-space:normal;font-size:11.5px;line-height:1.2}.tp-v{min-width:0}.tp-name{font-size:14px}.tp-head{gap:6px;padding:10px}.tp-head img{width:36px;height:36px}.tp-vs{font-size:16px}.tp-mini .tp-v{font-size:12.5px}}
 </style>
 </head>
 <body>
@@ -1224,7 +1234,8 @@ function renderGame() {
 
   const vids = videosCard(s);
   if (pre || !g.shots.length) {
-    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="lmBody"></div><div id="gmBody"></div><div id="gsPrev"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
+    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="tapeBody"></div><div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="lmBody"></div><div id="gmBody"></div><div id="gsPrev"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
+    renderTape(s, g);
     renderLineups(s, g);
     renderMatchup(s, g);
     renderGameModelPreview(s, g);
@@ -5197,6 +5208,66 @@ async function renderMyBets() {
     try { const j = JSON.parse(await f.text()), inc = Array.isArray(j) ? j : j.bets || []; const l = mbLoad(), ids = new Set(l.map(b => b.id)); let n = 0; inc.forEach(b => { if (b && b.id && !ids.has(b.id) && Math.abs(b.odds) >= 100 && b.stake > 0) { l.push(b); n++; } }); mbSave(l); alertBox(`Imported ${n} bet${n === 1 ? '' : 's'}`); renderMyBets(); }
     catch (err) { alertBox('That file isn\'t an Ice Lab bet backup.'); }
   };
+}
+
+/* ---- 🥊 Tale of the tape (game preview) ---- */
+async function renderTape(s, g) {
+  const box = () => $('#tapeBody'); if (!box()) return;
+  const H = g.home.id, Aw = g.away.id, gid = g.id;
+  if (!A.loadedKey || !A.filtered.length) {
+    box().innerHTML = `<div class="card tape"><div class="card-h"><h3>🥊 Tale of the tape</h3></div><p class="muted" style="margin:0 0 10px">The tape uses this season's team analytics, which aren't loaded yet.</p><button class="btn primary" id="tapeLoad">Load team analytics</button></div>`;
+    $('#tapeLoad').onclick = async () => { $('#tapeLoad').disabled = true; $('#tapeLoad').textContent = 'Loading… this can take a minute'; await ensureData(); if (GC.id === gid) renderTape(s, g); };
+    return;
+  }
+  const { R } = aggregate(), rt = ratings(), ids = Object.keys(R).filter(id => R[id].gp);
+  if (!R[H] || !R[Aw]) { box().innerHTML = ''; return; }
+  const k = A.calib || 1;
+  // last 10 games and rest, from the loaded games
+  const recent = id => { const gs = A.filtered.filter(x => x.final && (x.home.id === id || x.away.id === id)).sort((a, b) => new Date(b.date) - new Date(a.date)); const l10 = gs.slice(0, 10); let w = 0, l = 0, o = 0, xf = 0, xa = 0; for (const x of l10) { const me = x.home.id === id ? x.home : x.away, op = x.home.id === id ? x.away : x.home; if (me.score > op.score) w++; else if (x.ot || x.so) o++; else l++; for (const sh of x.shots) { if (sh.t === 3 || sh.en) continue; if (sh.tm === id) xf += sh.xg * k; else xa += sh.xg * k; } } return { rec: `${w}-${l}-${o}`, xgp: div(xf, xf + xa), last: gs[0] ? gs[0].date : null }; };
+  const M = {};
+  for (const id of ids) {
+    const r = R[id], ev = teamDerived(r, 'ev'), al = teamDerived(r, 'all');
+    M[id] = { pts: div(2 * r.w + r.otl, 2 * r.gp), rating: rt.T[id] ? rt.T[id].off - rt.T[id].def : NaN, xgf60: al.xgf60, xga60: al.xga60, xgp: ev.xgp, pp: div(r.ppg, r.ppo), ppx: al.ppxg60, pk: 1 - div(r.pkga, r.pko), pkx: al.pkxga60, gsax: div(al.gsax, r.gp), shp: al.shp, svp: al.svp };
+  }
+  const rA = recent(Aw), rH = recent(H);
+  const rest = d => d ? Math.max(0, Math.round((new Date(g.date) - new Date(d)) / 864e5) - 1) : null;
+  const rows = [
+    ['Team rating', 'rating', 1, sgn2, 'Goals per game better (+) or worse (−) than an average team, adjusted for opponents.'],
+    ['Points %', 'pts', 1, f3, 'Share of available standings points earned.'],
+    ['Offense (xGF/60)', 'xgf60', 1, f2, 'Expected goals created per 60 minutes, all situations.'],
+    ['Defense (xGA/60)', 'xga60', -1, f2, 'Expected goals allowed per 60 minutes (lower is better).'],
+    ['Play driving (EV xGF%)', 'xgp', 1, v => pct1(v) + '%', 'Share of even-strength expected goals.'],
+    ['Power play', 'pp', 1, v => pct1(v) + '%', 'Power-play conversion rate.'],
+    ['Penalty kill', 'pk', 1, v => pct1(v) + '%', 'Share of opponent power plays killed.'],
+    ['Goaltending (GSAx/game)', 'gsax', 1, sgn2, 'Goals saved above expected per game by the team\'s goalies.'],
+    ['Finishing (shooting %)', 'shp', 1, v => pct1(v) + '%', 'Goals divided by shots on goal.']];
+  const rank = (key, dir, v) => fin(v) ? 1 + ids.filter(id => fin(M[id][key]) && (dir > 0 ? M[id][key] > v : M[id][key] < v)).length : null;
+  const ord = n => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th');
+  let winsA = 0, winsH = 0;
+  const lines = rows.map(([l, key, dir, f, tip]) => {
+    const a = M[Aw][key], h = M[H][key]; if (!fin(a) && !fin(h)) return '';
+    const ra = rank(key, dir, a), rh = rank(key, dir, h), N = ids.length;
+    const edge = !fin(a) || !fin(h) || a === h ? 0 : (dir > 0 ? (a > h ? -1 : 1) : (a < h ? -1 : 1));
+    if (edge < 0) winsA++; else if (edge > 0) winsH++;
+    // bar length = league percentile (1st = full bar)
+    const pA = ra ? (N - ra + 1) / N : 0, pH = rh ? (N - rh + 1) / N : 0;
+    return `<div class="tp-row" data-tip="${esc(`<b>${l}</b><div style='margin-top:2px'>${tip}</div>`)}">
+      <div class="tp-side tp-a ${edge < 0 ? 'win' : ''}"><span class="tp-v">${fin(a) ? f(a) : '–'}</span><span class="tp-r">${ra ? ord(ra) : ''}</span><div class="tp-bar"><i style="width:${(pA * 100).toFixed(0)}%"></i></div></div>
+      <div class="tp-l">${edge < 0 ? '◀ ' : ''}${l}${edge > 0 ? ' ▶' : ''}</div>
+      <div class="tp-side tp-h ${edge > 0 ? 'win' : ''}"><div class="tp-bar"><i style="width:${(pH * 100).toFixed(0)}%"></i></div><span class="tp-r">${rh ? ord(rh) : ''}</span><span class="tp-v">${fin(h) ? f(h) : '–'}</span></div></div>`;
+  }).join('');
+  const recA = `${R[Aw].w}-${R[Aw].l}-${R[Aw].otl}`, recH = `${R[H].w}-${R[H].l}-${R[H].otl}`;
+  const extra = (lab, a, h) => `<div class="tp-row tp-mini"><div class="tp-side tp-a"><span class="tp-v">${a}</span></div><div class="tp-l">${lab}</div><div class="tp-side tp-h"><span class="tp-v">${h}</span></div></div>`;
+  const restTxt = d => d == null ? '–' : d === 0 ? '<b style="color:var(--neg)">Back-to-back</b>' : `${d} day${d === 1 ? '' : 's'}`;
+  const verdict = winsA === winsH ? 'Dead even on the tape' : `${esc((winsA > winsH ? g.away : g.home).abbr)} wins the tape ${Math.max(winsA, winsH)}–${Math.min(winsA, winsH)}`;
+  if (!box() || GC.id !== gid) return;
+  box().innerHTML = `<div class="card tape"><div class="card-h"><h3>🥊 Tale of the tape</h3><p>League rank shown · bar = how high in the league</p></div>
+    <div class="tp-head"><div class="tp-team">${logoImg(Aw, 54)}<div><div class="tp-name">${esc(TM(Aw).name || g.away.abbr)}</div><div class="muted">${recA} · away</div></div></div><div class="tp-vs">VS</div><div class="tp-team tp-right"><div><div class="tp-name">${esc(TM(H).name || g.home.abbr)}</div><div class="muted">${recH} · home</div></div>${logoImg(H, 54)}</div></div>
+    ${lines}
+    ${extra('Last 10 games', `${rA.rec} <span class="muted">${fin(rA.xgp) ? pct1(rA.xgp) + '% xGF' : ''}</span>`, `${rH.rec} <span class="muted">${fin(rH.xgp) ? pct1(rH.xgp) + '% xGF' : ''}</span>`)}
+    ${extra('Rest', restTxt(rest(rA.last)), restTxt(rest(rH.last)))}
+    <div class="tp-verdict">${verdict}</div>
+    <p class="muted" style="font-size:12px;margin:6px 0 0">From the analytics range above (${A.range === 'season' ? 'full season' : 'last ' + A.range + ' days'}). Arrows point to the team with the edge in each category.</p></div>`;
 }
 
 /* ============================== UPSET TRACKER ============================== */
