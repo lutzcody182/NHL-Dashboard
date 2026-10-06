@@ -448,6 +448,9 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
 .tp-side.win .tp-v{font-size:15px}.tp-a.win .tp-bar i{opacity:1}.tp-h.win .tp-bar i{opacity:1}.tp-a.win .tp-v{color:var(--away)}.tp-h.win .tp-v{color:var(--home)}
 .tp-mini .tp-v{font-weight:600;min-width:0}.tp-verdict{margin-top:12px;text-align:center;font-weight:800;font-size:15px;padding:8px;border-radius:10px;background:var(--surface-2)}
 @media (max-width:560px){.tp-bar{display:none}.tp-row{grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr);gap:6px}.tp-l{white-space:normal;font-size:11.5px;line-height:1.2}.tp-v{min-width:0}.tp-name{font-size:14px}.tp-head{gap:6px;padding:10px}.tp-head img{width:36px;height:36px}.tp-vs{font-size:16px}.tp-mini .tp-v{font-size:12.5px}}
+.qbig{grid-template-columns:minmax(0,1fr);max-width:980px}
+.qzone{fill:transparent;cursor:zoom-in}.qzone:hover{fill:var(--accent);fill-opacity:.05}
+.qdot:hover circle:last-of-type{stroke:var(--text);stroke-width:2}
 </style>
 </head>
 <body>
@@ -4485,7 +4488,7 @@ function pkPressureCard(R) {
 }
 
 /* ============================== QUADRANTS ============================== */
-const QD = { view: 'all', team: '', minGp: null };
+const QD = { view: 'all', team: '', minGp: null, zoom: {}, find: '', pos: '' };
 // pull title + chart (nothing else) out of rendered cards
 function graphsOnly(html, from) {
   const tmp = document.createElement('div'); tmp.innerHTML = html;
@@ -4502,18 +4505,24 @@ function siteQuadGraphs() {
   }
   return out;
 }
-const graphCard = g => `<div class="card"><div class="card-h"><h3>${esc(g.title)}</h3>${g.from !== 'Quadrants' ? `<p>Also on ${esc(g.from)}</p>` : ''}</div>${g.svg}</div>`;
+const graphCard = g => `<div class="card"><div class="card-h"><h3>${esc(g.title)}</h3>${g.from !== 'Quadrants' ? `<p>Also on ${esc(g.from)}</p>` : ''}${QD.zoom[g.title] ? `<button class="btn" data-qzout="${esc(g.title)}">⤢ Show all</button>` : ''}</div>${g.svg}</div>`;
 function quadAll() {
-  const sec = (title, list) => list.length ? `<h3 class="cmp-sec">${title}</h3><div class="grid g2" style="margin-bottom:14px">${list.map(graphCard).join('')}</div>` : '';
+  const sec = (title, list, big) => list.length ? `<h3 class="cmp-sec">${title}</h3><div class="grid ${big ? 'qbig' : 'g2'}" style="margin-bottom:14px">${list.map(graphCard).join('')}</div>` : '';
   const site = siteQuadGraphs();
   return sec('Teams', graphsOnly(quadTeams(), 'Quadrants').concat(site.filter(g => g.from === 'Team Analytics' || g.from === 'Shot Profiles'))) +
     sec('Special teams', site.filter(g => g.from === 'Special Teams')) +
-    sec('Players', graphsOnly(quadPlayers(), 'Quadrants')) + sec('Goalies', graphsOnly(quadGoalies(), 'Quadrants'));
+    sec('Players', graphsOnly(quadPlayers(), 'Quadrants'), 1) + sec('Goalies', graphsOnly(quadGoalies(), 'Quadrants'), 1);
 }
 // dot scatter for players/goalies, with quadrant labels and names on the standouts
-function quadDots({ pts, xl, yl, fx = f2, fy = f2, avgX, avgY, quad, labelN = 8, hl }) {
+function quadDots({ pts: allPts, xl, yl, fx = f2, fy = f2, avgX, avgY, quad, labelN = 10, hl, key }) {
   const W = 640, H = 460, m = { l: 58, r: 18, t: 18, b: 46 };
-  if (!pts.length) return '<div class="empty">Not enough players yet.</div>';
+  if (!allPts.length) return '<div class="empty">Not enough players yet.</div>';
+  // zoomed into one corner: keep only the dots in that corner
+  const z = key && QD.zoom[key], inZ = (p, q) => (q[1] === 'r' ? p.x >= avgX : p.x < avgX) && (q[0] === 't' ? p.y >= avgY : p.y < avgY);
+  const pts = z && allPts.some(p => inZ(p, z)) ? allPts.filter(p => inZ(p, z)) : allPts, zoomed = pts !== allPts;
+  const found = QD.find && allPts.find(p => p.id === QD.find);
+  if (found && !pts.includes(found)) pts.push(found);
+  if (zoomed) labelN = pts.length <= 30 ? pts.length : 20;
   const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
   let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   const px = (x1 - x0) * .08 || 1, py = (y1 - y0) * .08 || 1; x0 -= px; x1 += px; y0 -= py; y1 += py;
@@ -4522,24 +4531,39 @@ function quadDots({ pts, xl, yl, fx = f2, fy = f2, avgX, avgY, quad, labelN = 8,
   for (const t of ticks(x0, x1, 6)) g += `<line class="gridl" x1="${sx(t)}" x2="${sx(t)}" y1="${m.t}" y2="${H - m.b}"/><text x="${sx(t)}" y="${H - m.b + 16}" text-anchor="middle">${fx(t)}</text>`;
   for (const t of ticks(y0, y1, 6)) g += `<line class="gridl" x1="${m.l}" x2="${W - m.r}" y1="${sy(t)}" y2="${sy(t)}"/><text x="${m.l - 6}" y="${sy(t) + 4}" text-anchor="end">${fy(t)}</text>`;
   let ref = '';
-  if (fin(avgX)) ref += `<line class="ref" x1="${sx(avgX)}" x2="${sx(avgX)}" y1="${m.t}" y2="${H - m.b}"/>`;
-  if (fin(avgY)) ref += `<line class="ref" x1="${m.l}" x2="${W - m.r}" y1="${sy(avgY)}" y2="${sy(avgY)}"/>`;
+  if (fin(avgX) && avgX > x0 && avgX < x1) ref += `<line class="ref" x1="${sx(avgX)}" x2="${sx(avgX)}" y1="${m.t}" y2="${H - m.b}"/>`;
+  if (fin(avgY) && avgY > y0 && avgY < y1) ref += `<line class="ref" x1="${m.l}" x2="${W - m.r}" y1="${sy(avgY)}" y2="${sy(avgY)}"/>`;
   const [tl, tr, bl, br] = quad;
-  const q = `<text class="qlab" x="${m.l + 8}" y="${m.t + 16}">${tl}</text><text class="qlab" x="${W - m.r - 8}" y="${m.t + 16}" text-anchor="end">${tr}</text><text class="qlab" x="${m.l + 8}" y="${H - m.b - 8}">${bl}</text><text class="qlab" x="${W - m.r - 8}" y="${H - m.b - 8}" text-anchor="end">${br}</text>`;
+  // invisible click areas: click a corner to zoom into it
+  if (key && !zoomed && fin(avgX) && fin(avgY)) {
+    const cx = Math.min(Math.max(sx(avgX), m.l), W - m.r), cy = Math.min(Math.max(sy(avgY), m.t), H - m.b);
+    for (const [q, X0, Y0, X1, Y1] of [['tl', m.l, m.t, cx, cy], ['tr', cx, m.t, W - m.r, cy], ['bl', m.l, cy, cx, H - m.b], ['br', cx, cy, W - m.r, H - m.b]])
+      ref += `<rect class="qzone" data-qz="${esc(key)}" data-q="${q}" x="${X0}" y="${Y0}" width="${Math.max(0, X1 - X0)}" height="${Math.max(0, Y1 - Y0)}"><title>Click to zoom into this corner</title></rect>`;
+  }
+  const q = zoomed ? `<text class="qlab" x="${m.l + 8}" y="${m.t + 16}">${{ tl, tr, bl, br }[z]}</text>` : `<text class="qlab" x="${m.l + 8}" y="${m.t + 16}">${tl}</text><text class="qlab" x="${W - m.r - 8}" y="${m.t + 16}" text-anchor="end">${tr}</text><text class="qlab" x="${m.l + 8}" y="${H - m.b - 8}">${bl}</text><text class="qlab" x="${W - m.r - 8}" y="${H - m.b - 8}" text-anchor="end">${br}</text>`;
   // label the players farthest from the average (or the highlighted team's players)
   const sdx = Math.sqrt(xs.reduce((s, v) => s + (v - avgX) ** 2, 0) / xs.length) || 1, sdy = Math.sqrt(ys.reduce((s, v) => s + (v - avgY) ** 2, 0) / ys.length) || 1;
-  const far = new Set((hl ? pts.filter(p => p.tm === hl) : [...pts].sort((a, b) => Math.hypot((b.x - avgX) / sdx, (b.y - avgY) / sdy) - Math.hypot((a.x - avgX) / sdx, (a.y - avgY) / sdy)).slice(0, labelN)).map(p => p.id));
+  const far = new Set((hl && !zoomed ? pts.filter(p => p.tm === hl) : [...pts].sort((a, b) => Math.hypot((b.x - avgX) / sdx, (b.y - avgY) / sdy) - Math.hypot((a.x - avgX) / sdx, (a.y - avgY) / sdy)).slice(0, labelN)).map(p => p.id));
   const ordered = [...pts].sort((a, b) => (far.has(a.id) || (hl && a.tm === hl)) - (far.has(b.id) || (hl && b.tm === hl)));
+  if (found) { far.add(found.id); ordered.sort((a, b) => (a === found) - (b === found)); }
+  // place name labels: right of the dot, or left near the edge; skip one that would overlap another
+  const boxes = [], side = {}, txt = p => found && p.id === found.id ? p.n : String(p.n).split(' ').slice(-1)[0];
+  for (const p of [...pts].filter(p => far.has(p.id)).sort((a, b) => (found && b.id === found.id) - (found && a.id === found.id))) {
+    const cx = sx(p.x), cy = sy(p.y), w = txt(p).length * 7 + 4, r = 9;
+    const opts = [[cx + r, cx + r + w, 'r'], [cx - r - w, cx - r, 'l']].filter(([a, b]) => a >= m.l && b <= W - 2);
+    const ok = opts.find(([a, b]) => !boxes.some(q => a < q[1] && b > q[0] && cy - 7 < q[3] && cy + 7 > q[2]));
+    if (ok) { boxes.push([ok[0], ok[1], cy - 7, cy + 7]); side[p.id] = ok[2]; } else if (found && p.id === found.id) side[p.id] = opts[0] ? opts[0][2] : 'l';
+  }
   const dots = ordered.map(p => {
-    const on = !hl || p.tm === hl, cx = sx(p.x), cy = sy(p.y), lab = far.has(p.id);
-    const col = TM(p.tm).color ? '#' + TM(p.tm).color : 'var(--accent)';
-    return `<g data-tip="${esc(p.tip)}" data-player="${esc(p.id)}" style="cursor:pointer;opacity:${on ? 1 : .18}"><circle cx="${cx}" cy="${cy}" r="9" fill="transparent"/><circle cx="${cx}" cy="${cy}" r="${lab ? 5 : 4}" fill="${col}" fill-opacity=".8" stroke="var(--surface)" stroke-width="1.2"/>${lab ? `<text x="${cx + 7}" y="${cy + 4}" font-size="11" font-weight="600" fill="var(--text)" paint-order="stroke" stroke="var(--surface)" stroke-width="3">${esc(String(p.n).split(' ').slice(-1)[0])}</text>` : ''}</g>`;
+    const me = found && p.id === found.id, on = me || (!found && (!hl || p.tm === hl)), cx = sx(p.x), cy = sy(p.y), lab = !!side[p.id], lt = side[p.id] === 'l';
+    const col = TM(p.tm).color ? '#' + TM(p.tm).color : 'var(--accent)', r = me ? 8 : lab ? 6 : 4.5;
+    return `<g class="qdot" data-tip="${esc(p.tip)}" data-player="${esc(p.id)}" style="cursor:pointer;opacity:${on ? 1 : found ? .3 : .15}"><circle cx="${cx}" cy="${cy}" r="10" fill="transparent"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" fill-opacity=".85" stroke="${me ? 'var(--text)' : 'var(--surface)'}" stroke-width="${me ? 2.5 : 1.2}"/>${lab ? `<text x="${lt ? cx - r - 3 : cx + r + 3}" y="${cy + 4}" text-anchor="${lt ? 'end' : 'start'}" font-size="${me ? 14 : 12}" font-weight="${me ? 800 : 600}" fill="var(--text)" paint-order="stroke" stroke="var(--surface)" stroke-width="3">${esc(txt(p))}</text>` : ''}</g>`;
   }).join('');
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(xl)} vs ${esc(yl)}"><g class="axis">${g}</g>${ref}${q}${dots}
     <text x="${(m.l + W - m.r) / 2}" y="${H - 8}" text-anchor="middle" fill="var(--text-2)" font-size="12" font-weight="600">${esc(xl)} →</text>
     <text transform="translate(14 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle" fill="var(--text-2)" font-size="12" font-weight="600">${esc(yl)} →</text></svg>`;
 }
-const qCard = (title, sub, chart, note) => `<div class="card"><div class="card-h"><h3>${title}</h3><p>${sub}</p></div>${chart}${note ? `<p class="muted" style="font-size:12px;margin:6px 0 0">${note}</p>` : ''}</div>`;
+const qCard = (title, sub, chart, note) => `<div class="card"><div class="card-h"><h3>${title}</h3><p>${sub}</p>${QD.zoom[title] ? `<button class="btn" data-qzout="${esc(title)}">⤢ Show all</button>` : ''}</div>${chart}${note ? `<p class="muted" style="font-size:12px;margin:6px 0 0">${note}</p>` : ''}</div>`;
 const qAvg = (arr, f) => { const v = arr.map(f).filter(fin); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : NaN; };
 const qRow = (l, v) => `<div class='row'><span>${l}</span><b>${v}</b></div>`;
 
@@ -4547,17 +4571,22 @@ function quadTeams() {
   const { R } = aggregate(), rt = ratings(), k = A.calib || 1;
   const ids = Object.keys(R).filter(id => R[id].gp);
   // home/road, discipline, pace, schedule from the loaded games
-  const X = {}; const x = id => X[id] || (X[id] = { hf: 0, ha: 0, rf: 0, ra: 0, pen: 0, pdr: 0, gp: 0, opp: 0, oppN: 0 });
+  const X = {}; const x = id => X[id] || (X[id] = { hf: 0, ha: 0, rf: 0, ra: 0, pen: 0, pdr: 0, gp: 0, opp: 0, oppN: 0, rush: 0, cyc: 0, mk: 0, md: 0, mn: 0, mlP: 0, mlR: 0, mlN: 0, mlW: 0 });
   for (const g of A.filtered) {
     if (!g.final) continue;
     let xh = 0, xa = 0; for (const s of g.shots) { if (s.t === 3 || s.en) continue; if (s.tm === g.home.id) xh += s.xg * k; else xa += s.xg * k; }
     const H = x(g.home.id), Aw = x(g.away.id), bh = (g.bx || {})[g.home.id] || {}, ba = (g.bx || {})[g.away.id] || {};
+    for (const s of g.shots) { if (s.t === 3 || s.en || s.str !== 0) continue; const o = x(s.tm); if (s.f & 2) o.rush += s.xg * k; else o.cyc += s.xg * k; }
     if (!g.neutral) { H.hf += xh; H.ha += xa; Aw.rf += xa; Aw.ra += xh; }
     H.gp++; Aw.gp++; H.pen += bh.pen || 0; H.pdr += ba.pen || 0; Aw.pen += ba.pen || 0; Aw.pdr += bh.pen || 0;
     const ro = t => rt.T[t] ? rt.T[t].off - rt.T[t].def : NaN;
     if (fin(ro(g.away.id))) { H.opp += ro(g.away.id); H.oppN++; } if (fin(ro(g.home.id))) { Aw.opp += ro(g.home.id); Aw.oppN++; }
   }
-  const T = ids.map(id => { const r = R[id], ev = teamDerived(r, 'ev'), al = teamDerived(r, 'all'), q = x(id); return { id, r, ev, al, q, home: div(q.hf, q.hf + q.ha), road: div(q.rf, q.rf + q.ra), pace: ev.cf60 + ev.ca60, penT: div(q.pen, q.gp), penD: div(q.pdr, q.gp), sos: div(q.opp, q.oppN) }; });
+  // market vs model: same games, both pre-game (Ice Lab ratings are walk-forward, so no peeking at the result)
+  for (const p of rt.preds) { if (!fin(p.mk) || !fin(p.pH) || p.hn < 5 || p.an < 5) continue; const H = x(p.h), Aw = x(p.a); H.mk += p.mk; H.md += p.pH; H.mn++; Aw.mk += 1 - p.mk; Aw.md += 1 - p.pH; Aw.mn++; }
+  // moneyline profit backing the team every game, with your bet sizing rule
+  for (const b of betGames()) { if (b.mlH == null) continue; const H = x(b.h), Aw = x(b.a), hw = b.hs > b.as; H.mlP += b.pH; H.mlR += b.sH.risk; H.mlN++; H.mlW += hw; Aw.mlP += b.pA; Aw.mlR += b.sA.risk; Aw.mlN++; Aw.mlW += !hw; }
+  const T = ids.map(id => { const r = R[id], ev = teamDerived(r, 'ev'), al = teamDerived(r, 'all'), q = x(id); return { id, r, ev, al, q, home: div(q.hf, q.hf + q.ha), road: div(q.rf, q.rf + q.ra), pace: ev.cf60 + ev.ca60, rush60: per60(q.rush, r.ev), cyc60: per60(q.cyc, r.ev), mkt: q.mn >= 5 ? q.mk / q.mn : NaN, mdl: q.mn >= 5 ? q.md / q.mn : NaN, mlWp: q.mlN >= 5 ? q.mlW / q.mlN : NaN, penT: div(q.pen, q.gp), penD: div(q.pdr, q.gp), sos: div(q.opp, q.oppN) }; });
   const nm = t => esc(TM(t.id).name);
   const mk = (title, sub, f, opts, note) => { const pts = T.map(t => ({ id: t.id, ...f(t) })).filter(p => fin(p.x) && fin(p.y)); if (pts.length < 4) return ''; return qCard(title, sub, scatterLogos({ pts, ...opts, avgX: opts.avgX ?? qAvg(pts, p => p.x), avgY: opts.avgY ?? qAvg(pts, p => p.y) }), note); };
   return `<div class="grid g2">
@@ -4567,6 +4596,9 @@ function quadTeams() {
     ${mk('Pace vs. control', 'Total shot attempts per 60 (both teams) against shot share · even strength', t => ({ x: t.pace, y: t.ev.cfp * 100, tip: `<b>${nm(t)}</b>${qRow('Attempts / 60, both teams', f1(t.pace))}${qRow('CF%', pct1(t.ev.cfp))}` }), { xl: 'Pace: total attempts per 60', yl: 'Control: CF%', fx: f0, fy: f0, avgY: 50, quad: ['🪨 Grind-it-out winners', '🏃 Track-meet winners', '🐌 Slow and outplayed', '💨 Track-meet losers'] })}
     ${mk('Discipline', 'Penalties taken against penalties drawn, per game', t => ({ x: t.penT, y: t.penD, tip: `<b>${nm(t)}</b>${qRow('Penalties taken / game', f2(t.penT))}${qRow('Penalties drawn / game', f2(t.penD))}` }), { xl: 'Penalties taken per game', yl: 'Penalties drawn per game', fx: f1, fy: f1, quad: ['😇 Clean and baiting', '🎭 Undisciplined but draws calls', '🙏 Saints', '🚔 Penalty box regulars'] }, 'Left is cleaner; up means they draw more power plays.')}
     ${mk('Schedule check', 'Average strength of opponents faced against points %', t => ({ x: t.sos, y: t.ev.ptsp, tip: `<b>${nm(t)}</b>${qRow('Schedule strength', sgn2(t.sos))}${qRow('Points %', f3(t.ev.ptsp))}` }), { xl: 'Schedule strength (opponents\' rating)', yl: 'Points %', fx: sgn2, fy: f3, quad: ['🍰 Fattened on weak teams', '💪 Battle-tested and winning', '😬 Easy schedule, still struggling', '🌪️ Tough schedule, struggling'] }, 'Opponent strength uses current Ice Lab team ratings (goals per game better or worse than average).')}
+    ${mk('Rush vs. cycle', 'Even-strength expected goals per 60, split by how the chance was created', t => ({ x: t.rush60, y: t.cyc60, tip: `<b>${nm(t)}</b>${qRow('Rush xG / 60', f2(t.rush60))}${qRow('Set-up xG / 60', f2(t.cyc60))}${qRow('Share off the rush', pct1(div(t.q.rush, t.q.rush + t.q.cyc)) + '%')}` }), { xl: 'Rush: xG per 60 off the rush', yl: 'Cycle: xG per 60 from set-up play', fx: f2, fy: f2, quad: ['🔄 Cycle grinders', '🔥 Beat you every way', '🧊 Low-event offense', '💨 Rush team'] }, 'Rush chances are shots taken right after the puck comes up ice from the other end. Everything else (cycling, point shots, rebounds, net-front work) counts as set-up play.')}
+    ${mk('Market vs. model', 'Average pre-game win chance: betting market against Ice Lab ratings', t => ({ x: t.mdl * 100, y: t.mkt * 100, tip: `<b>${nm(t)}</b>${qRow('Market win chance', pct1(t.mkt) + '%')}${qRow('Ice Lab win chance', pct1(t.mdl) + '%')}${qRow('Gap (market − Ice Lab)', sgn1((t.mkt - t.mdl) * 100) + ' pts')}${qRow('Games compared', t.q.mn)}${qRow('Actual win %', pct1(t.mlWp) + '%')}` }), { xl: 'Ice Lab: average win chance', yl: 'Market: average win chance', fx: f0, fy: f0, avgX: 50, avgY: 50, diag: true, same: true, quad: ['📉 Books like them more (fade?)', '🤝 Both believe', '🗑️ Both doubt', '📈 Ice Lab likes them more (value?)'] }, 'Teams above the diagonal are priced higher by the market than Ice Lab rates them; below it, Ice Lab sees more than the market. Uses games where both teams had 5+ games and a betting line; the market line has the bookmaker margin removed.')}
+    ${mk('Betting profit vs. win %', 'Moneyline profit backing the team every game, against their win %', t => ({ x: t.mlWp * 100, y: t.q.mlP, tip: `<b>${nm(t)}</b>${qRow('Win %', pct1(t.mlWp) + '%')}${qRow('Moneyline profit', money(t.q.mlP))}${qRow('ROI', (t.q.mlP > 0 ? '+' : '') + pct1(div(t.q.mlP, t.q.mlR)) + '%')}${qRow('Games with a line', t.q.mlN)}` }), { xl: 'Win % (games with a betting line)', yl: 'Moneyline profit', fx: f0, fy: v => Math.abs(v) >= 1000 ? `${v < 0 ? '−' : '+'}$${+(Math.abs(v) / 1000).toFixed(1)}k` : money(Math.round(v)), avgX: 50, avgY: 0, quad: ['💰 Losing but paying (underdog value)', '🏆 Winning and paying', '💸 Losing and costing you', '🧾 Winning but overpriced'] }, 'Bet sizing follows your rule: $100 on plus odds, bet to win $100 on minus odds. Good teams can still lose money when the price is too steep.')}
   </div>`;
 }
 function quadPlayers() {
@@ -4574,16 +4606,16 @@ function quadPlayers() {
   const all = Object.values(P).filter(p => p.gp > 0 && p.toi > 0);
   const maxGp = Math.max(0, ...all.map(p => p.gp)); if (QD.minGp == null || QD.minGp > maxGp) QD.minGp = Math.max(1, Math.min(10, Math.floor(maxGp / 3)));
   const sk = all.filter(p => p.gp >= QD.minGp && p.toi / p.gp >= 300);
-  const F = sk.filter(p => p.pos !== 'D'), Dm = sk.filter(p => p.pos === 'D');
+  const F = sk.filter(p => p.pos !== 'D'), Dm = sk.filter(p => p.pos === 'D'), mix = QD.pos === 'F' ? F : QD.pos === 'D' ? Dm : sk;
   const nm = p => `<b>${esc(p.n)}</b> · ${esc(TM(p.tm).abbr)} ${esc(p.pos || '')}`;
   const base = p => ({ id: p.id, n: p.n, tm: p.tm });
-  const mk = (title, sub, list, f, opts, note) => { const pts = list.map(p => ({ ...base(p), ...f(p) })).filter(p => fin(p.x) && fin(p.y)); if (pts.length < 6) return qCard(title, sub, '<div class="empty">Not enough players yet.</div>'); return qCard(title, sub, quadDots({ pts, ...opts, avgX: opts.avgX ?? qAvg(pts, p => p.x), avgY: opts.avgY ?? qAvg(pts, p => p.y), hl: QD.team }), note); };
-  return `<div class="grid g2">
-    ${mk('Scorers: finishing vs. chances', 'Forwards and defensemen', sk, p => ({ x: per60(p.ixg, p.toi), y: p.g - p.ixg, tip: `${nm(p)}${qRow('ixG / 60', f2(per60(p.ixg, p.toi)))}${qRow('Goals', p.g)}${qRow('Goals − ixG', sgn1(p.g - p.ixg))}` }), { xl: 'Chances: individual xG per 60', yl: 'Finishing: goals minus xG', fx: f1, fy: f1, avgY: 0, quad: ['🍀 Lucky bounces', '⭐ Elite and finishing', '😴 Quiet', '😤 Getting chances, snakebitten'] }, 'Snakebitten players with lots of chances are classic "due" candidates.')}
+  const mk = (title, sub, list, f, opts, note) => { const pts = list.map(p => ({ ...base(p), ...f(p) })).filter(p => fin(p.x) && fin(p.y)); if (pts.length < 6) return qCard(title, sub, '<div class="empty">Not enough players yet.</div>'); return qCard(title, sub, quadDots({ pts, ...opts, avgX: opts.avgX ?? qAvg(pts, p => p.x), avgY: opts.avgY ?? qAvg(pts, p => p.y), hl: QD.team, key: title }), note); };
+  return `<div class="grid qbig">
+    ${mk('Scorers: finishing vs. chances', QD.pos === 'F' ? 'Forwards' : QD.pos === 'D' ? 'Defensemen' : 'Forwards and defensemen', mix, p => ({ x: per60(p.ixg, p.toi), y: p.g - p.ixg, tip: `${nm(p)}${qRow('ixG / 60', f2(per60(p.ixg, p.toi)))}${qRow('Goals', p.g)}${qRow('Goals − ixG', sgn1(p.g - p.ixg))}` }), { xl: 'Chances: individual xG per 60', yl: 'Finishing: goals minus xG', fx: f1, fy: f1, avgY: 0, quad: ['🍀 Lucky bounces', '⭐ Elite and finishing', '😴 Quiet', '😤 Getting chances, snakebitten'] }, 'Snakebitten players with lots of chances are classic "due" candidates.')}
     ${mk('Playmakers vs. shooters', 'Forwards', F, p => ({ x: per60(p.sog, p.toi), y: per60(p.a, p.toi), tip: `${nm(p)}${qRow('Shots / 60', f1(per60(p.sog, p.toi)))}${qRow('Assists / 60', f2(per60(p.a, p.toi)))}` }), { xl: 'Shots on goal per 60', yl: 'Assists per 60', fx: f1, fy: f1, quad: ['🧠 Pure passer', '🌟 Do-it-all', '🪵 Depth player', '🔫 Pure shooter'] })}
-    ${mk('Usage vs. production', 'Forwards and defensemen', sk, p => ({ x: p.toi / p.gp / 60, y: per60(p.g + p.a, p.toi), tip: `${nm(p)}${qRow('TOI / game', mmss(p.toi / p.gp))}${qRow('Points / 60', f2(per60(p.g + p.a, p.toi)))}${qRow('Points', p.g + p.a)}` }), { xl: 'Ice time per game (minutes)', yl: 'Points per 60', fx: f0, fy: f1, quad: ['🚀 Deserves more minutes', '⭐ Stars', '🪵 Depth role', '🥵 Overused'] }, 'Top-left players produce well in limited minutes; bottom-right get big minutes without much offense (often defensive roles).')}
+    ${mk('Usage vs. production', QD.pos === 'F' ? 'Forwards' : QD.pos === 'D' ? 'Defensemen' : 'Forwards and defensemen', mix, p => ({ x: p.toi / p.gp / 60, y: per60(p.g + p.a, p.toi), tip: `${nm(p)}${qRow('TOI / game', mmss(p.toi / p.gp))}${qRow('Points / 60', f2(per60(p.g + p.a, p.toi)))}${qRow('Points', p.g + p.a)}` }), { xl: 'Ice time per game (minutes)', yl: 'Points per 60', fx: f0, fy: f1, quad: ['🚀 Deserves more minutes', '⭐ Stars', '🪵 Depth role', '🥵 Overused'] }, 'Top-left players produce well in limited minutes; bottom-right get big minutes without much offense (often defensive roles).')}
     ${mk('Defensemen: offense vs. defense', 'Defensemen', Dm, p => ({ x: per60(p.g + p.a, p.toi), y: per60(p.bs + (p.tk || 0), p.toi), tip: `${nm(p)}${qRow('Points / 60', f2(per60(p.g + p.a, p.toi)))}${qRow('Blocks / 60', f1(per60(p.bs, p.toi)))}${qRow('Takeaways / 60', f1(per60(p.tk || 0, p.toi)))}` }), { xl: 'Offense: points per 60', yl: 'Defensive plays: blocks + takeaways per 60', fx: f1, fy: f1, quad: ['🧱 Shutdown', '🔄 Two-way', '😕 Struggling', '🎯 Offensive specialist'] }, 'ESPN doesn\'t publish who is on the ice for each shot, so defense here is measured by the player\'s own blocks and takeaways.')}
-    ${mk('Physical profile', 'Forwards and defensemen', sk, p => ({ x: per60(p.ht, p.toi), y: per60(p.bs, p.toi), tip: `${nm(p)}${qRow('Hits / 60', f1(per60(p.ht, p.toi)))}${qRow('Blocks / 60', f1(per60(p.bs, p.toi)))}` }), { xl: 'Hits per 60', yl: 'Blocked shots per 60', fx: f0, fy: f0, quad: ['🛡️ Shot blocker', '💥 Wrecking ball', '🎨 Finesse', '🔨 Hitter'] })}
+    ${mk('Physical profile', QD.pos === 'F' ? 'Forwards' : QD.pos === 'D' ? 'Defensemen' : 'Forwards and defensemen', mix, p => ({ x: per60(p.ht, p.toi), y: per60(p.bs, p.toi), tip: `${nm(p)}${qRow('Hits / 60', f1(per60(p.ht, p.toi)))}${qRow('Blocks / 60', f1(per60(p.bs, p.toi)))}` }), { xl: 'Hits per 60', yl: 'Blocked shots per 60', fx: f0, fy: f0, quad: ['🛡️ Shot blocker', '💥 Wrecking ball', '🎨 Finesse', '🔨 Hitter'] })}
   </div>`;
 }
 function quadGoalies() {
@@ -4592,8 +4624,8 @@ function quadGoalies() {
   const gs = all.filter(g => g.gp >= minGp);
   const nm = g => `<b>${esc(g.n)}</b> · ${esc(TM(g.tm).abbr)}`;
   const base = g => ({ id: g.id, n: g.n, tm: g.tm });
-  const mk = (title, sub, f, opts, note) => { const pts = gs.map(g => ({ ...base(g), ...f(g) })).filter(p => fin(p.x) && fin(p.y)); if (pts.length < 4) return qCard(title, sub, '<div class="empty">Not enough goalies yet.</div>'); return qCard(title, sub, quadDots({ pts, ...opts, avgX: opts.avgX ?? qAvg(pts, p => p.x), avgY: opts.avgY ?? qAvg(pts, p => p.y), labelN: 12, hl: QD.team }), note); };
-  return `<div class="grid g2">
+  const mk = (title, sub, f, opts, note) => { const pts = gs.map(g => ({ ...base(g), ...f(g) })).filter(p => fin(p.x) && fin(p.y)); if (pts.length < 4) return qCard(title, sub, '<div class="empty">Not enough goalies yet.</div>'); return qCard(title, sub, quadDots({ pts, ...opts, avgX: opts.avgX ?? qAvg(pts, p => p.x), avgY: opts.avgY ?? qAvg(pts, p => p.y), labelN: 12, hl: QD.team, key: title }), note); };
+  return `<div class="grid qbig">
     ${mk('Goalies: workload vs. quality', `Min ${minGp} games`, g => ({ x: per60(g.sa, g.toi), y: per60(g.xga - g.gan, g.toi), tip: `${nm(g)}${qRow('Shots faced / 60', f1(per60(g.sa, g.toi)))}${qRow('GSAx / 60', sgn2(per60(g.xga - g.gan, g.toi)))}${qRow('SV%', f3(div(g.sv, g.sa)))}` }), { xl: 'Workload: shots faced per 60', yl: 'Quality: goals saved above expected per 60', fx: f0, fy: sgn2, avgY: 0, quad: ['🛋️ Sheltered and solid', '🦸 Workhorse and elite', '😟 Sheltered but struggling', '🥵 Overworked and struggling'] }, 'Top-right goalies are bailing out their defense; bottom-right are getting buried.')}
     ${mk('Goalies: high-danger vs. everything else', `Min ${minGp} games`, g => { const hd = 1 - div(g.hdga, g.hdsa), oth = div((g.sa - g.hdsa) - (g.ga - g.hdga), g.sa - g.hdsa); return { x: hd * 100, y: oth * 100, tip: `${nm(g)}${qRow('High-danger SV%', f3(hd))}${qRow('Other SV%', f3(oth))}${qRow('HD shots faced', g.hdsa)}` }; }, { xl: 'High-danger save %', yl: 'Save % on all other shots', fx: f0, fy: f1, quad: ['🙃 Stops the easy ones only', '🏆 Complete', '😬 Rough', '🧤 Makes the big saves'] }, 'High-danger save % is noisy until a goalie has faced a lot of chances.')}
   </div>`;
@@ -4604,13 +4636,28 @@ function renderQuads() {
   const { R } = aggregate();
   const teams = Object.keys(R).sort((a, b) => (TM(a).abbr || '').localeCompare(TM(b).abbr || ''));
   const seg = `<div class="seg" id="qdSeg">${[['all', 'All'], ['teams', 'Teams'], ['players', 'Players'], ['goalies', 'Goalies']].map(([v, l]) => `<button data-v="${v}" class="${QD.view === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-  const filt = QD.view === 'teams' ? '' : `<div class="ctl"><label>Highlight team</label><select id="qdTeam"><option value="">None</option>${teams.map(t => `<option value="${t}" ${t === QD.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>${QD.view === 'players' ? `<div class="ctl"><label>Min GP</label><input id="qdMin" type="number" min="1" value="${QD.minGp || 1}" style="width:64px"></div>` : ''}`;
+  const filt = QD.view === 'teams' ? '' : `<div class="ctl"><label>Highlight team</label><select id="qdTeam"><option value="">None</option>${teams.map(t => `<option value="${t}" ${t === QD.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>${QD.view === 'players' ? `<div class="ctl"><label>Position</label><select id="qdPos"><option value="">All</option><option value="F" ${QD.pos === 'F' ? 'selected' : ''}>Forwards</option><option value="D" ${QD.pos === 'D' ? 'selected' : ''}>Defense</option></select></div>` : ''}${QD.view !== 'teams' ? qdFindBox() : ''}${QD.view === 'players' ? `<div class="ctl"><label>Min GP</label><input id="qdMin" type="number" min="1" value="${QD.minGp || 1}" style="width:64px"></div>` : ''}`;
   const inner = QD.view === 'all' ? quadAll() : QD.view === 'players' ? quadPlayers() : QD.view === 'goalies' ? quadGoalies() : quadTeams();
   body.innerHTML = `<div class="bar"><h2 class="grow">Quadrants</h2>${filt}${seg}</div>
-    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Each chart splits the league into four types using two measures. Dashed lines mark the league average (or 50% / zero where that's the natural middle). Hover for numbers; tap a logo to open the team or a dot to open the player.${QD.view === 'all' ? ' <b>All</b> shows every quadrant chart on the site in one place, including the ones on Team Analytics, Special Teams and Shot Profiles (they also stay on those tabs). The other buttons add notes and filters.' : QD.view !== 'teams' ? ' The players farthest from average are labeled; pick a team to highlight its players instead.' : ''}</p>${inner}`;
-  $('#qdSeg').onclick = e => { const b = e.target.closest('button'); if (b) { QD.view = b.dataset.v; renderQuads(); } };
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Each chart splits the league into four types using two measures. Dashed lines mark the league average (or 50% / zero where that's the natural middle). Hover for numbers; tap a logo to open the team or a dot to open the player.${QD.view === 'all' ? ' <b>All</b> shows every quadrant chart on the site in one place, including the ones on Team Analytics, Special Teams and Shot Profiles (they also stay on those tabs). The other buttons add notes and filters.' : QD.view !== 'teams' ? ' The players farthest from average are labeled; pick a team to highlight its players, or type a name to find one player on every chart. <b>Click any corner of a chart to zoom into it</b> and see every name there.' : ''}</p>${inner}`;
+  $('#qdSeg').onclick = e => { const b = e.target.closest('button'); if (b) { QD.view = b.dataset.v; QD.zoom = {}; renderQuads(); } };
   const ts = $('#qdTeam'); if (ts) ts.onchange = () => { QD.team = ts.value; renderQuads(); };
   const mn = $('#qdMin'); if (mn) mn.onchange = () => { QD.minGp = Math.max(1, +mn.value || 1); renderQuads(); };
+  const ps = $('#qdPos'); if (ps) ps.onchange = () => { QD.pos = ps.value; QD.zoom = {}; renderQuads(); };
+  const fd = $('#qdFind'); if (fd) fd.onchange = () => { const v = fd.value.trim().toLowerCase(); const hit = QD.names.find(([, n]) => n.toLowerCase() === v) || (v ? QD.names.find(([, n]) => n.toLowerCase().includes(v)) : null); QD.find = hit ? hit[0] : ''; renderQuads(); };
+  const fc = $('#qdFindX'); if (fc) fc.onclick = () => { QD.find = ''; renderQuads(); };
+  body.onclick = e => {
+    const z = e.target.closest('[data-qz]'); if (z) { QD.zoom[z.dataset.qz] = z.dataset.q; renderQuads(); return; }
+    const o = e.target.closest('[data-qzout]'); if (o) { delete QD.zoom[o.dataset.qzout]; renderQuads(); }
+  };
+}
+// player / goalie name box (players and goalies in the loaded range)
+function qdFindBox() {
+  const { P, G } = aggregate();
+  const src = QD.view === 'goalies' ? Object.values(G) : QD.view === 'players' ? Object.values(P) : [...Object.values(P), ...Object.values(G)];
+  QD.names = src.filter(p => p.gp > 0).map(p => [String(p.id), p.n]).sort((a, b) => a[1].localeCompare(b[1]));
+  const cur = QD.find && QD.names.find(([id]) => id === QD.find);
+  return `<div class="ctl"><label>Find player</label><input id="qdFind" list="qdNames" placeholder="Type a name" value="${cur ? esc(cur[1]) : ''}" style="width:170px"><datalist id="qdNames">${QD.names.map(([, n]) => `<option value="${esc(n)}">`).join('')}</datalist>${cur ? '<button class="btn" id="qdFindX" title="Clear">✕</button>' : ''}</div>`;
 }
 
 /* ============================== GOAL SCORER MODEL v2 ==============================
