@@ -1377,7 +1377,7 @@ $('#stView').onclick = e => { const b = e.target.closest('button'); if (!b) retu
 $('#stSeason').onchange = e => { ST.season = +e.target.value; loadStandings(); };
 
 /* ============================== ANALYTICS DATA ============================== */
-const A = { season: null, range: '30', types: 'reg', sit: 'ev', games: new Map(), ids: [], filtered: [], calib: 1, loading: false, token: 0, cal: {}, note: '', loadedKey: null, agg: null, memo: {}, W: null, useTrained: true, model: null, adj: true };
+const A = { season: null, range: 'season', types: 'reg', sit: 'ev', games: new Map(), ids: [], filtered: [], calib: 1, loading: false, token: 0, cal: {}, note: '', loadedKey: null, agg: null, memo: {}, W: null, useTrained: true, model: null, adj: true };
 function invalidate() { A.agg = null; A.memo = {}; }
 function recalib() { let gs = 0, xs = 0; for (const g of A.filtered) for (const s of g.shots) if (s.t !== 3 && !s.en) { xs += s.xg; if (s.t === 0) gs++; } A.calib = A.filtered.length >= 40 && xs > 0 ? Math.max(.7, Math.min(1.4, gs / xs)) : 1; }
 function trainAndApply() {
@@ -5543,7 +5543,11 @@ function setTab(t) {
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
   if (t === 'mybets') renderMyBets();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers'].includes(t)) { renderAbar(); if (A.loading) return; ensureData(); }
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers'].includes(t)) {
+    // every tab opens on the full current season
+    if (A.range !== 'season' || (S.curSeason && A.season !== S.curSeason)) { A.range = 'season'; if (S.curSeason) A.season = S.curSeason; A.note = ''; }
+    renderAbar(); if (A.loading) return; ensureData();
+  }
   window.scrollTo({ top: 0 });
 }
 $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.tab); };
