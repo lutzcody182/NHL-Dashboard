@@ -1,3 +1,4 @@
+
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
 # (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
 # odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
@@ -166,11 +167,12 @@ jobs:
       - name: Install page runner
         run: npm install --prefix "$RUNNER_TEMP/tk" jsdom@24 --no-audit --no-fund --silent
 
-      - name: Save and grade goal scorer picks
+      - name: Save and grade goal scorer and game model picks
         run: |
           cat > "$RUNNER_TEMP/track.js" <<'EOF'
-          // Goal scorer pick tracker: runs the dashboard's own model (from index.html) headlessly,
-          // saves today's pre-game picks with DraftKings prices to picks.json, and grades finished ones.
+          // Pick tracker: runs the dashboard's own models (from index.html) headlessly. Saves today's pre-game goal scorer picks
+          // (DraftKings prices) and Game model v2 moneyline picks to picks.json, grades finished ones, and records each day's
+          // model test scores so the dashboard can chart accuracy over time.
           const fs = require('fs');
           const { JSDOM } = require('jsdom');
           const ET = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, '');
@@ -192,7 +194,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
             return w.__t;
           }
 
@@ -207,23 +209,40 @@ jobs:
             log(`Loaded ${pre} saved games from cache.`);
             if (preload) await preload(T); else await T.ensureData(true);
             log(`Model data: ${T.A.filtered.length} completed games this season.`);
+            // game model: last season + this season (saved games come from the cache)
+            let gmOK = false;
+            try {
+              const all = preload ? [...T.A.games.values()].filter(g => g && g.final) : await T.gmCollect(() => {});
+              const M = T.gmTrain(all);
+              if (M.error) log('Game model: ' + M.error); else { T.GM.model = M; gmOK = true; log(`Game model trained on ${M.nRows} games · test accuracy ${(M.sKeep.acc * 100).toFixed(1)}%`); }
+            } catch (e) { log('Game model error: ' + (e.stack || e.message)); }
             fs.mkdirSync('.cache', { recursive: true });
             fs.writeFileSync('.cache/games.json', JSON.stringify([...T.A.games.values()].filter(g => g && g.final)));
 
             const picks = readJSON('picks.json', { picks: [] });
-            const byKey = new Map(picks.picks.map(p => [p.k, p]));
+            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g]));
 
             // 1) today's pre-game picks
             const today = ET(now);
             let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
             const PF = readJSON('props.json', null), LF = readJSON('lines.json', null);
-            let added = 0, updated = 0;
-            if (sb && T.A.filtered.length) {
-              const { S } = T.gsGetState();
-              for (const e of sb.events || []) {
-                const c = e.competitions[0];
-                if (c.status.type.state !== 'pre' || new Date(e.date) <= now) continue; // only games that haven't started
-                const rows = T.gsTonight(S, e, LF, PF).filter(r => r.dk != null);
+            let added = 0, updated = 0, gAdded = 0;
+            const gs = T.A.filtered.length ? T.gsGetState() : null;
+            if (sb) for (const e of sb.events || []) {
+              const c = e.competitions[0];
+              if (c.status.type.state !== 'pre' || new Date(e.date) <= now) continue; // only games that haven't started
+              const inj = await T.getInjuries(e.id);
+              // game model moneyline pick
+              if (gmOK) {
+                const gp = T.gmEventPick(e, inj);
+                if (gp && gp.ml) {
+                  const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, inj: out, hw: null, saved: now.toISOString() };
+                  if (!gByKey.has(k) || gByKey.get(k).hw == null) { if (!gByKey.has(k)) gAdded++; gByKey.set(k, rec); }
+                }
+              }
+              if (gs) {
+                const rows = T.gsTonight(gs.S, e, LF, PF, inj).filter(r => r.dk != null);
                 if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
                 for (const r of rows) {
                   const k = `${e.id}|${r.pid}`;
@@ -232,7 +251,7 @@ jobs:
                 }
               }
             }
-            log(`Picks saved: ${added} new, ${updated} refreshed.`);
+            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new.`);
 
             // 2) grade finished games
             let graded = 0;
@@ -249,8 +268,23 @@ jobs:
                 graded++;
               }
             }
-            log(`Graded ${graded} picks.`);
-            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev) };
+            // grade game picks
+            let gGraded = 0;
+            for (const p of [...gByKey.values()].filter(p => p.hw == null && new Date(p.start) < new Date(now - 4 * 3600e3))) {
+              let g = null; try { g = await T.getGame(p.gid); } catch (e) { log(`Game ${p.gid}: ${e.message}`); }
+              if (!g || !g.final) continue;
+              p.hs = g.home.score; p.as = g.away.score; p.hw = g.home.score > g.away.score; p.ot = !!(g.ot || g.so);
+              const price = p.side === 'h' ? p.mlH : p.mlA, won = p.side === 'h' ? p.hw : !p.hw;
+              p.profit = won ? (price < 0 ? 100 : price) : -(price < 0 ? -price : 100);
+              gGraded++;
+            }
+            log(`Graded ${graded} goal scorer picks and ${gGraded} game picks.`);
+            // today's model test scores, for the accuracy-over-time charts (one snapshot per day)
+            const hist = (picks.hist || []).filter(h => h.date !== today), snap = { date: today };
+            if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
+            if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
+            if (snap.gm || snap.gs) hist.push(snap);
+            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
           }
@@ -265,6 +299,6 @@ jobs:
           git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
           git add props.json picks.json
           if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
-          git commit -m "Update DraftKings goal scorer odds and pick tracker"
+          git commit -m "Update DraftKings odds, picks and model accuracy"
           git pull --rebase --quiet || true
           git push
