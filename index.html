@@ -451,6 +451,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
 .qbig{grid-template-columns:minmax(0,1fr);max-width:980px}
 .qzone{fill:transparent;cursor:zoom-in}.qzone:hover{fill:var(--accent);fill-opacity:.05}
 .qdot:hover circle:last-of-type{stroke:var(--text);stroke-width:2}
+.injb{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;font-size:10.5px;font-weight:700;background:color-mix(in srgb,#e8a33d 22%,transparent);color:var(--text)}.injb.out{background:color-mix(in srgb,var(--neg) 22%,transparent)}
 </style>
 </head>
 <body>
@@ -1151,11 +1152,13 @@ async function loadScores(silent) {
   }).join('');
   const cached = S.lead && S.lead.d === d ? S.lead.html : `<div class="empty"><div class="spinner"></div>Finding today's top performers…</div>`;
   body.innerHTML = `<div class="games">${cards}</div>
+    <section class="lead-sec"><div class="card-h"><h2>🎯 Best bets</h2><p>Game model value and top goal scorer edges, saved by the daily job</p></div><div id="dayPkBody">${S.dp && S.dp.d === d ? S.dp.html : '<div class="card empty"><div class="spinner"></div>Loading picks…</div>'}</div></section>
     <section class="lead-sec"><div class="card-h"><h2>Upset watch</h2><p>${isToday ? "Today's" : "This day's"} favorites and underdogs</p></div><div id="dayUpBody">${S.up && S.up.d === d ? S.up.html : '<div class="card empty"><div class="spinner"></div>Checking for upsets…</div>'}</div></section>
     <section class="ms-sec" id="msSec">${S.ms && S.ms.d === d ? S.ms.html : ''}</section>
     <section class="lead-sec"><div class="card-h"><h2>${isToday ? "Today's" : 'Daily'} leaders</h2><p id="leadNote"></p></div><div id="leadersBody">${cached}</div></section>`;
   loadLeaders(evs, d);
   loadDayUpsets(evs, d);
+  loadDayPicks(evs, d);
   clearInterval(S.timer);
   if (anyLive && isToday) S.timer = setInterval(() => { if ($('#tab-scores').classList.contains('on') && !document.hidden) loadScores(true); }, 30000);
 }
@@ -3256,9 +3259,9 @@ async function renderModel() {
           <p class="muted" style="font-size:12px">If the model is well calibrated, favorites it gives 60% should win about 60% of the time. Brier score: lower is better; 0.25 is a coin flip.</p></div></div>
       <h3 class="cmp-sec">Most recent predictions</h3><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Ice Lab pick</th><th>Market</th><th class="l">Final</th><th>Result</th></tr></thead><tbody>${recent.map(p => { const pick = p.pH >= .5 ? p.h : p.a, pp = Math.max(p.pH, 1 - p.pH), ok = (p.pH >= .5) === p.hw; const mk = fin(p.mk) ? pct1(p.pH >= .5 ? p.mk : 1 - p.mk) + '%' : '–'; return `<tr class="click" data-game="${p.id}"><td class="l">${new Date(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.a, 16)}${esc(TM(p.a).abbr)} @ ${logoImg(p.h, 16)}${esc(TM(p.h).abbr)}</div></td><td class="l">${esc(TM(pick).abbr)} ${pct1(pp)}%${p.hn < 5 || p.an < 5 ? ' <span class="muted">(early)</span>' : ''}</td><td>${mk}</td><td class="l">${p.as}–${p.hs}${p.ot ? ' OT' : ''}</td><td>${ok ? '<b style="color:var(--good)">✓</b>' : '<b style="color:var(--neg)">✗</b>'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
   }
-  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid"><div id="gmSec"></div>${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid"><div id="gmSec"></div><div id="gmPickSec"></div><div id="accSec"></div>${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
   const u = $('#mdUse'); if (u) u.onclick = e => { const b = e.target.closest('button'); if (!b) return; A.useTrained = b.dataset.v === '1'; for (const g of A.filtered) applyModel(g); recalib(); invalidate(); renderModel(); };
-  renderGameModelCard();
+  renderGameModelCard(); renderModelExtras();
   $('#mdAdj').onclick = e => { const b = e.target.closest('button'); if (!b) return; A.adj = b.dataset.v === '1'; invalidate(); renderModel(); };
   // tonight's picks (current season only)
   if (A.season === S.curSeason) {
@@ -3266,9 +3269,10 @@ async function renderModel() {
       const sb = await getJSON(`${API}/scoreboard?dates=${todayStr()}`);
       const up = (sb.events || []).filter(e => e.competitions[0].status.type.state === 'pre');
       await gmLoadSaved();
+      const INJS = {}; await pool(up, 6, async e => { INJS[e.id] = await getInjuries(e.id); });
       const rowsT = up.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); const pr = predictMatch(String(h.team.id), String(a.team.id)); if (!pr) return ''; const pick = pr.pH >= .5 ? h.team : a.team;
         let v2 = '<span class="muted">train in Model Lab</span>';
-        if (GM.model) { const pg = probableGoalies(e), H = String(h.team.id), Aw = String(a.team.id); const o = c.odds && c.odds[0]; const ml = o && o.homeTeamOdds && o.awayTeamOdds && isFinite(o.homeTeamOdds.moneyLine) && isFinite(o.awayTeamOdds.moneyLine) ? { h: +o.homeTeamOdds.moneyLine, a: +o.awayTeamOdds.moneyLine } : null; const r = gmPredict(H, Aw, e.date, (pg[H] && pg[H].id) || gmUsualGoalie(GM.model.S, H), (pg[Aw] && pg[Aw].id) || gmUsualGoalie(GM.model.S, Aw), ml); if (r) { const p = r.p, t2 = p >= .5 ? h.team : a.team; v2 = `<b>${esc(t2.abbreviation)}</b> ${pct1(Math.max(p, 1 - p))}% <span class="muted">fair ${fairAmerican(Math.max(p, 1 - p))}</span>${r.parts[0] ? ` <span class="muted" style="font-size:12px">· ${esc(r.parts[0].l.toLowerCase())}</span>` : ''}`;
+        if (GM.model) { const pg = probableGoalies(e), H = String(h.team.id), Aw = String(a.team.id); const o = c.odds && c.odds[0]; const ml = o && o.homeTeamOdds && o.awayTeamOdds && isFinite(o.homeTeamOdds.moneyLine) && isFinite(o.awayTeamOdds.moneyLine) ? { h: +o.homeTeamOdds.moneyLine, a: +o.awayTeamOdds.moneyLine } : null; const gp0 = gmEventPick(e, INJS[e.id]), r = gp0 && gp0.r; if (r) { const p = r.p, t2 = p >= .5 ? h.team : a.team; v2 = `<b>${esc(t2.abbreviation)}</b> ${pct1(Math.max(p, 1 - p))}% <span class="muted">fair ${fairAmerican(Math.max(p, 1 - p))}</span>${r.parts[0] ? ` <span class="muted" style="font-size:12px">· ${esc(r.parts[0].l.toLowerCase())}</span>` : ''}`;
           if (ml) { const sides = [[r.p, ml.h, h.team], [1 - r.p, ml.a, a.team]].map(([q, price, tm]) => ({ q, price, tm, edge: q - amImplied(price) })).sort((x, y) => y.edge - x.edge)[0]; v2 += sides.edge >= .03 ? `<div style="font-size:12px"><b style="color:var(--good)">✓ Value: ${esc(sides.tm.abbreviation)} ${fmtML(sides.price)}</b> (+${(sides.edge * 100).toFixed(1)} pts)</div>` : sides.edge > 0 ? `<div style="font-size:12px;color:var(--good)">Lean ${esc(sides.tm.abbreviation)} ${fmtML(sides.price)} (+${(sides.edge * 100).toFixed(1)} pts)</div>` : '<div class="muted" style="font-size:12px">No value at posted prices</div>'; } } }
         return `<tr class="click" data-game="${e.id}"><td class="l"><div class="tcell">${logoImg(String(a.team.id), 16)}${esc(a.team.abbreviation)} @ ${logoImg(String(h.team.id), 16)}${esc(h.team.abbreviation)}</div></td><td class="l"><b>${esc(pick.abbreviation)}</b> ${pct1(Math.max(pr.pH, 1 - pr.pH))}%</td><td class="l">${v2}</td><td>${f2(pr.la)} – ${f2(pr.lh)}</td><td>${esc((c.odds && c.odds[0] && c.odds[0].details) || '–')}</td></tr>`; }).filter(Boolean).join('');
       const el = $('#mdToday'); if (el && rowsT) el.innerHTML = `<div class="card"><div class="card-h"><h3>Tonight's picks</h3><p>Ratings-only pick and the game model v2 pick (with its biggest factor)</p></div><div class="twrap"><table><thead><tr><th class="l">Game</th><th class="l">Ratings pick</th><th class="l">Game model v2</th><th>Projected xG</th><th>Line</th></tr></thead><tbody>${rowsT}</tbody></table></div></div>`;
@@ -4173,7 +4177,7 @@ function gmFeatures(S, hId, aId, dateIso, gH, gA) {
     (gq(gH) - gq(gA)) / .5, (stv(h) - stv(a)) / .25, penv(a) - penv(h), (formv(h) - formv(a)) / .05, cook(h) / .05, cook(a) / .05];
   return { x, ready: h.n >= 5 && a.n >= 5, lh, la };
 }
-function gmUsualGoalie(S, tid) { const t = S.T[tid]; if (!t || !t.gks) return null; let best = null, bt = -1; for (const [id, v] of Object.entries(t.gks)) if (v > bt) { bt = v; best = id; } return best; }
+function gmUsualGoalie(S, tid, skip) { const t = S.T[tid]; if (!t || !t.gks) return null; let best = null, bt = -1; for (const [id, v] of Object.entries(t.gks)) if (v > bt && !(skip && skip.has(id))) { bt = v; best = id; } return best; }
 function gmStarter(g, tid) { let best = null, bt = -1; for (const [id, p] of Object.entries(g.gk || {})) if (p.tm === tid && p.toi > bt) { bt = p.toi; best = id; } return best; }
 // update state with a finished game
 function gmUpdate(S, g) {
@@ -4195,6 +4199,9 @@ function gmUpdate(S, g) {
     t.ppg += bm.ppg || 0; t.ppga += bo.ppg || 0; t.pen += bm.pen || 0;
   }
   for (const s of g.shots) { if (s.t === 3 || s.en || !s.gl) continue; const q = S.Gk[s.gl] || (S.Gk[s.gl] = { xga: 0, ga: 0, toi: 0 }); q.xga += s.xg; if (s.t === 0) q.ga++; }
+  // each player's share of his team's recent expected goals (fades ~15% per game), used for injury adjustments
+  for (const t of [h, a]) { t.px = t.px || {}; t.tx = (t.tx || 0) * .85; for (const k in t.px) { t.px[k] *= .85; if (t.px[k] < .01) delete t.px[k]; } }
+  for (const s of g.shots) { if (s.t === 3 || s.en || !s.pl || !o[s.tm]) continue; const t = S.T[s.tm]; t.px[s.pl] = (t.px[s.pl] || 0) + s.xg; t.tx += s.xg; }
   S.Gn = S.Gn || {};
   for (const t of [h, a]) if (t.gks) for (const k in t.gks) t.gks[k] *= .9; // recent starts count most
   for (const [id, p] of Object.entries(g.gk || {})) {
@@ -4270,14 +4277,19 @@ function gmTrain(games) {
   return { W, Wfull, Wb, keep, abl, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, t: Date.now() };
 }
 // predict an upcoming game, with a factor-by-factor breakdown
-function gmPredict(hId, aId, dateIso, gH, gA, ml) {
+function gmPredict(hId, aId, dateIso, gH, gA, ml, inj) {
   const M = GM.model; if (!M) return null;
   const f = gmFeatures(M.S, hId, aId, dateIso, gH, gA), W = M.W;
-  const p = gmProb(W, f.x);
-  const parts = GM_FEATS.map(([k, l], i) => { if (!W[i] || i < 2 || !f.x[i]) return null; const x0 = [...f.x]; x0[i] = 0; return { k, l, d: p - gmProb(W, x0) }; }).filter(Boolean).sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+  const p0 = gmProb(W, f.x);
+  const parts = GM_FEATS.map(([k, l], i) => { if (!W[i] || i < 2 || !f.x[i]) return null; const x0 = [...f.x]; x0[i] = 0; return { k, l, d: p0 - gmProb(W, x0) }; }).filter(Boolean);
+  // injuries: lower each team's scoring by the share of its recent xG that is out tonight
+  const iH = gmInjury(M.S, hId, inj), iA = gmInjury(M.S, aId, inj);
+  let p = p0;
+  if (iH.cut || iA.cut) { const wp = (x, y) => logit(clamp(winProb(x, y), .02, .98)); p = clamp(sigm(logit(p0) + wp(f.lh * (1 - iH.cut), f.la * (1 - iA.cut)) - wp(f.lh, f.la)), .01, .99); parts.push({ k: 'inj', l: 'Injuries', d: p - p0 }); }
+  parts.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
   const mk = devig(ml);
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
-  return { p, pb, mk, parts, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
+  return { p, p0, pb, mk, parts, inj: { h: iH, a: iA }, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
 async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W) GM.model = m; } catch (e) {} return GM.model; }
 async function gmCollect(onProg) {
@@ -4365,12 +4377,14 @@ async function renderGameModelPreview(s, g) {
   await gmLoadSaved();
   if (!GM.model) { box().innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3></div><p class="muted" style="margin:0">Train the game model in <b>League → Model Lab</b> to see its prediction here, with a breakdown of every factor.</p></div>`; return; }
   let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === g.id) || null; } catch (e) {}
-  const pg = probableGoalies(ev), M = GM.model;
-  const gH = (pg[g.home.id] && pg[g.home.id].id) || gmUsualGoalie(M.S, g.home.id), gA = (pg[g.away.id] && pg[g.away.id].id) || gmUsualGoalie(M.S, g.away.id);
+  const pg = probableGoalies(ev), M = GM.model, inj = injParse(s);
+  const skip = t => new Set(((inj.byTeam[t]) || []).filter(x => x.out).map(x => x.id));
+  const gH = (pg[g.home.id] && pg[g.home.id].id) || gmUsualGoalie(M.S, g.home.id, skip(g.home.id)), gA = (pg[g.away.id] && pg[g.away.id].id) || gmUsualGoalie(M.S, g.away.id, skip(g.away.id));
   const pk = (s.pickcenter && s.pickcenter[0]) || null;
   const ml = pk && pk.homeTeamOdds && pk.awayTeamOdds && isFinite(pk.homeTeamOdds.moneyLine) && isFinite(pk.awayTeamOdds.moneyLine) ? { h: +pk.homeTeamOdds.moneyLine, a: +pk.awayTeamOdds.moneyLine } : null;
-  const r = gmPredict(g.home.id, g.away.id, g.date || new Date().toISOString(), gH, gA, ml);
+  const r = gmPredict(g.home.id, g.away.id, g.date || new Date().toISOString(), gH, gA, ml, inj);
   if (!r || !box()) return;
+  const injTxt = [[g.away, r.inj.a], [g.home, r.inj.h]].filter(([, x]) => x.who.length).map(([t, x]) => `<p style="margin:0 0 4px;font-size:13px"><b>${esc(t.abbr)}</b> missing ${x.who.slice(0, 4).map(w => `${esc(w.n)} <span class="muted">(${pct1(w.share)}% of recent xG)</span>`).join(', ')}${x.who.length > 4 ? ` +${x.who.length - 4} more` : ''} → scoring −${pct1(x.cut)}%</p>`).join('');
   const meter = (l, p) => fin(p) ? `<div class="pred-row"><span>${l}</span><div class="meter"><i style="width:${(1 - p) * 100}%;background:var(--away)"></i><i style="width:${p * 100}%;background:var(--home)"></i></div><span class="num">${f0((1 - p) * 100)}% – ${f0(p * 100)}%</span></div>` : '';
   const parts = r.parts.slice(0, 6).map(x => { const favH = x.d >= 0; return `<li><span>${esc(x.l)}</span><b style="color:var(${favH ? '--home' : '--away'})">${favH ? '+' : '−'}${Math.abs(x.d * 100).toFixed(1)} pts ${esc(favH ? g.home.abbr : g.away.abbr)}</b></li>`; }).join('');
   const gName = (id, t) => pg[t] ? `${esc(pg[t].n)} ${gBadge(pg[t].st)}` : id ? `${esc((M.S.Gn || {})[id] || 'Usual starter')} <span class="muted">(not announced yet: assumes his usual starter)</span>` : '<span class="muted">unknown</span>';
@@ -4380,7 +4394,8 @@ async function renderGameModelPreview(s, g) {
     <h4 class="cmp-sec" style="margin-top:12px">Fair line & value</h4>${gmValueTable(r.p, ml, g.away.abbr, g.home.abbr, 'Game model v2')}
     ${fin(r.pb) ? `<p class="muted" style="font-size:12px;margin:6px 0 0">More cautious view: the v2 + market blend says ${esc(g.home.abbr)} ${pct1(r.pb)}% (fair ${fairAmerican(r.pb)}) and ${esc(g.away.abbr)} ${pct1(1 - r.pb)}% (fair ${fairAmerican(1 - r.pb)}). When both point the same way, the edge is more trustworthy.</p>` : ''}
     <div class="grid g2" style="margin-top:10px"><div><h4 class="cmp-sec" style="margin-top:0">Why</h4>${parts ? `<ul class="gmwhy">${parts}</ul>` : '<p class="muted" style="margin:0">Mostly team strength and home ice.</p>'}</div>
-    <div><h4 class="cmp-sec" style="margin-top:0">Goalies used</h4><p style="margin:0 0 4px;font-size:13px">${esc(g.away.abbr)}: ${gName(gA, g.away.id)}</p><p style="margin:0;font-size:13px">${esc(g.home.abbr)}: ${gName(gH, g.home.id)}</p></div></div>
+    <div><h4 class="cmp-sec" style="margin-top:0">Goalies used</h4><p style="margin:0 0 4px;font-size:13px">${esc(g.away.abbr)}: ${gName(gA, g.away.id)}</p><p style="margin:0;font-size:13px">${esc(g.home.abbr)}: ${gName(gH, g.home.id)}</p>
+      <h4 class="cmp-sec">Injuries factored in</h4>${injTxt || '<p class="muted" style="margin:0;font-size:13px">No regulars listed as out.</p>'}</div></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">Points = how much each factor moves ${esc(g.home.abbr)}'s win chance. The model was last trained ${new Date(M.t).toLocaleDateString()}; retrain it in Model Lab to include the newest games. For fun and analysis, not betting advice.</p></div>`;
 }
 
@@ -4865,7 +4880,7 @@ function gsRoleMap(S, lf, tid) {
   return Object.keys(out).length ? out : null;
 }
 // predictions for every skater in one scoreboard event (used by the tab, the game preview and the GitHub job)
-function gsTonight(S, e, LF, PF) {
+function gsTonight(S, e, LF, PF, INJ) {
   const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
   const H = String(h.team.id), Aw = String(a.team.id); addTeam(h.team); addTeam(a.team);
   const gLike = { date: e.date, home: { id: H }, away: { id: Aw } }, probs = probableGoalies(e), dkm = PF ? dkPriceMap(PF, e.date, H, Aw) : null;
@@ -4876,11 +4891,12 @@ function gsTonight(S, e, LF, PF) {
   for (const [t, opp] of [[H, Aw], [Aw, H]]) {
     let implied = gsImplied(tot, t === H ? mlH : mlA, t === H ? mlA : mlH), envSrc = 'betting line';
     if (!fin(implied)) { const pm = predictMatch(H, Aw); if (pm) { implied = t === H ? pm.lh : pm.la; envSrc = 'Ice Lab ratings'; } }
-    const ro = gsRoster(S, LF, gLike, t), gl = gsGoalie(S, probs, LF, gLike, opp), role = gsRoleMap(S, linesFor(LF, gLike, t), t);
+    const ro = gsRoster(S, LF, gLike, t), gl = gsGoalie(S, probs, LF, gLike, opp, INJ), role = gsRoleMap(S, linesFor(LF, gLike, t), t);
     const d = S.D[opp], lgPen = S.L.teamGames ? S.L.pen / S.L.teamGames : 3, oppPen = d && d.gp ? (d.pen + lgPen * 5) / (d.gp + 5) : lgPen;
     const teamPPsec = lgPP * (lgPen > 0 ? oppPen / lgPen : 1);
     for (const pid of ro.ids) {
       const r0 = S.P[pid]; if (!r0 || !r0.gp) continue;
+      const ij = INJ && INJ.st[pid]; if (ij && ij.out && ro.src !== 'RotoGrinders lines') continue; // listed out and not in tonight's lines
       const avgEv = r0.rec.length ? r0.rec.reduce((s, x) => s + x[0], 0) / r0.rec.length : r0.ev / r0.gp, avgPP = r0.rec.length ? r0.rec.reduce((s, x) => s + x[1], 0) / r0.rec.length : r0.pp / r0.gp;
       const rl = role && role[pid];
       let evSec = avgEv, ppSec = null, roleTxt = '';
@@ -4892,7 +4908,7 @@ function gsTonight(S, e, LF, PF) {
       const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied });
       if (!r) continue;
       const dk = dkm ? dkLookup(dkm, r0.n) : null, ev = dk != null ? betEV(r.p, dk) : null;
-      rows.push({ pid, n: r0.n, pos: r0.pos, tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt), dk, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
+      rows.push({ pid, n: r0.n, pos: r0.pos, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt), dk, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
     }
   }
   return rows;
@@ -4927,12 +4943,15 @@ function gsRoster(S, LF, gLike, tid) {
   let last = null; for (const p of Object.values(S.P)) if (p.tm === tid && (!last || p.last > last)) last = p.last;
   return { ids: Object.values(S.P).filter(p => p.tm === tid && p.last === last).map(p => p.id), src: 'their last game' };
 }
-function gsGoalie(S, probs, LF, gLike, tid) {
+function gsGoalie(S, probs, LF, gLike, tid, INJ) {
   // the confirmed/probable starter ESPN lists always wins, even if he has no games in the loaded range (then he's treated as league average)
   if (probs[tid] && (probs[tid].id || probs[tid].n)) { const id = probs[tid].id || (Object.values(S.Gk).find(q => normName(q.n) === normName(probs[tid].n)) || {}).id || null; return { id, n: probs[tid].n, st: probs[tid].st || 'Probable', noData: !(id && S.Gk[id]) }; }
   const lf = linesFor(LF, gLike, tid);
   if (lf && lf.goalie) { const hit = Object.values(S.Gk).find(q => normName(q.n) === normName(lf.goalie)); return hit ? { id: hit.id, n: hit.n, st: 'Projected by RotoGrinders' } : { id: null, n: lf.goalie, st: 'Projected by RotoGrinders', noData: true }; }
-  const d = S.D[tid]; if (d && d.lastG && S.Gk[d.lastG]) return { id: d.lastG, n: S.Gk[d.lastG].n, st: 'Last starter (not announced)' };
+  const d = S.D[tid], hurt = id => !!(INJ && INJ.st[id] && INJ.st[id].out);
+  if (d && d.lastG && S.Gk[d.lastG] && !hurt(d.lastG)) return { id: d.lastG, n: S.Gk[d.lastG].n, st: 'Last starter (not announced)' };
+  const alt = Object.values(S.Gk).filter(q => q.tm === tid && !hurt(q.id) && q.last).sort((a, b) => a.last < b.last ? 1 : -1)[0];
+  if (alt) return { id: alt.id, n: alt.n, st: 'Last healthy starter (not announced)' };
   return null;
 }
 function gsWhy(r, goalieName, implied, envSrc, roleTxt) {
@@ -4957,14 +4976,16 @@ async function renderScorers() {
   if (activeTab() !== 'scorers') return;
   const evs = ((sb && sb.events) || []);
   const LF = await getLinesFile(), PF = await getPropsFile(), PK = await getPicksFile();
+  const INJS = {}; await pool(evs.filter(e => e.competitions[0].status.type.state === 'pre'), 6, async e => { INJS[e.id] = await getInjuries(e.id); });
+  if (activeTab() !== 'scorers') return;
   const rows = [];
   for (const e of evs) {
     if (GS.game && GS.game !== String(e.id)) { const c = e.competitions[0]; c.competitors.forEach(x => addTeam(x.team)); continue; }
-    rows.push(...gsTonight(S, e, LF, PF).filter(r => !GS.team || GS.team === r.tm));
+    rows.push(...gsTonight(S, e, LF, PF, INJS[e.id]).filter(r => !GS.team || GS.team === r.tm));
   }
   const gameOpts = evs.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); return `<option value="${e.id}" ${String(e.id) === GS.game ? 'selected' : ''}>${esc(a.team.abbreviation)} @ ${esc(h.team.abbreviation)}</option>`; }).join('');
   const cols = [
-    { k: 'n', h: 'Player', l: 1, v: r => r.n, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}${plink(r.pid, v)} <span class="muted">${esc(r.pos)}</span></div>` },
+    { k: 'n', h: 'Player', l: 1, v: r => r.n, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}${plink(r.pid, v)} <span class="muted">${esc(r.pos)}</span>${injBadge(r.inj)}</div>` },
     { k: 'role', h: 'Role', l: 1, v: r => r.role || '', f: (v, r) => v ? `<span style="font-size:12.5px">${esc(v)}</span>` : '<span class="muted" style="font-size:12px">usual</span>', t: 'Tonight\'s line (L1–L4) or defense pair (D1–D3) and power-play unit from the RotoGrinders lines. "usual" = lines not posted, so his recent average minutes are used.' },
     { k: 'opp', h: 'Vs. goalie', l: 1, v: r => r.gl ? r.gl.n : '', f: (v, r) => `<div class="tcell">${logoImg(r.opp, 16)}${r.gl ? esc(r.gl.n) : '<span class="muted">unknown</span>'}</div>${r.gl ? `<div class="gstat">${/confirm/i.test(r.gl.st || '') ? '<span class="gs-ok">✓ Confirmed</span>' : /rotogrinders/i.test(r.gl.st || '') ? '<span class="gs-maybe">Projected</span>' : /last starter/i.test(r.gl.st || '') ? '<span class="gs-maybe">Not announced: last starter</span>' : `<span class="gs-maybe">${esc(r.gl.st || 'Probable')}</span>`}${r.gl.noData ? ' <span class="muted" data-tip="No games for this goalie in the loaded range, so he\'s treated as a league-average goalie.">· no data</span>' : ''}</div>` : ''}` },
     { k: 'p', h: 'Chance to score', v: r => r.p, f: (v, r) => `<b data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${pct1(v)}%</b>`, dir: 1, t: 'Estimated chance he scores at least one goal tonight (any situation).' },
@@ -5003,8 +5024,8 @@ async function renderScorers() {
       <div class="ctl"><label>Game</label><select id="gsGame"><option value="">All games</option>${gameOpts}</select></div>
       <div class="ctl"><label>Team</label><select id="gsTeam"><option value="">All</option>${teamsTonight.map(t => `<option value="${t}" ${t === GS.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>
       <div class="ctl"><label>Player</label><input id="gsQ" type="search" placeholder="Search a name" value="${esc(GS.q)}" autocomplete="off"></div></div>
-    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores tonight. It starts from where he shoots, how dangerous those shots are, his finishing and tonight's projected minutes and power-play role, then adjusts for his team's scoring environment (betting total and moneyline), the opponent's shot volume and quality allowed by zone, how often they take penalties and how good their penalty kill is, and the goalie's results by zone, by shot type and on rebounds and rush chances. How much each adjustment counts is learned from the loaded games and rebuilds every time new games load. Hover a chance for the breakdown. Lineups come from RotoGrinders when posted (otherwise each team's last game); goalies are the confirmed or probable starter when ESPN lists one. Uses the analytics range above; <b>Full season</b> gives the best samples.</p>
-    ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${pickTrackerCard(PK)}${btCard}
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores tonight. It starts from where he shoots, how dangerous those shots are, his finishing and tonight's projected minutes and power-play role, then adjusts for his team's scoring environment (betting total and moneyline), the opponent's shot volume and quality allowed by zone, how often they take penalties and how good their penalty kill is, and the goalie's results by zone, by shot type and on rebounds and rush chances. How much each adjustment counts is learned from the loaded games and rebuilds every time new games load. Hover a chance for the breakdown. Lineups come from RotoGrinders when posted (otherwise each team's last game), and players ESPN lists as out or on injured reserve are left off; goalies are the confirmed or probable starter when ESPN lists one. Uses the analytics range above; <b>Full season</b> gives the best samples.</p>
+    ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${pickTrackerCard(PK)}${accuracyCard(PK, 'gs')}${btCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For fun and analysis, not betting advice.</p>`;
   RERENDER.gs = renderScorers;
   $('#gsDate').onchange = e => { GS.date = e.target.value.replace(/-/g, ''); GS.game = ''; GS.team = ''; renderScorers(); };
@@ -5024,7 +5045,7 @@ async function renderScorerPreview(g) {
   const { S } = gsGetState();
   let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === g.id) || null; } catch (e) {}
   if (!ev || !box()) { if (box()) box().innerHTML = ''; return; }
-  const LF = await getLinesFile(), PF = await getPropsFile(), all = gsTonight(S, ev, LF, PF);
+  const LF = await getLinesFile(), PF = await getPropsFile(), INJ = await getInjuries(g.id), all = gsTonight(S, ev, LF, PF, INJ);
   const col = t => { const list = all.filter(r => r.tm === t).sort((a, b) => b.p - a.p).slice(0, 5), gl = list[0] && list[0].gl;
     return `<div><div class="tcell" style="margin-bottom:6px">${logoImg(t, 18)}<b>${esc(TM(t).abbr)}</b> <span class="muted" style="font-size:12px">vs. ${gl ? esc(gl.n) : 'unknown goalie'}</span></div><ol class="plist">${list.map(x => `<li><span>${plink(x.pid, x.n)}${x.role ? ` <span class="muted" style="font-size:11px">${esc(x.role)}</span>` : ''}</span><span class="num" data-tip="${esc(`<b>${esc(x.n)}</b>${x.why.html}`)}"><b>${pct1(x.p)}%</b> <span class="muted">${fairAmerican(x.p)}</span>${x.dk != null ? ` <span style="font-size:12px">· DK ${fmtML(x.dk)} <b style="color:${x.edgeP > 0 ? 'var(--good)' : 'var(--neg)'}">${x.edgeP > 0 ? '+' : ''}${(x.edgeP * 100).toFixed(1)}</b></span>` : ''}</span></li>`).join('') || '<li class="muted">No data yet</li>'}</ol></div>`; };
   box().innerHTML = `<div class="card"><div class="card-h"><h3>🎯 Most likely goal scorers</h3><p>Chance to score · fair odds · DraftKings price and edge (pts) when posted</p></div><div class="grid g2">${col(g.away.id)}${col(g.home.id)}</div><p class="muted" style="font-size:12px;margin:8px 0 0">Full list in <b>Players → Goal Scorers</b>.</p></div>`;
@@ -5315,6 +5336,170 @@ async function renderTape(s, g) {
     ${extra('Rest', restTxt(rest(rA.last)), restTxt(rest(rH.last)))}
     <div class="tp-verdict">${verdict}</div>
     <p class="muted" style="font-size:12px;margin:6px 0 0">From the analytics range above (${A.range === 'season' ? 'full season' : 'last ' + A.range + ' days'}). Arrows point to the team with the edge in each category.</p></div>`;
+}
+
+/* ============================== INJURIES (ESPN game summaries) ==============================
+   "Out", injured reserve and suspended players are left out of the goal scorer model, and the game model
+   lowers a team's scoring by the share of its recent expected goals those players created (half of it,
+   since a replacement plays in their spot). Day-to-day players are flagged but kept, since they often play. */
+const INJ_C = {};
+const injIsOut = st => /out|reserve|\bir\b|ltir|suspen/i.test(st || '') && !/day/i.test(st || '');
+function injParse(s) {
+  const out = { byTeam: {}, st: {} };
+  for (const t of (s && s.injuries) || []) {
+    const tid = t.team ? String(t.team.id) : null;
+    for (const i of t.injuries || []) {
+      const a = i.athlete || {}; if (!a.id) continue;
+      const st = i.status || (i.type && (i.type.description || i.type.name)) || 'Injured', d = i.details || {};
+      const rec = { id: String(a.id), n: a.displayName || a.fullName || '', pos: (a.position && a.position.abbreviation) || '', st, out: injIsOut(st), det: [d.type, d.detail].filter(Boolean).join(' · '), tm: tid };
+      out.st[rec.id] = rec; if (tid) (out.byTeam[tid] = out.byTeam[tid] || []).push(rec);
+    }
+  }
+  return out;
+}
+async function getInjuries(eid) {
+  const c = INJ_C[eid]; if (c && Date.now() - c.t < 20 * 60e3) return c.v;
+  let v = null; try { v = injParse(await getJSON(`${API}/summary?event=${eid}`)); } catch (e) { v = null; }
+  INJ_C[eid] = { t: Date.now(), v }; return v;
+}
+const injBadge = st => !st ? '' : injIsOut(st) ? `<span class="injb out" data-tip="${esc('ESPN lists him as <b>' + esc(st) + '</b>. He is in tonight\'s projected lines, so he is kept in.')}">${esc(st)}</span>` : `<span class="injb" data-tip="${esc('ESPN lists him as <b>' + esc(st) + '</b>. Kept in, since day-to-day players often play.')}">${/day/i.test(st) ? 'DTD' : esc(st)}</span>`;
+// game model: how much of a team's recent offense is out tonight
+function gmInjury(S, tid, inj) {
+  const t = S.T[tid], list = ((inj && inj.byTeam[tid]) || []).filter(x => x.out && x.pos !== 'G');
+  if (!t || !t.px || !t.tx || !list.length) return { cut: 0, who: [] };
+  const who = list.map(x => ({ ...x, share: (t.px[x.id] || 0) / t.tx })).filter(x => x.share >= .01).sort((a, b) => b.share - a.share);
+  return { cut: Math.min(.3, .5 * who.reduce((s, x) => s + x.share, 0)), who };
+}
+const gmEventML = e => { const o = e.competitions[0].odds && e.competitions[0].odds[0]; const h = o && o.homeTeamOdds && o.homeTeamOdds.moneyLine, a = o && o.awayTeamOdds && o.awayTeamOdds.moneyLine; return h != null && a != null && h !== '' && a !== '' && isFinite(h) && isFinite(a) ? { h: +h, a: +a } : null; };
+// game model prediction + value check for one scoreboard event (Model Lab, Today summary and the GitHub job)
+function gmEventPick(e, inj) {
+  const M = GM.model; if (!M) return null;
+  const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
+  const H = String(h.team.id), Aw = String(a.team.id), pg = probableGoalies(e), ml = gmEventML(e);
+  const skip = t => new Set(((inj && inj.byTeam[t]) || []).filter(x => x.out).map(x => x.id));
+  const gH = (pg[H] && pg[H].id) || gmUsualGoalie(M.S, H, skip(H)), gA = (pg[Aw] && pg[Aw].id) || gmUsualGoalie(M.S, Aw, skip(Aw));
+  const r = gmPredict(H, Aw, e.date, gH, gA, ml, inj); if (!r) return null;
+  const side = ml ? [['h', r.p, ml.h], ['a', 1 - r.p, ml.a]].map(([s, q, price]) => ({ s, q, price, edge: q - amImplied(price) })).sort((x, y) => y.edge - x.edge)[0] : null;
+  const gn = (id, t) => pg[t] ? pg[t].n : ((M.S.Gn || {})[id] || '');
+  return { H, Aw, ha: h.team.abbreviation, aa: a.team.abbreviation, ml, r, gHn: gn(gH, H), gAn: gn(gA, Aw), side, verdict: side ? (side.edge >= .03 ? 'bet' : side.edge > 0 ? 'lean' : 'pass') : null };
+}
+
+/* ---- game model pick tracker (picks.json → games, saved and graded by the GitHub job) ---- */
+const GPK = { strat: 'bet', all: false };
+const gpRes = (g, s) => { const price = s === 'h' ? g.mlH : g.mlA, won = s === 'h' ? g.hw : !g.hw; return won ? pkWin(price) : -pkRisk(price); };
+const GP_STRATS = [
+  ['bet', 'Value bets (3+ pts)', gs => gs.filter(g => g.verdict === 'bet').map(g => [g, g.side])],
+  ['pos', 'Every positive edge', gs => gs.filter(g => g.edge > 0).map(g => [g, g.side])],
+  ['mfav', 'Model\'s pick every game', gs => gs.map(g => [g, g.p >= .5 ? 'h' : 'a'])],
+  ['kfav', 'Market favorite every game (baseline)', gs => gs.map(g => [g, g.mlH <= g.mlA ? 'h' : 'a'])]];
+function gamePickCard(PK) {
+  const gs = ((PK && PK.games) || []).filter(g => g.mlH != null && g.mlA != null);
+  if (!gs.length) return `<div class="card"><div class="card-h"><h3>📒 Game model profit tracker</h3></div><p class="muted" style="margin:0">Not started yet. Once the GitHub job runs with the updated workflow, it trains the game model, saves each day's moneyline picks before the games (around 11 AM and 5 PM Eastern) and grades them the next morning. Results build up here.</p></div>`;
+  const done = gs.filter(g => g.hw != null), pend = gs.filter(g => g.hw == null);
+  const stats = list => { const g = list.filter(([x]) => x.hw != null); const pr = g.reduce((s, [x, sd]) => s + gpRes(x, sd), 0), risk = g.reduce((s, [x, sd]) => s + pkRisk(sd === 'h' ? x.mlH : x.mlA), 0), w = g.filter(([x, sd]) => gpRes(x, sd) > 0).length; return { n: g.length, w, ls: g.length - w, profit: pr, roi: div(pr, risk), pend: list.length - g.length }; };
+  const S2 = GP_STRATS.map(([k, l, f]) => ({ k, l, list: f(gs), ...stats(f(gs)) }));
+  const tiles = `<div class="tiles" style="margin-bottom:12px">${S2.map(s => `<div class="tile"><div class="k">${esc(s.l)}</div><div class="v num" style="color:${s.profit > 0 ? 'var(--good)' : s.profit < 0 ? 'var(--neg)' : 'inherit'}">${money(s.profit)}</div><div class="s">${s.w}-${s.ls} · ROI ${fin(s.roi) ? (s.roi > 0 ? '+' : '') + pct1(s.roi) + '%' : '–'}${s.pend ? ` · ${s.pend} pending` : ''}</div></div>`).join('')}</div>`;
+  const run = list => { let c = 0; return list.filter(([x]) => x.hw != null).sort((a, b) => a[0].start < b[0].start ? -1 : 1).map(([x, sd], i) => { c += gpRes(x, sd); return [i + 1, c]; }); };
+  const colors = { bet: 'var(--good)', pos: 'var(--accent)', mfav: 'var(--home)', kfav: 'var(--text-2)' };
+  const series = S2.map(s => ({ name: s.l, color: colors[s.k], pts: run(s.list) })).filter(s => s.pts.length);
+  const ys = series.flatMap(s => s.pts.map(p => p[1])), nMax = Math.max(0, ...series.map(s => s.pts.length));
+  const chart = nMax >= 2 ? lineChart({ series, x0: 1, x1: Math.max(2, nMax), xTicks: (() => { const st = Math.max(1, Math.ceil(nMax / 7)), o = []; for (let v = 1; v <= nMax - st / 2; v += st) o.push({ v, l: `Bet ${v}` }); return o; })(), y0: Math.min(0, ...ys) * 1.1 - 50, y1: Math.max(0, ...ys) * 1.1 + 50, fx: v => `Bet ${Math.round(v)}`, fy: v => Math.abs(v) >= 1000 ? `${v < 0 ? '−' : ''}$${+(Math.abs(v) / 1000).toFixed(1)}k` : money(v), refY: 0, H: 240 }) + `<div class="legend">${series.map(s => `<span><i class="lg-dot" style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>` : '<div class="empty">The running profit chart appears after the first graded games.</div>';
+  const cur = S2.find(s => s.k === GPK.strat) || S2[0];
+  const lst = [...cur.list].sort((a, b) => a[0].start > b[0].start ? -1 : a[0].start < b[0].start ? 1 : 0), shown = GPK.all ? lst : lst.slice(0, 40);
+  const ab = (x, sd) => sd === 'h' ? x.ha : x.aa;
+  const rows = shown.map(([x, sd]) => { const q = sd === 'h' ? x.p : 1 - x.p, price = sd === 'h' ? x.mlH : x.mlA, edge = q - amImplied(price), pr = x.hw != null ? gpRes(x, sd) : null;
+    return `<tr><td class="l">${parseYmd(x.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${esc(x.aa)} @ ${esc(x.ha)}${x.hw != null ? ` <span class="muted">${x.as}–${x.hs}</span>` : ''}</td><td class="l"><div class="tcell">${logoImg(sd === 'h' ? x.h : x.a, 16)}<b>${esc(ab(x, sd))}</b> ${fmtML(price)}</div></td><td>${pct1(q)}%</td><td style="color:${edge > 0 ? 'var(--good)' : 'var(--neg)'}">${edge > 0 ? '+' : ''}${(edge * 100).toFixed(1)}</td><td class="l">${pr == null ? '<span class="muted">Pending</span>' : pr > 0 ? '<b style="color:var(--good)">✓ Won</b>' : '<span style="color:var(--neg)">✗ Lost</span>'}${(x.inj || []).length ? ` <span class="muted" style="font-size:11.5px" data-tip="${esc('Out: ' + x.inj.map(esc).join(', '))}">🩹</span>` : ''}</td><td>${pr == null ? '–' : moneyCell(pr)}</td></tr>`; }).join('');
+  // model vs market accuracy on graded games
+  const acc = f => div(done.filter(g => (f(g) >= .5) === !!g.hw).length, done.length);
+  return `<div class="card"><div class="card-h"><h3>📒 Game model profit tracker</h3><p>${done.length} graded games · ${pend.length} pending · updated ${PK.updated ? new Date(PK.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</p></div>
+    <p class="muted" style="margin:-4px 0 10px;font-size:12px">The GitHub job trains Game model v2 on last season and this season, then saves a moneyline pick for every game before puck drop (about 11 AM and 5 PM Eastern, using the latest line and any injuries and confirmed goalies) and grades it the next morning. Bet sizes follow your rule: $100 on plus odds, bet to win $100 on minus odds.${done.length ? ` Picked the winner in <b>${pct1(acc(g => g.p))}%</b> of graded games (betting market favorite: ${pct1(acc(g => g.mk))}%).` : ''}</p>
+    ${tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit</h3>${chart}
+    <div class="card-h" style="margin-top:14px"><h3>Pick log</h3><select id="gpStrat">${S2.map(s => `<option value="${s.k}" ${s.k === cur.k ? 'selected' : ''}>${esc(s.l)}</option>`).join('')}</select></div>
+    ${rows ? `<div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Pick</th><th>Model chance</th><th>Edge</th><th class="l">Result</th><th>Profit</th></tr></thead><tbody>${rows}</tbody></table></div>${lst.length > 40 ? `<button class="btn" id="gpAll" style="margin-top:8px">${GPK.all ? 'Show fewer' : `Show all ${lst.length}`}</button>` : ''}` : '<p class="muted" style="margin:0">No picks in this strategy yet.</p>'}
+    <p class="muted" style="font-size:12px;margin:10px 0 0">Value bet = the model's chance beats the price's break-even chance by 3+ points. 🩹 = key players were out. For fun and analysis, not betting advice.</p></div>`;
+}
+document.addEventListener('change', e => { if (e.target.id === 'gpStrat') { GPK.strat = e.target.value; GPK.all = false; renderModelExtras(); } });
+document.addEventListener('click', e => { if (e.target.id === 'gpAll') { GPK.all = !GPK.all; renderModelExtras(); } });
+
+/* ---- model accuracy over time ---- */
+const weekOf = ymdS => { const d = parseYmd(ymdS); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return ymd(d); };
+const llOf = (p, y) => { p = clamp(p, 1e-4, 1 - 1e-4); return -(y ? Math.log(p) : Math.log(1 - p)); };
+function accuracyCard(PK, which = 'both') {
+  const hist = ((PK && PK.hist) || []).slice().sort((a, b) => a.date < b.date ? -1 : 1);
+  const games = ((PK && PK.games) || []).filter(g => g.hw != null && fin(g.p));
+  const gsp = ((PK && PK.picks) || []).filter(p => (p.res === 'W' || p.res === 'L') && fin(p.p) && fin(p.imp));
+  const tick = (list, lab) => { const st = Math.max(1, Math.ceil(list.length / 6)), o = []; for (let i = 0; i < list.length; i += st) o.push({ v: i + 1, l: lab(list[i]) }); return o; };
+  const short = s => parseYmd(s).toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const mkChart = (series, list, lab, fy, note) => { const ys = series.flatMap(s => s.pts.map(p => p[1])).filter(fin); if (list.length < 2 || !ys.length) return ''; const lo = Math.min(...ys), hi = Math.max(...ys), pad = (hi - lo) * .15 || .01; return lineChart({ series, x0: 1, x1: list.length, xTicks: tick(list, lab), y0: lo - pad, y1: hi + pad, fx: v => lab(list[Math.max(0, Math.min(list.length - 1, Math.round(v) - 1))]), fy, H: 220 }) + `<div class="legend">${series.map(s => `<span><i class="lg-dot" style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>${note ? `<p class="muted" style="font-size:12px;margin:4px 0 0">${note}</p>` : ''}`; };
+  let out = '';
+  // --- game model
+  if (which !== 'gs') {
+    const gh = hist.filter(h => h.gm);
+    const trend = mkChart([{ name: 'Game model v2', color: 'var(--accent)', pts: gh.map((h, i) => [i + 1, h.gm.acc * 100]) }, ...(gh.some(h => fin(h.gm.mktAcc)) ? [{ name: 'Betting market', color: 'var(--text-2)', pts: gh.map((h, i) => [i + 1, h.gm.mktAcc * 100]).filter(p => fin(p[1])) }] : [])], gh, h => short(h.date), v => v.toFixed(1) + '%', 'Each point is one daily retrain by the GitHub job, graded on recent games that retrain never trained on.');
+    const wk = {}; for (const g of games) (wk[weekOf(g.date)] = wk[weekOf(g.date)] || []).push(g);
+    const weeks = Object.keys(wk).sort().map(w => { const l = wk[w], m = l.filter(g => fin(g.mk)); return { w, n: l.length, acc: div(l.filter(g => (g.p >= .5) === !!g.hw).length, l.length), ll: l.reduce((s, g) => s + llOf(g.p, g.hw), 0) / l.length, mAcc: m.length ? div(m.filter(g => (g.mk >= .5) === !!g.hw).length, m.length) : NaN, mLl: m.length ? m.reduce((s, g) => s + llOf(g.mk, g.hw), 0) / m.length : NaN }; });
+    const wChart = mkChart([{ name: 'Game model v2', color: 'var(--accent)', pts: weeks.map((w, i) => [i + 1, w.acc * 100]) }, { name: 'Betting market favorite', color: 'var(--text-2)', pts: weeks.map((w, i) => [i + 1, w.mAcc * 100]).filter(p => fin(p[1])) }], weeks, w => 'Wk ' + short(w.w), v => v.toFixed(0) + '%');
+    const wTable = weeks.length ? `<div class="twrap"><table><thead><tr><th class="l">Week of</th><th>Games</th><th data-gloss="How often the team the model favored won.">Model picked winner</th><th>Market favorite won</th><th data-gloss="How far the predicted chances were from what happened. Lower is better.">Model log loss</th><th>Market log loss</th></tr></thead><tbody>${weeks.slice().reverse().map(w => `<tr><td class="l">${short(w.w)}</td><td>${w.n}</td><td><b>${pct1(w.acc)}%</b></td><td>${fin(w.mAcc) ? pct1(w.mAcc) + '%' : '–'}</td><td style="color:${w.ll < w.mLl ? 'var(--good)' : 'inherit'}">${w.ll.toFixed(3)}</td><td>${fin(w.mLl) ? w.mLl.toFixed(3) : '–'}</td></tr>`).join('')}</tbody></table></div>` : '';
+    const last = gh[gh.length - 1];
+    out += `<h3 class="cmp-sec">🧠 Game model v2</h3>
+      ${last ? `<div class="tiles" style="margin-bottom:10px"><div class="tile"><div class="k">Latest test accuracy</div><div class="v num">${pct1(last.gm.acc)}%</div><div class="s">log loss ${last.gm.ll.toFixed(3)} · ${last.gm.test} test games</div></div><div class="tile"><div class="k">Games learned from</div><div class="v num">${last.gm.n.toLocaleString()}</div><div class="s">${gh.length > 1 ? `was ${gh[0].gm.n.toLocaleString()} on ${short(gh[0].date)}` : 'grows every day'}</div></div>${fin(last.gm.mktLl) ? `<div class="tile"><div class="k">Market on same games</div><div class="v num">${pct1(last.gm.mktAcc)}%</div><div class="s">log loss ${last.gm.mktLl.toFixed(3)}</div></div>` : ''}</div>` : ''}
+      ${trend ? `<h4 class="cmp-sec" style="margin-top:0">Test score after each daily retrain</h4>${trend}` : ''}
+      <h4 class="cmp-sec">Live results by week <span class="muted" style="font-weight:500;font-size:12.5px">predictions saved before each game</span></h4>
+      ${weeks.length ? `${wChart}${wTable}` : '<p class="muted" style="margin:0">Fills in once the job has graded its first saved game picks.</p>'}`;
+  }
+  // --- goal scorer model
+  if (which !== 'gm') {
+    const sh = hist.filter(h => h.gs);
+    const trend = mkChart([{ name: 'Full model', color: 'var(--accent)', pts: sh.map((h, i) => [i + 1, h.gs.brier]) }, { name: 'Without matchup factors', color: 'var(--text-2)', pts: sh.map((h, i) => [i + 1, h.gs.brierBase]) }], sh, h => short(h.date), v => v.toFixed(4), 'Brier score on the newest player-games each rebuild never trained on. Lower is better.');
+    const wk = {}; for (const p of gsp) (wk[weekOf(p.date)] = wk[weekOf(p.date)] || []).push(p);
+    const weeks = Object.keys(wk).sort().map(w => { const l = wk[w], y = p => p.res === 'W' ? 1 : 0; const pos = l.filter(p => p.edge > 0); return { w, n: l.length, exp: l.reduce((s, p) => s + p.p, 0), dkExp: l.reduce((s, p) => s + p.imp, 0), act: l.filter(p => p.res === 'W').length, br: l.reduce((s, p) => s + (p.p - y(p)) ** 2, 0) / l.length, dbr: l.reduce((s, p) => s + (p.imp - y(p)) ** 2, 0) / l.length, prof: pos.reduce((s, p) => s + pkProfit(p), 0), np: pos.length }; });
+    const wChart = mkChart([{ name: 'Ice Lab', color: 'var(--accent)', pts: weeks.map((w, i) => [i + 1, w.br]) }, { name: 'DraftKings implied', color: 'var(--text-2)', pts: weeks.map((w, i) => [i + 1, w.dbr]) }], weeks, w => 'Wk ' + short(w.w), v => v.toFixed(3), 'Weekly Brier score on every priced player (lower is better). DraftKings\' chances include its margin, which costs it a little here.');
+    const wTable = weeks.length ? `<div class="twrap"><table><thead><tr><th class="l">Week of</th><th>Player-games</th><th data-gloss="Sum of Ice Lab's chances: how many goal scorers it expected.">Ice Lab expected scorers</th><th>DK expected</th><th>Actually scored</th><th data-gloss="Average squared error of the chances. Lower is better.">Ice Lab Brier</th><th>DK Brier</th><th>Positive-edge profit</th></tr></thead><tbody>${weeks.slice().reverse().map(w => `<tr><td class="l">${short(w.w)}</td><td>${w.n}</td><td>${f0(w.exp)}</td><td>${f0(w.dkExp)}</td><td><b>${w.act}</b></td><td style="color:${w.br < w.dbr ? 'var(--good)' : 'inherit'}">${w.br.toFixed(4)}</td><td>${w.dbr.toFixed(4)}</td><td>${w.np ? moneyCell(w.prof) : '–'}</td></tr>`).join('')}</tbody></table></div>` : '';
+    const last = sh[sh.length - 1];
+    out += `<h3 class="cmp-sec">🎯 Goal scorer model</h3>
+      ${last ? `<div class="tiles" style="margin-bottom:10px"><div class="tile"><div class="k">Latest test Brier</div><div class="v num">${last.gs.brier.toFixed(4)}</div><div class="s">${last.gs.brier < last.gs.brierBase ? '<b style="color:var(--good)">matchup factors helping</b>' : 'matchup factors not helping yet'} · ${last.gs.n.toLocaleString()} test player-games</div></div><div class="tile"><div class="k">Games learned from</div><div class="v num">${last.gs.games.toLocaleString()}</div><div class="s">${sh.length > 1 ? `was ${sh[0].gs.games.toLocaleString()} on ${short(sh[0].date)}` : 'grows every day'}</div></div></div>` : ''}
+      ${trend ? `<h4 class="cmp-sec" style="margin-top:0">Test score after each daily rebuild</h4>${trend}` : ''}
+      <h4 class="cmp-sec">Live results by week <span class="muted" style="font-weight:500;font-size:12.5px">every player with a DraftKings price</span></h4>
+      ${weeks.length ? `${wChart}${wTable}` : '<p class="muted" style="margin:0">Fills in once the job has graded its first saved goal scorer picks.</p>'}`;
+  }
+  return `<div class="card"${which === 'gs' ? ' style="margin-top:14px"' : ''}><div class="card-h"><h3>📈 Model accuracy over time</h3><p>${hist.length ? `${hist.length} daily snapshot${hist.length === 1 ? '' : 's'} since ${short(hist[0].date)}` : 'Starts with the next GitHub job run'}</p></div>
+    <p class="muted" style="margin:-4px 0 6px;font-size:12px">Two ways to watch the models improve: the <b>test score</b> the job records every time it retrains (graded on recent games it didn't train on), and <b>live results</b> from the predictions it saved before each game. Expect bumpy weeks; the trend over a month or more is what matters.</p>
+    ${out}</div>`;
+}
+// Model Lab: tracker + accuracy, from picks.json
+async function renderModelExtras() {
+  const a = $('#gmPickSec'), b = $('#accSec'); if (!a && !b) return;
+  const PK = await getPicksFile();
+  if (a) a.innerHTML = gamePickCard(PK);
+  if (b) b.innerHTML = accuracyCard(PK, 'both');
+}
+
+/* ---- Today tab: daily best bets (from picks.json) ---- */
+async function loadDayPicks(evs, d) {
+  const box = () => $('#dayPkBody');
+  const PK = await getPicksFile();
+  if (d !== S.date || !box()) return;
+  const put = html => { S.dp = { d, html }; box().innerHTML = html; };
+  const sc = {}; for (const e of evs) { const c = e.competitions[0]; if (!c.status.type.completed) continue; const h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); sc[String(e.id)] = { hs: +h.score, as: +a.score }; }
+  const gp = ((PK && PK.games) || []).filter(g => g.date === d && (g.verdict === 'bet' || g.verdict === 'lean')).sort((a, b) => b.edge - a.edge);
+  const sp = ((PK && PK.picks) || []).filter(p => p.date === d && p.edge > 0 && p.res !== 'V').sort((a, b) => b.roi - a.roi).slice(0, 6);
+  if (!gp.length && !sp.length) {
+    const isToday = d === todayStr();
+    put(`<div class="card muted">${!PK ? 'Best bets show up here once the GitHub job saves its first picks (picks.json).' : isToday ? 'No saved picks yet for today. The GitHub job saves them about 11 AM and 5 PM Eastern, once lines and DraftKings prices are posted.' : 'No saved picks with an edge for this date.'}</div>`); return;
+  }
+  const gRes = g => { const f = g.hw != null ? { hs: g.hs, as: g.as } : sc[g.gid]; if (!f) return null; const hw = f.hs > f.as; return gpRes({ ...g, hw }, g.side); };
+  const resTag = pr => pr == null ? '<span class="muted">Pending</span>' : pr > 0 ? `<b style="color:var(--good)">✓ ${money(pr)}</b>` : `<span style="color:var(--neg)">✗ ${money(pr)}</span>`;
+  const gCards = gp.map(g => { const sd = g.side, tm = sd === 'h' ? g.h : g.a, price = sd === 'h' ? g.mlH : g.mlA, q = sd === 'h' ? g.p : 1 - g.p, ev = betEV(q, price), pr = gRes(g);
+    return `<div class="edge" data-game="${esc(g.gid)}" style="cursor:pointer"><div class="tcell">${logoImg(tm, 20)}<b>${esc(sd === 'h' ? g.ha : g.aa)} moneyline</b></div><div class="muted" style="font-size:12px">${esc(g.aa)} @ ${esc(g.ha)} · ${g.verdict === 'bet' ? '✓ Value bet' : 'Lean'}</div><div class="eg"><span>Price <b>${fmtML(price)}</b></span><span>Fair <b>${fairAmerican(q)}</b></span></div><div class="eg"><span>Model <b>${pct1(q)}%</b></span><b style="color:var(--good)">+${(g.edge * 100).toFixed(1)} pts</b></div><div class="eg"><span>Exp. ${moneyCell(ev.ev)}</span>${resTag(pr)}</div></div>`; }).join('');
+  const sCards = sp.map(p => { const pr = p.res === 'W' || p.res === 'L' ? pkProfit(p) : null;
+    return `<div class="edge"><div class="tcell">${logoImg(p.tm, 18)}${plink(p.pid, p.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(p.opp).abbr || '')}${p.gl ? ' · ' + esc(p.gl) : ''}${p.role ? ' · ' + esc(p.role) : ''}</div><div class="eg"><span>DK <b>${fmtML(p.dk)}</b></span><span>Fair <b>${fairAmerican(p.p)}</b></span></div><div class="eg"><span>Ice Lab <b>${pct1(p.p)}%</b></span><b style="color:var(--good)">+${(p.edge * 100).toFixed(1)} pts</b></div><div class="eg"><span>Exp. ${moneyCell(p.ev)}</span>${resTag(pr)}</div></div>`; }).join('');
+  const all = [...gp.map(g => gRes(g)), ...sp.map(p => p.res === 'W' || p.res === 'L' ? pkProfit(p) : null)].filter(v => v != null);
+  const tot = all.length ? `<b>${all.filter(v => v > 0).length}-${all.filter(v => v < 0).length}</b> so far, ${moneyCell(all.reduce((s, v) => s + v, 0))}` : '';
+  const saved = [...gp, ...sp].map(x => x.saved).filter(Boolean).sort().pop();
+  put(`<div class="card">${tot ? `<p style="margin:0 0 10px">${tot} on these picks.</p>` : ''}
+    ${gCards ? `<h3 class="cmp-sec" style="margin-top:0">🧠 Game model value</h3><div class="edges" style="margin-bottom:12px">${gCards}</div>` : ''}
+    ${sCards ? `<h3 class="cmp-sec" style="margin-top:0">🎯 Goal scorer edges <span class="muted" style="font-weight:500;font-size:12.5px">top ${sp.length} by expected return</span></h3><div class="edges">${sCards}</div>` : ''}
+    <p class="muted" style="font-size:12px;margin:10px 0 0">Saved by the GitHub job${saved ? ` at ${new Date(saved).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}, with that moment's prices; the same picks are graded in the profit trackers (League → Model Lab and Players → Goal Scorers). Prices may have moved since. Bet sizes follow your rule. For fun and analysis, not betting advice.</p></div>`);
 }
 
 /* ============================== UPSET TRACKER ============================== */
