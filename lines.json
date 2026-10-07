@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-07",
- "updated": "2026-10-07T12:46:12.080Z",
+ "updated": "2026-10-07T19:28:51.842Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -260,7 +260,7 @@
    "teams": [
     {
      "team": "Colorado Avalanche",
-     "goalie": "Scott Wedgewood",
+     "goalie": "Mackenzie Blackwood",
      "groups": [
       {
        "label": "Line 1",
@@ -432,27 +432,7 @@
          "pp": ""
         },
         {
-         "n": "Brad Lambert",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Morgan Barron",
-         "pos": "W",
-         "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
-         "n": "Vladislav Namestnikov",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Cole Koepke",
          "pos": "W",
          "pp": ""
         },
@@ -464,12 +444,32 @@
        ]
       },
       {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Brad Lambert",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Vladislav Namestnikov",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Cole Koepke",
+         "pos": "W",
+         "pp": ""
+        }
+       ]
+      },
+      {
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Dylan DeMelo",
+         "n": "Neal Pionk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Josh Morrissey",
@@ -482,9 +482,9 @@
          "pp": ""
         },
         {
-         "n": "Neal Pionk",
+         "n": "Dylan DeMelo",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jack St. Ivany",
