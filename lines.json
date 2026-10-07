@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-06",
- "updated": "2026-10-06T23:11:31.317Z",
+ "updated": "2026-10-07T01:28:03.313Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1516,9 +1516,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Pavel Buchnevich",
+         "n": "Jonatan Berggren",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Connor McMichael",
@@ -1541,9 +1541,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Jonatan Berggren",
+         "n": "Pavel Buchnevich",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1571,19 +1571,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Colton Parayko",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Philip Broberg",
          "pos": "D",
          "pp": ""
-        },
-        {
-         "n": "Cam Fowler",
-         "pos": "D",
-         "pp": "PP1"
         },
         {
          "n": "Adam Jiricek",
@@ -1591,9 +1581,19 @@
          "pp": "PP2"
         },
         {
+         "n": "Colton Parayko",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Theo Lindstein",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Cam Fowler",
+         "pos": "D",
+         "pp": "PP1"
         },
         {
          "n": "Brandon Carlo",
