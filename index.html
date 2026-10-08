@@ -445,6 +445,8 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
 .qzone{fill:transparent;cursor:zoom-in}.qzone:hover{fill:var(--accent);fill-opacity:.05}
 .qdot:hover circle:last-of-type{stroke:var(--text);stroke-width:2}
 .injb{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;font-size:10.5px;font-weight:700;background:color-mix(in srgb,#e8a33d 22%,transparent);color:var(--text)}.injb.out{background:color-mix(in srgb,var(--neg) 22%,transparent)}
+.trust-t{table-layout:fixed;width:100%}.trust-t td,.trust-t th{white-space:normal;vertical-align:top}
+.trust-v{border-left:4px solid;padding:8px 12px;border-radius:8px;background:var(--surface-2)}
 </style>
 </head>
 <body>
@@ -3165,7 +3167,7 @@ async function renderModel() {
           <p class="muted" style="font-size:12px">If the model is well calibrated, favorites it gives 60% should win about 60% of the time. Brier score: lower is better; 0.25 is a coin flip.</p></div></div>
       <h3 class="cmp-sec">Most recent predictions</h3><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Ice Lab pick</th><th>Market</th><th class="l">Final</th><th>Result</th></tr></thead><tbody>${recent.map(p => { const pick = p.pH >= .5 ? p.h : p.a, pp = Math.max(p.pH, 1 - p.pH), ok = (p.pH >= .5) === p.hw; const mk = fin(p.mk) ? pct1(p.pH >= .5 ? p.mk : 1 - p.mk) + '%' : '–'; return `<tr class="click" data-game="${p.id}"><td class="l">${new Date(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.a, 16)}${esc(TM(p.a).abbr)} @ ${logoImg(p.h, 16)}${esc(TM(p.h).abbr)}</div></td><td class="l">${esc(TM(pick).abbr)} ${pct1(pp)}%${p.hn < 5 || p.an < 5 ? ' <span class="muted">(early)</span>' : ''}</td><td>${mk}</td><td class="l">${p.as}–${p.hs}${p.ot ? ' OT' : ''}</td><td>${ok ? '<b style="color:var(--good)">✓</b>' : '<b style="color:var(--neg)">✗</b>'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
   }
-  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid"><div id="gmSec"></div><div id="gmPickSec"></div><div id="accSec"></div>${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid"><div id="gmSec"></div><div id="trustSec"></div><div id="gmPickSec"></div><div id="accSec"></div>${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
   const u = $('#mdUse'); if (u) u.onclick = e => { const b = e.target.closest('button'); if (!b) return; A.useTrained = b.dataset.v === '1'; for (const g of A.filtered) applyModel(g); recalib(); invalidate(); renderModel(); };
   renderGameModelCard(); renderModelExtras();
   $('#mdAdj').onclick = e => { const b = e.target.closest('button'); if (!b) return; A.adj = b.dataset.v === '1'; invalidate(); renderModel(); };
@@ -5198,7 +5200,7 @@ async function renderScorers() {
       <div class="ctl"><label>Player</label><input id="gsQ" type="search" placeholder="Search a name" value="${esc(GS.q)}" autocomplete="off"></div></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores tonight. It starts from where he shoots, how dangerous those shots are, his finishing and tonight's projected minutes and power-play role, then adjusts for his team's scoring environment (betting total and moneyline), the opponent's shot volume and quality allowed by zone, how often they take penalties and how good their penalty kill is, and the goalie's results by zone, by shot type and on rebounds and rush chances. How much each adjustment counts is learned from the loaded games and rebuilds every time new games load. Hover a chance for the breakdown. Lineups come from RotoGrinders when posted (otherwise each team's last game), and players ESPN lists as out or on injured reserve are left off; goalies are the confirmed or probable starter when ESPN lists one. Uses the analytics range above; <b>Full season</b> gives the best samples.</p>
     <p class="muted" id="gsPriorMsg" style="margin:-6px 0 12px;font-size:12.5px">${GS.prior ? `✓ Using last season (${GS.prior.length.toLocaleString()} games) as the starting point, counted at half weight, so a hot or cold first week can't fool the model.` : GS.priorLoading ? esc(GS.priorMsg || 'Checking for last season\'s games…') : /^need:/.test(GS.priorMsg) ? `Last season isn't loaded, so early-season numbers rest on few games. <button class="btn sm" id="gsPriorGo">Load last season</button> (one-time download of about ${GS.priorMsg.split(':')[1]} games; saved after; training the game model in Model Lab also loads it).` : /^err:/.test(GS.priorMsg) ? `Couldn't load last season (${esc(GS.priorMsg.slice(4))}).` : ''}</p>
-    ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${pickTrackerCard(PK)}${accuracyCard(PK, 'gs')}${btCard}
+    ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${trustCard(PK, 'gs')}${pickTrackerCard(PK)}${accuracyCard(PK, 'gs')}${btCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For fun and analysis, not betting advice.</p>`;
   RERENDER.gs = renderScorers;
   const pg = $('#gsPriorGo'); if (pg) pg.onclick = () => { GS.priorMsg = ''; gsLoadPrior(true); renderScorers(); };
@@ -5661,8 +5663,9 @@ function accuracyCard(PK, which = 'both') {
 }
 // Model Lab: tracker + accuracy, from picks.json
 async function renderModelExtras() {
-  const a = $('#gmPickSec'), b = $('#accSec'); if (!a && !b) return;
+  const a = $('#gmPickSec'), b = $('#accSec'), t = $('#trustSec'); if (!a && !b && !t) return;
   const PK = await getPicksFile();
+  if (t) t.innerHTML = trustCard(PK, 'both');
   if (a) a.innerHTML = gamePickCard(PK);
   if (b) b.innerHTML = accuracyCard(PK, 'both');
 }
@@ -5693,6 +5696,80 @@ async function loadDayPicks(evs, d) {
     ${gCards ? `<h3 class="cmp-sec" style="margin-top:0">🧠 Game model value</h3><div class="edges" style="margin-bottom:12px">${gCards}</div>` : ''}
     ${sCards ? `<h3 class="cmp-sec" style="margin-top:0">🎯 Goal scorer edges <span class="muted" style="font-weight:500;font-size:12.5px">top ${sp.length} by expected return</span></h3><div class="edges">${sCards}</div>` : ''}
     <p class="muted" style="font-size:12px;margin:10px 0 0">Saved by the GitHub job${saved ? ` at ${new Date(saved).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}, with that moment's prices; the same picks are graded in the profit trackers (League → Model Lab and Players → Goal Scorers). Prices may have moved since. Bet sizes follow your rule. For fun and analysis, not betting advice.</p></div>`);
+}
+
+/* ============================== TRUST SCORECARD ==============================
+   Is a model worth listening to? Four checks, strongest first: closing line value, accuracy vs. the market,
+   calibration, and profit, each with an honest range (95%) so luck isn't mistaken for skill. */
+const TRUST_DBG = {};
+const ciMean = arr => { const n = arr.length; if (!n) return { n: 0, m: NaN, lo: NaN, hi: NaN }; const m = arr.reduce((a, b) => a + b, 0) / n; if (n < 2) return { n, m, lo: NaN, hi: NaN }; const sd = Math.sqrt(arr.reduce((s, x) => s + (x - m) ** 2, 0) / (n - 1)), se = sd / Math.sqrt(n); return { n, m, lo: m - 1.96 * se, hi: m + 1.96 * se }; };
+const llOne = (p, y) => { p = clamp(p, 1e-4, 1 - 1e-4); return -(y ? Math.log(p) : Math.log(1 - p)); };
+const sgnPts = v => fin(v) ? `${v >= 0 ? '+' : '−'}${Math.abs(v * 100).toFixed(1)}` : '–';
+const rangeTxt = (c, f) => fin(c.lo) ? `range ${f(c.lo)} to ${f(c.hi)}` : 'not enough bets for a range';
+function trustVerdict({ clv, ll, roi, need }) {
+  const enoughClv = clv.n >= need.clv, enoughLl = ll.n >= need.ll;
+  if (!enoughClv && !enoughLl) return { k: 'wait', l: 'Not enough data yet', why: `Needs ${need.clv} bets with closing prices (has ${clv.n}) or ${need.ll} graded predictions (has ${ll.n}) before it can say anything. Early results are mostly luck.` };
+  const strong = (enoughClv && clv.lo > 0) || (enoughLl && ll.hi < 0), bad = (enoughClv && clv.hi < 0) || (enoughLl && ll.lo > 0);
+  if (strong && !bad) return { k: 'good', l: 'Beating the market', why: enoughClv && clv.lo > 0 ? 'Its bets consistently get better prices than the closing line, the strongest sign of a real edge.' : 'Its chances are measurably closer to what actually happened than the market\'s.' };
+  if (bad && !strong) return { k: 'bad', l: 'Not beating the market', why: enoughClv && clv.hi < 0 ? 'Its bets consistently get worse prices than the closing line: the market moves against its picks.' : 'The market\'s chances are measurably more accurate than the model\'s. Lean on the market or the blended numbers instead.' };
+  const se = c => (c.hi - c.lo) / 3.92; // leaning the right way by 1.5 standard errors, not just a hair
+  if ((enoughClv && clv.m > 1.5 * se(clv)) || (enoughLl && -ll.m > 1.5 * se(ll))) return { k: 'maybe', l: 'Promising, not proven', why: 'Leaning the right way, but the range still includes "no edge". Keep tracking.' };
+  return { k: 'none', l: 'No edge shown yet', why: 'Nothing so far says it knows more than the market. Not proof it can\'t, but don\'t bet on it alone.' };
+}
+function calibChart(pts) { // pts: [{p, y}] → predicted vs. actual by bucket
+  const bins = [[0, .1], [.1, .2], [.2, .3], [.3, .4], [.4, .5], [.5, .55], [.55, .6], [.6, .65], [.65, .7], [.7, .8], [.8, 1.01]].map(([lo, hi]) => { const g = pts.filter(x => x.p >= lo && x.p < hi); return { n: g.length, p: div(g.reduce((s, x) => s + x.p, 0), g.length), a: div(g.filter(x => x.y).length, g.length) }; }).filter(b => b.n >= 8);
+  if (bins.length < 2) return '<p class="muted" style="margin:0;font-size:12.5px">Needs more graded predictions.</p>';
+  const lo = Math.max(0, Math.min(...bins.map(b => Math.min(b.p, b.a))) - .05), hi = Math.min(1, Math.max(...bins.map(b => Math.max(b.p, b.a))) + .05);
+  const tk = []; for (let v = Math.ceil(lo * 10) / 10; v <= hi + 1e-9; v += .1) tk.push({ v: v * 100, l: Math.round(v * 100) + '%' });
+  return lineChart({ series: [{ name: 'Perfect calibration', color: 'var(--text-2)', pts: [[lo * 100, lo * 100], [hi * 100, hi * 100]] }, { name: 'What actually happened', color: 'var(--accent)', pts: bins.map(b => [b.p * 100, b.a * 100]) }], x0: lo * 100, x1: hi * 100, xTicks: tk, y0: lo * 100, y1: hi * 100, fx: v => `Predicted ${v.toFixed(0)}%`, fy: v => v.toFixed(0) + '%', H: 200 }) + `<div class="legend"><span><i class="lg-dot" style="background:var(--accent)"></i>What actually happened</span><span><i class="lg-dot" style="background:var(--text-2)"></i>Perfect calibration</span></div>`;
+}
+function trustBlock(title, v, rows, calib, foot) {
+  const col = { good: 'var(--good)', bad: 'var(--neg)', maybe: '#e8a33d', none: 'var(--text-2)', wait: 'var(--text-2)' }[v.k], ico = { good: '✅', bad: '⛔', maybe: '🟡', none: '⚪', wait: '⏳' }[v.k];
+  return `<h3 class="cmp-sec">${title}</h3>
+    <div class="trust-v" style="border-color:${col}"><div style="font-size:18px;font-weight:800;color:${col}">${ico} ${v.l}</div><div style="font-size:13px;margin-top:2px">${v.why}</div></div>
+    <div style="margin-top:10px"><div class="twrap"><table class="trust-t"><colgroup><col style="width:40%"><col style="width:40%"><col style="width:20%"></colgroup><thead><tr><th class="l">Check</th><th class="l">Result</th><th class="l">Reads as</th></tr></thead><tbody>${rows.map(r => `<tr><td class="l"><b>${r[0]}</b><div class="muted" style="font-size:11.5px">${r[1]}</div></td><td class="l">${r[2]}</td><td class="l" style="font-size:12.5px">${r[3]}</td></tr>`).join('')}</tbody></table></div>
+    <div style="max-width:560px;margin-top:10px"><h4 class="cmp-sec" style="margin-top:0">Calibration <span class="muted" style="font-weight:500;font-size:12px">when it says X%, does it happen X% of the time?</span></h4>${calib}</div></div>${foot ? `<p class="muted" style="font-size:12px;margin:6px 0 0">${foot}</p>` : ''}`;
+}
+const readCI = (c, need, goodHigh, unit) => !c.n ? '<span class="muted">No data yet</span>' : c.n < need ? `<span class="muted">Too early (${c.n}/${need})</span>` : (goodHigh ? c.lo > 0 : c.hi < 0) ? '<b style="color:var(--good)">Real edge</b>' : (goodHigh ? c.hi < 0 : c.lo > 0) ? '<b style="color:var(--neg)">Real disadvantage</b>' : `<span>Could be luck</span>`;
+function trustGame(PK) {
+  const gs = ((PK && PK.games) || []).filter(g => g.hw != null && fin(g.p));
+  // 1) closing line value on every positive-edge pick: the closing chance (margin removed) minus the break-even chance of the price taken
+  const cl = ((PK && PK.games) || []).filter(g => g.edge > 0 && g.mlCloseH != null && g.mlCloseA != null).map(g => { const pr = g.side === 'h' ? g.mlH : g.mlA, fc = devig({ h: g.mlCloseH, a: g.mlCloseA }), fs = g.side === 'h' ? fc : 1 - fc; return { v: fs - amImplied(pr), beat: amImplied(pr) < amImplied(g.side === 'h' ? g.mlCloseH : g.mlCloseA) }; });
+  const clv = ciMean(cl.map(x => x.v)), beat = div(cl.filter(x => x.beat).length, cl.length);
+  // 2) log loss vs. the market on the same games (negative = model better)
+  const lm = gs.filter(g => fin(g.mk)), ll = ciMean(lm.map(g => llOne(g.p, g.hw) - llOne(g.mk, g.hw)));
+  // 3) profit on value bets, per $ risked
+  const vb = gs.filter(g => g.verdict === 'bet'), roi = ciMean(vb.map(g => gpRes(g, g.side) / pkRisk(g.side === 'h' ? g.mlH : g.mlA)));
+  const acc = div(gs.filter(g => (g.p >= .5) === !!g.hw).length, gs.length), macc = div(lm.filter(g => (g.mk >= .5) === !!g.hw).length, lm.length);
+  const need = { clv: 50, ll: 150, roi: 500 }, v = trustVerdict({ clv, ll, roi, need }); TRUST_DBG.gm = { clv, ll, roi };
+  const rows = [
+    ['Closing line value', 'Did its bets get better prices than the final line? Strongest signal; trustworthy after ~50 bets.', cl.length ? `${sgnPts(clv.m)} pts per bet after the margin · beat the closing price ${pct1(beat)}% of the time<div class="muted" style="font-size:11.5px">${rangeTxt(clv, sgnPts)} · ${cl.length} bets</div>` : '<span class="muted">Starts once the closing-price job records closes</span>', readCI(clv, need.clv, true)],
+    ['Accuracy vs. the market', 'Log loss difference on the same games (lower = model closer to reality). Trustworthy after ~150 games.', lm.length ? `${fin(ll.m) ? (ll.m <= 0 ? 'Model better by ' : 'Market better by ') + Math.abs(ll.m * 1000).toFixed(1) + ' (×1,000)' : '–'}<div class="muted" style="font-size:11.5px">Picked the winner ${pct1(acc)}% vs. market favorite ${pct1(macc)}% · ${lm.length} games</div>` : '<span class="muted">No graded games yet</span>', readCI(ll, need.ll, false)],
+    ['Profit on value bets', 'Your bet sizes. Weakest signal: luck dominates for hundreds of bets.', vb.length ? `${fin(roi.m) ? (roi.m >= 0 ? '+' : '−') + pct1(Math.abs(roi.m)) + '% ROI' : '–'}<div class="muted" style="font-size:11.5px">${fin(roi.lo) ? `range ${pct1(roi.lo)}% to ${pct1(roi.hi)}%` : 'not enough bets for a range'} · ${vb.length} bets</div>` : '<span class="muted">No graded value bets yet</span>', readCI(roi, need.roi, true)]];
+  return trustBlock('🧠 Game model v2', v, rows, calibChart(gs.map(g => ({ p: g.p, y: !!g.hw }))), 'Ranges are 95%: if the range includes zero, the result could easily be luck.');
+}
+function trustScorer(PK) {
+  const ps = ((PK && PK.picks) || []).filter(p => p.dk != null && fin(p.p));
+  const done = ps.filter(p => p.res === 'W' || p.res === 'L');
+  // 1) closing line value: DraftKings' closing chance (its margin removed, using that game's margin) minus the break-even chance of the price taken
+  const cl = ps.filter(p => p.edge > 0 && p.dkClose != null).map(p => { const imp = amImplied(p.dk), ic = amImplied(p.dkClose); const m = fin(p.fair) && p.fair > 0 && p.fair < 1 ? Math.log(1 - imp) / Math.log(1 - p.fair) : 1.22; const fc = 1 - Math.exp(Math.log(1 - ic) / m); return { v: fc - imp, beat: imp < ic }; });
+  const clv = ciMean(cl.map(x => x.v)), beat = div(cl.filter(x => x.beat).length, cl.length);
+  // 2) log loss of the chance we bet on vs. DraftKings' margin-free chance at the time
+  const lm = done.filter(p => fin(p.fair)), y = p => p.res === 'W';
+  const ll = ciMean(lm.map(p => llOne(p.p, y(p)) - llOne(p.fair, y(p)))), llRaw = ciMean(lm.filter(p => fin(p.pRaw)).map(p => llOne(p.pRaw, y(p)) - llOne(p.fair, y(p))));
+  // 3) profit on every positive edge
+  const pos = done.filter(p => p.edge > 0), roi = ciMean(pos.map(p => pkProfit(p) / pkRisk(p.dk)));
+  const need = { clv: 100, ll: 500, roi: 2000 }, v = trustVerdict({ clv, ll, roi, need }); TRUST_DBG.gs = { clv, ll, roi };
+  const rows = [
+    ['Closing line value', 'Did its picks get better prices than DraftKings\' final price? Trustworthy after ~100 bets.', cl.length ? `${sgnPts(clv.m)} pts per bet after the margin · beat the closing price ${pct1(beat)}% of the time<div class="muted" style="font-size:11.5px">${rangeTxt(clv, sgnPts)} · ${cl.length} bets</div>` : '<span class="muted">Starts once the closing-price job records closes</span>', readCI(clv, need.clv, true)],
+    ['Accuracy vs. DraftKings', 'Log loss of the blended chance vs. DraftKings with its margin removed. Trustworthy after ~500 player-games.', lm.length ? `${fin(ll.m) ? (ll.m <= 0 ? 'Ice Lab better by ' : 'DraftKings better by ') + Math.abs(ll.m * 1000).toFixed(2) + ' (×1,000)' : '–'}<div class="muted" style="font-size:11.5px">${fin(llRaw.m) ? `Model alone: ${llRaw.m <= 0 ? 'better' : 'worse'} by ${Math.abs(llRaw.m * 1000).toFixed(2)} · ` : ''}${lm.length} player-games</div>` : '<span class="muted">No graded picks yet</span>', readCI(ll, need.ll, false)],
+    ['Profit on positive edges', 'Your bet sizes. Longshot props swing wildly: it takes ~2,000 bets to trust a profit.', pos.length ? `${fin(roi.m) ? (roi.m >= 0 ? '+' : '−') + pct1(Math.abs(roi.m)) + '% ROI' : '–'}<div class="muted" style="font-size:11.5px">${fin(roi.lo) ? `range ${pct1(roi.lo)}% to ${pct1(roi.hi)}%` : 'not enough bets for a range'} · ${pos.length} bets</div>` : '<span class="muted">No graded bets yet</span>', readCI(roi, need.roi, true)]];
+  return trustBlock('🎯 Goal scorer model', v, rows, calibChart(done.map(p => ({ p: p.p, y: y(p) }))), 'Ranges are 95%: if the range includes zero, the result could easily be luck.');
+}
+function trustCard(PK, which = 'both') {
+  return `<div class="card"${which === 'gs' ? ' style="margin-top:14px"' : ''}><div class="card-h"><h3>🧭 Trust scorecard</h3><p>Is the model worth listening to?</p></div>
+    <p class="muted" style="margin:-4px 0 6px;font-size:12.5px">Picking winners isn't the test: the betting favorite already wins most games. The question is whether the model knows something the price doesn't. Checks run from strongest to weakest evidence, and each shows a range, so a hot or cold streak isn't mistaken for skill.</p>
+    ${which !== 'gs' ? trustGame(PK) : ''}${which !== 'gm' ? trustScorer(PK) : ''}</div>`;
 }
 
 /* ============================== UPSET TRACKER ============================== */
