@@ -1,4 +1,3 @@
-
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
 # (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
 # odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
@@ -162,7 +161,7 @@ jobs:
         continue-on-error: true
         run: |
           cat > "$RUNNER_TEMP/ph.js" <<'EOF'
-          // Post Hockey skater ratings (used with permission): this season and the two before, regular season, all situations.
+          // Post Hockey skater ratings and team stats (used with permission): this season and the two before, regular season.
           const fs = require('fs');
           const log = (...a) => console.log(...a);
           async function run({ fetchImpl = fetch, now = new Date() } = {}) {
@@ -185,7 +184,32 @@ jobs:
               if (rows.length) { out.seasons[s] = rows; log(`${s}: ${rows.length} skaters`); }
               else if (old[s]) { out.seasons[s] = old[s]; log(`${s}: fetch failed, kept saved copy`); }
             }
-            if (Object.keys(out.seasons).length) fs.writeFileSync('posthockey.json', JSON.stringify(out));
+            // team stats: 5v5, power play, penalty kill and all situations (season to date)
+            let oldAll = {}; try { oldAll = JSON.parse(fs.readFileSync('posthockey.json', 'utf8')); } catch (e) {}
+            out.teamCols = ['tm', 'gp', 'toi', 'xgf', 'xga', 'gf', 'ga', 'cf', 'ca', 'gsax'];
+            out.teams = {};
+            for (const k of [0, 1, 2]) {
+              const s = code(k), prev = (oldAll.teams || {})[s];
+              if (k >= 1 && prev && prev['5v5']) { out.teams[s] = prev; continue; } // finished seasons don't change
+              const t = {};
+              for (const st of ['5v5', 'pp', 'pk', 'all']) {
+                const url = `https://posthockey.com/api/v1/teams/leaders?stat=xgf_pct_fully_adj&season=${s}&game_type=2&strength=${st}&min_gp=1&sort_dir=desc&limit=200`;
+                try { const r = await fetchImpl(url, { headers: { 'User-Agent': 'NHL-Ice-Lab (personal dashboard; permission granted)' } }); if (r.ok) { const j = await r.json(); t[st] = (j.rows || []).map(x => [x.team_abbreviation, x.games_played || 0, x.toi_seconds || 0, x.xgf, x.xga, x.gf, x.ga, x.cf, x.ca, x.gsax_shooter_adj]); } else log(`teams ${s} ${st}: HTTP ${r.status}`); } catch (e) { log(`teams ${s} ${st}: ${e.message}`); }
+                await new Promise(r => setTimeout(r, 400));
+              }
+              if (t['5v5'] && t['5v5'].length) { out.teams[s] = t; log(`teams ${s}: ${t['5v5'].length} teams`); } else if (prev) out.teams[s] = prev;
+            }
+            // a dated snapshot of this season's team stats each run, so the game model can use them walk-forward (only what was known that day)
+            out.teamHist = oldAll.teamHist || {};
+            const cur = out.teams[code(0)];
+            if (cur && cur['5v5']) {
+              const day = now.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, ''), snap = {};
+              const by = (st, tm) => (cur[st] || []).find(r => r[0] === tm);
+              for (const r of cur['5v5']) { const pp = by('pp', r[0]), pk = by('pk', r[0]); snap[r[0]] = [r[1], r[2], r[3], r[4], pp ? pp[2] : 0, pp ? pp[3] : 0, pk ? pk[2] : 0, pk ? pk[4] : 0]; }
+              out.teamHist[day] = { s: code(0), t: snap };
+            }
+            out.teamHistCols = ['gp', 'toi5', 'xgf5', 'xga5', 'toiPP', 'xgfPP', 'toiPK', 'xgaPK'];
+            if (Object.keys(out.seasons).length || Object.keys(out.teams).length) fs.writeFileSync('posthockey.json', JSON.stringify(out));
             return out;
           }
           module.exports = { run };
