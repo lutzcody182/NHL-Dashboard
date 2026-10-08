@@ -293,13 +293,6 @@ svg{display:block;max-width:100%}
 
 /* grouped navigation end */
 /* lineups */
-.lm-head,.lm-row{display:grid;grid-template-columns:70px 1fr 64px 70px 110px 54px;gap:10px;align-items:center}
-.lm-head{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding-bottom:4px}
-.lm-head span:nth-child(n+3),.lm-row>*:nth-child(n+3){text-align:right}
-.lm-row{padding:6px 0;border-bottom:1px dashed var(--border)}
-.lm-bar{height:10px;background:var(--surface-2);border-radius:99px;overflow:hidden}
-.lm-bar i{display:block;height:100%;border-radius:99px}
-.lm-fair{font-family:"Barlow Condensed",Inter,sans-serif;font-size:20px;font-weight:700}
 .up2{color:var(--good);font-weight:700}
 .down2{color:var(--neg);font-weight:700}
 @media (max-width:640px){.lm-head,.lm-row{grid-template-columns:52px 1fr 52px 56px 0 44px}.lm-head span:nth-child(5),.lm-row>*:nth-child(5){display:none}}
@@ -1240,7 +1233,7 @@ function renderGame() {
 
   const vids = videosCard(s);
   if (pre || !g.shots.length) {
-    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="tapeBody"></div><div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="lmBody"></div><div id="gmBody"></div><div id="gsPrev"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
+    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="tapeBody"></div><div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="gmBody"></div><div id="gsPrev"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
     renderTape(s, g);
     renderLineups(s, g);
     renderMatchup(s, g);
@@ -2561,110 +2554,10 @@ async function renderLineups(s, g) {
   box().innerHTML = `<div class="card"><div class="card-h"><h3>Lineups & starting goalies</h3><p>${both ? 'Both starters confirmed' : 'Checks for goalie confirmations every 2 minutes'} · updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p></div>
     <div class="grid g2">${ca}${ch}</div>
     <p class="muted" style="font-size:12px;margin:10px 0 0">${haveLines ? `Lines and defense pairs come from <a href="${esc((LF && LF.url) || 'https://rotogrinders.com/lineups/nhl')}" target="_blank" rel="noopener">RotoGrinders</a>, refreshed every 30 minutes by your GitHub job; PP1/PP2 are power-play units. Goalie confirmations come from ESPN.` : `Lines aren't posted for this game yet, so the skater lists show who dressed in each team's last game, ordered by ice time (PP = regular power-play time). Lines appear here once RotoGrinders posts them.`} The official lineup appears in the box score at puck drop.</p></div>`;
-  renderLineModel(s, g, LUX);
 }
 
-/* ============================== LINEUP-ADJUSTED LINE ============================== */
+/* lineup minutes by slot (used by the goal scorer model) */
 const SLOT_F = [19.5, 17, 14.5, 11.5], SLOT_D = [23.5, 21, 17]; // typical all-situation minutes by line / pair
-function playerValues() {
-  if (A.memo.pv) return A.memo.pv;
-  const { P } = aggregate(); const tot = { F: [0, 0], D: [0, 0] };
-  for (const p of Object.values(P)) { if (!p.toi) continue; const k = p.pos === 'D' ? 'D' : 'F'; tot[k][0] += p.ixg + .5 * p.a; tot[k][1] += p.toi; }
-  const mean = { F: tot.F[0] / (tot.F[1] / 3600 || 1), D: tot.D[0] / (tot.D[1] / 3600 || 1) }, K = 300; // minutes of prior
-  const v = (id, pos) => { const k = (pos === 'D') ? 'D' : 'F', prior = mean[k] * .8, p = id ? P[id] : null; if (!p || !p.toi) return prior; const mins = p.toi / 60; return (p.ixg + .5 * p.a + prior * K / 60) / ((mins + K) / 60); };
-  return (A.memo.pv = { v, mean });
-}
-function goalieRate(id) { // goals saved above expected per 60, shrunk toward 0 by 20 games of average play
-  if (!id) return null; const x = aggregate().G[id]; if (!x || !x.toi) return null;
-  return ((x.xga - x.gan) / (x.toi / 3600)) * x.toi / (x.toi + 20 * 3600);
-}
-function teamUsual(t) {
-  const key = 'usual:' + t; if (A.memo[key]) return A.memo[key];
-  const { v } = playerValues();
-  const games = A.filtered.filter(g => g.home.id === t || g.away.id === t).sort((a, b) => a.date < b.date ? 1 : -1).slice(0, 10);
-  let num = 0, den = 0, gsum = 0, gn = 0;
-  for (const g of games) {
-    for (const [id, p] of Object.entries(g.sk)) if (p.tm === t && p.toi > 0) { num += v(id, p.pos) * p.toi; den += p.toi; }
-    const st = Object.entries(g.gk).filter(([, p]) => p.tm === t && p.toi > 0).sort((a, b) => b[1].toi - a[1].toi)[0];
-    if (st) { gsum += goalieRate(st[0]) || 0; gn++; }
-  }
-  return (A.memo[key] = { rate: den ? num / den : null, goalie: gn ? gsum / gn : 0, games: games.length });
-}
-const toAmerican = p => !fin(p) || p <= 0 || p >= 1 ? '–' : p >= .5 ? String(-Math.round(100 * p / (1 - p))) : '+' + Math.round(100 * (1 - p) / p);
-function scoreGrid(lh, la) {
-  const pmf = l => { const o = []; let p = Math.exp(-l); for (let k = 0; k <= 15; k++) { o.push(p); p *= l / (k + 1); } return o; };
-  const H = pmf(lh), Aw = pmf(la), cells = [];
-  for (let i = 0; i <= 15; i++) for (let j = 0; j <= 15; j++) cells.push([i, j, H[i] * Aw[j]]);
-  return cells;
-}
-function lineOdds(lh, la, total) {
-  const cells = scoreGrid(lh, la); let win = 0, tie = 0, over = 0, hPL = 0, aPL = 0;
-  for (const [i, j, p] of cells) {
-    if (i > j) win += p; else if (i === j) tie += p;
-    if (i - j >= 2) hPL += p; if (j - i >= 2) aPL += p;
-    if (fin(total) && (i + j + (i === j ? 1 : 0)) > total) over += p; // a tie adds the OT/shootout winner's goal
-  }
-  return { pH: win + tie * .52, over, hPL, aPL };
-}
-function lineupRate(players) {
-  const { v } = playerValues(); let num = 0, den = 0;
-  for (const p of players) { num += v(p.id, p.pos) * p.min; den += p.min; }
-  return den ? num / den : null;
-}
-async function renderLineModel(s, g, LUX) {
-  const box = () => $('#lmBody'); if (!box()) return;
-  const H = g.home.id, W = g.away.id;
-  if (!A.loadedKey || !A.filtered.length) {
-    box().innerHTML = `<div class="card"><div class="card-h"><h3>Lineup-adjusted line</h3></div><p class="muted" style="margin:0 0 10px">Building the line needs player and team ratings from the analytics data.</p><button class="btn primary" id="lmLoad">${A.loading ? 'Loading analytics…' : 'Load analytics and build the line'}</button></div>`;
-    const b = $('#lmLoad'); if (b) b.onclick = async () => { b.disabled = true; b.textContent = 'Loading analytics… this can take a minute'; await ensureData(); if (GC.id === g.id) renderLineups(s, g); };
-    return;
-  }
-  const base = predictMatch(H, W);
-  if (!base) { box().innerHTML = `<div class="card"><div class="card-h"><h3>Lineup-adjusted line</h3></div><p class="muted" style="margin:0">One of these teams has no games in the loaded analytics range.</p></div>`; return; }
-  const side = t => {
-    const lu = LUX[t] || { players: [], goalie: null, src: 'none' }, us = teamUsual(t);
-    const tonight = lineupRate(lu.players), ratio = tonight && us.rate ? tonight / us.rate : 1;
-    const m = Math.max(.85, Math.min(1.15, 1 + .6 * (ratio - 1)));
-    const gr = lu.goalie && lu.goalie.id ? goalieRate(lu.goalie.id) : null;
-    const gAdj = gr == null ? 0 : Math.max(-.6, Math.min(.6, gr - us.goalie));
-    return { lu, us, ratio, m, gr, gAdj };
-  };
-  const a = side(W), h = side(H);
-  const pk = (s.pickcenter && s.pickcenter[0]) || {}, total = fin(+pk.overUnder) ? +pk.overUnder : 6.5;
-  const step = (lh, la) => lineOdds(Math.max(.3, lh), Math.max(.3, la), total);
-  const s0 = step(base.lh, base.la);
-  const s1 = step(base.lh, base.la * a.m);
-  const s2 = step(base.lh * h.m, base.la * a.m);
-  const s3 = step(base.lh * h.m, base.la * a.m - h.gAdj);
-  const lh = Math.max(.3, base.lh * h.m - a.gAdj), la = Math.max(.3, base.la * a.m - h.gAdj);
-  const fnl = lineOdds(lh, la, total);
-  const mlH = pk.homeTeamOdds && pk.homeTeamOdds.moneyLine, mlA = pk.awayTeamOdds && pk.awayTeamOdds.moneyLine;
-  const mk = devig(mlH != null && mlA != null ? { h: +mlH, a: +mlA } : null);
-  const fmtML = v => v == null || !isFinite(v) ? '–' : (v > 0 ? '+' + v : String(v));
-  const teamRow = (t, p, ml, mkp) => { const d = fin(mkp) ? (p - mkp) * 100 : NaN; return `<div class="lm-row"><span class="tcell">${logoImg(t, 22)}<b>${esc(TM(t).abbr)}</b></span><div class="lm-bar"><i style="width:${p * 100}%;background:var(${t === H ? '--home' : '--away'})"></i></div><b class="num">${pct1(p)}%</b><span class="num lm-fair">${toAmerican(p)}</span><span class="num muted">${fmtML(ml)}${fin(mkp) ? ` · ${pct1(mkp)}%` : ''}</span><span class="num ${fin(d) && Math.abs(d) >= 3 ? (d > 0 ? 'up2' : 'down2') : 'muted'}">${fin(d) ? (d > 0 ? '+' : '') + d.toFixed(1) : '–'}</span></div>`; };
-  const fav = fnl.pH >= .5 ? H : W, favPL = fav === H ? fnl.hPL : fnl.aPL;
-  const moveRow = (label, detail, from, to) => { const d = (to - from) * 100; return `<tr><td class="l">${label}<div class="muted" style="font-size:12px">${detail}</div></td><td class="num ${Math.abs(d) >= .5 ? (d > 0 ? 'up2' : 'down2') : 'muted'}">${Math.abs(d) < .05 ? '0.0' : (d > 0 ? '+' : '') + d.toFixed(1)}</td></tr>`; };
-  const luDesc = (x, t) => { const pct = (x.ratio - 1) * 100; const src = x.lu.src === 'rg' ? 'RotoGrinders lines' : x.lu.src === 'last' ? 'last game\'s lineup' : 'no lineup'; return `${fin(pct) && Math.abs(pct) >= .5 ? `${Math.abs(pct).toFixed(1)}% ${pct > 0 ? 'stronger' : 'weaker'} offensive lineup than usual` : 'About their usual offensive strength'} · ${src}`; };
-  const gDesc = (x) => !x.lu.goalie ? 'Starter not announced; using their usual goaltending' : x.gr == null ? `${esc(x.lu.goalie.n)}: not enough data, treated as average` : `${esc(x.lu.goalie.n)}: ${x.gAdj >= 0 ? '+' : ''}${x.gAdj.toFixed(2)} goals saved per game vs. their usual goaltending`;
-  box().innerHTML = `<div class="card lm"><div class="card-h"><h3>Lineup-adjusted line</h3><p>Team strength + tonight's lineups + starting goalies</p></div>
-    <div class="lm-head"><span></span><span></span><span>Win chance</span><span>Fair line</span><span>Market</span><span title="Ice Lab win chance minus the market's, in percentage points">Diff</span></div>
-    ${teamRow(W, 1 - fnl.pH, mlA, fin(mk) ? 1 - mk : NaN)}${teamRow(H, fnl.pH, mlH, mk)}
-    <div class="tiles" style="margin:12px 0">
-      <div class="tile"><div class="k">Projected score</div><div class="v num">${f1(la)}–${f1(lh)}</div><div class="s">${esc(TM(W).abbr)}–${esc(TM(H).abbr)} expected goals</div></div>
-      <div class="tile"><div class="k">Total ${total}</div><div class="v num">${pct1(fnl.over)}%</div><div class="s">chance of the over · fair ${toAmerican(fnl.over)} / ${toAmerican(1 - fnl.over)}${pk.overOdds != null ? ` · market ${fmtML(pk.overOdds)}` : ''}</div></div>
-      <div class="tile"><div class="k">${esc(TM(fav).abbr)} −1.5</div><div class="v num">${pct1(favPL)}%</div><div class="s">win by 2+ · fair ${toAmerican(favPL)}</div></div>
-    </div>
-    <h3 class="cmp-sec">What moved the line <span class="muted" style="font-weight:500;font-size:13px">${esc(TM(H).abbr)} win chance, in points</span></h3>
-    <div class="twrap"><table><tbody>
-      <tr><td class="l"><b>Team strength ratings</b><div class="muted" style="font-size:12px">Offense and defense ratings plus home ice</div></td><td class="num"><b>${pct1(s0.pH)}%</b></td></tr>
-      ${moveRow(`${esc(TM(W).abbr)} lineup`, luDesc(a, W), s0.pH, s1.pH)}
-      ${moveRow(`${esc(TM(H).abbr)} lineup`, luDesc(h, H), s1.pH, s2.pH)}
-      ${moveRow(`${esc(TM(H).abbr)} goalie`, gDesc(h), s2.pH, s3.pH)}
-      ${moveRow(`${esc(TM(W).abbr)} goalie`, gDesc(a), s3.pH, fnl.pH)}
-      <tr><td class="l"><b>Lineup-adjusted</b></td><td class="num"><b>${pct1(fnl.pH)}%</b></td></tr>
-    </tbody></table></div>
-    <p class="muted" style="font-size:12px;margin:10px 0 0">Fair line = the odds that match Ice Lab's win chance, with no bookmaker margin. "Diff" compares that chance with the market's (margin removed); gaps of 3+ points are highlighted. Lineup strength uses each dressed skater's expected goals and assists per 60, weighted by ice time for their line, compared with the team's usual lineup over its last 10 loaded games; unknown players count as replacement level. Goalies use goals saved above expected, pulled toward average. The lineup adjustments aren't backtested yet, so treat this as an informed estimate, for fun and not betting advice.</p></div>`;
-}
 
 /* ============================== MATCHUP PREVIEW ============================== */
 async function getStandings(season) {
@@ -2732,7 +2625,7 @@ async function renderMatchup(s, g) {
         const ph = impliedProb(odds.homeTeamOdds.moneyLine), pa = impliedProb(odds.awayTeamOdds.moneyLine);
         if (fin(ph) && fin(pa)) { const nh = ph / (ph + pa); vegas = `<div class="pred-row"><span>Betting market</span><div class="meter"><i style="width:${(1 - nh) * 100}%;background:var(--away)"></i><i style="width:${nh * 100}%;background:var(--home)"></i></div><span class="num">${f0((1 - nh) * 100)}% – ${f0(nh * 100)}%</span></div>`; }
       }
-      pred = `<div class="card"><div class="card-h"><h3>Team-strength prediction</h3><p>Ratings and home ice only · see the lineup-adjusted line above</p></div>
+      pred = `<div class="card"><div class="card-h"><h3>Team-strength prediction</h3><p>Ratings and home ice only · Game model v2 below adds every other factor</p></div>
         <div style="display:flex;justify-content:space-between;font-weight:700"><span>${esc(g.away.abbr)}</span><span>${esc(g.home.abbr)}</span></div>
         <div class="pred-row"><span>Ice Lab model</span><div class="meter"><i style="width:${sim.a * 100}%;background:var(--away)"></i><i style="width:${sim.h * 100}%;background:var(--home)"></i></div><span class="num">${f0(sim.a * 100)}% – ${f0(sim.h * 100)}%</span></div>${vegas}
         <p class="muted" style="font-size:12px;margin:8px 0 0">Projected expected goals: ${esc(g.away.abbr)} ${f2(la)} · ${esc(g.home.abbr)} ${f2(lh)}. ${vegas ? 'Moneylines converted to win chances with the bookmaker margin removed.' : ''} Just for fun, not betting advice.</p></div>`;
@@ -5712,7 +5605,7 @@ const GLOSS = {
   '+/-': 'Plus/minus: even-strength and shorthanded goals scored while the player was on the ice, minus goals allowed.', 'pim': 'Penalty minutes.', 'sog': 'Shots on goal.', 's': 'Shots on goal.', 'hit': 'Hits delivered.', 'blk': 'Shots blocked.',
   'toi': 'Time on ice.', 'toi/gp': 'Average time on ice per game.', 'min': 'Minutes of ice time in this situation.', 'age': 'Current age.',
   'p%': 'Points percentage: points earned out of points available.', 'points %': 'Points earned out of points available. .500 is average.', 'rw': 'Regulation wins (no overtime or shootout).', 'row': 'Wins in regulation or overtime (not shootouts). An NHL tiebreaker.',
-  'gf': 'Goals for.', 'ga': 'Goals against.', 'diff': 'Goal differential: goals for minus goals against. On the lineup-adjusted line, Ice Lab\'s win chance minus the market\'s, in percentage points.', 'home': 'Record at home.', 'away': 'Record on the road.', 'l10': 'Record over the last 10 games.', 'last 10': 'Results of the last 10 games, oldest to newest.', 'strk': 'Current streak: W = wins, L = losses, OT = overtime losses.',
+  'gf': 'Goals for.', 'ga': 'Goals against.', 'diff': 'Goal differential: goals for minus goals against.', 'home': 'Record at home.', 'away': 'Record on the road.', 'l10': 'Record over the last 10 games.', 'last 10': 'Results of the last 10 games, oldest to newest.', 'strk': 'Current streak: W = wins, L = losses, OT = overtime losses.',
   'gaa': 'Goals-against average: goals allowed per 60 minutes.', 'sa': 'Shots on goal faced.', 'sv': 'Saves.', 'sv%': 'Save percentage: saves divided by shots on goal faced.', 'so': 'Shutouts.', 'gs': 'Games started.',
   'sh%': 'Shooting percentage: goals divided by shots on goal.', 'shooting %': 'Goals divided by shots on goal.', 'gwg': 'Game-winning goals: the goal that put the winning team one ahead of the loser\'s final total.',
   'ppg': 'Power-play goals.', 'ppa': 'Power-play assists.', 'shg': 'Shorthanded goals.', 'sha': 'Shorthanded assists.', 't': 'Total.',
