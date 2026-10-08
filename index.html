@@ -1694,7 +1694,9 @@ function renderSkaters() {
   if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
   const { P } = aggregate();
   const PR = A.memo.pr !== undefined ? A.memo.pr : (A.memo.pr = prBuild(A.filtered, true));
-  let all = Object.values(P).filter(p => p.gp > 0).map(p => ({ ...p, offR: PR && PR.O[p.id] != null ? PR.O[p.id] : NaN, defR: PR && PR.D[p.id] != null ? PR.D[p.id] : NaN, netR: PR && PR.O[p.id] != null ? PR.O[p.id] + PR.D[p.id] : NaN, pts: p.g + p.a, gix: p.g - p.ixg, shp: div(p.g, p.sog), p60: per60(p.g + p.a, p.toi), g60: per60(p.g, p.toi), ixg60: per60(p.ixg, p.toi), icf60: per60(p.icf, p.toi), toig: p.toi / p.gp }));
+  if (PHF.data === null) { getPHFile().then(() => { if (PHF.idx && activeTab() === 'skaters') renderSkaters(); }); }
+  const phS = A.season, phRow = p => PHF.idx ? phFind(phS, p.n, TM(p.tm).abbr, p.pos) : null;
+  let all = Object.values(P).filter(p => p.gp > 0).map(p => ({ ...p, offR: PR && PR.O[p.id] != null ? PR.O[p.id] : NaN, defR: PR && PR.D[p.id] != null ? PR.D[p.id] : NaN, netR: PR && PR.O[p.id] != null ? PR.O[p.id] + PR.D[p.id] : NaN, ph: phRow(p), pts: p.g + p.a, gix: p.g - p.ixg, shp: div(p.g, p.sog), p60: per60(p.g + p.a, p.toi), g60: per60(p.g, p.toi), ixg60: per60(p.ixg, p.toi), icf60: per60(p.icf, p.toi), toig: p.toi / p.gp }));
   const maxGp = Math.max(...all.map(p => p.gp));
   if (SK.minGp == null || SK.minGp > maxGp) SK.minGp = Math.max(1, Math.round(maxGp * .25));
   const rows = all.filter(p => p.gp >= SK.minGp && (!SK.team || p.tm === SK.team) && (!SK.pos || (SK.pos === 'D' ? p.pos === 'D' : p.pos !== 'D')) && (!SK.q || p.n.toLowerCase().includes(SK.q.toLowerCase())));
@@ -1711,7 +1713,12 @@ function renderSkaters() {
     { k: 'ht', h: 'HIT', v: p => p.ht, f: f0 }, { k: 'bs', h: 'BLK', v: p => p.bs, f: f0 }, { k: 'pm', h: '+/-', v: p => p.pm, f: v => (v > 0 ? '+' : '') + v },
     { k: 'offR', h: 'Off RTG', v: p => p.offR, f: v => fin(v) ? sgn2(v) : '–', dir: 1, t: 'Offensive rating: how many more even-strength expected goals per 60 his team creates with him on the ice than with an average player, after accounting for teammates and opponents. Estimated from games (ESPN doesn\'t publish shifts), so treat it as a rough guide.' },
     { k: 'defR', h: 'Def RTG', v: p => p.defR, f: v => fin(v) ? sgn2(v) : '–', dir: 1, t: 'Defensive rating: how many fewer even-strength expected goals per 60 his team allows with him on the ice. Positive = better defense.' },
-    { k: 'netR', h: 'Net RTG', v: p => p.netR, f: v => fin(v) ? `<b>${sgn2(v)}</b>` : '–', dir: 1, t: 'Offense + defense: expected goal differential per 60 he adds at even strength. Used by Game model v2 (lineup strength) and the goal scorer model (linemates).' }];
+    { k: 'netR', h: 'Net RTG', v: p => p.netR, f: v => fin(v) ? `<b>${sgn2(v)}</b>` : '–', dir: 1, t: 'Offense + defense: expected goal differential per 60 he adds at even strength. Used by Game model v2 (lineup strength) and the goal scorer model (linemates).' },
+    ...(PHF.idx ? [
+      { k: 'phO', h: 'PH Off', v: p => p.ph ? p.ph.o : NaN, f: v => fin(v) ? sgn1(v) : '–', dir: 1, t: 'Post Hockey offensive rating: goals above average this season from his offense (scoring, setting up, driving play). From posthockey.com.' },
+      { k: 'phD', h: 'PH Def', v: p => p.ph ? p.ph.d : NaN, f: v => fin(v) ? sgn1(v) : '–', dir: 1, t: 'Post Hockey defensive rating: goals above average this season from his defense. From posthockey.com.' },
+      { k: 'phN', h: 'PH Net', v: p => p.ph ? p.ph.net : NaN, f: v => fin(v) ? `<b>${sgn1(v)}</b>` : '–', dir: 1, t: 'Post Hockey Net Rating: total goals above average this season (offense + defense). From posthockey.com.' },
+      { k: 'phE', h: 'PH Est.', v: p => p.ph ? p.ph.est : NaN, f: v => fin(v) ? sgn1(v) : '–', dir: 1, t: 'Post Hockey Estimated Net Rating: their forecast of his talent, in goals above average per 82 games, blending the last three seasons with this one. Used by Game model v2 and the goal scorer model.' }] : [])];
   body.innerHTML = `
     <div class="leaders">
       <div class="card"><h3>Most expected goals</h3><ol>${top('ixg')}</ol></div>
@@ -1720,6 +1727,7 @@ function renderSkaters() {
       <div class="card"><h3>Shot volume (iCF/60)</h3><ol>${top('icf60')}</ol></div>
       ${PR ? `<div class="card"><h3>Best net rating</h3><ol>${top('netR', 5, sgn2)}</ol></div>` : ''}
     </div>
+    ${PHF.idx ? `<p class="muted" style="font-size:12px;margin:-4px 0 4px">PH columns: player ratings from <a href="https://posthockey.com/skaters" target="_blank" rel="noopener">Post Hockey</a>, built from real on-ice shift data, updated by the GitHub job. Used with permission.</p>` : ''}
     ${PR ? `<p class="muted" style="font-size:12px;margin:-4px 0 10px">Off / Def / Net RTG are Ice Lab's player ratings (even-strength expected goals per 60, vs. average), estimated from who played how much in each game, since ESPN doesn't publish shifts.${PR.rel ? ` Rated separately from odd and even games, the same players' net ratings agree with a correlation of ${PR.rel.net.toFixed(2)} (1 = perfectly consistent, 0 = pure noise)${PR.rel.net < .3 ? ', so they\'re still mostly noise at this sample size' : PR.rel.net < .5 ? ', a rough but real signal' : ', a solid signal'}.` : ' The consistency check appears once players have more games.'}</p>` : ''}
     <div class="bar">
       <input type="search" id="skQ" placeholder="Search player…" value="${esc(SK.q)}" style="flex:1;min-width:160px">
@@ -4074,8 +4082,10 @@ const GM_FEATS = [
   ['alt', 'Playing at altitude (Denver)', 'sched', 'visitors playing in Denver'],
   ['move', 'Betting line movement', 'move', 'per 10 points the home team\'s market chance moved (open → now)'],
   ['style', 'Style matchup: rush vs. cycle', 'style', 'per 2% more expected goals the home team gets from how its rush/cycle offense fits the visitor\'s defense, than the reverse'],
-  ['lineup', 'Tonight\'s lineup vs. usual (player ratings)', 'lineup', 'per 0.1 goals per 60 the home lineup is stronger than its usual lineup, minus the same for the visitor']];
-const GM_GROUPS = [['rest', 'Rest & back-to-backs'], ['travel', 'Time zones / travel'], ['goalie', 'Starting goalie'], ['special', 'Special teams'], ['discipline', 'Discipline'], ['form', 'Recent form'], ['homecook', 'Home cooking'], ['gmatch', 'Shooters vs. goalie matchup'], ['ot', 'Overtime & shootout'], ['gload', 'Goalie workload'], ['sched', 'Schedule stretches'], ['move', 'Line movement'], ['style', 'Rush vs. cycle style matchup'], ['lineup', 'Lineup strength (player ratings)']];
+  ['lineup', 'Tonight\'s lineup vs. usual (player ratings)', 'lineup', 'per 0.1 goals per 60 the home lineup is stronger than its usual lineup, minus the same for the visitor'],
+  ['phteam', 'Post Hockey talent: lineup vs. lineup', 'posthockey', 'per 1 goal per game of Post Hockey Net Rating the home lineup has over the visitor\'s'],
+  ['phline', 'Post Hockey talent: lineup vs. usual', 'posthockey', 'per 0.25 goals per game the home lineup is stronger than its usual one (by Post Hockey ratings), minus the same for the visitor']];
+const GM_GROUPS = [['rest', 'Rest & back-to-backs'], ['travel', 'Time zones / travel'], ['goalie', 'Starting goalie'], ['special', 'Special teams'], ['discipline', 'Discipline'], ['form', 'Recent form'], ['homecook', 'Home cooking'], ['gmatch', 'Shooters vs. goalie matchup'], ['ot', 'Overtime & shootout'], ['gload', 'Goalie workload'], ['sched', 'Schedule stretches'], ['move', 'Line movement'], ['style', 'Rush vs. cycle style matchup'], ['lineup', 'Lineup strength (player ratings)'], ['posthockey', 'Post Hockey player ratings']];
 const GM = { model: null, loading: false, prog: '' };
 const logit = p => Math.log(p / (1 - p));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -4120,6 +4130,17 @@ function gmStyleFit(S, offId, defId) {
   const rate = (v, n, lg) => ((v || 0) + lg * K) / ((n || 0) + K) / lg;
   const oR = rate(o.rF, o.sg, lr), oC = rate(o.cF, o.sg, lc), dR = rate(d.rA, d.sg, lr), dC = rate(d.cA, d.sg, lc), sr = lr / (lr + lc);
   return sr * (oR - 1) * (dR - 1) + (1 - sr) * (oC - 1) * (dC - 1);
+}
+// Post Hockey talent features: [home lineup − road lineup, (home vs. its usual) − (road vs. its usual)]
+function gmPHFeat(S, hId, aId, luH, luA, season, mode, GSs) {
+  if (!PHF.idx) return [0, 0];
+  const nm = id => (S.nm || {})[id] || (GSs && GSs.P[id] && GSs.P[id].n) || '', ps = id => (S.pos || {})[id] || (GSs && GSs.P[id] && GSs.P[id].pos) || '';
+  const val = (ids, t) => phLineup(ids, nm, TM(t).abbr, ps, season, mode);
+  const H = val(luH, hId), Aw = val(luA, aId);
+  if (H.k < 8 || Aw.k < 8) return [0, 0];
+  const usual = t => { const l = (gmTeam(S, t).lus || []); return l.length >= 3 ? l.reduce((s, x) => s + val(x, t).net, 0) / l.length : null; };
+  const uH = usual(hId), uA = usual(aId);
+  return [H.net - Aw.net, uH != null && uA != null ? ((H.net - uH) - (Aw.net - uA)) / .25 : 0];
 }
 // lineup strength: tonight's lineup vs. the team's last 10 lineups, both valued with today's player ratings
 function gmLineupDelta(S, PR, tid, ids) {
@@ -4273,8 +4294,11 @@ function gmBuild(games, opt = {}, sadj = null, noGS = false) {
       if (prRowsAcc.length >= 400 && (prLast == null || day - prLast >= 14)) { const seasonNow = seasonOf(g.date); const rw = prRowsAcc.map(r => ({ ...r, w: r.w0 * Math.pow(.5, seasonNow - r.season) })); PRw = prSolve(rw, prPriors(prGames).pr, PRw, 25, 6); const sh = {}, n = {}; for (const r of prRowsAcc) for (const [id, s] of r.own) { sh[id] = (sh[id] || 0) + s; n[id] = (n[id] || 0) + 1; } for (const id in sh) sh[id] /= n[id]; PRw.sh = sh; prLast = day; }
       f.x.push((gmLineupDelta(S, PRw, g.home.id, gmLineup(g, g.home.id)) - gmLineupDelta(S, PRw, g.away.id, gmLineup(g, g.away.id))) / .1);
     } else f.x.push(0);
+    if (!noGS) { S.nm = S.nm || {}; S.pos = S.pos || {}; for (const [id, p] of Object.entries(g.sk || {})) { S.nm[id] = p.n; S.pos[id] = p.pos; } } // lineups are known before puck drop
+    f.x.push(...(noGS ? [0, 0] : gmPHFeat(S, g.home.id, g.away.id, gmLineup(g, g.home.id), gmLineup(g, g.away.id), seasonOf(g.date), 'prior')));
     if (f.ready) rows.push({ x: f.x, y: g.home.score > g.away.score ? 1 : 0, mk: devig(g.ml), id: g.id, date: g.date });
     gmUpdate(S, g); if (GSs) gsState([g], GSs);
+    if (!noGS) { S.nm = S.nm || {}; S.pos = S.pos || {}; for (const [id, p] of Object.entries(g.sk || {})) { S.nm[id] = p.n; S.pos[id] = p.pos; } }
     if (!noGS) { for (const r of prGameRows(g, 1)) prRowsAcc.push({ ...r, w0: r.w, season: seasonOf(g.date) }); prGames.push(g); for (const [t, tid] of [[gmTeam(S, g.home.id), g.home.id], [gmTeam(S, g.away.id), g.away.id]]) { t.lus = t.lus || []; t.lus.push(gmLineup(g, tid)); if (t.lus.length > 10) t.lus.shift(); } }
   }
   return { S, rows, GS: GSs, PR: PRw };
@@ -4315,7 +4339,7 @@ function gmTrain(games) {
   const half = Math.floor(test.length / 2), tA = test.slice(0, half), tB = test.slice(half), ablA = {}, ablB = {};
   for (const grp of allGroups) { const W = gmFit(train, gmMask(allGroups.filter(x => x !== grp))), pf = r => gmProb(W, r.x), pa = r => gmProb(Wall, r.x); abl[grp] = gmScore(test, pf).ll - sAll.ll; ablA[grp] = gmScore(tA, pf).ll - gmScore(tA, pa).ll; ablB[grp] = gmScore(tB, pf).ll - gmScore(tB, pa).ll; }
   // factors with an obvious direction must also point the right way (e.g. a better style fit can't hurt), so a lucky test split can't sneak in nonsense
-  const GM_SIGN = { gmatch: ['gmatch', 1], ot: ['ot', 1], style: ['style', 1], goalie: ['goalie', 1], move: ['move', 1], lineup: ['lineup', 1] };
+  const GM_SIGN = { gmatch: ['gmatch', 1], ot: ['ot', 1], style: ['style', 1], goalie: ['goalie', 1], move: ['move', 1], lineup: ['lineup', 1], posthockey: ['phteam', 1] };
   const signOK = grp => { const s = GM_SIGN[grp]; if (!s) return true; const i = GM_FEATS.findIndex(f => f[0] === s[0]); return !(Wall[i] * s[1] < 0); };
   const keep = allGroups.filter(grp => abl[grp] > .001 && ablA[grp] > 0 && ablB[grp] > 0 && signOK(grp));
   const Wkeep = gmFit(train, gmMask(keep)), sKeep = gmScore(test, r => gmProb(Wkeep, r.x));
@@ -4351,7 +4375,9 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   if (M.PR && M.GS) { const gl = { date: dateIso, home: { id: hId }, away: { id: aId } }, lu = t => { const r = gsRoster(M.GS, LF || null, gl, t); return r.src === 'RotoGrinders lines' ? r.ids : r.ids.filter(id => !(inj && inj.st[id] && inj.st[id].out)); }; luH = lu(hId); luA = lu(aId); }
   const dH = M.PR ? gmLineupDelta(M.S, M.PR, hId, luH) : 0, dA = M.PR ? gmLineupDelta(M.S, M.PR, aId, luA) : 0;
   f.x.push((dH - dA) / .1);
-  const lineupOn = M.W.length >= GM_FEATS.length && M.keep.includes('lineup');
+  const phf = luH && luA ? gmPHFeat(M.S, hId, aId, luH, luA, seasonOf(dateIso), 'now', M.GS) : [0, 0];
+  f.x.push(...phf);
+  const lineupOn = M.W.length >= GM_FEATS.length && (M.keep.includes('lineup') || M.keep.includes('posthockey'));
   const refs = (inj && inj.refs) || [], crew = gmCrew(M.S, refs), rg = gmRefGoals(M.S, hId, aId, crew);
   const p0 = gmProb(W, f.x);
   const parts = GM_FEATS.map(([k, l], i) => { if (!W[i] || i < 2 || !f.x[i]) return null; const x0 = [...f.x]; x0[i] = 0; return { k, l, d: p0 - gmProb(W, x0) }; }).filter(Boolean);
@@ -4365,7 +4391,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   parts.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
   const mk = devig(ml);
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
-  return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
+  return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
 async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W) GM.model = m; } catch (e) {} return GM.model; }
 async function gmCollect(onProg) {
@@ -4384,7 +4410,7 @@ async function gmRun(force) {
   GM.loading = true; GM.err = '';
   const prog = (l, d, t) => { GM.prog = `${l}… ${d.toLocaleString()} / ${t.toLocaleString()}`; const e = $('#gmProg'); if (e) e.textContent = GM.prog; const f = $('#gmFill'); if (f) f.style.width = (t ? d / t * 100 : 0) + '%'; };
   try {
-    const games = await gmCollect(prog);
+    const games = await gmCollect(prog); await getPHFile();
     GM.prog = 'Training and testing…'; const e = $('#gmProg'); if (e) e.textContent = GM.prog; await sleep(30);
     const m = gmTrain(games);
     if (m.error) GM.err = m.error; else { GM.model = m; DB.set('gm2', m); }
@@ -4463,7 +4489,7 @@ async function renderGameModelPreview(s, g) {
   const pk = (s.pickcenter && s.pickcenter[0]) || null;
   const ml = pk && pk.homeTeamOdds && pk.awayTeamOdds && isFinite(pk.homeTeamOdds.moneyLine) && isFinite(pk.awayTeamOdds.moneyLine) ? { h: +pk.homeTeamOdds.moneyLine, a: +pk.awayTeamOdds.moneyLine } : null;
   if (ml) ml.open = mlOpenOf(pk);
-  const LFp = await getLinesFile();
+  const LFp = await getLinesFile(); await getPHFile();
   const r = gmPredict(g.home.id, g.away.id, g.date || new Date().toISOString(), gH, gA, ml, inj, LFp);
   if (!r || !box()) return;
   const injTxt = [[g.away, r.inj.a], [g.home, r.inj.h]].filter(([, x]) => x.who.length).map(([t, x]) => `<p style="margin:0 0 4px;font-size:13px"><b>${esc(t.abbr)}</b> missing ${x.who.slice(0, 4).map(w => `${esc(w.n)} <span class="muted">(${pct1(w.share)}% of recent xG)</span>`).join(', ')}${x.who.length > 4 ? ` +${x.who.length - 4} more` : ''}${r.inj.viaLineup ? ' <span class="muted">→ counted through lineup strength</span>' : ` → scoring −${pct1(x.cut)}%`}</p>`).join('');
@@ -4480,6 +4506,7 @@ async function renderGameModelPreview(s, g) {
       ${r.match ? `<h4 class="cmp-sec">Shooters vs. goalie</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('How well each lineup\'s shot mix (where they shoot from, shot types, rebounds and rush chances) fits the other goalie\'s weak spots, compared with an average lineup against him. Used only if it improved the model in testing.')}">${esc(g.home.abbr)} shooters vs. ${esc(gName(gA, g.away.id).replace(/<[^>]+>/g, '').split('(')[0].trim())}: <b style="color:${r.match.h > .01 ? 'var(--good)' : r.match.h < -.01 ? 'var(--neg)' : 'inherit'}">${r.match.h >= 0 ? '+' : '−'}${pct1(Math.abs(r.match.h))}%</b></p><p style="margin:0 0 4px;font-size:13px">${esc(g.away.abbr)} shooters vs. ${esc(gName(gH, g.home.id).replace(/<[^>]+>/g, '').split('(')[0].trim())}: <b style="color:${r.match.a > .01 ? 'var(--good)' : r.match.a < -.01 ? 'var(--neg)' : 'inherit'}">${r.match.a >= 0 ? '+' : '−'}${pct1(Math.abs(r.match.a))}%</b></p>${M.keep.includes('gmatch') ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}` : ''}
       ${(() => { const fh = gmStyleFit(M.S, g.home.id, g.away.id), fa = gmStyleFit(M.S, g.away.id, g.home.id); if (!fh && !fa) return ''; const t = (v, ab) => `<b style="color:${v > .005 ? 'var(--good)' : v < -.005 ? 'var(--neg)' : 'inherit'}">${v >= 0 ? '+' : '−'}${pct1(Math.abs(v))}%</b>`; return `<h4 class="cmp-sec">Rush vs. cycle styles</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('How each offense\'s mix of rush chances and set-up (cycle) chances fits what the other defense gives up, beyond the teams\' overall ratings.')}">${esc(g.home.abbr)} offense vs. ${esc(g.away.abbr)} defense: ${t(fh)} · ${esc(g.away.abbr)} offense vs. ${esc(g.home.abbr)} defense: ${t(fa)}</p>${M.keep.includes('style') ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}`; })()}
       ${r.lineup ? `<h4 class="cmp-sec">Lineup strength</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('Tonight\'s expected lineup (posted lines, or the last game minus injured players) valued with Ice Lab player ratings, compared with each team\'s last 10 lineups. In goals per 60 at even strength.')}">${[[g.home, r.lineup.h], [g.away, r.lineup.a]].map(([t, v]) => `${esc(t.abbr)} <b style="color:${v > .03 ? 'var(--good)' : v < -.03 ? 'var(--neg)' : 'inherit'}">${v >= 0 ? '+' : '−'}${f2(Math.abs(v))}</b> vs. usual`).join(' · ')}</p>${r.lineup.on ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}` : ''}
+      ${r.ph ? `<h4 class="cmp-sec">Post Hockey talent</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('Sum of each expected skater\'s Post Hockey talent (Estimated Net Rating, goals above average per game). Ratings from posthockey.com.')}">${esc(g.home.abbr)} lineup ${r.ph.team >= 0 ? '+' : '−'}${f2(Math.abs(r.ph.team))} goals per game vs. ${esc(g.away.abbr)}'s · vs. usual lineups: ${r.ph.vsUsual >= 0 ? '+' : '−'}${f2(Math.abs(r.ph.vsUsual))} net for ${esc(g.home.abbr)}</p>${r.ph.on ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}` : ''}
       <h4 class="cmp-sec">Referees</h4>${r.ref.names.length ? `<p style="margin:0 0 4px;font-size:13px">${r.ref.names.map(esc).join(' & ')}: <b style="color:${r.ref.crew > 1.03 ? 'var(--neg)' : r.ref.crew < .97 ? 'var(--good)' : 'inherit'}">${r.ref.crew >= 1 ? '+' : '−'}${pct1(Math.abs(r.ref.crew - 1))}%</b> penalties vs. an average crew</p>${(() => { const pt = r.parts.find(x => x.k === 'ref'); return `<p class="muted" style="margin:0;font-size:12px">${r.ref.goals.h || r.ref.goals.a ? `Expected power-play goals: ${esc(g.home.abbr)} ${r.ref.goals.h >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.h))}, ${esc(g.away.abbr)} ${r.ref.goals.a >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.a))}${pt ? ` → ${esc(pt.d >= 0 ? g.home.abbr : g.away.abbr)} +${Math.abs(pt.d * 100).toFixed(1)} pts` : ''}. ` : ''}${fin(r.ref.beta) ? `${Math.round(r.ref.beta * 100)}% of a crew's past rate carries into its next game (learned from past games).` : 'Retrain in Model Lab to use referee crews.'}</p>`; })()}` : '<p class="muted" style="margin:0;font-size:13px">Not posted yet (usually the day of the game).</p>'}
       <h4 class="cmp-sec">Injuries factored in</h4>${injTxt || '<p class="muted" style="margin:0;font-size:13px">No regulars listed as out.</p>'}</div></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">Points = how much each factor moves ${esc(g.home.abbr)}'s win chance. The model was last trained ${new Date(M.t).toLocaleDateString()}; retrain it in Model Lab to include the newest games. For fun and analysis, not betting advice.</p></div>`;
@@ -4854,7 +4881,8 @@ function gsParts(S, pid, oppId, goalieId, ctx = {}) {
   const L = S.L, pos = r.pos, K = 4; // K = hours of league-average ice time mixed into every player's shot rate
   const at = gsAvgToi(S, r), avgEv = at.ev, avgPP = at.pp;
   const d = S.D[oppId], q = goalieId && S.Gk[goalieId], myT = S.D[r.tm];
-  const finS = clamp((r.g + 20) / (r.ixg + 20), .8, 1.25); // finishing: needs a big sample before it moves much
+  // finishing: Post Hockey's shooter talent when available (years of shots), else his own record, regressed hard
+  const finS = fin(ctx.finPH) ? clamp(Math.exp(ctx.finPH), .75, 1.35) : clamp((r.g + 20) / (r.ixg + 20), .8, 1.25);
   const evSec = ctx.evSec != null ? ctx.evSec : avgEv;
   // even strength, by zone
   const zones = [0, 1, 2, 3].map(z => {
@@ -5032,12 +5060,14 @@ function gsMateMap(S, LF, games) {
   const all = []; // [teamId, roleMap] for every team with posted lines
   for (const e of games) { const c = e.competitions[0]; for (const x of c.competitors) { const t = String(x.team.id), rm = gsRoleMap(S, linesFor(LF, { date: e.date }, t), t); if (rm) all.push(rm); } }
   const bySlot = {};
-  // with player ratings: the linemates' combined on-ice offense; without: their own shot creation + assists
-  const mq = S.pr ? (rm, id) => { const v = (rm[id].mates || []).map(m => S.pr.O[m]).filter(fin); return v.length ? v.reduce((a, b) => a + b, 0) : NaN; }
+  // best available: Post Hockey offensive ratings (goals per game) → Ice Lab ratings → shot creation + assists
+  const phSeason = games[0] ? seasonOf(games[0].date) : null, phO = id => { const r = S.P[id]; const v = r && PHF.idx ? phTalent(r.n, TM(r.tm).abbr, r.pos, phSeason, 'now') : null; return v ? v.o : NaN; };
+  const usePH = !!PHF.idx && Object.keys(S.P).slice(0, 400).some(id => fin(phO(id)));
+  const mq = usePH ? (rm, id) => { const v = (rm[id].mates || []).map(phO).filter(fin); return v.length ? v.reduce((a, b) => a + b, 0) : NaN; } : S.pr ? (rm, id) => { const v = (rm[id].mates || []).map(m => S.pr.O[m]).filter(fin); return v.length ? v.reduce((a, b) => a + b, 0) : NaN; }
     : (rm, id) => { const v = (rm[id].mates || []).map(m => gsPlayVal(S, m)).filter(fin); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : NaN; };
   for (const rm of all) for (const id of Object.keys(rm)) { const q = mq(rm, id); if (fin(q)) (bySlot[rm[id].line] = bySlot[rm[id].line] || []).push(q); }
   const avg = Object.fromEntries(Object.entries(bySlot).map(([k, v]) => [k, v.reduce((a, b) => a + b, 0) / v.length]));
-  return (rm, id) => { if (!rm || !rm[id]) return 1; const q = mq(rm, id), a = avg[rm[id].line]; if (!fin(q) || !fin(a)) return 1; return S.pr ? clamp(1 + (q - a) / (S.pr.mu || 2.5), .88, 1.12) : a > 0 ? clamp(1 + .25 * (q / a - 1), .88, 1.12) : 1; };
+  return (rm, id) => { if (!rm || !rm[id]) return 1; const q = mq(rm, id), a = avg[rm[id].line]; if (!fin(q) || !fin(a)) return 1; if (usePH) return clamp(1 + (q - a) / 1.5, .88, 1.12); return S.pr ? clamp(1 + (q - a) / (S.pr.mu || 2.5), .88, 1.12) : a > 0 ? clamp(1 + .25 * (q / a - 1), .88, 1.12) : 1; };
 }
 // predictions for every skater in one scoreboard event (used by the tab, the game preview and the GitHub job)
 function gsTonight(S, e, LF, PF, INJ, MATE) {
@@ -5069,7 +5099,8 @@ function gsTonight(S, e, LF, PF, INJ, MATE) {
       }
       const pH = devig({ h: mlH, a: mlA }), pWin = fin(pH) ? (t === H ? pH : 1 - pH) : (() => { const pm = predictMatch(H, Aw); return pm ? (t === H ? pm.pH : 1 - pm.pH) : .5; })();
       const mate = (MATE || gsMateMap(S, LF, [e]))(role, pid);
-      const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied, crew, pWin, mate });
+      const phv = PHF.idx ? phTalent(r0.n, TM(t).abbr, r0.pos, seasonOf(e.date), 'now') : null;
+      const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied, crew, pWin, mate, finPH: phv && fin(phv.sh) ? phv.sh : undefined });
       if (!r) continue;
       const dk = dkm ? dkLookup(dkm, r0.n) : null, ev = dk != null ? betEV(r.p, dk) : null;
       rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt, crew, INJ && INJ.refs), crew, dk, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
@@ -5180,7 +5211,7 @@ async function renderScorers() {
   if (activeTab() !== 'scorers') return;
   const evs = ((sb && sb.events) || []);
   const LF = await getLinesFile(), PF = await getPropsFile(), PK = await getPicksFile();
-  gsBlendFit(PK);
+  gsBlendFit(PK); await getPHFile();
   const MATE = gsMateMap(S, LF, evs);
   const INJS = {}; await pool(evs.filter(e => e.competitions[0].status.type.state === 'pre'), 6, async e => { INJS[e.id] = await getInjuries(e.id); });
   if (activeTab() !== 'scorers') return;
@@ -5254,7 +5285,7 @@ async function renderScorerPreview(g) {
   const { S } = gsGetState();
   let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === g.id) || null; } catch (e) {}
   if (!ev || !box()) { if (box()) box().innerHTML = ''; return; }
-  const LF = await getLinesFile(), PF = await getPropsFile(), INJ = await getInjuries(g.id); gsBlendFit(await getPicksFile()); const all = gsTonight(S, ev, LF, PF, INJ);
+  const LF = await getLinesFile(), PF = await getPropsFile(), INJ = await getInjuries(g.id); gsBlendFit(await getPicksFile()); await getPHFile(); const all = gsTonight(S, ev, LF, PF, INJ);
   const col = t => { const list = all.filter(r => r.tm === t).sort((a, b) => b.p - a.p).slice(0, 5), gl = list[0] && list[0].gl;
     return `<div><div class="tcell" style="margin-bottom:6px">${logoImg(t, 18)}<b>${esc(TM(t).abbr)}</b> <span class="muted" style="font-size:12px">vs. ${gl ? esc(gl.n) : 'unknown goalie'}</span></div><ol class="plist">${list.map(x => `<li><span>${plink(x.pid, x.n)}${x.role ? ` <span class="muted" style="font-size:11px">${esc(x.role)}</span>` : ''}</span><span class="num" data-tip="${esc(`<b>${esc(x.n)}</b>${x.why.html}`)}"><b>${pct1(x.p)}%</b> <span class="muted">${fairAmerican(x.p)}</span>${x.dk != null ? ` <span style="font-size:12px">· DK ${fmtML(x.dk)} <b style="color:${x.edgeP > 0 ? 'var(--good)' : 'var(--neg)'}">${x.edgeP > 0 ? '+' : ''}${(x.edgeP * 100).toFixed(1)}</b></span>` : ''}</span></li>`).join('') || '<li class="muted">No data yet</li>'}</ol></div>`; };
   box().innerHTML = `<div class="card"><div class="card-h"><h3>🎯 Most likely goal scorers</h3><p>Chance to score · fair odds · DraftKings price and edge (pts) when posted</p></div><div class="grid g2">${col(g.away.id)}${col(g.home.id)}</div><p class="muted" style="font-size:12px;margin:8px 0 0">Full list in <b>Players → Goal Scorers</b>.</p></div>`;
@@ -5878,6 +5909,54 @@ function prBuild(games, withRel = false) {
 function prLineup(PR, ids) {
   let o = 0, d = 0, k = 0; for (const id of ids || []) { if (PR.O[id] == null) continue; const s = PR.sh[id] || .3; o += s * PR.O[id]; d += s * PR.D[id]; k++; }
   return { o, d, net: o + d, k };
+}
+
+/* ============================== POST HOCKEY RATINGS (posthockey.json, from the GitHub job) ==============================
+   Net Rating = goals above average (offense + defense), built by Post Hockey from real on-ice shift data.
+   Estimated Net Rating = their talent forecast (last three seasons + this one). Shooter talent = finishing skill (log-odds).
+   To keep the game model honest, past games use each player's PREVIOUS-season rating (known before the game);
+   tonight's games use the current estimate. Players are matched to ESPN by name, then team and position. */
+const PHF = { data: null, t: 0, idx: null };
+const PH_TM = { TB: 'TBL', LA: 'LAK', SJ: 'SJS', NJ: 'NJD', UTAH: 'UTA', UTA: 'UTA', MON: 'MTL', WSH: 'WSH', VGK: 'VGK', CBJ: 'CBJ' };
+async function getPHFile() {
+  if (PHF.data !== null && Date.now() - PHF.t < 30 * 60e3) return PHF.data;
+  try { const r = await fetch('posthockey.json?t=' + Date.now(), { cache: 'no-store' }); PHF.data = r.ok ? await r.json() : false; } catch (e) { PHF.data = false; }
+  PHF.t = Date.now(); PHF.idx = PHF.data ? phIndex(PHF.data) : null; PHF.cache = {};
+  return PHF.data;
+}
+function phIndex(D) {
+  const out = {};
+  for (const [s, rows] of Object.entries(D.seasons || {})) {
+    const m = new Map();
+    for (const r of rows) { const o = { n: r[0], tm: r[1], pos: r[2], gp: +r[3] || 0, toi: +r[4] || 0, o: +r[5] || 0, d: +r[6] || 0, net: +r[7] || 0, est: r[8] == null ? null : +r[8], sh: r[9] == null ? null : +r[9] }; const k = normName(o.n); if (!m.has(k)) m.set(k, []); m.get(k).push(o); }
+    out[s] = m;
+  }
+  return out;
+}
+const phCode = season => `${season - 1}${season}`;
+// find a player in one Post Hockey season by name (team and position break ties, e.g. the two Sebastian Ahos)
+function phFind(season, name, tmAbbr, pos) {
+  const m = PHF.idx && PHF.idx[phCode(season)]; if (!m) return null;
+  const l = m.get(normName(name)); if (!l) return null; if (l.length === 1) return l[0];
+  const t = PH_TM[tmAbbr] || tmAbbr, isD = pos === 'D';
+  return l.find(x => x.tm === t) || l.find(x => (x.pos === 'D') === isD) || l[0];
+}
+// talent in goals above average per game. 'prior': last season's rating, pulled toward average by 20 games (no peeking).
+// 'now': the current estimate (Estimated Net Rating / 82), else this season's per-game rate pulled toward last season.
+function phTalent(name, tmAbbr, pos, season, mode) {
+  if (!PHF.idx) return null;
+  const key = mode + season + '|' + name + '|' + tmAbbr; if (PHF.cache && key in PHF.cache) return PHF.cache[key];
+  const prev = phFind(season - 1, name, tmAbbr, pos), prevG = prev ? prev.net / (prev.gp + 20) : 0, prevO = prev ? prev.o / (prev.gp + 20) : 0;
+  let v = null;
+  if (mode === 'prior') v = prev ? { net: prevG, o: prevO, sh: null } : null;
+  else { const cur = phFind(season, name, tmAbbr, pos); if (cur) v = { net: fin(cur.est) ? cur.est / 82 : (cur.net + prevG * 20) / (cur.gp + 20), o: (cur.o + prevO * 20) / (cur.gp + 20), sh: cur.sh }; else if (prev) v = { net: prevG, o: prevO, sh: prev.sh }; }
+  if (PHF.cache) PHF.cache[key] = v;
+  return v;
+}
+// a lineup's Post Hockey talent: sum of goals above average per game (unknown players count as average)
+function phLineup(ids, nameOf, tmAbbr, posOf, season, mode) {
+  let s = 0, k = 0; for (const id of ids || []) { const v = phTalent(nameOf(id), tmAbbr, posOf(id), season, mode); if (v) { s += v.net; k++; } }
+  return { net: s, k };
 }
 
 /* ============================== UPSET TRACKER ============================== */
