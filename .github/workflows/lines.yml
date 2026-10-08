@@ -1,4 +1,3 @@
-
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
 # (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
 # odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
@@ -238,7 +237,7 @@ jobs:
                 const gp = T.gmEventPick(e, inj);
                 if (gp && gp.ml) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, inj: out, hw: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) { if (!gByKey.has(k)) gAdded++; gByKey.set(k, rec); }
                 }
               }
@@ -247,7 +246,7 @@ jobs:
                 if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
                 for (const r of rows) {
                   const k = `${e.id}|${r.pid}`;
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, imp: +r.dkImp.toFixed(4), edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, imp: +r.dkImp.toFixed(4), edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
                   if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
               }
