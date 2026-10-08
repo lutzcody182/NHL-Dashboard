@@ -1595,6 +1595,7 @@ function teamDerived(r, sit) {
 function renderTeams() {
   const body = $('#teamsBody');
   if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet. Try a longer range or a different season.</div>`; return; }
+  if (PHF.data === null) getPHFile().then(() => { if (PHF.data && PHF.data.teams && activeTab() === 'teams') renderTeams(); });
   const { R } = aggregate();
   const rows = Object.values(R).map(r => ({ id: r.id, ...teamDerived(r, A.sit) }));
   const sitLbl = A.sit === 'ev' ? 'even strength' : 'all situations';
@@ -1615,7 +1616,14 @@ function renderTeams() {
     { k: 'gsax', h: 'GSAx', v: r => r.gsax, f: sgn1, dir: 1, t: 'Team goaltending: goals saved above expected (all situations)' },
     { k: 'fin', h: 'G−xG', v: r => r.fin, f: sgn1, dir: 1, t: 'Finishing: actual goals minus expected (all situations, no empty-netters)' },
     { k: 'ppxg60', h: 'PP xGF/60', v: r => r.ppxg60, f: f2, dir: 1, t: 'Power play expected goals per 60 PP minutes' },
-    { k: 'pkxga60', h: 'PK xGA/60', v: r => r.pkxga60, f: f2, dir: -1, t: 'Penalty kill expected goals against per 60 PK minutes' }];
+    { k: 'pkxga60', h: 'PK xGA/60', v: r => r.pkxga60, f: f2, dir: -1, t: 'Penalty kill expected goals against per 60 PK minutes' },
+    ...(PHF.data && PHF.data.teams ? [
+      { k: 'ph5', h: 'PH 5v5 xGF%', v: r => { const x = phTeamRow(A.season, TM(r.id).abbr, '5v5'); return x && x.xgf + x.xga > 0 ? x.xgf / (x.xgf + x.xga) : NaN; }, f: pct1, dir: 1, t: 'Post Hockey: share of 5-on-5 expected goals, on their shooter-adjusted xG model (from real shift data). posthockey.com' },
+      { k: 'ph5f', h: 'PH xGF/60', v: r => { const x = phTeamRow(A.season, TM(r.id).abbr, '5v5'); return x && x.toi ? x.xgf / x.toi * 3600 : NaN; }, f: f2, dir: 1, t: 'Post Hockey: 5-on-5 expected goals for per 60.' },
+      { k: 'ph5a', h: 'PH xGA/60', v: r => { const x = phTeamRow(A.season, TM(r.id).abbr, '5v5'); return x && x.toi ? x.xga / x.toi * 3600 : NaN; }, f: f2, dir: -1, t: 'Post Hockey: 5-on-5 expected goals against per 60.' },
+      { k: 'phpp', h: 'PH PP xGF/60', v: r => { const x = phTeamRow(A.season, TM(r.id).abbr, 'pp'); return x && x.toi ? x.xgf / x.toi * 3600 : NaN; }, f: f2, dir: 1, t: 'Post Hockey: power-play expected goals per 60 power-play minutes.' },
+      { k: 'phpk', h: 'PH PK xGA/60', v: r => { const x = phTeamRow(A.season, TM(r.id).abbr, 'pk'); return x && x.toi ? x.xga / x.toi * 3600 : NaN; }, f: f2, dir: -1, t: 'Post Hockey: penalty-kill expected goals against per 60 shorthanded minutes.' },
+      { k: 'phgs', h: 'PH GSAx', v: r => { const x = phTeamRow(A.season, TM(r.id).abbr, 'all'); return x && fin(x.gsax) ? x.gsax : NaN; }, f: sgn2, dir: 1, t: 'Post Hockey: team goals saved above expected (all situations), on their shooter-adjusted model.' }] : [])];
   const avg = key => rows.reduce((a, r) => a + (fin(r[key]) ? r[key] : 0), 0) / rows.length;
   const pts1 = rows.map(r => ({ id: r.id, x: r.xgf60, y: r.xga60, tip: `<b>${esc(TM(r.id).name)}</b><div class='row'><span>xGF/60</span><b>${f2(r.xgf60)}</b></div><div class='row'><span>xGA/60</span><b>${f2(r.xga60)}</b></div><div class='row'><span>xGF%</span><b>${pct1(r.xgp)}</b></div>` })).filter(p => fin(p.x) && fin(p.y));
   const pts2 = rows.map(r => ({ id: r.id, x: r.xgp * 100, y: r.gfp * 100, tip: `<b>${esc(TM(r.id).name)}</b><div class='row'><span>xGF%</span><b>${pct1(r.xgp)}</b></div><div class='row'><span>GF%</span><b>${pct1(r.gfp)}</b></div><div class='row'><span>PDO</span><b>${f1(r.pdo)}</b></div>` })).filter(p => fin(p.x) && fin(p.y));
@@ -4084,8 +4092,10 @@ const GM_FEATS = [
   ['style', 'Style matchup: rush vs. cycle', 'style', 'per 2% more expected goals the home team gets from how its rush/cycle offense fits the visitor\'s defense, than the reverse'],
   ['lineup', 'Tonight\'s lineup vs. usual (player ratings)', 'lineup', 'per 0.1 goals per 60 the home lineup is stronger than its usual lineup, minus the same for the visitor'],
   ['phteam', 'Post Hockey talent: lineup vs. lineup', 'posthockey', 'per 1 goal per game of Post Hockey Net Rating the home lineup has over the visitor\'s'],
-  ['phline', 'Post Hockey talent: lineup vs. usual', 'posthockey', 'per 0.25 goals per game the home lineup is stronger than its usual one (by Post Hockey ratings), minus the same for the visitor']];
-const GM_GROUPS = [['rest', 'Rest & back-to-backs'], ['travel', 'Time zones / travel'], ['goalie', 'Starting goalie'], ['special', 'Special teams'], ['discipline', 'Discipline'], ['form', 'Recent form'], ['homecook', 'Home cooking'], ['gmatch', 'Shooters vs. goalie matchup'], ['ot', 'Overtime & shootout'], ['gload', 'Goalie workload'], ['sched', 'Schedule stretches'], ['move', 'Line movement'], ['style', 'Rush vs. cycle style matchup'], ['lineup', 'Lineup strength (player ratings)'], ['posthockey', 'Post Hockey player ratings']];
+  ['phline', 'Post Hockey talent: lineup vs. usual', 'posthockey', 'per 0.25 goals per game the home lineup is stronger than its usual one (by Post Hockey ratings), minus the same for the visitor'],
+  ['pht5', 'Post Hockey team 5v5 play', 'phteams', 'per 0.5 of 5v5 expected goal differential per 60 (Post Hockey xG), home minus road'],
+  ['phst', 'Post Hockey team special teams', 'phteams', 'per 2 goals per 60 of power-play xGF minus penalty-kill xGA (Post Hockey xG), home minus road']];
+const GM_GROUPS = [['rest', 'Rest & back-to-backs'], ['travel', 'Time zones / travel'], ['goalie', 'Starting goalie'], ['special', 'Special teams'], ['discipline', 'Discipline'], ['form', 'Recent form'], ['homecook', 'Home cooking'], ['gmatch', 'Shooters vs. goalie matchup'], ['ot', 'Overtime & shootout'], ['gload', 'Goalie workload'], ['sched', 'Schedule stretches'], ['move', 'Line movement'], ['style', 'Rush vs. cycle style matchup'], ['lineup', 'Lineup strength (player ratings)'], ['posthockey', 'Post Hockey player ratings'], ['phteams', 'Post Hockey team stats']];
 const GM = { model: null, loading: false, prog: '' };
 const logit = p => Math.log(p / (1 - p));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -4296,6 +4306,7 @@ function gmBuild(games, opt = {}, sadj = null, noGS = false) {
     } else f.x.push(0);
     if (!noGS) { S.nm = S.nm || {}; S.pos = S.pos || {}; for (const [id, p] of Object.entries(g.sk || {})) { S.nm[id] = p.n; S.pos[id] = p.pos; } } // lineups are known before puck drop
     f.x.push(...(noGS ? [0, 0] : gmPHFeat(S, g.home.id, g.away.id, gmLineup(g, g.home.id), gmLineup(g, g.away.id), seasonOf(g.date), 'prior')));
+    f.x.push(...(noGS ? [0, 0] : gmPHTeamFeat(g.home.id, g.away.id, g.date)));
     if (f.ready) rows.push({ x: f.x, y: g.home.score > g.away.score ? 1 : 0, mk: devig(g.ml), id: g.id, date: g.date });
     gmUpdate(S, g); if (GSs) gsState([g], GSs);
     if (!noGS) { S.nm = S.nm || {}; S.pos = S.pos || {}; for (const [id, p] of Object.entries(g.sk || {})) { S.nm[id] = p.n; S.pos[id] = p.pos; } }
@@ -4339,9 +4350,9 @@ function gmTrain(games) {
   const half = Math.floor(test.length / 2), tA = test.slice(0, half), tB = test.slice(half), ablA = {}, ablB = {};
   for (const grp of allGroups) { const W = gmFit(train, gmMask(allGroups.filter(x => x !== grp))), pf = r => gmProb(W, r.x), pa = r => gmProb(Wall, r.x); abl[grp] = gmScore(test, pf).ll - sAll.ll; ablA[grp] = gmScore(tA, pf).ll - gmScore(tA, pa).ll; ablB[grp] = gmScore(tB, pf).ll - gmScore(tB, pa).ll; }
   // factors with an obvious direction must also point the right way (e.g. a better style fit can't hurt), so a lucky test split can't sneak in nonsense
-  const GM_SIGN = { gmatch: ['gmatch', 1], ot: ['ot', 1], style: ['style', 1], goalie: ['goalie', 1], move: ['move', 1], lineup: ['lineup', 1], posthockey: ['phteam', 1] };
+  const GM_SIGN = { gmatch: ['gmatch', 1], ot: ['ot', 1], style: ['style', 1], goalie: ['goalie', 1], move: ['move', 1], lineup: ['lineup', 1], posthockey: ['phteam', 1], phteams: ['pht5', 1] };
   const signOK = grp => { const s = GM_SIGN[grp]; if (!s) return true; const i = GM_FEATS.findIndex(f => f[0] === s[0]); return !(Wall[i] * s[1] < 0); };
-  const keep = allGroups.filter(grp => abl[grp] > .001 && ablA[grp] > 0 && ablB[grp] > 0 && signOK(grp));
+  const keep = allGroups.filter(grp => abl[grp] > .002 && ablA[grp] > 0 && ablB[grp] > 0 && signOK(grp));
   const Wkeep = gmFit(train, gmMask(keep)), sKeep = gmScore(test, r => gmProb(Wkeep, r.x));
   // market comparison + blend (games with lines only)
   const mTest = test.filter(r => fin(r.mk)), mTrain = train.filter(r => fin(r.mk));
@@ -4377,6 +4388,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   f.x.push((dH - dA) / .1);
   const phf = luH && luA ? gmPHFeat(M.S, hId, aId, luH, luA, seasonOf(dateIso), 'now', M.GS) : [0, 0];
   f.x.push(...phf);
+  const pht = gmPHTeamFeat(hId, aId, dateIso); f.x.push(...pht);
   const lineupOn = M.W.length >= GM_FEATS.length && (M.keep.includes('lineup') || M.keep.includes('posthockey'));
   const refs = (inj && inj.refs) || [], crew = gmCrew(M.S, refs), rg = gmRefGoals(M.S, hId, aId, crew);
   const p0 = gmProb(W, f.x);
@@ -4391,7 +4403,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   parts.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
   const mk = devig(ml);
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
-  return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
+  return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
 async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W) GM.model = m; } catch (e) {} return GM.model; }
 async function gmCollect(onProg) {
@@ -4458,7 +4470,7 @@ async function renderGameModelCard() {
     <p style="margin:0 0 6px;font-size:13.5px">Tested ${M.tune.grid.length} versions of the ratings and kept the one that predicted best: <b>${Math.round(M.tune.best.BL * 100)}% expected goals / ${Math.round((1 - M.tune.best.BL) * 100)}% actual goals</b>, ratings move <b>${M.tune.best.floor <= .04 ? 'slowly' : M.tune.best.floor >= .09 ? 'quickly' : 'at a medium pace'}</b> after each game (at least ${Math.round(M.tune.best.floor * 100)}% of the surprise), and <b>${M.tune.best.adj ? 'score-adjusted' : 'not score-adjusted'}</b> shot data.${M.tune.dflt && fin(M.tune.dflt.ll) ? ` Test log loss ${M.tune.best.ll.toFixed(4)} vs. ${M.tune.dflt.ll.toFixed(4)} for the old fixed settings.` : ''}</p>
     <p class="muted" style="font-size:12px;margin:0 0 10px">Score adjustment: leading teams sit back and trailing teams push, so shots are weighted to count as if the game were tied (trailing by 1: ×${f2(M.tune.sadj[1])}, leading by 1: ×${f2(M.tune.sadj[3])}).</p>` : ''}
     <h3 class="cmp-sec">What it takes into account</h3>
-    <p class="muted" style="font-size:12px;margin:-4px 0 8px">Effect = change in win chance for a typical amount of each factor, starting from an even game. "Test impact" = how much worse the predictions got with that factor's group removed (×1,000 log loss); positive means it helps. Factors are used only if they help.</p>
+    <p class="muted" style="font-size:12px;margin:-4px 0 8px">Effect = change in win chance for a typical amount of each factor, starting from an even game. "Test impact" = how much worse the predictions got with that factor's group removed (×1,000 log loss); positive means it helps. Factors are used only if they clearly help (test impact above +2) in both halves of the test games.</p>
     <div class="twrap"><table><thead><tr><th class="l">Factor</th><th class="l">Unit</th><th>Effect</th><th data-gloss="Increase in test log loss (×1,000) when this group of factors is removed. Positive = the factor makes predictions better.">Test impact</th><th>Status</th></tr></thead><tbody>${inputs}</tbody></table></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">${grpRows}. Every factor is built only from what was known before each game (walk-forward), and ratings carry over from last season pulled halfway back toward average. Starting goalies use whoever started; for upcoming games the confirmed or probable starter is used when ESPN lists one.</p></div>`;
   $('#gmRe').onclick = () => { gmRun(true); renderGameModelCard(); };
@@ -4507,6 +4519,7 @@ async function renderGameModelPreview(s, g) {
       ${(() => { const fh = gmStyleFit(M.S, g.home.id, g.away.id), fa = gmStyleFit(M.S, g.away.id, g.home.id); if (!fh && !fa) return ''; const t = (v, ab) => `<b style="color:${v > .005 ? 'var(--good)' : v < -.005 ? 'var(--neg)' : 'inherit'}">${v >= 0 ? '+' : '−'}${pct1(Math.abs(v))}%</b>`; return `<h4 class="cmp-sec">Rush vs. cycle styles</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('How each offense\'s mix of rush chances and set-up (cycle) chances fits what the other defense gives up, beyond the teams\' overall ratings.')}">${esc(g.home.abbr)} offense vs. ${esc(g.away.abbr)} defense: ${t(fh)} · ${esc(g.away.abbr)} offense vs. ${esc(g.home.abbr)} defense: ${t(fa)}</p>${M.keep.includes('style') ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}`; })()}
       ${r.lineup ? `<h4 class="cmp-sec">Lineup strength</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('Tonight\'s expected lineup (posted lines, or the last game minus injured players) valued with Ice Lab player ratings, compared with each team\'s last 10 lineups. In goals per 60 at even strength.')}">${[[g.home, r.lineup.h], [g.away, r.lineup.a]].map(([t, v]) => `${esc(t.abbr)} <b style="color:${v > .03 ? 'var(--good)' : v < -.03 ? 'var(--neg)' : 'inherit'}">${v >= 0 ? '+' : '−'}${f2(Math.abs(v))}</b> vs. usual`).join(' · ')}</p>${r.lineup.on ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}` : ''}
       ${r.ph ? `<h4 class="cmp-sec">Post Hockey talent</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('Sum of each expected skater\'s Post Hockey talent (Estimated Net Rating, goals above average per game). Ratings from posthockey.com.')}">${esc(g.home.abbr)} lineup ${r.ph.team >= 0 ? '+' : '−'}${f2(Math.abs(r.ph.team))} goals per game vs. ${esc(g.away.abbr)}'s · vs. usual lineups: ${r.ph.vsUsual >= 0 ? '+' : '−'}${f2(Math.abs(r.ph.vsUsual))} net for ${esc(g.home.abbr)}</p>${r.ph.on ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}` : ''}
+      ${r.phTeam ? `<h4 class="cmp-sec">Post Hockey team stats</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('Post Hockey\'s shooter-adjusted expected goals: 5-on-5 differential per 60, and power-play xGF/60 minus penalty-kill xGA/60. This season to date, blended with last season early on.')}">5v5 xG ±/60: ${esc(g.home.abbr)} ${r.phTeam.d5 >= 0 ? '+' : '−'}${f2(Math.abs(r.phTeam.d5))} better · special teams: ${esc(g.home.abbr)} ${r.phTeam.st >= 0 ? '+' : '−'}${f2(Math.abs(r.phTeam.st))}</p>${r.phTeam.on ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}` : ''}
       <h4 class="cmp-sec">Referees</h4>${r.ref.names.length ? `<p style="margin:0 0 4px;font-size:13px">${r.ref.names.map(esc).join(' & ')}: <b style="color:${r.ref.crew > 1.03 ? 'var(--neg)' : r.ref.crew < .97 ? 'var(--good)' : 'inherit'}">${r.ref.crew >= 1 ? '+' : '−'}${pct1(Math.abs(r.ref.crew - 1))}%</b> penalties vs. an average crew</p>${(() => { const pt = r.parts.find(x => x.k === 'ref'); return `<p class="muted" style="margin:0;font-size:12px">${r.ref.goals.h || r.ref.goals.a ? `Expected power-play goals: ${esc(g.home.abbr)} ${r.ref.goals.h >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.h))}, ${esc(g.away.abbr)} ${r.ref.goals.a >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.a))}${pt ? ` → ${esc(pt.d >= 0 ? g.home.abbr : g.away.abbr)} +${Math.abs(pt.d * 100).toFixed(1)} pts` : ''}. ` : ''}${fin(r.ref.beta) ? `${Math.round(r.ref.beta * 100)}% of a crew's past rate carries into its next game (learned from past games).` : 'Retrain in Model Lab to use referee crews.'}</p>`; })()}` : '<p class="muted" style="margin:0;font-size:13px">Not posted yet (usually the day of the game).</p>'}
       <h4 class="cmp-sec">Injuries factored in</h4>${injTxt || '<p class="muted" style="margin:0;font-size:13px">No regulars listed as out.</p>'}</div></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">Points = how much each factor moves ${esc(g.home.abbr)}'s win chance. The model was last trained ${new Date(M.t).toLocaleDateString()}; retrain it in Model Lab to include the newest games. For fun and analysis, not betting advice.</p></div>`;
@@ -5952,6 +5965,36 @@ function phTalent(name, tmAbbr, pos, season, mode) {
   else { const cur = phFind(season, name, tmAbbr, pos); if (cur) v = { net: fin(cur.est) ? cur.est / 82 : (cur.net + prevG * 20) / (cur.gp + 20), o: (cur.o + prevO * 20) / (cur.gp + 20), sh: cur.sh }; else if (prev) v = { net: prevG, o: prevO, sh: prev.sh }; }
   if (PHF.cache) PHF.cache[key] = v;
   return v;
+}
+/* ---- Post Hockey team stats ---- */
+// one team's season row at a strength ('5v5', 'pp', 'pk', 'all') as an object
+function phTeamRow(season, espnAbbr, st) {
+  const T = PHF.data && PHF.data.teams && PHF.data.teams[phCode(season)]; if (!T || !T[st]) return null;
+  const t = PH_TM[espnAbbr] || espnAbbr, r = T[st].find(x => x[0] === t); if (!r) return null;
+  return { tm: r[0], gp: +r[1] || 0, toi: +r[2] || 0, xgf: +r[3] || 0, xga: +r[4] || 0, gf: +r[5] || 0, ga: +r[6] || 0, cf: +r[7] || 0, ca: +r[8] || 0, gsax: r[9] == null ? null : +r[9] };
+}
+// best known team rates before a game (per 60): this season's snapshot from that morning or earlier, blended with last season by games played.
+// Before snapshots exist (all older games) it's last season alone, so nothing from the future leaks in.
+function phTeamRates(espnAbbr, dateIso) {
+  if (!PHF.data || !PHF.data.teams) return null;
+  const season = seasonOf(dateIso), t = PH_TM[espnAbbr] || espnAbbr;
+  const p5 = phTeamRow(season - 1, espnAbbr, '5v5'), ppP = phTeamRow(season - 1, espnAbbr, 'pp'), pkP = phTeamRow(season - 1, espnAbbr, 'pk');
+  const per = (x, toi) => toi > 0 ? x / toi * 3600 : NaN;
+  let pr = p5 ? { f: per(p5.xgf, p5.toi), a: per(p5.xga, p5.toi), pp: ppP ? per(ppP.xgf, ppP.toi) : NaN, pk: pkP ? per(pkP.xga, pkP.toi) : NaN } : null;
+  const day = new Date(dateIso).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, ''), code = phCode(season);
+  const H = PHF.data.teamHist || {}, key = Object.keys(H).filter(k => k <= day && H[k].s === code).sort().pop(), c = key && H[key].t[t];
+  if (!c) return pr;
+  const gp = c[0], cur = { f: per(c[2], c[1]), a: per(c[3], c[1]), pp: per(c[5], c[4]), pk: per(c[7], c[6]) };
+  if (!pr) return gp >= 5 ? cur : null;
+  const w = gp / (gp + 15), mix = (x, y) => fin(x) && fin(y) ? w * x + (1 - w) * y : fin(y) ? y : x;
+  return { f: mix(cur.f, pr.f), a: mix(cur.a, pr.a), pp: mix(cur.pp, pr.pp), pk: mix(cur.pk, pr.pk) };
+}
+// game model features: [5v5 xG differential per 60 (home − road), special teams: own PP xGF/60 − own PK xGA/60 (home − road)]
+function gmPHTeamFeat(hId, aId, dateIso) {
+  const H = phTeamRates(TM(hId).abbr, dateIso), A_ = phTeamRates(TM(aId).abbr, dateIso);
+  if (!H || !A_ || !fin(H.f) || !fin(A_.f)) return [0, 0];
+  const st = r => fin(r.pp) && fin(r.pk) ? r.pp - r.pk : 0;
+  return [((H.f - H.a) - (A_.f - A_.a)) / .5, (st(H) - st(A_)) / 2];
 }
 // a lineup's Post Hockey talent: sum of goals above average per game (unknown players count as average)
 function phLineup(ids, nameOf, tmAbbr, posOf, season, mode) {
