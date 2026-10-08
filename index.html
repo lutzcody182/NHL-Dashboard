@@ -426,6 +426,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
 .edges{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.edge{padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);display:grid;gap:4px}.edge .eg{display:flex;justify-content:space-between;gap:8px;font-size:13px}
 .btn.sm{padding:3px 9px;font-size:12px;border-radius:8px}.mybet{white-space:nowrap}.mybet.on{background:var(--good);border-color:var(--good);color:#fff}
 .mbmodal{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}.mbbox{background:var(--surface);color:var(--text);border-radius:16px;padding:18px;width:min(460px,100%);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.gbseg{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}.gbseg .dbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;font-size:13.5px}.gbseg .dbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}.gbseg .dbtn:disabled{opacity:.35;cursor:default}
 .mbgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mbgrid label{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--text-2)}.mbgrid input{width:100%;min-width:0;box-sizing:border-box;font:inherit;font-size:15px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text)}
 .mbact{display:flex;gap:6px;align-items:center}.mbact select{font:inherit;font-size:12px;padding:3px 6px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;z-index:1100;box-shadow:0 8px 24px rgba(0,0,0,.3)}
@@ -1156,7 +1157,7 @@ async function loadScores(silent) {
   try { sb = await getJSON(`${API}/scoreboard?dates=${d}`); }
   catch (e) { body.innerHTML = `<div class="empty">Couldn't reach ESPN (${esc(e.message)}). Try again in a moment.</div>`; return; }
   if (d !== S.date) return;
-  const evs = sb.events || [];
+  const evs = sb.events || []; evs.forEach(x => SBEV[String(x.id)] = x);
   if (!evs.length) { body.innerHTML = `<div class="empty">No NHL games on this date.</div>`; clearInterval(S.timer); return; }
   let anyLive = false;
   const cards = evs.map(e => {
@@ -1218,7 +1219,7 @@ async function openGame(id, silent) {
 }
 async function gcDecRender(g) {
   const box = $('#gcDec'); if (!box) return;
-  let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === String(g.id)) || null; } catch (e) {}
+  let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === String(g.id)) || null; if (ev) SBEV[String(ev.id)] = ev; } catch (e) {}
   const LF = await getLinesFile(); await decLoad(); if (!$('#gcDec')) return;
   const r = ev ? readyOf(ev, LF) : { gConf: 0, lines: 0, ready: false };
   box.innerHTML = `<div class="card" data-gw="${esc(g.id)}" data-rdy="${r.ready ? 1 : 0}" style="padding:10px 14px"><div class="gdec" data-decbar="${esc(g.id)}" style="padding:0"><span class="rchip${r.ready ? ' ok' : ''}">${r.ready ? '✓ Ready to review: both goalies confirmed and lines posted' : `Goalies ${r.gConf}/2 confirmed · lines ${r.lines === 2 ? 'posted' : r.lines + '/2 posted'}`}</span><span class="muted" style="font-size:12px">Your call:</span><button class="dbtn bet" data-dec="bet" data-gid="${esc(g.id)}">Bet</button><button class="dbtn pass" data-dec="pass" data-gid="${esc(g.id)}">Pass</button></div></div>`;
@@ -5474,6 +5475,7 @@ const mbDefaultStake = odds => odds < 0 ? -odds : 100; // your rule: $100 on plu
 function alertBox(msg) { const n = document.createElement('div'); n.className = 'toast'; n.textContent = msg; document.body.appendChild(n); setTimeout(() => n.remove(), 2600); }
 // bet form (new or edit)
 function mbOpenForm(seed, editId) {
+  if (seed && seed.type && seed.type !== 'goal') return mbOpenGameForm(null, editId);
   const old = $('#mbModal'); if (old) old.remove();
   const b = seed || {};
   const odds = b.odds != null ? b.odds : (b.dk != null ? b.dk : '');
@@ -5523,7 +5525,7 @@ async function mbGrade() {
   for (const gid of [...new Set(open.map(b => b.gid))]) {
     let g = null; try { g = await getGame(gid); } catch (e) {}
     if (!g || !g.final) continue;
-    for (const b of open.filter(x => x.gid === gid)) { const s = g.sk[b.pid]; if (!s || !(s.toi > 0)) { b.res = 'V'; b.goals = 0; } else { b.goals = s.g; b.res = s.g > 0 ? 'W' : 'L'; } b.auto = true; changed++; }
+    for (const b of open.filter(x => x.gid === gid)) { if (b.type && b.type !== 'goal') { const r = gbGrade(b, g); if (r) { b.res = r; b.final = `${g.away.score}-${g.home.score}`; b.auto = true; changed++; } continue; } const s = g.sk[b.pid]; if (!s || !(s.toi > 0)) { b.res = 'V'; b.goals = 0; } else { b.goals = s.g; b.res = s.g > 0 ? 'W' : 'L'; } b.auto = true; changed++; }
   }
   if (changed) mbSave(list);
   return changed;
@@ -5558,20 +5560,22 @@ async function renderMyBets() {
   // by odds range
   const ob = [[-10000, 0, 'Favorites (minus odds)'], [100, 200, '+100 to +199'], [200, 400, '+200 to +399'], [400, 100000, '+400 and longer']].map(([lo, hi, l]) => { const g = done.filter(b => b.odds >= lo && b.odds < hi); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s, b) => s + b.stake, 0), p: g.reduce((s, b) => s + mbProfit(b), 0) }; }).filter(x => x.n);
   const obRows = ob.map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
+  const tyRows = [['goal', 'Goal scorer'], ['ml', 'Moneyline'], ['total', 'Total'], ['pl', 'Puck line']].map(([k, l]) => { const g = done.filter(b => (b.type || 'goal') === k); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s2, b) => s2 + b.stake, 0), p: g.reduce((s2, b) => s2 + mbProfit(b), 0) }; }).filter(x => x.n).map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
   // bet list
   const all = [...list].sort((a, b) => (b.start || b.placed).localeCompare(a.start || a.placed)), shown = MB.all ? all : all.slice(0, 50);
-  const resCell = b => b.res === 'W' ? `<b style="color:var(--good)">✓ Won${b.goals > 1 ? ` (${b.goals} G)` : ''}</b>` : b.res === 'L' ? '<span style="color:var(--neg)">✗ Lost</span>' : b.res === 'V' ? '<span class="muted">Void / refunded</span>' : '<span class="muted">Pending</span>';
-  const rows = shown.map(b => `<tr><td class="l">${new Date(b.start || b.placed).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${b.tm ? logoImg(b.tm, 16) : ''}${b.pid ? plink(b.pid, b.n) : esc(b.n)}</div><div class="muted" style="font-size:11.5px">vs. ${esc(TM(b.opp || '').abbr || '')}${b.gl ? ' · ' + esc(b.gl) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div></td><td><b>${fmtML(b.odds)}</b><div class="muted" style="font-size:11.5px">${esc(b.book || '')}</div></td><td>${money(b.stake).replace('+', '')}</td><td>${money(mbToWin(b.stake, b.odds)).replace('+', '')}</td><td>${fin(b.p) ? pct1(b.p) + '%' : '–'}</td><td class="l">${resCell(b)}</td><td>${b.res === 'W' || b.res === 'L' ? moneyCell(mbProfit(b)) : '–'}</td>
-    <td class="l"><div class="mbact"><button class="btn sm" data-mbedit="${b.id}" title="Edit odds or amount">Edit</button><select data-mbres="${b.id}" title="Set the result yourself"><option value="">${b.res ? 'Change…' : 'Settle…'}</option><option value="W">Won</option><option value="L">Lost</option><option value="V">Void</option><option value="P">Back to pending</option></select><button class="btn sm" data-mbdel="${b.id}" title="Delete this bet">✕</button></div></td></tr>`).join('');
+  const resCell = b => b.res === 'W' ? `<b style="color:var(--good)">✓ Won${b.goals > 1 ? ` (${b.goals} G)` : ''}</b>` : b.res === 'L' ? '<span style="color:var(--neg)">✗ Lost</span>' : b.res === 'V' ? '<span class="muted">Void / refunded</span>' : b.res === 'PU' ? '<span class="muted">Push / refunded</span>' : '<span class="muted">Pending</span>';
+  const rows = shown.map(b => `<tr><td class="l">${new Date(b.start || b.placed).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${b.type && b.type !== 'goal' ? `<div class="tcell">${b.type !== 'total' ? logoImg(b.tm, 16) : ''}<b>${mbLabel(b)}</b></div><div class="muted" style="font-size:11.5px">${GB_TYPES[b.type]} · ${esc(TM(b.aid || '').abbr || '')} @ ${esc(TM(b.hid || '').abbr || '')}${b.final ? ' · final ' + esc(b.final) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>` : `<div class="tcell">${b.tm ? logoImg(b.tm, 16) : ''}${b.pid ? plink(b.pid, b.n) : esc(b.n)}</div><div class="muted" style="font-size:11.5px">Goal scorer · vs. ${esc(TM(b.opp || '').abbr || '')}${b.gl ? ' · ' + esc(b.gl) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>`}</td><td><b>${fmtML(b.odds)}</b><div class="muted" style="font-size:11.5px">${esc(b.book || '')}</div></td><td>${money(b.stake).replace('+', '')}</td><td>${money(mbToWin(b.stake, b.odds)).replace('+', '')}</td><td>${fin(b.p) ? pct1(b.p) + '%' : '–'}</td><td class="l">${resCell(b)}</td><td>${b.res === 'W' || b.res === 'L' ? moneyCell(mbProfit(b)) : '–'}</td>
+    <td class="l"><div class="mbact"><button class="btn sm" data-mbedit="${b.id}" title="Edit odds or amount">Edit</button><select data-mbres="${b.id}" title="Set the result yourself"><option value="">${b.res ? 'Change…' : 'Settle…'}</option><option value="W">Won</option><option value="L">Lost</option><option value="V">Void</option><option value="PU">Push</option><option value="P">Back to pending</option></select><button class="btn sm" data-mbdel="${b.id}" title="Delete this bet">✕</button></div></td></tr>`).join('');
   body.innerHTML = `<div class="bar"><h2 class="grow">My bets</h2><button class="btn" id="mbExport">⬇ Export backup</button><label class="btn" style="cursor:pointer">⬆ Import<input type="file" id="mbImport" accept=".json,application/json" hidden></label></div>
-    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Log a bet from <b>Players → Goal Scorers</b> with the <b>＋ Bet</b> button, enter the odds you got and how much you bet, and it's tracked here all season. Results settle automatically from ESPN box scores the morning after (a player who doesn't play is void, like at the sportsbook), or you can settle one yourself. ${graded ? `<b>${graded} bet${graded > 1 ? 's' : ''} just settled.</b>` : ''}</p>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Log a goal scorer bet from <b>Players → Goal Scorers</b> with the <b>＋ Bet</b> button, or a moneyline, total or puck line bet with the <b>Bet</b> button on any game (Today tab or the game page). Enter the odds you got and how much you bet, and it's tracked here all season. Results settle automatically from ESPN once the game is final (a player who doesn't play is void; a total or puck line landing exactly on the number is a push; a shootout winner counts as one goal, like the sportsbook), or you can settle one yourself. ${graded ? `<b>${graded} bet${graded > 1 ? 's' : ''} just settled.</b>` : ''}</p>
     ${MBS.mode === 'memory' ? `<div class="note" style="border-color:var(--neg)"><b>This browser is blocking storage for the site, so bets you log here are lost when the page closes.</b> <span id="mbDiag" class="muted" style="display:block;font-size:12px;margin-top:6px;white-space:pre-line"></span> This happens in private/incognito windows, when cookies and site data are blocked, or when the page is opened inside another app's preview instead of your own site. Open your GitHub Pages address in a normal browser window to save bets. Until then, use <b>Export backup</b> before closing.</div>` : `<div class="note">Your bets are saved in this browser on this device. Use <b>Export backup</b> now and then, and <b>Import</b> to move them to another computer or phone.</div>`}
     ${list.length ? `${tiles}<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Running profit</h3><p>Settled bets in date order</p></div>${chart}</div>
     <div class="grid g2" style="margin-bottom:14px"><div class="card"><div class="card-h"><h3>By month</h3></div>${moRows ? `<div class="twrap"><table><thead><tr><th class="l">Month</th><th>Record</th><th>Bet</th><th>Profit</th><th>ROI</th></tr></thead><tbody>${moRows}</tbody></table></div>` : '<p class="muted" style="margin:0">No settled bets yet.</p>'}</div>
     <div class="card"><div class="card-h"><h3>By odds</h3></div>${obRows ? `<div class="twrap"><table><thead><tr><th class="l">Odds</th><th>Record</th><th>Bet</th><th>Profit</th><th>ROI</th></tr></thead><tbody>${obRows}</tbody></table></div>` : '<p class="muted" style="margin:0">No settled bets yet.</p>'}</div></div>
-    <div class="card"><div class="card-h"><h3>All my bets</h3><p>${list.length} logged</p></div><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Player</th><th>Odds</th><th>Bet</th><th>To win</th><th data-gloss="Ice Lab's chance he would score, when you logged the bet.">Ice Lab</th><th class="l">Result</th><th>Profit</th><th class="l"></th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${tyRows ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>By bet type</h3></div><div class="twrap"><table><thead><tr><th class="l">Type</th><th>Record</th><th>Bet</th><th>Profit</th><th>ROI</th></tr></thead><tbody>${tyRows}</tbody></table></div></div>` : ''}
+    <div class="card"><div class="card-h"><h3>All my bets</h3><p>${list.length} logged</p></div><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Pick</th><th>Odds</th><th>Bet</th><th>To win</th><th data-gloss="Ice Lab's chance the bet wins, when you logged it (goal scorers and moneylines).">Ice Lab</th><th class="l">Result</th><th>Profit</th><th class="l"></th></tr></thead><tbody>${rows}</tbody></table></div>
     ${all.length > 50 ? `<button class="btn" id="mbAllBtn" style="margin-top:8px">${MB.all ? 'Show fewer' : `Show all ${all.length}`}</button>` : ''}</div>`
-    : `<div class="empty">No bets logged yet. Go to <b>Players → Goal Scorers</b> and tap <b>＋ Bet</b> next to a player you bet on.</div>`}
+    : `<div class="empty">No bets logged yet. Tap <b>Bet</b> on a game on the Today tab, or <b>＋ Bet</b> next to a player on <b>Players → Goal Scorers</b>.</div>`}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For tracking only. Please bet responsibly.</p>`;
   if (MBS.mode === 'memory') mbDiag().then(d => { const el = $('#mbDiag'); if (el) el.textContent = 'Details to send Claude:\n' + d.join('\n'); });
   const save = fn => { const l = mbLoad(); fn(l); mbSave(l); renderMyBets(); };
@@ -6106,9 +6110,143 @@ async function readyMark(evs, d) {
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-dec]'); if (!b) return;
   e.stopPropagation(); e.preventDefault();
-  const gid = b.dataset.gid, m = await decLoad(), cur = m[gid] && m[gid].d, next = cur === b.dataset.dec ? null : b.dataset.dec;
-  await decSet(gid, next); decPaint(gid);
+  const gid = b.dataset.gid, m = await decLoad(), cur = m[gid] && m[gid].d;
+  if (b.dataset.dec === 'bet') { // mark Bet and open the form to log what you bet (or see/edit what's logged)
+    if (cur !== 'bet') { await decSet(gid, 'bet'); decPaint(gid); }
+    b.disabled = true; const seed = await gbSeed(gid); b.disabled = false;
+    mbOpenGameForm(seed, null, async () => { await mbInit(); if (cur !== 'bet' && !mbLoad().some(x => x.gid === gid)) { await decSet(gid, cur || null); decPaint(gid); } });
+    return;
+  }
+  await decSet(gid, cur === 'pass' ? null : 'pass'); decPaint(gid);
 });
+
+/* ---- game bets (moneyline, total, puck line) logged from the Bet button ---- */
+const SBEV = {}; // scoreboard events seen this session, by game id
+const GB_TYPES = { ml: 'Moneyline', total: 'Total', pl: 'Puck line' };
+const gbNum = v => { const n = parseFloat(v); return isFinite(n) && n !== 0 ? n : null; };
+const fmtLine = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+function mbLabel(b) {
+  const ab = id => esc(TM(id || '').abbr || '');
+  if (b.type === 'ml') return `${ab(b.tm)} moneyline`;
+  if (b.type === 'pl') return `${ab(b.tm)} ${fmtLine(b.line)} puck line`;
+  if (b.type === 'total') return `${b.side === 'o' ? 'Over' : 'Under'} ${b.line}`;
+  return esc(b.n || '');
+}
+// teams, start time and posted prices for one game
+async function gbSeed(gid) {
+  gid = String(gid);
+  let e = SBEV[gid];
+  if (!e) for (const d of [S.date, todayStr()].filter(Boolean)) { try { const sb = await getJSON(`${API}/scoreboard?dates=${d}`); (sb.events || []).forEach(x => SBEV[String(x.id)] = x); } catch (err) {} if (SBEV[gid]) { e = SBEV[gid]; break; } }
+  if (e) {
+    const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'), o = (c.odds && c.odds[0]) || {};
+    [h, a].forEach(x => addTeam(x.team));
+    const ho = o.homeTeamOdds || {}, ao = o.awayTeamOdds || {};
+    return { gid, e, start: e.date, hid: String(h.team.id), aid: String(a.team.id),
+      ml: gbNum(ho.moneyLine) && gbNum(ao.moneyLine) ? { h: +ho.moneyLine, a: +ao.moneyLine } : null,
+      tot: gbNum(o.overUnder) ? { line: +o.overUnder, o: gbNum(o.overOdds), u: gbNum(o.underOdds) } : null,
+      pl: { h: gbNum(ho.spreadOdds), a: gbNum(ao.spreadOdds), fav: ho.favorite === true ? 'h' : ao.favorite === true ? 'a' : null } };
+  }
+  let g = null; try { g = await getGame(gid); } catch (err) {}
+  if (!g) return null;
+  return { gid, e: null, start: g.date, hid: String(g.home.id), aid: String(g.away.id), ml: g.ml || null, tot: g.tot ? { line: g.tot.line, o: g.tot.o, u: g.tot.u } : null, pl: { h: null, a: null, fav: null } };
+}
+// open the game bet form; seed = gbSeed result (new bet) or an existing bet (edit)
+async function mbOpenGameForm(seed, editId, onCancel) {
+  const old = $('#mbModal'); if (old) old.remove();
+  await mbInit();
+  const ex = editId ? mbLoad().find(x => x.id === editId) : null;
+  const G = ex ? { gid: ex.gid, start: ex.start, hid: ex.hid, aid: ex.aid, ml: null, tot: null, pl: {} } : seed;
+  if (!G) { alertBox('Couldn\'t load this game from ESPN. Try again in a moment.'); return; }
+  const fav = G.ml ? (G.ml.h <= G.ml.a ? 'h' : 'a') : (G.pl && G.pl.fav) || 'h';
+  const st = { type: ex ? ex.type : 'ml', side: ex ? ex.side : fav, line: ex ? ex.line : null, oddsTouched: !!ex, stakeTouched: !!ex, p: null };
+  const ab = s => TM(s === 'h' ? G.hid : G.aid).abbr || (s === 'h' ? 'Home' : 'Away');
+  const others = ex ? [] : mbLoad().filter(x => x.gid === G.gid && x.type && x.type !== 'goal');
+  const m = document.createElement('div'); m.id = 'mbModal'; m.className = 'mbmodal';
+  m.innerHTML = `<div class="mbbox" role="dialog" aria-label="Log a game bet">
+    <div class="card-h"><h3>${ex ? 'Edit bet' : 'Log my bet'}</h3><button class="btn" data-mbclose>✕</button></div>
+    <div class="tcell" style="margin-bottom:10px">${logoImg(G.aid, 22)}<b>${esc(ab('a'))}</b><span class="muted">@</span>${logoImg(G.hid, 22)}<b>${esc(ab('h'))}</b><span class="muted">${G.start ? ' · ' + new Date(G.start).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}</span></div>
+    ${others.length ? `<div class="note" style="margin:0 0 10px;font-size:12.5px"><b>Already logged on this game:</b> ${others.map(x => `${mbLabel(x)} ${fmtML(x.odds)} · ${money(x.stake).replace('+', '')} <button class="btn sm" data-gbedit="${x.id}">Edit</button>`).join(' · ')}</div>` : ''}
+    <div class="gbseg" id="gbType">${Object.entries(GB_TYPES).map(([k, l]) => `<button class="dbtn" data-gbtype="${k}"${ex && ex.type !== k ? ' disabled' : ''}>${l}</button>`).join('')}</div>
+    <div class="gbseg" id="gbSide"></div>
+    <div class="mbgrid">
+      <label id="gbLineL">Line<input id="gbLine" type="number" step="0.5"></label>
+      <label>Odds I got (American)<input id="mbOdds" type="number" step="1" placeholder="-150 or +130"></label>
+      <label>Amount bet ($)<input id="mbStake" type="number" step="0.01" min="0"></label>
+      <label>Sportsbook<input id="mbBook" type="text" value="${esc(ex ? ex.book || '' : 'DraftKings')}"></label>
+      <label style="grid-column:1/-1">Note (optional)<input id="mbNote" type="text" value="${esc(ex ? ex.note || '' : '')}"></label>
+    </div>
+    <p id="gbInfo" class="muted" style="margin:10px 0 0;font-size:12.5px"></p>
+    <p id="mbCalc" class="muted" style="margin:6px 0 0;font-size:13px"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">${ex ? '' : '<button class="btn" id="gbClear" style="margin-right:auto" title="Remove the Bet mark from this game">Not betting after all</button>'}<button class="btn" data-mbclose>Cancel</button><button class="btn primary" id="mbSaveBtn">${ex ? 'Save changes' : 'Confirm bet'}</button></div></div>`;
+  document.body.appendChild(m);
+  if (ex) { $('#mbOdds').value = ex.odds; $('#mbStake').value = ex.stake; }
+  const postedOdds = () => st.type === 'ml' ? (G.ml ? G.ml[st.side] : null) : st.type === 'total' ? (G.tot ? G.tot[st.side] : null) : (G.pl ? G.pl[st.side] : null);
+  const defLine = () => st.type === 'total' ? (G.tot ? G.tot.line : 6.5) : st.type === 'pl' ? (st.side === fav ? -1.5 : 1.5) : null;
+  const calc = () => {
+    const o = +$('#mbOdds').value, s = +$('#mbStake').value;
+    $('#mbCalc').innerHTML = o && Math.abs(o) >= 100 && s > 0 ? `To win <b>${money(mbToWin(s, o)).replace('+', '')}</b> · total payout ${money(s + mbToWin(s, o)).replace('+', '')}` : 'Enter odds like −150 or +130 and an amount.';
+    const info = [];
+    if (st.type === 'ml' && fin(st.p)) { const q = st.side === 'h' ? st.p : 1 - st.p; info.push(`Ice Lab gives ${esc(ab(st.side))} ${pct1(q)}% (fair ${fairAmerican(q)})`); if (Math.abs(o) >= 100) { const ed = q - amImplied(o); info.push(`<b style="color:${ed > 0 ? 'var(--good)' : 'var(--neg)'}">${ed > 0 ? '+' : ''}${(ed * 100).toFixed(1)} pts</b> vs. your price`); } }
+    const po = postedOdds(); if (po != null) info.push(`ESPN line ${fmtML(po)}`);
+    $('#gbInfo').innerHTML = info.join(' · ');
+  };
+  const setOdds = () => { if (!st.oddsTouched) { const po = postedOdds(); $('#mbOdds').value = po != null ? po : ''; } if (!st.stakeTouched) { const o = +$('#mbOdds').value; $('#mbStake').value = Math.abs(o) >= 100 ? mbDefaultStake(o) : 100; } calc(); };
+  const paint = () => {
+    $$('#gbType [data-gbtype]').forEach(b => b.classList.toggle('on', b.dataset.gbtype === st.type));
+    const sides = st.type === 'total' ? [['o', 'Over'], ['u', 'Under']] : [['a', ab('a')], ['h', ab('h')]];
+    if (!sides.some(([k]) => k === st.side)) st.side = st.type === 'total' ? 'o' : fav;
+    $('#gbSide').innerHTML = sides.map(([k, l]) => `<button class="dbtn${k === st.side ? ' on' : ''}" data-gbside="${k}">${st.type !== 'total' ? logoImg(k === 'h' ? G.hid : G.aid, 16) : ''}${esc(l)}</button>`).join('');
+    $('#gbLineL').style.display = st.type === 'ml' ? 'none' : '';
+    $('#gbLineL').firstChild.textContent = st.type === 'total' ? 'Total goals line' : `Puck line for ${ab(st.side)}`;
+    if (st.type !== 'ml' && (st.line == null || st.lineAuto)) { st.line = defLine(); st.lineAuto = true; }
+    $('#gbLine').value = st.type === 'ml' ? '' : st.line;
+    calc();
+  };
+  m.addEventListener('click', e => {
+    const t = e.target.closest('[data-gbtype]'), sd = e.target.closest('[data-gbside]'), ed = e.target.closest('[data-gbedit]');
+    if (t && !t.disabled) { st.type = t.dataset.gbtype; st.line = null; paint(); setOdds(); return; }
+    if (sd) { st.side = sd.dataset.gbside; if (st.type === 'pl' && st.lineAuto) st.line = null; paint(); setOdds(); return; }
+    if (ed) { m.remove(); mbOpenGameForm(null, ed.dataset.gbedit); return; }
+    if (e.target === m || e.target.closest('[data-mbclose]')) { m.remove(); if (onCancel) onCancel(); }
+  });
+  $('#gbLine').oninput = () => { st.line = +$('#gbLine').value; st.lineAuto = false; };
+  $('#mbOdds').oninput = () => { st.oddsTouched = true; if (!st.stakeTouched) { const o = +$('#mbOdds').value; if (Math.abs(o) >= 100) $('#mbStake').value = mbDefaultStake(o); } calc(); };
+  $('#mbStake').oninput = () => { st.stakeTouched = true; calc(); };
+  const clr = $('#gbClear'); if (clr) clr.onclick = async () => { m.remove(); await decSet(G.gid, null); decPaint(G.gid); };
+  paint(); if (!ex) setOdds(); else calc();
+  // Ice Lab's win chance (game model), filled in when ready
+  (async () => {
+    if (ex && fin(ex.pH)) { st.p = ex.pH; calc(); return; }
+    if (!G.e) return;
+    try { await gmLoadSaved(); if (!GM.model) return; let inj = null; try { inj = await getInjuries(G.gid); } catch (err) {} const LF = await getLinesFile(); const pk = gmEventPick(G.e, inj, LF); if (pk && fin(pk.r.p) && document.body.contains(m)) { st.p = pk.r.p; calc(); } } catch (err) {}
+  })();
+  $('#mbSaveBtn').onclick = async () => {
+    const o = Math.round(+$('#mbOdds').value), s = +$('#mbStake').value, line = st.type === 'ml' ? null : +$('#gbLine').value;
+    if (!(Math.abs(o) >= 100) || !(s > 0)) { alertBox('Enter valid odds (like -150 or +130) and an amount.'); return; }
+    if (st.type !== 'ml' && !(isFinite(line) && line !== 0 && Math.abs(line) < 20)) { alertBox(st.type === 'total' ? 'Enter the total goals line (like 6.5).' : 'Enter the puck line (like -1.5 or +1.5).'); return; }
+    const team = st.type === 'total' ? G.hid : st.side === 'h' ? G.hid : G.aid, opp = st.type === 'total' ? G.aid : st.side === 'h' ? G.aid : G.hid;
+    const q = st.type === 'ml' && fin(st.p) ? (st.side === 'h' ? st.p : 1 - st.p) : null;
+    const rec = { type: st.type, side: st.side, line, tm: team, opp, hid: G.hid, aid: G.aid, odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim() };
+    rec.n = mbLabel(rec).replace(/&amp;/g, '&');
+    const list = mbLoad();
+    if (ex) { const x = list.find(y => y.id === ex.id); if (x) { Object.assign(x, rec); if (st.type === 'ml' && fin(st.p)) x.p = q; else if (st.type !== 'ml') delete x.p; } }
+    else list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), placed: new Date().toISOString(), gid: G.gid, start: G.start, date: G.start ? localDay(G.start) : todayStr(), ...rec, p: q, pH: st.p, res: null });
+    if (mbSave(list)) {
+      m.remove(); await decSet(G.gid, 'bet'); decPaint(G.gid);
+      alertBox(ex ? 'Bet updated' : `Bet logged: ${rec.n} ${fmtML(o)} for ${money(s).replace('+', '')}`);
+      if (activeTab() === 'mybets') renderMyBets();
+    }
+  };
+}
+// grade one game bet from a final score (shootout winner counts as one goal, like the sportsbook)
+function gbGrade(b, g) {
+  if (g.unknownWinner) return null;
+  const hs = g.home.score, as = g.away.score, hid = String(g.home.id), mine = String(b.tm) === hid ? 'h' : 'a';
+  if (b.type === 'ml') return (mine === 'h' ? hs > as : as > hs) ? 'W' : 'L';
+  if (b.type === 'total') { const t = hs + as; return t === b.line ? 'PU' : (b.side === 'o' ? t > b.line : t < b.line) ? 'W' : 'L'; }
+  if (b.type === 'pl') { const mg = (mine === 'h' ? hs - as : as - hs) + b.line; return mg === 0 ? 'PU' : mg > 0 ? 'W' : 'L'; }
+  return null;
+}
 
 /* ============================== UPSET TRACKER ============================== */
 function renderUpsets() {
