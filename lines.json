@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-08",
- "updated": "2026-10-08T12:34:22.888Z",
+ "updated": "2026-10-08T19:41:38.947Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -326,8 +326,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Brendan Gallagher",
-         "pos": "W",
+         "n": "Aatu Raty",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -381,7 +381,7 @@
     },
     {
      "team": "Carolina Hurricanes",
-     "goalie": "Brandon Bussi",
+     "goalie": "Pyotr Kochetkov",
      "groups": [
       {
        "label": "Line 1",
@@ -509,7 +509,7 @@
    "teams": [
     {
      "team": "Utah Hockey Club",
-     "goalie": "Karel Vejmelka",
+     "goalie": "Sebastian Cossa",
      "groups": [
       {
        "label": "Line 1",
@@ -758,15 +758,15 @@
    "teams": [
     {
      "team": "Philadelphia Flyers",
-     "goalie": "Dan Vladar",
+     "goalie": "Joseph Woll",
      "groups": [
       {
        "label": "Line 1",
        "players": [
         {
-         "n": "Matvei Michkov",
+         "n": "Porter Martone",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Travis Konecny",
@@ -774,8 +774,8 @@
          "pp": "PP1"
         },
         {
-         "n": "Christian Dvorak",
-         "pos": "C",
+         "n": "Sean Couturier",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -783,11 +783,6 @@
       {
        "label": "Line 2",
        "players": [
-        {
-         "n": "Denver Barkey",
-         "pos": "W",
-         "pp": "PP2"
-        },
         {
          "n": "Trevor Zegras",
          "pos": "C",
@@ -797,6 +792,11 @@
          "n": "Owen Tippett",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Christian Dvorak",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -809,14 +809,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Porter Martone",
+         "n": "Denver Barkey",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Noah Cates",
-         "pos": "C",
-         "pp": ""
+         "n": "Matvei Michkov",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -829,13 +829,8 @@
          "pp": ""
         },
         {
-         "n": "Carl Grundstrom",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Sean Couturier",
-         "pos": "W",
+         "n": "Noah Cates",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -844,7 +839,7 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Cam York",
+         "n": "Jamie Drysdale",
          "pos": "D",
          "pp": "PP2"
         },
@@ -854,19 +849,19 @@
          "pp": ""
         },
         {
-         "n": "Jamie Drysdale",
+         "n": "David Jiricek",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Cam York",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Simon Benoit",
          "pos": "D",
          "pp": ""
-        },
-        {
-         "n": "David Jiricek",
-         "pos": "D",
-         "pp": "PP2"
         },
         {
          "n": "Nick Seeler",
@@ -885,11 +880,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Ridly Greig",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Drake Batherson",
          "pos": "W",
          "pp": "PP1"
@@ -898,12 +888,22 @@
          "n": "Tim Stutzle",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "William Eklund",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
       {
        "label": "Line 2",
        "players": [
+        {
+         "n": "Ridly Greig",
+         "pos": "W",
+         "pp": ""
+        },
         {
          "n": "Fabian Zetterlund",
          "pos": "W",
@@ -912,11 +912,6 @@
         {
          "n": "Dylan Cozens",
          "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "William Eklund",
-         "pos": "W",
          "pp": "PP1"
         }
        ]
@@ -1053,7 +1048,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Yakov Trenin",
+         "n": "Marcus Foligno",
          "pos": "W",
          "pp": ""
         },
@@ -1073,12 +1068,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Marcus Foligno",
+         "n": "Nico Sturm",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Nick Foligno",
+         "n": "Yakov Trenin",
          "pos": "W",
          "pp": ""
         },
@@ -1128,7 +1123,7 @@
     },
     {
      "team": "Tampa Bay Lightning",
-     "goalie": "Andrei Vasilevskiy",
+     "goalie": "Dennis Hildeby",
      "groups": [
       {
        "label": "Line 1",
@@ -1367,7 +1362,7 @@
     },
     {
      "team": "Montreal Canadiens",
-     "goalie": "Jakub Dobes",
+     "goalie": "",
      "groups": [
       {
        "label": "Line 1",
@@ -1478,7 +1473,7 @@
          "pp": ""
         },
         {
-         "n": "Jayden Struble",
+         "n": "Adam Engstrom",
          "pos": "D",
          "pp": ""
         }
@@ -1702,9 +1697,19 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Logan Stanley",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Matthew Schaefer",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Ryan Pulock",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Adam Pelech",
@@ -1712,19 +1717,9 @@
          "pp": ""
         },
         {
-         "n": "Logan Stanley",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Tony DeAngelo",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Ryan Pulock",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Scott Mayfield",
@@ -1744,7 +1739,7 @@
    "teams": [
     {
      "team": "San Jose Sharks",
-     "goalie": "Yaroslav Askarov",
+     "goalie": "Alex Nedeljkovic",
      "groups": [
       {
        "label": "Line 1",
@@ -1840,7 +1835,7 @@
          "pp": ""
         },
         {
-         "n": "Nolan Allan",
+         "n": "Sam Dickinson",
          "pos": "D",
          "pp": ""
         },
@@ -2114,7 +2109,7 @@
     },
     {
      "team": "Calgary Flames",
-     "goalie": "Dustin Wolf",
+     "goalie": "Devin Cooley",
      "groups": [
       {
        "label": "Line 1",
@@ -2366,7 +2361,7 @@
         {
          "n": "Ivan Barbashev",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jack Eichel",
@@ -2399,14 +2394,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Victor Olofsson",
+         "n": "Trevor Connelly",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Trevor Connelly",
+         "n": "Raphael Lavoie",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Tomas Hertl",
