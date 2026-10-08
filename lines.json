@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-07",
- "updated": "2026-10-07T19:28:51.842Z",
+ "updated": "2026-10-08T00:01:54.899Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -552,7 +552,7 @@
         {
          "n": "Owen Michaels",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Alex Formenton",
@@ -575,12 +575,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Colton Dach",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Josh Samanski",
+         "pos": "W",
+         "pp": ""
         },
         {
-         "n": "Josh Samanski",
+         "n": "Max Jones",
          "pos": "W",
          "pp": ""
         }
