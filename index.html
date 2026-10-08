@@ -4048,7 +4048,21 @@ const GM = { model: null, loading: false, prog: '' };
 const logit = p => Math.log(p / (1 - p));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-function gmStateNew() { return { T: {}, Gk: {}, mu: 2.9, last: null }; }
+function gmStateNew() { return { T: {}, Gk: {}, mu: 2.9, last: null, R: {}, Rl: { pen: 0, n: 0 } }; }
+// referee crew: penalties per game vs. league average (1 = average), from games before this one
+function gmCrew(S, names) {
+  const Rl = S.Rl || { pen: 0, n: 0 }; if (!names || !names.length || Rl.n < 30) return 1;
+  const lg = Rl.pen / Rl.n, rate = nm => { const r = (S.R || {})[nm]; return r ? (r.pen + lg * 20) / (r.gp + 20) : lg; };
+  return clamp(1 + (S.refBeta != null ? S.refBeta : .5) * (names.reduce((s, x) => s + rate(x), 0) / names.length / lg - 1), .8, 1.25);
+}
+// extra goals each team gets from a busier (or quieter) crew: extra power plays × its power-play rate vs. the other penalty kill
+function gmRefGoals(S, hId, aId, crew) {
+  const h = gmTeam(S, hId), a = gmTeam(S, aId), L = S.Lpp; if (!L || !L.ppo || crew === 1) return { h: 0, a: 0 };
+  const conv = L.ppg / L.ppo, perTeam = L.ppo / (L.n || 1);
+  const pp = t => ((t.ppg || 0) + conv * 25) / ((t.ppo || 0) + 25), pk = t => ((t.ppga || 0) + conv * 25) / ((t.ppoA || 0) + 25);
+  const extra = (crew - 1) * perTeam;
+  return { h: extra * (pp(h) + pk(a)) / 2, a: extra * (pp(a) + pk(h)) / 2 };
+}
 function gmTeam(S, id) {
   return S.T[id] || (S.T[id] = { id, off: S.mu, def: S.mu, n: 0, last: null, tz: null, rec: [], sxf: 0, sxa: 0, hxf: 0, hxa: 0, rxf: 0, rxa: 0, ppg: 0, ppga: 0, pen: 0, gp: 0, sgp: 0 });
 }
@@ -4090,12 +4104,15 @@ function gmUpdate(S, g) {
     t.rec.push([xf, xa]); if (t.rec.length > 10) t.rec.shift();
     t.sxf += xf; t.sxa += xa; if (home) { t.hxf += xf; t.hxa += xa; } else { t.rxf += xf; t.rxa += xa; }
     const bm = (g.bx || {})[me] || {}, bo = (g.bx || {})[op] || {};
-    t.ppg += bm.ppg || 0; t.ppga += bo.ppg || 0; t.pen += bm.pen || 0;
+    t.ppg += bm.ppg || 0; t.ppga += bo.ppg || 0; t.pen += bm.pen || 0; t.ppo = (t.ppo || 0) + (bm.ppo || 0); t.ppoA = (t.ppoA || 0) + (bo.ppo || 0);
+    S.Lpp = S.Lpp || { ppg: 0, ppo: 0, n: 0 }; S.Lpp.ppg += bm.ppg || 0; S.Lpp.ppo += bm.ppo || 0; S.Lpp.n++;
   }
   for (const s of g.shots) { if (s.t === 3 || s.en || !s.gl) continue; const q = S.Gk[s.gl] || (S.Gk[s.gl] = { xga: 0, ga: 0, toi: 0 }); q.xga += s.xg; if (s.t === 0) q.ga++; }
   // each player's share of his team's recent expected goals (fades ~15% per game), used for injury adjustments
   for (const t of [h, a]) { t.px = t.px || {}; t.tx = (t.tx || 0) * .85; for (const k in t.px) { t.px[k] *= .85; if (t.px[k] < .01) delete t.px[k]; } }
   for (const s of g.shots) { if (s.t === 3 || s.en || !s.pl || !o[s.tm]) continue; const t = S.T[s.tm]; t.px[s.pl] = (t.px[s.pl] || 0) + s.xg; t.tx += s.xg; }
+  // referee crew penalty counts
+  { const names = refNames(g), pen = ((g.bx || {})[H] || {}).pen + ((g.bx || {})[Aw] || {}).pen; if (names.length && pen > 0) { S.R = S.R || {}; S.Rl = S.Rl || { pen: 0, n: 0 }; for (const nm of names) { const r = S.R[nm] || (S.R[nm] = { gp: 0, pen: 0 }); r.gp++; r.pen += pen; } S.Rl.pen += pen; S.Rl.n++; } }
   S.Gn = S.Gn || {};
   for (const t of [h, a]) if (t.gks) for (const k in t.gks) t.gks[k] *= .9; // recent starts count most
   for (const [id, p] of Object.entries(g.gk || {})) {
@@ -4108,10 +4125,11 @@ function gmUpdate(S, g) {
 function gmNewSeason(S) {
   for (const t of Object.values(S.T)) {
     t.off = S.mu + .5 * (t.off - S.mu); t.def = S.mu + .5 * (t.def - S.mu); t.n = Math.min(t.n, 10);
-    for (const k of ['sxf', 'sxa', 'hxf', 'hxa', 'rxf', 'rxa', 'ppg', 'ppga', 'pen', 'gp']) t[k] *= .5;
+    for (const k of ['sxf', 'sxa', 'hxf', 'hxa', 'rxf', 'rxa', 'ppg', 'ppga', 'pen', 'gp', 'ppo', 'ppoA']) if (t[k] != null) t[k] *= .5;
     t.rec = []; t.last = null;
   }
   for (const q of Object.values(S.Gk)) { q.xga *= .5; q.ga *= .5; q.toi *= .5; }
+  for (const r of Object.values(S.R || {})) { r.gp *= .5; r.pen *= .5; }
 }
 // Shooters vs. goalie: how well a team's shot mix (zones, shot types, rebounds and rush chances) lines up with the
 // goalie's weak spots, compared with how that same goalie does against an average shooter. 0 = no matchup effect;
@@ -4164,6 +4182,7 @@ function gmScore(rows, pf) {
 function gmTrain(games) {
   games = [...games].filter(g => g.final && g.shots && g.shots.length).sort((a, b) => new Date(a.date) - new Date(b.date));
   const { S, rows, GS } = gmBuild(games);
+  const RB = refBuild(games); S.refBeta = RB.beta; // how much of a crew's past penalty rate carries into its next game
   if (rows.length < 150) return { error: `Only ${rows.length} usable games. Needs at least 150.` };
   const cut = Math.floor(rows.length * .7), train = rows.slice(0, cut), test = rows.slice(cut);
   const allGroups = GM_GROUPS.map(g => g[0]);
@@ -4201,16 +4220,20 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj) {
   let mH = 0, mA = 0;
   if (M.GS) { const gl = { date: dateIso, home: { id: hId }, away: { id: aId } }, ro = t => gsRoster(M.GS, null, gl, t).ids; mH = gmGoalieMatch(M.GS, aId, gA, ro(hId)); mA = gmGoalieMatch(M.GS, hId, gH, ro(aId)); }
   f.x.push((mH - mA) / .05);
+  const refs = (inj && inj.refs) || [], crew = gmCrew(M.S, refs), rg = gmRefGoals(M.S, hId, aId, crew);
   const p0 = gmProb(W, f.x);
   const parts = GM_FEATS.map(([k, l], i) => { if (!W[i] || i < 2 || !f.x[i]) return null; const x0 = [...f.x]; x0[i] = 0; return { k, l, d: p0 - gmProb(W, x0) }; }).filter(Boolean);
   // injuries: lower each team's scoring by the share of its recent xG that is out tonight
   const iH = gmInjury(M.S, hId, inj), iA = gmInjury(M.S, aId, inj);
   let p = p0;
-  if (iH.cut || iA.cut) { const wp = (x, y) => logit(clamp(winProb(x, y), .02, .98)); p = clamp(sigm(logit(p0) + wp(f.lh * (1 - iH.cut), f.la * (1 - iA.cut)) - wp(f.lh, f.la)), .01, .99); parts.push({ k: 'inj', l: 'Injuries', d: p - p0 }); }
+  const wp = (x, y) => logit(clamp(winProb(x, y), .02, .98));
+  if (iH.cut || iA.cut) { p = clamp(sigm(logit(p0) + wp(f.lh * (1 - iH.cut), f.la * (1 - iA.cut)) - wp(f.lh, f.la)), .01, .99); parts.push({ k: 'inj', l: 'Injuries', d: p - p0 }); }
+  // referees: extra (or fewer) power plays for both teams, converted at each team's power-play rate vs. the other's penalty kill
+  if (rg.h || rg.a) { const p1 = p; p = clamp(sigm(logit(p1) + wp(f.lh + rg.h, f.la + rg.a) - wp(f.lh, f.la)), .01, .99); if (Math.abs(p - p1) >= .0005) parts.push({ k: 'ref', l: 'Referee crew', d: p - p1 }); }
   parts.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
   const mk = devig(ml);
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
-  return { p, p0, pb, mk, parts, inj: { h: iH, a: iA }, match: M.GS ? { h: mH, a: mA } : null, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
+  return { p, p0, pb, mk, parts, inj: { h: iH, a: iA }, match: M.GS ? { h: mH, a: mA } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
 async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W) GM.model = m; } catch (e) {} return GM.model; }
 async function gmCollect(onProg) {
@@ -4318,6 +4341,7 @@ async function renderGameModelPreview(s, g) {
     <div class="grid g2" style="margin-top:10px"><div><h4 class="cmp-sec" style="margin-top:0">Why</h4>${parts ? `<ul class="gmwhy">${parts}</ul>` : '<p class="muted" style="margin:0">Mostly team strength and home ice.</p>'}</div>
     <div><h4 class="cmp-sec" style="margin-top:0">Goalies used</h4><p style="margin:0 0 4px;font-size:13px">${esc(g.away.abbr)}: ${gName(gA, g.away.id)}</p><p style="margin:0;font-size:13px">${esc(g.home.abbr)}: ${gName(gH, g.home.id)}</p>
       ${r.match ? `<h4 class="cmp-sec">Shooters vs. goalie</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('How well each lineup\'s shot mix (where they shoot from, shot types, rebounds and rush chances) fits the other goalie\'s weak spots, compared with an average lineup against him. Used only if it improved the model in testing.')}">${esc(g.home.abbr)} shooters vs. ${esc(gName(gA, g.away.id).replace(/<[^>]+>/g, '').split('(')[0].trim())}: <b style="color:${r.match.h > .01 ? 'var(--good)' : r.match.h < -.01 ? 'var(--neg)' : 'inherit'}">${r.match.h >= 0 ? '+' : '−'}${pct1(Math.abs(r.match.h))}%</b></p><p style="margin:0 0 4px;font-size:13px">${esc(g.away.abbr)} shooters vs. ${esc(gName(gH, g.home.id).replace(/<[^>]+>/g, '').split('(')[0].trim())}: <b style="color:${r.match.a > .01 ? 'var(--good)' : r.match.a < -.01 ? 'var(--neg)' : 'inherit'}">${r.match.a >= 0 ? '+' : '−'}${pct1(Math.abs(r.match.a))}%</b></p>${M.keep.includes('gmatch') ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}` : ''}
+      <h4 class="cmp-sec">Referees</h4>${r.ref.names.length ? `<p style="margin:0 0 4px;font-size:13px">${r.ref.names.map(esc).join(' & ')}: <b style="color:${r.ref.crew > 1.03 ? 'var(--neg)' : r.ref.crew < .97 ? 'var(--good)' : 'inherit'}">${r.ref.crew >= 1 ? '+' : '−'}${pct1(Math.abs(r.ref.crew - 1))}%</b> penalties vs. an average crew</p>${(() => { const pt = r.parts.find(x => x.k === 'ref'); return `<p class="muted" style="margin:0;font-size:12px">${r.ref.goals.h || r.ref.goals.a ? `Expected power-play goals: ${esc(g.home.abbr)} ${r.ref.goals.h >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.h))}, ${esc(g.away.abbr)} ${r.ref.goals.a >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.a))}${pt ? ` → ${esc(pt.d >= 0 ? g.home.abbr : g.away.abbr)} +${Math.abs(pt.d * 100).toFixed(1)} pts` : ''}. ` : ''}${fin(r.ref.beta) ? `${Math.round(r.ref.beta * 100)}% of a crew's past rate carries into its next game (learned from past games).` : 'Retrain in Model Lab to use referee crews.'}</p>`; })()}` : '<p class="muted" style="margin:0;font-size:13px">Not posted yet (usually the day of the game).</p>'}
       <h4 class="cmp-sec">Injuries factored in</h4>${injTxt || '<p class="muted" style="margin:0;font-size:13px">No regulars listed as out.</p>'}</div></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">Points = how much each factor moves ${esc(g.home.abbr)}'s win chance. The model was last trained ${new Date(M.t).toLocaleDateString()}; retrain it in Model Lab to include the newest games. For fun and analysis, not betting advice.</p></div>`;
 }
@@ -4704,7 +4728,7 @@ function gsParts(S, pid, oppId, goalieId, ctx = {}) {
   const ppX60 = (r.ppX + lgPPrate * 1.5) / (r.pp / 3600 + 1.5);
   const lgPen = L.teamGames ? L.pen / L.teamGames : 3, oppPen = d && d.gp ? (d.pen + lgPen * 5) / (d.gp + 5) : lgPen;
   const penF = lgPen > 0 ? oppPen / lgPen : 1;
-  const ppSec = ctx.ppSec != null ? ctx.ppSec : avgPP * penF;
+  const ppSec = ctx.ppSec != null ? ctx.ppSec : avgPP * penF * (ctx.crew || 1);
   const lgPk = L.pkSec > 0 ? L.pkX / (L.pkSec / 3600) : 0;
   const pkF = d && lgPk ? ((d.pkX + lgPk * .5) / (d.pkSec / 3600 + .5)) / lgPk : 1;
   const gAll = q ? clamp((q.ga.reduce((a, b) => a + b, 0) + q.tga[4] + 10) / (q.xga.reduce((a, b) => a + b, 0) + q.txg[4] + 10), .7, 1.4) : 1;
@@ -4765,7 +4789,7 @@ const gsCal = (rows, W) => { const lam = rows.reduce((s, r) => s + gsLam(W, r), 
 function gsBuild(games) {
   games = [...games].filter(g => g.final).sort((a, b) => new Date(a.date) - new Date(b.date));
   const out = { S: null, bt: null };
-  if (games.length < 60) { const S = gsState(games); const rows = gsRows(S, games); S.c = gsCal(rows, S.W); out.S = S; return out; }
+  if (games.length < 60) { const S = gsState(games); const rows = gsRows(S, games); S.c = gsCal(rows, S.W); S.ref = refBuild(games); out.S = S; return out; }
   const a = Math.floor(games.length * .6), b = Math.floor(games.length * .8);
   const S1 = gsState(games.slice(0, a)), fitRows = gsRows(S1, games.slice(a, b));
   const W = gsFit(fitRows, gsPriorW());
@@ -4779,7 +4803,7 @@ function gsBuild(games) {
   if (test.length) out.bt = { n: test.length, games: games.length - b, from: games[b].date, to: games[games.length - 1].date, brier: gsBrier(test, W, c1), brierBase: gsBrier(test, W0, c0), brierPrior: gsBrier(test, Wp, cp), expected: pSum, actual: hits, bins: bins.filter(x => x.n), W, fitN: fitRows.length,
     ablate: GS_FACT.map(([k, l], i) => { const Wk = { ...W, b: W.b.map((x, j) => j === i ? 0 : x) }; return { k, l, w: W.b[i], d: gsBrier(test, Wk, gsCal(fitRows, Wk)) - gsBrier(test, W, c1) }; }) };
   // final model: stats from every game, learned weights, recalibrated
-  const S = gsState(games); S.W = W; S.c = gsCal(gsRows(S2, games.slice(b)), W) || 1; out.S = S;
+  const S = gsState(games); S.W = W; S.c = gsCal(gsRows(S2, games.slice(b)), W) || 1; S.ref = refBuild(games); out.S = S;
   return out;
 }
 function gsGetState() {
@@ -4811,6 +4835,8 @@ function gsTonight(S, e, LF, PF, INJ) {
   const H = String(h.team.id), Aw = String(a.team.id); addTeam(h.team); addTeam(a.team);
   const gLike = { date: e.date, home: { id: H }, away: { id: Aw } }, probs = probableGoalies(e), dkm = PF ? dkPriceMap(PF, e.date, H, Aw) : null;
   const o = c.odds && c.odds[0], tot = o ? parseFloat(o.overUnder) : NaN, mlH = o && o.homeTeamOdds ? +o.homeTeamOdds.moneyLine : NaN, mlA = o && o.awayTeamOdds ? +o.awayTeamOdds.moneyLine : NaN;
+  // referee crew: busier crews mean more power-play time (how much of a crew's rate carries over is learned)
+  const crew = S.ref ? S.ref.crew(INJ && INJ.refs) : 1;
   // league power-play time per team-game
   const lgPP = S.L.teamGames ? S.L.ppSec / S.L.teamGames : 300;
   const rows = [];
@@ -4819,7 +4845,7 @@ function gsTonight(S, e, LF, PF, INJ) {
     if (!fin(implied)) { const pm = predictMatch(H, Aw); if (pm) { implied = t === H ? pm.lh : pm.la; envSrc = 'Ice Lab ratings'; } }
     const ro = gsRoster(S, LF, gLike, t), gl = gsGoalie(S, probs, LF, gLike, opp, INJ), role = gsRoleMap(S, linesFor(LF, gLike, t), t);
     const d = S.D[opp], lgPen = S.L.teamGames ? S.L.pen / S.L.teamGames : 3, oppPen = d && d.gp ? (d.pen + lgPen * 5) / (d.gp + 5) : lgPen;
-    const teamPPsec = lgPP * (lgPen > 0 ? oppPen / lgPen : 1);
+    const teamPPsec = lgPP * (lgPen > 0 ? oppPen / lgPen : 1) * crew;
     for (const pid of ro.ids) {
       const r0 = S.P[pid]; if (!r0 || !r0.gp) continue;
       const ij = INJ && INJ.st[pid]; if (ij && ij.out && ro.src !== 'RotoGrinders lines') continue; // listed out and not in tonight's lines
@@ -4831,10 +4857,10 @@ function gsTonight(S, e, LF, PF, INJ) {
         ppSec = rl.pp === 1 ? .6 * teamPPsec : rl.pp === 2 ? .35 * teamPPsec : Math.min(avgPP, .1 * teamPPsec);
         roleTxt = `${rl.line}${rl.pp ? ' · PP' + rl.pp : ''}`;
       }
-      const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied });
+      const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied, crew });
       if (!r) continue;
       const dk = dkm ? dkLookup(dkm, r0.n) : null, ev = dk != null ? betEV(r.p, dk) : null;
-      rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt), dk, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
+      rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt, crew, INJ && INJ.refs), crew, dk, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
     }
   }
   return gsRefine(rows, dkm, tot);
@@ -4919,13 +4945,13 @@ function gsGoalie(S, probs, LF, gLike, tid, INJ) {
   if (alt) return { id: alt.id, n: alt.n, st: 'Last healthy starter (not announced)' };
   return null;
 }
-function gsWhy(r, goalieName, implied, envSrc, roleTxt) {
+function gsWhy(r, goalieName, implied, envSrc, roleTxt, crew, refs) {
   const tot = r.zones.reduce((s, z) => s + z.lam, 0) || 1, top = [...r.zones].sort((a, b) => b.lam - a.lam)[0];
   const pctS = v => `${v >= 0 ? '+' : '−'}${Math.abs(v * 100).toFixed(1)}%`;
   const fx = r.eff.filter(x => Math.abs(x.pct) >= .005).sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
   const zl = r.zones.map(z => `<div class='row'><span>${ZN[z.z]}</span><b>${pct1(z.lam / tot)}% of his even-strength chance</b></div>`).join('');
   const fl = fx.map(x => `<div class='row'><span>${esc(x.l)}</span><b style='color:${x.pct > 0 ? 'var(--good)' : 'var(--neg)'}'>${pctS(x.pct)}</b></div>`).join('');
-  const html = `<div style='margin:4px 0'>Mostly from the <b>${ZN[top.z]}</b>. Projected ${mmss(r.evSec)} at even strength${r.ppSec > 1 ? ` + ${mmss(r.ppSec)} on the power play` : ''}${roleTxt ? ` (${esc(roleTxt)})` : ''}. ${r.ppShare > .02 ? `${pct1(r.ppShare)}% of his chance is on the power play.` : ''}</div>${zl}${fl ? `<div style='margin-top:6px;font-weight:700'>Tonight's adjustments</div>${fl}` : ''}<div style='margin-top:4px'>${fin(implied) ? `Team projected for ${f2(implied)} goals (${esc(envSrc)}) vs. ${f2(r.teamAvg)} usual. ` : ''}${goalieName ? `Vs. ${esc(goalieName)}. ` : ''}Finishing ×${f2(r.fin)}.</div>`;
+  const html = `<div style='margin:4px 0'>Mostly from the <b>${ZN[top.z]}</b>. Projected ${mmss(r.evSec)} at even strength${r.ppSec > 1 ? ` + ${mmss(r.ppSec)} on the power play` : ''}${roleTxt ? ` (${esc(roleTxt)})` : ''}. ${r.ppShare > .02 ? `${pct1(r.ppShare)}% of his chance is on the power play.` : ''}</div>${zl}${fl ? `<div style='margin-top:6px;font-weight:700'>Tonight's adjustments</div>${fl}` : ''}<div style='margin-top:4px'>${fin(implied) ? `Team projected for ${f2(implied)} goals (${esc(envSrc)}) vs. ${f2(r.teamAvg)} usual. ` : ''}${goalieName ? `Vs. ${esc(goalieName)}. ` : ''}Finishing ×${f2(r.fin)}.</div>${crew && Math.abs(crew - 1) >= .01 && r.ppSec > 1 ? `<div style='margin-top:4px'>Referees ${esc((refs || []).join(' & '))}: ${crew > 1 ? 'busier' : 'quieter'} crew, power-play time ${crew > 1 ? '+' : '−'}${pct1(Math.abs(crew - 1))}%.</div>` : ''}`;
   const big = fx[0];
   const short = big ? `${big.l.replace('Opponent ', 'opp. ').toLowerCase()} ${pctS(big.pct)}` : `${ZN[top.z]}`;
   return { html, short: `${ZN[top.z]}${big ? ' · ' + short : ''}` };
@@ -5310,6 +5336,24 @@ async function renderTape(s, g) {
    lowers a team's scoring by the share of its recent expected goals those players created (half of it,
    since a replacement plays in their spot). Day-to-day players are flagged but kept, since they often play. */
 const INJ_C = {};
+/* ---- referees: crew penalty rates ---- */
+const refNames = g => (g.off || []).filter(o => /referee/i.test(o[1] || '')).map(o => o[0]);
+// walk through games in order: each referee's penalties per game (both teams), pulled toward the league average
+// by 20 games, plus how much of a crew's past rate actually shows up in its next game (beta, learned walk-forward)
+function refBuild(games) {
+  const R = {}, K = 20; let lp = 0, ln = 0, sxy = 0, sxx = 0, n = 0;
+  const rate = nm => { const r = R[nm], lg = ln ? lp / ln : 0; return r ? (r.pen + lg * K) / (r.gp + K) : lg; };
+  for (const g of [...games].filter(g => g.final).sort((a, b) => a.date < b.date ? -1 : 1)) {
+    const names = refNames(g), bh = (g.bx || {})[g.home.id] || {}, ba = (g.bx || {})[g.away.id] || {}, pen = (bh.pen || 0) + (ba.pen || 0);
+    if (!names.length || !(pen > 0)) continue;
+    if (ln >= 50) { const lg = lp / ln, pred = names.reduce((s, x) => s + rate(x), 0) / names.length / lg - 1, act = pen / lg - 1; sxy += pred * act; sxx += pred * pred; n++; }
+    for (const nm of names) { const r = R[nm] || (R[nm] = { gp: 0, pen: 0 }); r.gp++; r.pen += pen; }
+    lp += pen; ln++;
+  }
+  const beta = n >= 150 && sxx > 0 ? clamp(sxy / sxx, 0, 1) : .5;
+  const crew = names => { if (!names || !names.length || !ln) return 1; const lg = lp / ln; return clamp(1 + beta * (names.reduce((s, x) => s + rate(x), 0) / names.length / lg - 1), .8, 1.25); };
+  return { R, lg: ln ? lp / ln : 0, beta, n, crew, rate };
+}
 const injIsOut = st => /out|reserve|\bir\b|ltir|suspen/i.test(st || '') && !/day/i.test(st || '');
 function injParse(s) {
   const out = { byTeam: {}, st: {} };
@@ -5322,6 +5366,7 @@ function injParse(s) {
       out.st[rec.id] = rec; if (tid) (out.byTeam[tid] = out.byTeam[tid] || []).push(rec);
     }
   }
+  out.refs = (((s && s.gameInfo) || {}).officials || []).filter(o => /referee/i.test((o.position && (o.position.displayName || o.position.name)) || '')).map(o => o.displayName || o.fullName).filter(Boolean);
   return out;
 }
 async function getInjuries(eid) {
