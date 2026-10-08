@@ -447,6 +447,20 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
 .injb{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;font-size:10.5px;font-weight:700;background:color-mix(in srgb,#e8a33d 22%,transparent);color:var(--text)}.injb.out{background:color-mix(in srgb,var(--neg) 22%,transparent)}
 .trust-t{table-layout:fixed;width:100%}.trust-t td,.trust-t th{white-space:normal;vertical-align:top}
 .trust-v{border-left:4px solid;padding:8px 12px;border-radius:8px;background:var(--surface-2)}
+.gwrap{display:flex;flex-direction:column;border-radius:var(--r);background:var(--surface);transition:box-shadow .3s}
+.gwrap>.game{flex:1;box-shadow:none;border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom:0}
+.gwrap>.gdec{border:1px solid var(--border);border-top:1px dashed var(--border);border-radius:0 0 var(--r) var(--r);padding:6px 10px}
+.gdec{display:flex;gap:6px;align-items:center;font-size:12px}
+.rchip{margin-right:auto;color:var(--muted);font-size:11.5px;line-height:1.25}.rchip.ok{color:var(--good);font-weight:800}
+.dbtn{border:1px solid var(--border);background:var(--surface);color:var(--text-2);border-radius:999px;padding:3px 12px;font:700 12px Inter,sans-serif;cursor:pointer}
+.dbtn:hover{border-color:var(--text-2)}.dbtn.bet.on{background:var(--good);border-color:var(--good);color:#fff}.dbtn.pass.on{background:var(--text-2);border-color:var(--text-2);color:var(--surface)}
+[data-gw].ready{box-shadow:0 0 0 2px var(--good),0 0 18px 3px color-mix(in srgb,var(--good) 45%,transparent);animation:readyGlow 2.4s ease-in-out infinite}
+[data-gw].ready>.game,[data-gw].ready>.gdec{border-color:var(--good)}
+[data-gw].decided{opacity:.82}[data-gw].decided:hover{opacity:1}
+[data-gw].ready.flash{animation:readyFlash 1s ease-out 3,readyGlow 2.4s ease-in-out 3s infinite}
+@keyframes readyGlow{50%{box-shadow:0 0 0 2px var(--good),0 0 30px 8px color-mix(in srgb,var(--good) 55%,transparent)}}
+@keyframes readyFlash{0%{transform:scale(1)}30%{transform:scale(1.025)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){[data-gw].ready,[data-gw].ready.flash{animation:none}}
 </style>
 </head>
 <body>
@@ -1156,7 +1170,7 @@ async function loadScores(silent) {
     const typ = e.season && e.season.type === 1 ? '<span class="pill">Preseason</span>' : e.season && e.season.type === 3 ? '<span class="pill">Playoffs</span>' : '';
     const status = st.state === 'pre' ? new Date(e.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : st.shortDetail;
     const foot = st.state === 'pre' ? `<span>${odds ? esc(odds.details || '') + (odds.overUnder ? ' · O/U ' + odds.overUnder : '') : ''}</span><span>${esc(bc)}</span>` : `<span>${post ? ((c.highlights || []).length ? '▶ Highlights · shot map & xG' : 'Tap for shot map & xG') : esc(bc)}</span><span>Game Center ›</span>`;
-    return `<button class="game" data-game="${e.id}"><div class="gstat ${live ? 'live' : ''}"><span style="margin-right:auto">${esc(status)}</span>${typ}</div>${row(a)}${row(h)}<div class="gfoot">${foot}</div></button>`;
+    return `<div class="gwrap" data-gw="${e.id}"><button class="game" data-game="${e.id}"><div class="gstat ${live ? 'live' : ''}"><span style="margin-right:auto">${esc(status)}</span>${typ}</div>${row(a)}${row(h)}<div class="gfoot">${foot}</div></button>${decBar(e.id, st.state)}</div>`;
   }).join('');
   const cached = S.lead && S.lead.d === d ? S.lead.html : `<div class="empty"><div class="spinner"></div>Finding today's top performers…</div>`;
   body.innerHTML = `<div class="games">${cards}</div>
@@ -1166,6 +1180,12 @@ async function loadScores(silent) {
     <section class="lead-sec"><div class="card-h"><h2>${isToday ? "Today's" : 'Daily'} leaders</h2><p id="leadNote"></p></div><div id="leadersBody">${cached}</div></section>`;
   loadLeaders(evs, d);
   loadDayUpsets(evs, d);
+  readyMark(evs, d);
+  clearInterval(S.readyTimer);
+  if (isToday && evs.some(e => e.competitions[0].status.type.state === 'pre')) S.readyTimer = setInterval(async () => {
+    if (!$('#tab-scores').classList.contains('on') || document.hidden || S.date !== d) return;
+    try { RGL.data = null; const sb = await getJSON(`${API}/scoreboard?dates=${d}`); readyMark(sb.events || [], d); } catch (e) {}
+  }, 120000);
   loadDayPicks(evs, d);
   clearInterval(S.timer);
   if (anyLive && isToday) S.timer = setInterval(() => { if ($('#tab-scores').classList.contains('on') && !document.hidden) loadScores(true); }, 30000);
@@ -1196,6 +1216,14 @@ async function openGame(id, silent) {
   if (GC.g && GC.g.state === 'in') GC.timer = setInterval(() => { if (GC.id === id && !document.hidden) openGame(id, true); }, 30000);
   else if (GC.g && GC.g.state === 'pre') { GC.preSig = null; gcPreRefresh(id, true); GC.timer = setInterval(() => { if (GC.id === id && !document.hidden && $('#luBody')) { renderLineups(GC.raw, GC.g); gcPreRefresh(id); } }, 120000); }
 }
+async function gcDecRender(g) {
+  const box = $('#gcDec'); if (!box) return;
+  let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === String(g.id)) || null; } catch (e) {}
+  const LF = await getLinesFile(); await decLoad(); if (!$('#gcDec')) return;
+  const r = ev ? readyOf(ev, LF) : { gConf: 0, lines: 0, ready: false };
+  box.innerHTML = `<div class="card" data-gw="${esc(g.id)}" data-rdy="${r.ready ? 1 : 0}" style="padding:10px 14px"><div class="gdec" data-decbar="${esc(g.id)}" style="padding:0"><span class="rchip${r.ready ? ' ok' : ''}">${r.ready ? '✓ Ready to review: both goalies confirmed and lines posted' : `Goalies ${r.gConf}/2 confirmed · lines ${r.lines === 2 ? 'posted' : r.lines + '/2 posted'}`}</span><span class="muted" style="font-size:12px">Your call:</span><button class="dbtn bet" data-dec="bet" data-gid="${esc(g.id)}">Bet</button><button class="dbtn pass" data-dec="pass" data-gid="${esc(g.id)}">Pass</button></div></div>`;
+  decPaint(String(g.id));
+}
 // pre-game: when the starting goalies, referees or injury list change (e.g. a goalie gets confirmed), re-run every prediction on the card
 async function gcPreRefresh(id, first) {
   let s = null, ev = null;
@@ -1210,7 +1238,7 @@ async function gcPreRefresh(id, first) {
   const both = Object.values(pg).filter(x => /confirm/i.test(x.st || '')).length >= 2;
   const note = $('#gcRefreshNote'); if (note) note.remove();
   const gm = $('#gmBody'); if (gm) gm.insertAdjacentHTML('beforebegin', `<div class="note" id="gcRefreshNote">🔄 ${both ? 'Both starting goalies confirmed' : 'Goalie, referee or injury news came in'} at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}: predictions below were re-run with the latest information.</div>`);
-  renderLineups(s, GC.g); renderGameModelPreview(s, GC.g); renderScorerPreview(GC.g);
+  renderLineups(s, GC.g); renderGameModelPreview(s, GC.g); renderScorerPreview(GC.g); gcDecRender(GC.g);
 }
 
 function gameAdv(g, sit, k) {
@@ -1264,7 +1292,8 @@ function renderGame() {
 
   const vids = videosCard(s);
   if (pre || !g.shots.length) {
-    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="tapeBody"></div><div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="gmBody"></div><div id="gsPrev"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
+    body.innerHTML = `<div class="grid">${hero}${oddsHtml}${vids}<div id="gcDec"></div><div id="tapeBody"></div><div id="luBody"><div class="card empty"><div class="spinner"></div>Checking lineups and starting goalies…</div></div><div id="gmBody"></div><div id="gsPrev"></div><div id="mupBody"><div class="card empty"><div class="spinner"></div>Building the matchup preview…</div></div></div>`;
+    gcDecRender(g);
     renderTape(s, g);
     renderLineups(s, g);
     renderMatchup(s, g);
@@ -6028,6 +6057,58 @@ function phLineup(ids, nameOf, tmAbbr, posOf, season, mode) {
   let s = 0, k = 0; for (const id of ids || []) { const v = phTalent(nameOf(id), tmAbbr, posOf(id), season, mode); if (v) { s += v.net; k++; } }
   return { net: s, k };
 }
+
+
+/* ============================== READY-TO-REVIEW + BET / PASS ==============================
+   A game lights up when both starting goalies are confirmed (ESPN) and both teams' lines are posted (RotoGrinders),
+   until you mark it Bet or Pass. Decisions are saved in this browser (same storage as My Bets). */
+const DEC = { map: null };
+async function decLoad() {
+  if (DEC.map) return DEC.map;
+  try { const db = await mbIdb(); const v = await mbIdbDo(db, 'readonly', s => s.get('icelab-decisions')); DEC.map = v && typeof v === 'object' ? v : {}; }
+  catch (e) { try { DEC.map = JSON.parse(localStorage.getItem('icelab-decisions') || '{}'); } catch (e2) { DEC.map = {}; } }
+  const cut = Date.now() - 200 * 864e5; for (const k of Object.keys(DEC.map)) if ((DEC.map[k].t || 0) < cut) delete DEC.map[k];
+  return DEC.map;
+}
+async function decSet(gid, d) {
+  const m = await decLoad(); if (!d) delete m[gid]; else m[gid] = { d, t: Date.now() };
+  try { const db = await mbIdb(); await mbIdbDo(db, 'readwrite', s => s.put(m, 'icelab-decisions')); } catch (e) { try { localStorage.setItem('icelab-decisions', JSON.stringify(m)); } catch (e2) {} }
+}
+const decBar = (gid, state) => `<div class="gdec" data-decbar="${esc(gid)}"><span class="rchip">${state === 'pre' ? 'Checking goalies & lines…' : ''}</span><button class="dbtn bet" data-dec="bet" data-gid="${esc(gid)}" title="I decided to bet this game">Bet</button><button class="dbtn pass" data-dec="pass" data-gid="${esc(gid)}" title="I decided to pass on this game">Pass</button></div>`;
+function decPaint(gid) {
+  const v = DEC.map && DEC.map[gid];
+  $$(`[data-decbar="${gid}"]`).forEach(bar => { bar.querySelectorAll('.dbtn').forEach(b => b.classList.toggle('on', !!v && b.dataset.dec === v.d)); });
+  $$(`[data-gw="${gid}"]`).forEach(w => { w.classList.toggle('decided', !!v); w.classList.toggle('ready', w.dataset.rdy === '1' && !v); if (v) w.classList.remove('flash'); });
+}
+// goalies confirmed + lines posted, for one scoreboard event
+function readyOf(e, LF) {
+  const c = e.competitions[0], pg = probableGoalies(e);
+  const teams = c.competitors.map(x => String(x.team.id));
+  const gConf = teams.filter(t => pg[t] && /confirm/i.test(pg[t].st || '')).length;
+  const lines = LF ? teams.filter(t => linesFor(LF, { date: e.date }, t)).length : 0;
+  return { gConf, lines, ready: gConf === 2 && lines === 2 };
+}
+async function readyMark(evs, d) {
+  const LF = await getLinesFile(); await decLoad();
+  if (S.date !== d) return;
+  for (const e of evs) {
+    const gid = String(e.id), st = e.competitions[0].status.type.state, w = $(`[data-gw="${gid}"]`); if (!w) continue;
+    const chip = w.querySelector('.rchip');
+    if (st === 'pre') {
+      const r = readyOf(e, LF), was = w.dataset.rdy === '1';
+      w.dataset.rdy = r.ready ? '1' : '0';
+      if (chip) { chip.className = 'rchip' + (r.ready ? ' ok' : ''); chip.innerHTML = r.ready ? '✓ Ready to review' : `Goalies ${r.gConf}/2 confirmed · lines ${r.lines === 2 ? 'posted' : r.lines + '/2 posted'}`; chip.title = 'Ready = both starting goalies confirmed (ESPN) and both teams\' lines posted (RotoGrinders). Open the game to check the value, then mark Bet or Pass.'; }
+      if (r.ready && !was && !(DEC.map || {})[gid]) { w.classList.remove('flash'); void w.offsetWidth; w.classList.add('flash'); }
+    } else { w.dataset.rdy = '0'; if (chip) chip.textContent = ''; }
+    decPaint(gid);
+  }
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-dec]'); if (!b) return;
+  e.stopPropagation(); e.preventDefault();
+  const gid = b.dataset.gid, m = await decLoad(), cur = m[gid] && m[gid].d, next = cur === b.dataset.dec ? null : b.dataset.dec;
+  await decSet(gid, next); decPaint(gid);
+});
 
 /* ============================== UPSET TRACKER ============================== */
 function renderUpsets() {
