@@ -1,7 +1,8 @@
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
 # (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
 # odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
-# pre-game picks with DraftKings prices to picks.json and grades finished games. Both also run on demand from the Actions tab.
+# pre-game picks with DraftKings prices to picks.json and grades finished games. In the evening, every 30 minutes, the
+# close job records the price just before puck drop for saved picks (closing line value). All run on demand from the Actions tab.
 name: Update NHL lines
 
 on:
@@ -304,5 +305,84 @@ jobs:
           git add props.json picks.json
           if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
           git commit -m "Update DraftKings odds, picks and model accuracy"
+          git pull --rebase --quiet || true
+          git push
+
+  close:
+    # every 30 minutes in the evening: record closing prices for picks starting in the next 45 minutes (closing line value)
+    needs: lines
+    if: always() && github.event_name == 'schedule' && github.event.schedule != '7 15 * * *' && github.event.schedule != '7 21 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Record closing prices for picks starting soon
+        continue-on-error: true
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          git pull --quiet || true
+          cat > "$RUNNER_TEMP/close.js" <<'EOF'
+          // Closing prices for saved picks: runs every 30 minutes and records the price just before puck drop
+          // (the moneyline from ESPN, and DraftKings' goal scorer price via The Odds API) so the dashboard can measure closing line value.
+          const fs = require('fs');
+          const log = (...a) => console.log(...a);
+          const normName = x => (x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+          const etDay = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, '');
+          async function run({ fetchImpl = fetch, now = Date.now(), key = process.env.ODDS_API_KEY } = {}) {
+            let P; try { P = JSON.parse(fs.readFileSync('picks.json', 'utf8')); } catch (e) { log('No picks.json yet.'); return 0; }
+            const W = 45 * 60e3, soon = x => { const t = new Date(x.start).getTime(); return t > now && t - now <= W; };
+            const fresh = x => !x.closeAt || now - new Date(x.closeAt).getTime() > 20 * 60e3; // refresh at most every 20 minutes
+            const games = (P.games || []).filter(soon), picks = (P.picks || []).filter(p => soon(p) && p.dk != null && fresh(p));
+            if (!games.length && !picks.length) { log('No saved picks starting in the next 45 minutes.'); return 0; }
+            let changed = 0;
+            // moneylines (ESPN, free)
+            for (const day of new Set(games.map(g => etDay(g.start)))) {
+              let sb = null; try { const r = await fetchImpl(`https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=${day}`); sb = r.ok ? await r.json() : null; } catch (e) { log('ESPN error: ' + e.message); }
+              for (const g of games.filter(x => etDay(x.start) === day)) {
+                const e = sb && (sb.events || []).find(x => String(x.id) === g.gid), c = e && e.competitions[0];
+                if (!c || c.status.type.state !== 'pre') continue;
+                const o = c.odds && c.odds[0], h = o && o.homeTeamOdds && o.homeTeamOdds.moneyLine, a = o && o.awayTeamOdds && o.awayTeamOdds.moneyLine;
+                if (h != null && a != null && h !== '' && a !== '' && isFinite(h) && isFinite(a)) { g.mlCloseH = +h; g.mlCloseA = +a; g.closeAt = new Date(now).toISOString(); changed++; log(`${g.aa} @ ${g.ha}: closing moneyline ${a} / ${h}`); }
+              }
+            }
+            // goal scorer prices (DraftKings via The Odds API; one request per game starting soon)
+            if (picks.length && !key) log('No ODDS_API_KEY: skipping goal scorer closing prices.');
+            if (picks.length && key) {
+              const BASE = 'https://api.the-odds-api.com/v4/sports/icehockey_nhl';
+              let events = []; try { const r = await fetchImpl(`${BASE}/events?apiKey=${key}`); events = r.ok ? await r.json() : []; } catch (e) { log('Odds API error: ' + e.message); }
+              for (const ev of events) {
+                const t = new Date(ev.commence_time).getTime(); if (!(t > now && t - now <= W)) continue;
+                const mine = picks.filter(p => Math.abs(new Date(p.start).getTime() - t) < 20 * 60e3); if (!mine.length) continue;
+                try {
+                  const r = await fetchImpl(`${BASE}/events/${ev.id}/odds?apiKey=${key}&regions=us&markets=player_goal_scorer_anytime&bookmakers=draftkings&oddsFormat=american`);
+                  if (!r.ok) throw new Error('HTTP ' + r.status);
+                  const data = await r.json(), bk = (data.bookmakers || []).find(b => b.key === 'draftkings'), mk = bk && (bk.markets || []).find(m => m.key === 'player_goal_scorer_anytime');
+                  const m = {}; for (const o of (mk && mk.outcomes) || []) if (!/^no$/i.test(o.name || '') && Number.isFinite(o.price)) m[normName(o.description || o.name)] = o.price;
+                  let n = 0; for (const p of mine) { const price = m[normName(p.n)]; if (price != null) { p.dkClose = price; p.closeAt = new Date(now).toISOString(); n++; changed++; } }
+                  log(`${ev.away_team} @ ${ev.home_team}: closing DraftKings prices for ${n} saved picks`);
+                } catch (e) { log(`::warning::${ev.away_team} @ ${ev.home_team}: ${e.message}`); }
+              }
+            }
+            if (changed) fs.writeFileSync('picks.json', JSON.stringify(P));
+            log(`Recorded ${changed} closing prices.`);
+            return changed;
+          }
+          module.exports = { run };
+          if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::error::' + (e.stack || e.message)); process.exit(1); });
+          EOF
+          node "$RUNNER_TEMP/close.js"
+
+      - name: Commit picks.json if it changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add picks.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
+          git commit -m "Record closing prices"
           git pull --rebase --quiet || true
           git push
