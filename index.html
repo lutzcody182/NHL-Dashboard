@@ -4052,8 +4052,9 @@ const GM_FEATS = [
   ['trip', 'Road trip length', 'sched', 'per 3 straight road games the visitor has played going in'],
   ['homec', 'Homecoming after a long trip', 'sched', 'home team\'s first home game after 4+ road games'],
   ['alt', 'Playing at altitude (Denver)', 'sched', 'visitors playing in Denver'],
-  ['move', 'Betting line movement', 'move', 'per 10 points the home team\'s market chance moved (open → now)']];
-const GM_GROUPS = [['rest', 'Rest & back-to-backs'], ['travel', 'Time zones / travel'], ['goalie', 'Starting goalie'], ['special', 'Special teams'], ['discipline', 'Discipline'], ['form', 'Recent form'], ['homecook', 'Home cooking'], ['gmatch', 'Shooters vs. goalie matchup'], ['ot', 'Overtime & shootout'], ['gload', 'Goalie workload'], ['sched', 'Schedule stretches'], ['move', 'Line movement']];
+  ['move', 'Betting line movement', 'move', 'per 10 points the home team\'s market chance moved (open → now)'],
+  ['style', 'Style matchup: rush vs. cycle', 'style', 'per 2% more expected goals the home team gets from how its rush/cycle offense fits the visitor\'s defense, than the reverse']];
+const GM_GROUPS = [['rest', 'Rest & back-to-backs'], ['travel', 'Time zones / travel'], ['goalie', 'Starting goalie'], ['special', 'Special teams'], ['discipline', 'Discipline'], ['form', 'Recent form'], ['homecook', 'Home cooking'], ['gmatch', 'Shooters vs. goalie matchup'], ['ot', 'Overtime & shootout'], ['gload', 'Goalie workload'], ['sched', 'Schedule stretches'], ['move', 'Line movement'], ['style', 'Rush vs. cycle style matchup']];
 const GM = { model: null, loading: false, prog: '' };
 const logit = p => Math.log(p / (1 - p));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -4089,6 +4090,16 @@ function gmTeamXg(g, S) {
   }
   return o;
 }
+// rush vs. cycle style fit: how much extra (or less) xG each offense should get because its mix of rush and set-up chances
+// lines up with what the other defense gives up, beyond what the two teams' overall ratings already say
+function gmStyleFit(S, offId, defId) {
+  const L = S.Lst; if (!L || L.n < 50) return 0;
+  const o = gmTeam(S, offId), d = gmTeam(S, defId), lr = L.r / L.n, lc = L.c / L.n, K = 10;
+  if (!(lr > 0) || !(lc > 0)) return 0;
+  const rate = (v, n, lg) => ((v || 0) + lg * K) / ((n || 0) + K) / lg;
+  const oR = rate(o.rF, o.sg, lr), oC = rate(o.cF, o.sg, lc), dR = rate(d.rA, d.sg, lr), dC = rate(d.cA, d.sg, lc), sr = lr / (lr + lc);
+  return sr * (oR - 1) * (dR - 1) + (1 - sr) * (oC - 1) * (dC - 1);
+}
 // newer walk-forward factors (appended after the shooter-vs-goalie factor, in GM_FEATS order)
 function gmExtra(S, hId, aId, dateIso, gH, gA, f, ml, mlOpen) {
   const h = gmTeam(S, hId), a = gmTeam(S, aId), day = d => Math.floor(new Date(d) / 864e5), today = day(dateIso);
@@ -4102,7 +4113,7 @@ function gmExtra(S, hId, aId, dateIso, gH, gA, f, ml, mlOpen) {
   const homec = t => { const s = sch(t); if (!s.length || s[s.length - 1].h) return 0; return trip(t) >= 4 ? 1 : 0; };
   const alt = TM(hId).abbr === 'COL' ? 1 : 0;
   const pm = devig(ml), po = devig(mlOpen), move = fin(pm) && fin(po) ? (pm - po) / .1 : 0;
-  return [ot, n7(gH) - n7(gA), yb(gH) - yb(gA), in4(h), in4(a), Math.min(6, trip(a)) / 3, homec(h), alt, move];
+  return [ot, n7(gH) - n7(gA), yb(gH) - yb(gA), in4(h), in4(a), Math.min(6, trip(a)) / 3, homec(h), alt, move, (gmStyleFit(S, hId, aId) - gmStyleFit(S, aId, hId)) / .02];
 }
 function gmStateNew() { return { T: {}, Gk: {}, mu: 2.9, last: null, R: {}, Rl: { pen: 0, n: 0 } }; }
 // referee crew: penalties per game vs. league average (1 = average), from games before this one
@@ -4154,6 +4165,11 @@ function gmUpdate(S, g) {
   if (g.ot || g.so) { const w = g.home.score > g.away.score ? h : a; h.otg = (h.otg || 0) + 1; a.otg = (a.otg || 0) + 1; w.otw = (w.otw || 0) + 1; }
   S.GkS = S.GkS || {}; for (const t of [H, Aw]) { const st = gmStarter(g, t); if (st) { const l = S.GkS[st] || (S.GkS[st] = []); l.push(g.date); if (l.length > 6) l.shift(); } }
   for (const [t, hm] of [[h, 1], [a, 0]]) { t.sch = t.sch || []; t.sch.push({ d: g.date, h: hm }); if (t.sch.length > 8) t.sch.shift(); }
+  // style: even-strength xG off the rush vs. from set-up (cycle) play, for and against
+  { const st = { [H]: { r: 0, c: 0 }, [Aw]: { r: 0, c: 0 } };
+    for (const s of g.shots) { if (s.t === 3 || s.en || s.str !== 0 || !st[s.tm] || (s.per > 3 && g.stype !== 3)) continue; if (s.f & 2) st[s.tm].r += s.xg; else st[s.tm].c += s.xg; }
+    S.Lst = S.Lst || { r: 0, c: 0, n: 0 };
+    for (const [t, me, op] of [[h, H, Aw], [a, Aw, H]]) { t.rF = (t.rF || 0) + st[me].r; t.cF = (t.cF || 0) + st[me].c; t.rA = (t.rA || 0) + st[op].r; t.cA = (t.cA || 0) + st[op].c; t.sg = (t.sg || 0) + 1; S.Lst.r += st[me].r; S.Lst.c += st[me].c; S.Lst.n++; } }
   const nh = { off: h.off + al(h) * (vh - (a.def - S.mu) - h.off), def: h.def + al(h) * (va - (a.off - S.mu) - h.def) };
   const na = { off: a.off + al(a) * (va - (h.def - S.mu) - a.off), def: a.def + al(a) * (vh - (h.off - S.mu) - a.def) };
   Object.assign(h, nh); Object.assign(a, na);
@@ -4185,7 +4201,7 @@ function gmUpdate(S, g) {
 function gmNewSeason(S) {
   for (const t of Object.values(S.T)) {
     t.off = S.mu + .5 * (t.off - S.mu); t.def = S.mu + .5 * (t.def - S.mu); t.n = Math.min(t.n, 10);
-    for (const k of ['sxf', 'sxa', 'hxf', 'hxa', 'rxf', 'rxa', 'ppg', 'ppga', 'pen', 'gp', 'ppo', 'ppoA', 'otg', 'otw']) if (t[k] != null) t[k] *= .5;
+    for (const k of ['sxf', 'sxa', 'hxf', 'hxa', 'rxf', 'rxa', 'ppg', 'ppga', 'pen', 'gp', 'ppo', 'ppoA', 'otg', 'otw', 'rF', 'cF', 'rA', 'cA', 'sg']) if (t[k] != null) t[k] *= .5;
     t.rec = []; t.last = null;
   }
   for (const q of Object.values(S.Gk)) { q.xga *= .5; q.ga *= .5; q.toi *= .5; }
@@ -4259,8 +4275,13 @@ function gmTrain(games) {
   const sBase = gmScore(test, r => gmProb(Wbase, r.x)), sAll = gmScore(test, r => gmProb(Wall, r.x));
   // ablation: drop one group at a time from the full model
   const abl = {};
-  for (const grp of allGroups) { const W = gmFit(train, gmMask(allGroups.filter(x => x !== grp))); abl[grp] = gmScore(test, r => gmProb(W, r.x)).ll - sAll.ll; }
-  const keep = allGroups.filter(grp => abl[grp] > .001);
+  // ...and it has to help in both the older and newer half of the test games, not just overall (guards against luck)
+  const half = Math.floor(test.length / 2), tA = test.slice(0, half), tB = test.slice(half), ablA = {}, ablB = {};
+  for (const grp of allGroups) { const W = gmFit(train, gmMask(allGroups.filter(x => x !== grp))), pf = r => gmProb(W, r.x), pa = r => gmProb(Wall, r.x); abl[grp] = gmScore(test, pf).ll - sAll.ll; ablA[grp] = gmScore(tA, pf).ll - gmScore(tA, pa).ll; ablB[grp] = gmScore(tB, pf).ll - gmScore(tB, pa).ll; }
+  // factors with an obvious direction must also point the right way (e.g. a better style fit can't hurt), so a lucky test split can't sneak in nonsense
+  const GM_SIGN = { gmatch: ['gmatch', 1], ot: ['ot', 1], style: ['style', 1], goalie: ['goalie', 1], move: ['move', 1] };
+  const signOK = grp => { const s = GM_SIGN[grp]; if (!s) return true; const i = GM_FEATS.findIndex(f => f[0] === s[0]); return !(Wall[i] * s[1] < 0); };
+  const keep = allGroups.filter(grp => abl[grp] > .001 && ablA[grp] > 0 && ablB[grp] > 0 && signOK(grp));
   const Wkeep = gmFit(train, gmMask(keep)), sKeep = gmScore(test, r => gmProb(Wkeep, r.x));
   // market comparison + blend (games with lines only)
   const mTest = test.filter(r => fin(r.mk)), mTrain = train.filter(r => fin(r.mk));
@@ -4414,6 +4435,7 @@ async function renderGameModelPreview(s, g) {
     <div class="grid g2" style="margin-top:10px"><div><h4 class="cmp-sec" style="margin-top:0">Why</h4>${parts ? `<ul class="gmwhy">${parts}</ul>` : '<p class="muted" style="margin:0">Mostly team strength and home ice.</p>'}</div>
     <div><h4 class="cmp-sec" style="margin-top:0">Goalies used</h4><p style="margin:0 0 4px;font-size:13px">${esc(g.away.abbr)}: ${gName(gA, g.away.id)}</p><p style="margin:0;font-size:13px">${esc(g.home.abbr)}: ${gName(gH, g.home.id)}</p>
       ${r.match ? `<h4 class="cmp-sec">Shooters vs. goalie</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('How well each lineup\'s shot mix (where they shoot from, shot types, rebounds and rush chances) fits the other goalie\'s weak spots, compared with an average lineup against him. Used only if it improved the model in testing.')}">${esc(g.home.abbr)} shooters vs. ${esc(gName(gA, g.away.id).replace(/<[^>]+>/g, '').split('(')[0].trim())}: <b style="color:${r.match.h > .01 ? 'var(--good)' : r.match.h < -.01 ? 'var(--neg)' : 'inherit'}">${r.match.h >= 0 ? '+' : '−'}${pct1(Math.abs(r.match.h))}%</b></p><p style="margin:0 0 4px;font-size:13px">${esc(g.away.abbr)} shooters vs. ${esc(gName(gH, g.home.id).replace(/<[^>]+>/g, '').split('(')[0].trim())}: <b style="color:${r.match.a > .01 ? 'var(--good)' : r.match.a < -.01 ? 'var(--neg)' : 'inherit'}">${r.match.a >= 0 ? '+' : '−'}${pct1(Math.abs(r.match.a))}%</b></p>${M.keep.includes('gmatch') ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}` : ''}
+      ${(() => { const fh = gmStyleFit(M.S, g.home.id, g.away.id), fa = gmStyleFit(M.S, g.away.id, g.home.id); if (!fh && !fa) return ''; const t = (v, ab) => `<b style="color:${v > .005 ? 'var(--good)' : v < -.005 ? 'var(--neg)' : 'inherit'}">${v >= 0 ? '+' : '−'}${pct1(Math.abs(v))}%</b>`; return `<h4 class="cmp-sec">Rush vs. cycle styles</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('How each offense\'s mix of rush chances and set-up (cycle) chances fits what the other defense gives up, beyond the teams\' overall ratings.')}">${esc(g.home.abbr)} offense vs. ${esc(g.away.abbr)} defense: ${t(fh)} · ${esc(g.away.abbr)} offense vs. ${esc(g.home.abbr)} defense: ${t(fa)}</p>${M.keep.includes('style') ? '' : '<p class="muted" style="margin:0;font-size:12px">Not used in the win chance: it didn\'t improve the model in testing.</p>'}`; })()}
       <h4 class="cmp-sec">Referees</h4>${r.ref.names.length ? `<p style="margin:0 0 4px;font-size:13px">${r.ref.names.map(esc).join(' & ')}: <b style="color:${r.ref.crew > 1.03 ? 'var(--neg)' : r.ref.crew < .97 ? 'var(--good)' : 'inherit'}">${r.ref.crew >= 1 ? '+' : '−'}${pct1(Math.abs(r.ref.crew - 1))}%</b> penalties vs. an average crew</p>${(() => { const pt = r.parts.find(x => x.k === 'ref'); return `<p class="muted" style="margin:0;font-size:12px">${r.ref.goals.h || r.ref.goals.a ? `Expected power-play goals: ${esc(g.home.abbr)} ${r.ref.goals.h >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.h))}, ${esc(g.away.abbr)} ${r.ref.goals.a >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.a))}${pt ? ` → ${esc(pt.d >= 0 ? g.home.abbr : g.away.abbr)} +${Math.abs(pt.d * 100).toFixed(1)} pts` : ''}. ` : ''}${fin(r.ref.beta) ? `${Math.round(r.ref.beta * 100)}% of a crew's past rate carries into its next game (learned from past games).` : 'Retrain in Model Lab to use referee crews.'}</p>`; })()}` : '<p class="muted" style="margin:0;font-size:13px">Not posted yet (usually the day of the game).</p>'}
       <h4 class="cmp-sec">Injuries factored in</h4>${injTxt || '<p class="muted" style="margin:0;font-size:13px">No regulars listed as out.</p>'}</div></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">Points = how much each factor moves ${esc(g.home.abbr)}'s win chance. The model was last trained ${new Date(M.t).toLocaleDateString()}; retrain it in Model Lab to include the newest games. For fun and analysis, not betting advice.</p></div>`;
