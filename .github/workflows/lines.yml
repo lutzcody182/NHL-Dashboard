@@ -193,7 +193,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
             return w.__t;
           }
 
@@ -227,7 +227,11 @@ jobs:
             const PF = readJSON('props.json', null), LF = readJSON('lines.json', null);
             let added = 0, updated = 0, gAdded = 0;
             T.gsBlendFit(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
-            const gs = T.A.filtered.length ? T.gsGetState() : null;
+            // last season is the goal scorer model's starting point (counted at half weight)
+            T.GS.prior = [...T.A.games.values()].filter(g => g && g.final && T.seasonOf(g.date) === T.S.curSeason - 1);
+            const gs = T.A.filtered.length || T.GS.prior.length ? T.gsGetState() : null;
+            if (gs) log(`Goal scorer model: ${T.A.filtered.length} games this season + ${T.GS.prior.length} from last season.`);
+            const MATE = gs && sb ? T.gsMateMap(gs.S, LF, sb.events || []) : null;
             if (sb) for (const e of sb.events || []) {
               const c = e.competitions[0];
               if (c.status.type.state !== 'pre' || new Date(e.date) <= now) continue; // only games that haven't started
@@ -242,7 +246,7 @@ jobs:
                 }
               }
               if (gs) {
-                const rows = T.gsTonight(gs.S, e, LF, PF, inj).filter(r => r.dk != null);
+                const rows = T.gsTonight(gs.S, e, LF, PF, inj, MATE).filter(r => r.dk != null);
                 if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
                 for (const r of rows) {
                   const k = `${e.id}|${r.pid}`;
