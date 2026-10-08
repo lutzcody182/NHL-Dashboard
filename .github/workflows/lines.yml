@@ -1,3 +1,4 @@
+
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
 # (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
 # odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
@@ -157,6 +158,41 @@ jobs:
           })().catch(err => { console.log('::error::' + err.message); process.exit(1); });
           EOF
 
+      - name: Fetch Post Hockey skater ratings
+        continue-on-error: true
+        run: |
+          cat > "$RUNNER_TEMP/ph.js" <<'EOF'
+          // Post Hockey skater ratings (used with permission): this season and the two before, regular season, all situations.
+          const fs = require('fs');
+          const log = (...a) => console.log(...a);
+          async function run({ fetchImpl = fetch, now = new Date() } = {}) {
+            const y = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1, code = k => `${y - k}${y - k + 1}`;
+            let old = {}; try { old = JSON.parse(fs.readFileSync('posthockey.json', 'utf8')).seasons || {}; } catch (e) {}
+            const out = { source: 'Post Hockey (posthockey.com), used with permission', updated: now.toISOString(), cols: ['n', 'tm', 'pos', 'gp', 'toi', 'o', 'd', 'net', 'est', 'sh'], seasons: {} };
+            for (const k of [0, 1, 2]) {
+              const s = code(k);
+              if (k >= 2 && old[s] && old[s].length) { out.seasons[s] = old[s]; log(`${s}: kept ${old[s].length} saved players`); continue; } // finished seasons don't change
+              const rows = [];
+              for (let off = 0; off < 3000; off += 500) {
+                const url = `https://posthockey.com/api/v1/stats/leaders?stat=est_net_rating&season=${s}&game_type=2&strength=all&position=S&min_gp=1&min_toi=0&sort_dir=desc&limit=500&offset=${off}`;
+                let j = null;
+                for (let t = 0; t < 3 && !j; t++) { try { const r = await fetchImpl(url, { headers: { 'User-Agent': 'NHL-Ice-Lab (personal dashboard; permission granted)' } }); if (r.ok) j = await r.json(); else log(`${s}: HTTP ${r.status}`); } catch (e) { log(`${s}: ${e.message}`); } if (!j) await new Promise(r => setTimeout(r, 2000)); }
+                if (!j) break;
+                for (const r of j.rows || []) rows.push([`${r.first_name || ''} ${r.last_name || ''}`.trim(), r.team_abbreviation || '', r.position || '', r.games_played || 0, r.toi_seconds || 0, r.o_rating, r.d_rating, r.net_rating_v2, r.est_net_rating, r.current_shooter_talent]);
+                if ((j.rows || []).length < 500 || rows.length >= (j.total || 0)) break;
+                await new Promise(r => setTimeout(r, 500)); // be polite
+              }
+              if (rows.length) { out.seasons[s] = rows; log(`${s}: ${rows.length} skaters`); }
+              else if (old[s]) { out.seasons[s] = old[s]; log(`${s}: fetch failed, kept saved copy`); }
+            }
+            if (Object.keys(out.seasons).length) fs.writeFileSync('posthockey.json', JSON.stringify(out));
+            return out;
+          }
+          module.exports = { run };
+          if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::warning::' + (e.stack || e.message)); process.exit(0); });
+          EOF
+          node "$RUNNER_TEMP/ph.js"
+
       - name: Restore saved game data
         uses: actions/cache@v4
         with:
@@ -194,7 +230,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
             return w.__t;
           }
 
@@ -211,6 +247,7 @@ jobs:
             log(`Model data: ${T.A.filtered.length} completed games this season.`);
             // game model: last season + this season (saved games come from the cache)
             let gmOK = false;
+            await T.getPHFile(); log(T.PHF.idx ? `Post Hockey ratings loaded: ${Object.entries(T.PHF.data.seasons).map(([k, v]) => k + ' ' + v.length).join(', ')}` : 'No Post Hockey ratings file.');
             try {
               const all = preload ? [...T.A.games.values()].filter(g => g && g.final) : await T.gmCollect(() => {});
               const M = T.gmTrain(all);
@@ -298,13 +335,13 @@ jobs:
           EOF
           NODE_PATH="$RUNNER_TEMP/tk/node_modules" node "$RUNNER_TEMP/track.js"
 
-      - name: Commit props.json and picks.json if they changed
+      - name: Commit props.json, picks.json and posthockey.json if they changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
-          git add props.json picks.json
+          git add props.json picks.json posthockey.json 2>/dev/null || git add props.json picks.json
           if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
-          git commit -m "Update DraftKings odds, picks and model accuracy"
+          git commit -m "Update DraftKings odds, Post Hockey ratings, picks and model accuracy"
           git pull --rebase --quiet || true
           git push
 
