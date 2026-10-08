@@ -733,6 +733,18 @@ function predictW(W, s) { const x = featVec(s); let z = 0; for (let i = 0; i < W
 const strCode = s => { const t = ((s && (s.abbreviation || s.text)) || '').toLowerCase(); return t.includes('power') ? 1 : t.includes('short') ? 2 : 0; };
 
 /* Turn an ESPN summary into a compact game record */
+// Every final NHL game has a winner. If a shootout winner's extra goal isn't in the score (a "tie"), use ESPN's winner flag,
+// or the shootout goals in the play-by-play, and add the goal the NHL awards. Applied to new and saved games alike.
+function fixFinal(g) {
+  if (!g || !g.final || g.home.score !== g.away.score) return g;
+  let w = g.win || null;
+  if (!w && g.shots) { const so = { [g.home.id]: 0, [g.away.id]: 0 }; for (const s of g.shots) if (s.per >= 5 && s.t === 0 && s.tm in so) so[s.tm]++; if (so[g.home.id] !== so[g.away.id]) w = so[g.home.id] > so[g.away.id] ? 'h' : 'a'; }
+  if (w === 'h') g.home.score++; else if (w === 'a') g.away.score++;
+  else g.unknownWinner = true;
+  if (w) g.so = true;
+  return g;
+}
+const sbWinner = (h, a) => h.winner === true ? 'h' : a.winner === true ? 'a' : (+h.score > +a.score ? 'h' : +a.score > +h.score ? 'a' : null);
 function processGame(s) {
   const comp = s.header && s.header.competitions && s.header.competitions[0];
   if (!comp) return null;
@@ -888,7 +900,7 @@ function processGame(s) {
   const g = {
     v: VER, id: String(s.header.id), date: comp.date, stype, final: !!st.completed, state: st.state, detail: st.shortDetail || st.detail || '',
     home: { ...home, score: +cH.score || 0 }, away: { ...away, score: +cA.score || 0 },
-    toi, ot: lastPer > 3, so, shots, sk, gk, nm, bx, ml, mlOpen, tot, bookN, fo, off, att: +gi.attendance || 0, ven: (gi.venue && gi.venue.fullName) || '', neutral: !!comp.neutralSite
+    toi, ot: lastPer > 3, so, shots, sk, gk, nm, bx, ml, mlOpen, tot, bookN, fo, off, win: cH.winner === true ? 'h' : cA.winner === true ? 'a' : null, att: +gi.attendance || 0, ven: (gi.venue && gi.venue.fullName) || '', neutral: !!comp.neutralSite
   };
   if (A.W && A.useTrained) applyModel(g);
   return g;
@@ -1107,7 +1119,7 @@ async function loadDayUpsets(evs, d) {
     if (!fin(ph)) { const o = c.odds && c.odds[0]; if (o && o.homeTeamOdds && o.awayTeamOdds) ph = devig({ h: +o.homeTeamOdds.moneyLine, a: +o.awayTeamOdds.moneyLine }); }
     if (!fin(ph) && pre[id] && pre[id].hn >= 5 && pre[id].an >= 5) { ph = pre[id].pH; src = 'Ice Lab'; }
     if (!fin(ph)) return null;
-    const fav = ph >= .5 ? H : Aw, dog = fav === H ? Aw : H, winner = hs > as ? H : Aw;
+    const fav = ph >= .5 ? H : Aw, dog = fav === H ? Aw : H, wf = sbWinner(h, a), winner = wf === 'a' ? Aw : wf === 'h' ? H : (hs > as ? H : Aw);
     return { id, h: H, a: Aw, hs, as, ot: !!(g && (g.ot || g.so)), src, fav, winner, favP: Math.max(ph, 1 - ph), upset: winner === dog, winP: winner === H ? ph : 1 - ph };
   })).filter(Boolean);
   if (d !== S.date || !box()) return;
@@ -1400,10 +1412,10 @@ async function getDay(d) {
 }
 async function getGame(id) {
   if (A.games.has(id)) return A.games.get(id);
-  const c = await DB.get(`g${VER}:${id}`);
+  const c = fixFinal(await DB.get(`g${VER}:${id}`));
   if (c) { addTeam(c.home); addTeam(c.away); A.games.set(id, c); return c; }
   const s = await getJSON(`${API}/summary?event=${id}`);
-  const g = processGame(s);
+  const g = fixFinal(processGame(s));
   if (g && g.final) { A.games.set(id, g); DB.set(`g${VER}:${id}`, g); }
   return g;
 }
@@ -4258,7 +4270,7 @@ function gmScore(rows, pf) {
   return { n: rows.length, ll: ll / rows.length, brier: br / rows.length, acc: hit / rows.length };
 }
 function gmTrain(games) {
-  games = [...games].filter(g => g.final && g.shots && g.shots.length).sort((a, b) => new Date(a.date) - new Date(b.date));
+  games = [...games].filter(g => g.final && g.shots && g.shots.length && !g.unknownWinner).sort((a, b) => new Date(a.date) - new Date(b.date));
   // tune how ratings react: xG vs. goals blend, how fast they move, and score adjustment; keep the combo that predicts best
   const sadj = gmScoreAdj(games), grid = [];
   const scoreOpt = opt => { const r = gmBuild(games, opt, sadj, true).rows; if (r.length < 150) return Infinity; const c = Math.floor(r.length * .7), W = gmFit(r.slice(0, c), gmMask([])); return gmScore(r.slice(c), x => gmProb(W, x.x)).ll; };
@@ -5589,14 +5601,14 @@ function gamePickCard(PK) {
   const lst = [...cur.list].sort((a, b) => a[0].start > b[0].start ? -1 : a[0].start < b[0].start ? 1 : 0), shown = GPK.all ? lst : lst.slice(0, 40);
   const ab = (x, sd) => sd === 'h' ? x.ha : x.aa;
   const rows = shown.map(([x, sd]) => { const q = sd === 'h' ? x.p : 1 - x.p, price = sd === 'h' ? x.mlH : x.mlA, edge = q - amImplied(price), pr = x.hw != null ? gpRes(x, sd) : null;
-    return `<tr><td class="l">${parseYmd(x.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${esc(x.aa)} @ ${esc(x.ha)}${x.hw != null ? ` <span class="muted">${x.as}–${x.hs}</span>` : ''}</td><td class="l"><div class="tcell">${logoImg(sd === 'h' ? x.h : x.a, 16)}<b>${esc(ab(x, sd))}</b> ${fmtML(price)}</div></td><td>${pct1(q)}%</td><td style="color:${edge > 0 ? 'var(--good)' : 'var(--neg)'}">${edge > 0 ? '+' : ''}${(edge * 100).toFixed(1)}</td><td class="l">${pr == null ? '<span class="muted">Pending</span>' : pr > 0 ? '<b style="color:var(--good)">✓ Won</b>' : '<span style="color:var(--neg)">✗ Lost</span>'}${(x.inj || []).length ? ` <span class="muted" style="font-size:11.5px" data-tip="${esc('Out: ' + x.inj.map(esc).join(', '))}">🩹</span>` : ''}</td><td>${pr == null ? '–' : moneyCell(pr)}</td></tr>`; }).join('');
+    return `<tr><td class="l">${parseYmd(x.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${esc(x.aa)} @ ${esc(x.ha)}${x.hw != null ? ` <span class="muted">${x.as}–${x.hs}</span>` : ''}</td><td class="l"><div class="tcell">${logoImg(sd === 'h' ? x.h : x.a, 16)}<b>${esc(ab(x, sd))}</b> ${fmtML(price)}</div></td><td>${pct1(q)}%</td><td style="color:${edge > 0 ? 'var(--good)' : 'var(--neg)'}">${edge > 0 ? '+' : ''}${(edge * 100).toFixed(1)}</td><td class="l">${pr == null ? '<span class="muted">Pending</span>' : pr > 0 ? '<b style="color:var(--good)">✓ Won</b>' : '<span style="color:var(--neg)">✗ Lost</span>'}${(x.inj || []).length ? ` <span class="muted" style="font-size:11.5px" data-tip="${esc('Out: ' + x.inj.map(esc).join(', '))}">🩹</span>` : ''}</td><td>${pr == null ? '–' : moneyCell(pr)}</td><td class="l">${(() => { const fh = x.p >= .5, ab2 = fh ? x.ha : x.aa, q2 = fh ? x.p : 1 - x.p; return `${esc(ab2)} ${pct1(q2)}%${x.hw == null ? '' : (fh === !!x.hw) ? ' <b style="color:var(--good)">✓</b>' : ' <span style="color:var(--neg)">✗</span>'}`; })()}</td></tr>`; }).join('');
   // model vs market accuracy on graded games
   const acc = f => div(done.filter(g => (f(g) >= .5) === !!g.hw).length, done.length);
   return `<div class="card"><div class="card-h"><h3>📒 Game model profit tracker</h3><p>${done.length} graded games · ${pend.length} pending · updated ${PK.updated ? new Date(PK.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</p></div>
     <p class="muted" style="margin:-4px 0 10px;font-size:12px">The GitHub job trains Game model v2 on last season and this season, then saves a moneyline pick for every game before puck drop (about 11 AM and 5 PM Eastern, using the latest line and any injuries and confirmed goalies) and grades it the next morning. Bet sizes follow your rule: $100 on plus odds, bet to win $100 on minus odds.${done.length ? ` Picked the winner in <b>${pct1(acc(g => g.p))}%</b> of graded games (betting market favorite: ${pct1(acc(g => g.mk))}%).` : ''}</p>
     ${tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit</h3>${chart}
     <div class="card-h" style="margin-top:14px"><h3>Pick log</h3><select id="gpStrat">${S2.map(s => `<option value="${s.k}" ${s.k === cur.k ? 'selected' : ''}>${esc(s.l)}</option>`).join('')}</select></div>
-    ${rows ? `<div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Pick</th><th>Model chance</th><th>Edge</th><th class="l">Result</th><th>Profit</th></tr></thead><tbody>${rows}</tbody></table></div>${lst.length > 40 ? `<button class="btn" id="gpAll" style="margin-top:8px">${GPK.all ? 'Show fewer' : `Show all ${lst.length}`}</button>` : ''}` : '<p class="muted" style="margin:0">No picks in this strategy yet.</p>'}
+    ${rows ? `<div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Bet</th><th>Model chance</th><th>Edge</th><th class="l">Bet result</th><th>Profit</th><th class="l" data-gloss="The team Game model v2 gave the better chance to win, and whether they won. This is how the model's accuracy is graded. It can differ from the bet: a value bet on an underdog can be a good bet even though the model expects them to lose more often than not.">Model's favorite</th></tr></thead><tbody>${rows}</tbody></table></div>${lst.length > 40 ? `<button class="btn" id="gpAll" style="margin-top:8px">${GPK.all ? 'Show fewer' : `Show all ${lst.length}`}</button>` : ''}` : '<p class="muted" style="margin:0">No picks in this strategy yet.</p>'}
     <p class="muted" style="font-size:12px;margin:10px 0 0">Value bet = the model's chance beats the price's break-even chance by 3+ points. 🩹 = key players were out. For fun and analysis, not betting advice.</p></div>`;
 }
 document.addEventListener('change', e => { if (e.target.id === 'gpStrat') { GPK.strat = e.target.value; GPK.all = false; renderModelExtras(); } });
@@ -5661,7 +5673,7 @@ async function loadDayPicks(evs, d) {
   const PK = await getPicksFile();
   if (d !== S.date || !box()) return;
   const put = html => { S.dp = { d, html }; box().innerHTML = html; };
-  const sc = {}; for (const e of evs) { const c = e.competitions[0]; if (!c.status.type.completed) continue; const h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); sc[String(e.id)] = { hs: +h.score, as: +a.score }; }
+  const sc = {}; for (const e of evs) { const c = e.competitions[0]; if (!c.status.type.completed) continue; const h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); { const w = sbWinner(h, a); sc[String(e.id)] = { hs: +h.score + (w === 'h' && +h.score === +a.score ? 1 : 0), as: +a.score + (w === 'a' && +h.score === +a.score ? 1 : 0) }; }; }
   const gp = ((PK && PK.games) || []).filter(g => g.date === d && (g.verdict === 'bet' || g.verdict === 'lean')).sort((a, b) => b.edge - a.edge);
   const sp = ((PK && PK.picks) || []).filter(p => p.date === d && p.edge > 0 && p.res !== 'V').sort((a, b) => b.roi - a.roi).slice(0, 6);
   if (!gp.length && !sp.length) {
