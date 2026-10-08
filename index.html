@@ -1194,7 +1194,23 @@ async function openGame(id, silent) {
   renderGame();
   clearInterval(GC.timer);
   if (GC.g && GC.g.state === 'in') GC.timer = setInterval(() => { if (GC.id === id && !document.hidden) openGame(id, true); }, 30000);
-  else if (GC.g && GC.g.state === 'pre') GC.timer = setInterval(() => { if (GC.id === id && !document.hidden && $('#luBody')) renderLineups(GC.raw, GC.g); }, 120000);
+  else if (GC.g && GC.g.state === 'pre') { GC.preSig = null; gcPreRefresh(id, true); GC.timer = setInterval(() => { if (GC.id === id && !document.hidden && $('#luBody')) { renderLineups(GC.raw, GC.g); gcPreRefresh(id); } }, 120000); }
+}
+// pre-game: when the starting goalies, referees or injury list change (e.g. a goalie gets confirmed), re-run every prediction on the card
+async function gcPreRefresh(id, first) {
+  let s = null, ev = null;
+  try { s = await getJSON(`${API}/summary?event=${id}`); const sb = await getJSON(`${API}/scoreboard?dates=${localDay(GC.g.date)}`); ev = (sb.events || []).find(e => String(e.id) === String(id)) || null; } catch (e) { return; }
+  if (GC.id !== id || !s) return;
+  if (ev && ev.competitions[0].status.type.state !== 'pre') { openGame(id, true); return; } // puck dropped
+  const pg = probableGoalies(ev), inj = injParse(s);
+  const sig = JSON.stringify([Object.entries(pg).map(([t, x]) => t + ':' + (x.id || x.n) + ':' + (/confirm/i.test(x.st || '') ? 'C' : 'P')).sort(), inj.refs, Object.values(inj.st).filter(x => x.out).map(x => x.id).sort()]);
+  if (first || GC.preSig == null) { GC.preSig = sig; return; }
+  if (sig === GC.preSig) return;
+  GC.preSig = sig; GC.raw = s; delete INJ_C[id];
+  const both = Object.values(pg).filter(x => /confirm/i.test(x.st || '')).length >= 2;
+  const note = $('#gcRefreshNote'); if (note) note.remove();
+  const gm = $('#gmBody'); if (gm) gm.insertAdjacentHTML('beforebegin', `<div class="note" id="gcRefreshNote">🔄 ${both ? 'Both starting goalies confirmed' : 'Goalie, referee or injury news came in'} at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}: predictions below were re-run with the latest information.</div>`);
+  renderLineups(s, GC.g); renderGameModelPreview(s, GC.g); renderScorerPreview(GC.g);
 }
 
 function gameAdv(g, sit, k) {
