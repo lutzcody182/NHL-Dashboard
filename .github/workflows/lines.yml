@@ -3,7 +3,8 @@
 # (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
 # odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
 # pre-game picks with DraftKings prices to picks.json and grades finished games. In the evening, every 30 minutes, the
-# close job records the price just before puck drop for saved picks (closing line value). All run on demand from the Actions tab.
+# close job records the price just before puck drop for saved picks (closing line value), and the repick job re-runs
+# both models when a starting goalie is confirmed or changed. All run on demand from the Actions tab.
 name: Update NHL lines
 
 on:
@@ -304,7 +305,7 @@ jobs:
                 const gp = T.gmEventPick(e, inj, LF);
                 if (gp && gp.ml) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) { if (!gByKey.has(k)) gAdded++; gByKey.set(k, rec); }
                 }
               }
@@ -446,5 +447,207 @@ jobs:
           git add picks.json 2>/dev/null || true
           if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
           git commit -m "Record closing prices"
+          git pull --rebase --quiet || true
+          git push
+
+  repick:
+    # evening, every 30 minutes: if a starting goalie got confirmed or switched for a game with saved picks,
+    # re-run both models and re-save those picks (no Odds API requests used)
+    needs: close
+    if: always() && github.event_name == 'schedule' && github.event.schedule != '7 15 * * *' && github.event.schedule != '7 21 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Check for goalie news
+        id: check
+        run: |
+          git pull --quiet || true
+          cat > "$RUNNER_TEMP/precheck.js" <<'EOF'
+          // Evening check: has goalie news changed for any game with saved picks that hasn't started yet? (no API credits used)
+          const fs = require('fs');
+          const etDay = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, '');
+          async function run({ fetchImpl = fetch, now = Date.now() } = {}) {
+            let P; try { P = JSON.parse(fs.readFileSync('picks.json', 'utf8')); } catch (e) { return false; }
+            const soon = (P.games || []).filter(g => { const t = new Date(g.start).getTime(); return g.hw == null && t > now && t - now < 5 * 3600e3; });
+            if (!soon.length) { console.log('No saved game picks starting in the next 5 hours.'); return false; }
+            const conf = st => /confirm/i.test(st || '') ? 'C' : 'P';
+            let changed = false;
+            for (const day of new Set(soon.map(g => etDay(g.start)))) {
+              let sb = null; try { const r = await fetchImpl(`https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=${day}`); sb = r.ok ? await r.json() : null; } catch (e) {}
+              for (const g of soon.filter(x => etDay(x.start) === day)) {
+                const e = sb && (sb.events || []).find(x => String(x.id) === g.gid); if (!e || e.competitions[0].status.type.state !== 'pre') continue;
+                for (const c of e.competitions[0].competitors) {
+                  const p = (c.probables || []).find(q => /goalie/i.test(q.name || '')) || (c.probables || [])[0]; if (!p || !p.athlete) continue;
+                  const n = p.athlete.fullName || p.athlete.displayName || '', st = (p.status && (p.status.name || p.status.abbreviation)) || 'Probable', home = c.homeAway === 'home';
+                  const savedN = home ? g.gH : g.gA, savedS = home ? g.gHs : g.gAs;
+                  if (n && (n !== savedN || conf(st) !== conf(savedS))) { console.log(`${g.aa} @ ${g.ha}: ${home ? 'home' : 'road'} goalie now ${n} (${st}), saved ${savedN || '?'} (${savedS || 'not announced'})`); changed = true; }
+                }
+              }
+            }
+            return changed;
+          }
+          module.exports = { run };
+          if (require.main === module) run().then(c => { console.log(c ? 'Goalie news changed: re-running picks.' : 'No goalie changes.'); if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${c ? 'yes' : 'no'}\n`); process.exit(0); }).catch(e => { console.log('::warning::' + e.message); process.exit(0); });
+          EOF
+          node "$RUNNER_TEMP/precheck.js"
+
+      - name: Restore saved game data
+        if: steps.check.outputs.changed == 'yes'
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache
+          key: espn-games-${{ github.run_id }}
+          restore-keys: espn-games-
+
+      - name: Install page runner
+        if: steps.check.outputs.changed == 'yes'
+        run: npm install --prefix "$RUNNER_TEMP/tk" jsdom@24 --no-audit --no-fund --silent
+
+      - name: Re-run models and re-save picks
+        if: steps.check.outputs.changed == 'yes'
+        run: |
+          cat > "$RUNNER_TEMP/track.js" <<'EOF'
+          // Pick tracker: runs the dashboard's own models (from index.html) headlessly. Saves today's pre-game goal scorer picks
+          // (DraftKings prices) and Game model v2 moneyline picks to picks.json, grades finished ones, and records each day's
+          // model test scores so the dashboard can chart accuracy over time.
+          const fs = require('fs');
+          const { JSDOM } = require('jsdom');
+          const ET = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, '');
+          const readJSON = (f, dflt) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return dflt; } };
+          const log = (...a) => console.log(...a);
+
+          async function boot(fetchImpl) {
+            const html = fs.readFileSync('index.html', 'utf8');
+            const dom = new JSDOM(html.replace(/<link[^>]+fonts[^>]*>/g, ''), { runScripts: 'outside-only', url: 'https://example.org/' });
+            const w = dom.window;
+            w.fetch = async (u, o) => {
+              const url = String(u);
+              if (!/^https?:/.test(url)) { // local files: lines.json, props.json
+                const f = url.split('?')[0]; const ok = fs.existsSync(f);
+                return { ok, status: ok ? 200 : 404, json: async () => JSON.parse(fs.readFileSync(f, 'utf8')) };
+              }
+              return fetchImpl(url, o);
+            };
+            w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
+            w.addEventListener('error', e => log('page error:', e.message));
+            const script = html.split('<script>')[1].split('</script>')[0];
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
+            return w.__t;
+          }
+
+          async function run({ fetchImpl = fetch, now = new Date(), preload } = {}) {
+            const T = await boot(fetchImpl);
+            await new Promise(r => setTimeout(r, 4000)); // let the page find the current season
+            if (!T.S.curSeason) { const d = new Date(); T.S.curSeason = d.getMonth() >= 7 ? d.getFullYear() + 1 : d.getFullYear(); }
+            T.A.season = T.S.curSeason; T.A.range = 'season'; T.A.types = 'reg'; T.A.note = '';
+            // saved processed games from earlier runs (GitHub cache) so only new games are downloaded
+            const cache = readJSON('.cache/games.json', []);
+            let pre = 0; for (const g of cache) if (g && g.v === T.VER && g.final) { T.A.games.set(g.id, T.fixFinal(g)); T.addTeam(g.home); T.addTeam(g.away); pre++; }
+            log(`Loaded ${pre} saved games from cache.`);
+            if (preload) await preload(T); else await T.ensureData(true);
+            log(`Model data: ${T.A.filtered.length} completed games this season.`);
+            // game model: last season + this season (saved games come from the cache)
+            let gmOK = false;
+            await T.getPHFile(); log(T.PHF.idx ? `Post Hockey ratings loaded: ${Object.entries(T.PHF.data.seasons).map(([k, v]) => k + ' ' + v.length).join(', ')}` : 'No Post Hockey ratings file.');
+            try {
+              const all = preload ? [...T.A.games.values()].filter(g => g && g.final) : await T.gmCollect(() => {});
+              const M = T.gmTrain(all);
+              if (M.error) log('Game model: ' + M.error); else { T.GM.model = M; gmOK = true; log(`Game model trained on ${M.nRows} games · test accuracy ${(M.sKeep.acc * 100).toFixed(1)}%`); }
+            } catch (e) { log('Game model error: ' + (e.stack || e.message)); }
+            fs.mkdirSync('.cache', { recursive: true });
+            fs.writeFileSync('.cache/games.json', JSON.stringify([...T.A.games.values()].filter(g => g && g.final)));
+
+            const picks = readJSON('picks.json', { picks: [] });
+            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g]));
+
+            // 1) today's pre-game picks
+            const today = ET(now);
+            let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
+            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null);
+            let added = 0, updated = 0, gAdded = 0;
+            T.gsBlendFit(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
+            // last season is the goal scorer model's starting point (counted at half weight)
+            T.GS.prior = [...T.A.games.values()].filter(g => g && g.final && T.seasonOf(g.date) === T.S.curSeason - 1);
+            const gs = T.A.filtered.length || T.GS.prior.length ? T.gsGetState() : null;
+            if (gs) log(`Goal scorer model: ${T.A.filtered.length} games this season + ${T.GS.prior.length} from last season.`);
+            const MATE = gs && sb ? T.gsMateMap(gs.S, LF, sb.events || []) : null;
+            if (sb) for (const e of sb.events || []) {
+              const c = e.competitions[0];
+              if (c.status.type.state !== 'pre' || new Date(e.date) <= now) continue; // only games that haven't started
+              const inj = await T.getInjuries(e.id);
+              // game model moneyline pick
+              if (gmOK) {
+                const gp = T.gmEventPick(e, inj, LF);
+                if (gp && gp.ml) {
+                  const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
+                  if (!gByKey.has(k) || gByKey.get(k).hw == null) { if (!gByKey.has(k)) gAdded++; gByKey.set(k, rec); }
+                }
+              }
+              if (gs) {
+                const rows = T.gsTonight(gs.S, e, LF, PF, inj, MATE).filter(r => r.dk != null);
+                if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
+                for (const r of rows) {
+                  const k = `${e.id}|${r.pid}`;
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, imp: +r.dkImp.toFixed(4), edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
+                  if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
+                }
+              }
+            }
+            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new.`);
+
+            // 2) grade finished games
+            let graded = 0;
+            const open = [...byKey.values()].filter(p => p.res == null && new Date(p.start) < new Date(now - 4 * 3600e3));
+            const gids = [...new Set(open.map(p => p.gid))];
+            for (const gid of gids) {
+              let g = null; try { g = await T.getGame(gid); } catch (e) { log(`Game ${gid}: ${e.message}`); }
+              if (!g || !g.final) continue;
+              for (const p of open.filter(x => x.gid === gid)) {
+                const s = g.sk[p.pid];
+                if (!s || !(s.toi > 0)) { p.res = 'V'; p.goals = 0; } // didn't play: sportsbooks void the bet
+                else { p.goals = s.g; p.res = s.g > 0 ? 'W' : 'L'; }
+                p.profit = p.res === 'W' ? (p.dk < 0 ? 100 : p.dk) : p.res === 'L' ? -(p.dk < 0 ? -p.dk : 100) : 0;
+                graded++;
+              }
+            }
+            // grade game picks
+            let gGraded = 0;
+            for (const p of [...gByKey.values()].filter(p => p.hw == null && new Date(p.start) < new Date(now - 4 * 3600e3))) {
+              let g = null; try { g = await T.getGame(p.gid); } catch (e) { log(`Game ${p.gid}: ${e.message}`); }
+              if (!g || !g.final) continue;
+              p.hs = g.home.score; p.as = g.away.score; p.hw = g.home.score > g.away.score; p.ot = !!(g.ot || g.so);
+              const price = p.side === 'h' ? p.mlH : p.mlA, won = p.side === 'h' ? p.hw : !p.hw;
+              p.profit = won ? (price < 0 ? 100 : price) : -(price < 0 ? -price : 100);
+              gGraded++;
+            }
+            log(`Graded ${graded} goal scorer picks and ${gGraded} game picks.`);
+            // today's model test scores, for the accuracy-over-time charts (one snapshot per day)
+            const hist = (picks.hist || []).filter(h => h.date !== today), snap = { date: today };
+            if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
+            if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
+            if (snap.gm || snap.gs) hist.push(snap);
+            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
+            fs.writeFileSync('picks.json', JSON.stringify(out));
+            return out;
+          }
+          module.exports = { run };
+          if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::error::' + (e.stack || e.message)); process.exit(1); });
+          EOF
+          NODE_PATH="$RUNNER_TEMP/tk/node_modules" node "$RUNNER_TEMP/track.js"
+
+      - name: Commit picks.json if it changed
+        if: steps.check.outputs.changed == 'yes'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add picks.json
+          if git diff --cached --quiet; then echo "No changes to commit."; exit 0; fi
+          git commit -m "Re-save picks after goalie news"
           git pull --rebase --quiet || true
           git push
