@@ -4685,7 +4685,7 @@ function qdFindBox() {
          opponent shot quality allowed by zone, goalie by zone, goalie by shot type, rebounds & rush chances.
    The weights b_k (how much each factor really matters) are learned from the loaded games every time the
    page or the GitHub job rebuilds the model, on games the model didn't use for its stats. */
-const GS = { date: null, game: '', team: '', q: '', cache: null };
+const GS = { date: null, game: '', team: '', q: '', cache: null, blendW: .4, blendN: 0, blendFit: null };
 const GS_FACT = [['env', 'Team scoring environment'], ['dvol', 'Opponent shot volume allowed'], ['dqual', 'Opponent shot quality allowed'], ['gzone', 'Goalie by zone'], ['gtype', 'Goalie by shot type'], ['rr', 'Rebounds & rush chances']];
 const ZN = ['inner slot', 'slot', 'wide/sharp angle', 'point'];
 const SHOT_T = st => /tip|deflect/i.test(st) ? 3 : /back/i.test(st) ? 2 : /slap/i.test(st) ? 1 : /wrist|snap/i.test(st) ? 0 : 4;
@@ -4739,17 +4739,17 @@ function gsImplied(total, mlT, mlO) { if (!fin(total) || !fin(mlT) || !fin(mlO))
 // pieces for one skater in one game; ctx = { evSec, ppSec, implied } for tonight (all optional)
 function gsParts(S, pid, oppId, goalieId, ctx = {}) {
   const r = S.P[pid]; if (!r || !r.gp) return null;
-  const L = S.L, pos = r.pos, K = 2;
+  const L = S.L, pos = r.pos, K = 4; // K = hours of league-average ice time mixed into every player's shot rate
   const avgEv = r.rec.length ? r.rec.reduce((a, x) => a + x[0], 0) / r.rec.length : r.ev / r.gp, avgPP = r.rec.length ? r.rec.reduce((a, x) => a + x[1], 0) / r.rec.length : r.pp / r.gp;
   const d = S.D[oppId], q = goalieId && S.Gk[goalieId], myT = S.D[r.tm];
-  const finS = clamp((r.g + 8) / (r.ixg + 8), .75, 1.35);
+  const finS = clamp((r.g + 20) / (r.ixg + 20), .8, 1.25); // finishing: needs a big sample before it moves much
   const evSec = ctx.evSec != null ? ctx.evSec : avgEv;
   // even strength, by zone
   const zones = [0, 1, 2, 3].map(z => {
     const lgRate = L.posEv[pos] > 0 ? L.posA[pos][z] / (L.posEv[pos] / 3600) : 0;
     const a60 = (r.att[z] + lgRate * K) / (r.ev / 3600 + K);
     const lgQ = L.posA[pos][z] ? L.posX[pos][z] / L.posA[pos][z] : .05;
-    const qz = (r.xg[z] + lgQ * 10) / (r.att[z] + 10);
+    const qz = (r.xg[z] + lgQ * 20) / (r.att[z] + 20);
     const lgAllow = L.teamGames ? L.allow[z] / L.teamGames : 0, lgAllowQ = L.allow[z] ? L.allowX[z] / L.allow[z] : lgQ;
     const dv = d && d.gp && lgAllow ? ((d.allow[z] + lgAllow * 5) / (d.gp + 5)) / lgAllow : 1;
     const dq = d && lgAllowQ ? ((d.allowX[z] + lgAllowQ * 40) / (d.allow[z] + 40)) / lgAllowQ : 1;
@@ -4776,7 +4776,7 @@ function gsParts(S, pid, oppId, goalieId, ctx = {}) {
   const env = fin(ctx.implied) && teamAvg > 0 ? clamp(ctx.implied / teamAvg, .6, 1.6) : 1;
   // power play
   const lgPPrate = L.posPPt[pos] > 0 ? L.posPPx[pos] / (L.posPPt[pos] / 3600) : 0;
-  const ppX60 = (r.ppX + lgPPrate * .5) / (r.pp / 3600 + .5);
+  const ppX60 = (r.ppX + lgPPrate * 1.5) / (r.pp / 3600 + 1.5);
   const lgPen = L.teamGames ? L.pen / L.teamGames : 3, oppPen = d && d.gp ? (d.pen + lgPen * 5) / (d.gp + 5) : lgPen;
   const penF = lgPen > 0 ? oppPen / lgPen : 1;
   const ppSec = ctx.ppSec != null ? ctx.ppSec : avgPP * penF;
@@ -4787,7 +4787,8 @@ function gsParts(S, pid, oppId, goalieId, ctx = {}) {
   const f = { env, dvol: wavg('dv'), dqual: wavg('dq'), gzone: wavg('gz'), gtype, rr };
   return { lamEv, lamPP, f, zones, fin: finS, evSec, ppSec, avgEv, avgPP, penF, pkF, teamAvg, ppX60 };
 }
-const gsLam = (W, pr) => Math.exp(W.b0) * (pr.lamEv * Math.exp(GS_FACT.reduce((s, [k], i) => s + W.b[i] * Math.log(Math.max(.2, pr.f[k])), 0)) + Math.exp(W.g) * pr.lamPP);
+// all matchup factors together can move a player at most −30% / +45%, so several small boosts can't stack into a huge one
+const gsLam = (W, pr) => Math.exp(W.b0) * (pr.lamEv * clamp(Math.exp(GS_FACT.reduce((s, [k], i) => s + W.b[i] * Math.log(Math.max(.2, pr.f[k])), 0)), .7, 1.45) + Math.exp(W.g) * pr.lamPP);
 // public: expected goals and chance for one skater, plus everything needed to explain it
 function gsLambda(S, pid, oppId, goalieId, ctx) {
   const pr = gsParts(S, pid, oppId, goalieId, ctx || {}); if (!pr) return null;
@@ -4908,10 +4909,49 @@ function gsTonight(S, e, LF, PF, INJ) {
       const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied });
       if (!r) continue;
       const dk = dkm ? dkLookup(dkm, r0.n) : null, ev = dk != null ? betEV(r.p, dk) : null;
-      rows.push({ pid, n: r0.n, pos: r0.pos, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt), dk, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
+      rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt), dk, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
     }
   }
+  return gsRefine(rows, dkm, tot);
+}
+// Keep the chances realistic:
+// 1) a team's skaters together can only score what the team is expected to score tonight (betting line or ratings),
+// 2) DraftKings' price with its margin removed is a strong second opinion, so the final chance blends the two.
+//    How much to trust the model vs. the market is learned from graded picks (starts at 40% model).
+function gsDkFair(dkm, tot) {
+  const imps = dkm ? Object.values(dkm).filter(fin).map(amImplied).filter(p => p > 0 && p < 1) : [];
+  // DraftKings' expected scorers vs. the goals the game total says will be scored = its built-in margin
+  const m = imps.length >= 20 && fin(tot) && tot > 1 ? clamp(imps.reduce((s, p) => s - Math.log(1 - p), 0) / (tot - .12), 1.05, 1.6) : 1.22;
+  return { m, fair: imp => 1 - Math.exp(Math.log(1 - imp) / m) };
+}
+function gsRefine(rows, dkm, tot) {
+  for (const t of new Set(rows.map(r => r.tm))) {
+    const tr = rows.filter(r => r.tm === t), imp = tr[0] && tr[0].implied, sum = tr.reduce((s, r) => s + r.lam, 0);
+    const k = tr.length >= 14 && fin(imp) && sum > 0 ? clamp((imp - .12) / sum, .7, 1.3) : 1;
+    tr.forEach(r => { r.anchor = k; r.lam *= k; });
+  }
+  const F = gsDkFair(dkm, tot), w = GS.blendW;
+  for (const r of rows) {
+    r.pModel = 1 - Math.exp(-r.lam);
+    if (r.dk != null) {
+      r.dkFair = F.fair(r.dkImp); r.margin = F.m;
+      r.p = sigm(w * logit(clamp(r.pModel, .005, .995)) + (1 - w) * logit(clamp(r.dkFair, .005, .995)));
+      r.edgeP = r.p - r.dkImp; const ev = betEV(r.p, r.dk); r.ev = ev.ev; r.roi = ev.roi;
+    } else r.p = r.pModel;
+    r.lowN = r.gp < 5; r.big = fin(r.edgeP) && r.edgeP >= .08;
+    r.why = { ...r.why, html: r.why.html + `<div style='margin-top:6px;border-top:1px solid var(--border);padding-top:4px'>${qRow('Ice Lab model alone', pct1(r.pModel) + '%')}${r.anchor !== 1 ? qRow('Team-total adjustment', (r.anchor > 1 ? '+' : '−') + pct1(Math.abs(r.anchor - 1)) + '%') : ''}${r.dk != null ? qRow('DraftKings, margin removed', pct1(r.dkFair) + '%') + qRow(`Blended (${Math.round(w * 100)}% model)`, '<b>' + pct1(r.p) + '%</b>') : ''}${r.lowN ? `<div style='color:var(--neg)'>Only ${r.gp} game${r.gp === 1 ? '' : 's'} of data: treat with caution</div>` : ''}</div>` };
+  }
   return rows;
+}
+// learn how much to trust the model vs. DraftKings from graded picks (log loss), pulled toward 40% until there's lots of data
+function gsBlendFit(PK) {
+  const ps = ((PK && PK.picks) || []).filter(p => (p.res === 'W' || p.res === 'L') && fin(p.pRaw) && fin(p.fair));
+  GS.blendN = ps.length;
+  if (ps.length < 150) { GS.blendW = .4; GS.blendFit = null; return GS.blendW; }
+  let best = .4, bl = Infinity;
+  for (let w = 0; w <= 1.0001; w += .05) { let L = 0; for (const p of ps) { const q = clamp(sigm(w * logit(clamp(p.pRaw, .005, .995)) + (1 - w) * logit(clamp(p.fair, .005, .995))), 1e-4, 1 - 1e-4); L -= p.res === 'W' ? Math.log(q) : Math.log(1 - q); } if (L < bl) { bl = L; best = w; } }
+  GS.blendFit = best; GS.blendW = (ps.length * best + 400 * .4) / (ps.length + 400);
+  return GS.blendW;
 }
 
 const PRF = { data: null, t: 0 };
@@ -4976,6 +5016,7 @@ async function renderScorers() {
   if (activeTab() !== 'scorers') return;
   const evs = ((sb && sb.events) || []);
   const LF = await getLinesFile(), PF = await getPropsFile(), PK = await getPicksFile();
+  gsBlendFit(PK);
   const INJS = {}; await pool(evs.filter(e => e.competitions[0].status.type.state === 'pre'), 6, async e => { INJS[e.id] = await getInjuries(e.id); });
   if (activeTab() !== 'scorers') return;
   const rows = [];
@@ -4988,11 +5029,12 @@ async function renderScorers() {
     { k: 'n', h: 'Player', l: 1, v: r => r.n, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}${plink(r.pid, v)} <span class="muted">${esc(r.pos)}</span>${injBadge(r.inj)}</div>` },
     { k: 'role', h: 'Role', l: 1, v: r => r.role || '', f: (v, r) => v ? `<span style="font-size:12.5px">${esc(v)}</span>` : '<span class="muted" style="font-size:12px">usual</span>', t: 'Tonight\'s line (L1–L4) or defense pair (D1–D3) and power-play unit from the RotoGrinders lines. "usual" = lines not posted, so his recent average minutes are used.' },
     { k: 'opp', h: 'Vs. goalie', l: 1, v: r => r.gl ? r.gl.n : '', f: (v, r) => `<div class="tcell">${logoImg(r.opp, 16)}${r.gl ? esc(r.gl.n) : '<span class="muted">unknown</span>'}</div>${r.gl ? `<div class="gstat">${/confirm/i.test(r.gl.st || '') ? '<span class="gs-ok">✓ Confirmed</span>' : /rotogrinders/i.test(r.gl.st || '') ? '<span class="gs-maybe">Projected</span>' : /last starter/i.test(r.gl.st || '') ? '<span class="gs-maybe">Not announced: last starter</span>' : `<span class="gs-maybe">${esc(r.gl.st || 'Probable')}</span>`}${r.gl.noData ? ' <span class="muted" data-tip="No games for this goalie in the loaded range, so he\'s treated as a league-average goalie.">· no data</span>' : ''}</div>` : ''}` },
-    { k: 'p', h: 'Chance to score', v: r => r.p, f: (v, r) => `<b data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${pct1(v)}%</b>`, dir: 1, t: 'Estimated chance he scores at least one goal tonight (any situation).' },
+    { k: 'p', h: 'Chance to score', v: r => r.p, f: (v, r) => `<b data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${pct1(v)}%</b>${r.lowN ? ' <span class="injb" data-tip="Fewer than 5 games of data, so his numbers are shaky. Left out of Biggest edges.">small sample</span>' : ''}`, dir: 1, t: 'Estimated chance he scores at least one goal tonight (any situation). When DraftKings has a price, this blends Ice Lab\'s model with DraftKings\' chance (margin removed); hover for both.' },
+    { k: 'pModel', h: 'Model alone', v: r => r.pModel, f: v => `<span class="muted">${pct1(v)}%</span>`, t: 'Ice Lab\'s model before blending with DraftKings, after making the team\'s players add up to its expected goals tonight.' },
     { k: 'fair', h: 'Fair odds', v: r => r.p, f: (v, r) => fairAmerican(r.p), t: 'The American odds that exactly match this chance, with no bookmaker margin. A sportsbook price longer than this means the model sees value.' },
     { k: 'dk', h: 'DraftKings', v: r => r.dk, f: v => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>`, t: 'DraftKings anytime goal scorer price.' },
     { k: 'dkImp', h: 'DK implied', v: r => r.dkImp, f: v => fin(v) ? pct1(v) + '%' : '–', t: 'The chance DraftKings\' price implies. It includes the sportsbook\'s built-in margin, so it runs a little high.' },
-    { k: 'edgeP', h: 'Edge', v: r => r.edgeP, f: v => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>` : '–', dir: 1, t: 'Ice Lab\'s chance minus DraftKings\' implied chance. Positive = Ice Lab thinks he\'s more likely to score than the price says.' },
+    { k: 'edgeP', h: 'Edge', v: r => r.edgeP, f: (v, r) => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>${r.big ? ' <span data-tip="Unusually big edge. These are usually news the model doesn\'t know yet (a scratch, a line change, an injury). Double-check before betting.">⚠️</span>' : ''}` : '–', dir: 1, t: 'Ice Lab\'s chance minus DraftKings\' implied chance. Positive = Ice Lab thinks he\'s more likely to score than the price says.' },
     { k: 'ev', h: 'Exp. profit', v: r => r.ev, f: (v, r) => fin(v) ? `${moneyCell(v)} <span class="muted" style="font-size:11.5px">${r.roi > 0 ? '+' : ''}${pct1(r.roi)}%</span>` : '–', dir: 1, t: 'Expected profit per bet using your bet sizes ($100 on plus odds; bet to win $100 on minus odds), if Ice Lab\'s chance is right. The % is return on the amount risked.' },
     { k: 'shots', h: 'Proj. attempts', v: r => r.shots, f: f1, t: 'Projected unblocked shot attempts tonight.' },
     { k: 'edge', h: 'Matchup edge', v: r => r.edge, f: v => `<span style="color:${v > .03 ? 'var(--good)' : v < -.03 ? 'var(--neg)' : 'inherit'}">${v >= 0 ? '+' : ''}${pct1(v)}%</span>`, dir: 1, t: 'How tonight raises or lowers his expected goals compared with his usual night: tonight\'s minutes and role, power-play chances, team scoring environment, opponent defense, goalie, shot types, rebounds and rush. Hover his chance for the breakdown.' },
@@ -5001,13 +5043,13 @@ async function renderScorers() {
   rows.forEach((r, i) => r.idx = i); GS.rows = rows;
   const teamsTonight = [...new Set(rows.map(r => r.tm))];
   const withDk = rows.filter(r => r.dk != null);
-  const best = [...withDk].filter(r => r.ev > 0).sort((a, b) => b.roi - a.roi).slice(0, 8);
+  const best = [...withDk].filter(r => r.ev > 0 && !r.lowN).sort((a, b) => b.roi - a.roi).slice(0, 8);
   const dkAge = PF && PF.updated ? `DraftKings prices updated ${new Date(PF.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : '';
   const dkCard = !PF ? `<div class="note">DraftKings odds aren't set up yet (no props.json found). Once the GitHub job runs with your API key, prices and edges show up here.</div>`
     : !withDk.length ? `<div class="note">${esc(dkAge)}. No DraftKings goal scorer prices matched these games yet. They're usually posted the day of the game; the job updates about 11 AM and 5 PM Eastern.</div>`
     : `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Biggest edges tonight</h3><p>${esc(dkAge)}</p></div>
       ${best.length ? `<div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)}${r.gl ? ' · ' + esc(r.gl.n) : ''}</div><div class="eg"><span>DK <b>${fmtML(r.dk)}</b></span><span>Fair <b>${fairAmerican(r.p)}</b></span></div><div class="eg"><span>Ice Lab <b>${pct1(r.p)}%</b></span><span>DK ${pct1(r.dkImp)}%</span></div><div class="eg"><b style="color:var(--good)">+${(r.edgeP * 100).toFixed(1)} pts</b>${moneyCell(r.ev)}</div><button class="btn sm mybet" data-mybet="${r.idx}" data-key="${esc(r.gid + '|' + r.pid)}">＋ Bet</button></div>`).join('')}</div>` : '<p class="muted" style="margin:0">No positive edges right now: DraftKings\' prices are at or above Ice Lab\'s chances for everyone.</p>'}
-      <p class="muted" style="font-size:12px;margin:8px 0 0">Ranked by expected return on the amount risked, using your bet sizes. Expected profit assumes Ice Lab's chance is right, which is the big if. Edges on players with few games or an unconfirmed goalie are shakier.</p></div>`;
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Ranked by expected return on the amount risked, using your bet sizes. Chances blend Ice Lab's model (${Math.round(GS.blendW * 100)}%) with DraftKings' own chance with its margin removed (${Math.round((1 - GS.blendW) * 100)}%)${GS.blendFit != null ? `, a mix learned from ${GS.blendN} graded picks` : `; the mix will be learned from graded picks once there are 150+ (${GS.blendN} so far)`}. That keeps edges realistic: to show an edge, Ice Lab has to disagree with DraftKings by enough to beat its margin. Players with under 5 games are left off this list; ⚠️ marks edges of 8+ points, which usually mean news the model doesn't know about.</p></div>`;
   const btCard = bt ? `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Report card</h3><p>Tested on ${bt.n.toLocaleString()} player-games it never saw (${new Date(bt.from).toLocaleDateString()} – ${new Date(bt.to).toLocaleDateString()})</p></div>
       <div class="tiles" style="margin-bottom:10px"><div class="tile"><div class="k">Predicted scorers</div><div class="v num">${f0(bt.expected)}</div><div class="s">vs. ${bt.actual} who actually scored</div></div>
       <div class="tile"><div class="k">Brier · full model</div><div class="v num">${bt.brier.toFixed(4)}</div><div class="s">lower is better</div></div>
@@ -5045,7 +5087,7 @@ async function renderScorerPreview(g) {
   const { S } = gsGetState();
   let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === g.id) || null; } catch (e) {}
   if (!ev || !box()) { if (box()) box().innerHTML = ''; return; }
-  const LF = await getLinesFile(), PF = await getPropsFile(), INJ = await getInjuries(g.id), all = gsTonight(S, ev, LF, PF, INJ);
+  const LF = await getLinesFile(), PF = await getPropsFile(), INJ = await getInjuries(g.id); gsBlendFit(await getPicksFile()); const all = gsTonight(S, ev, LF, PF, INJ);
   const col = t => { const list = all.filter(r => r.tm === t).sort((a, b) => b.p - a.p).slice(0, 5), gl = list[0] && list[0].gl;
     return `<div><div class="tcell" style="margin-bottom:6px">${logoImg(t, 18)}<b>${esc(TM(t).abbr)}</b> <span class="muted" style="font-size:12px">vs. ${gl ? esc(gl.n) : 'unknown goalie'}</span></div><ol class="plist">${list.map(x => `<li><span>${plink(x.pid, x.n)}${x.role ? ` <span class="muted" style="font-size:11px">${esc(x.role)}</span>` : ''}</span><span class="num" data-tip="${esc(`<b>${esc(x.n)}</b>${x.why.html}`)}"><b>${pct1(x.p)}%</b> <span class="muted">${fairAmerican(x.p)}</span>${x.dk != null ? ` <span style="font-size:12px">· DK ${fmtML(x.dk)} <b style="color:${x.edgeP > 0 ? 'var(--good)' : 'var(--neg)'}">${x.edgeP > 0 ? '+' : ''}${(x.edgeP * 100).toFixed(1)}</b></span>` : ''}</span></li>`).join('') || '<li class="muted">No data yet</li>'}</ol></div>`; };
   box().innerHTML = `<div class="card"><div class="card-h"><h3>🎯 Most likely goal scorers</h3><p>Chance to score · fair odds · DraftKings price and edge (pts) when posted</p></div><div class="grid g2">${col(g.away.id)}${col(g.home.id)}</div><p class="muted" style="font-size:12px;margin:8px 0 0">Full list in <b>Players → Goal Scorers</b>.</p></div>`;
