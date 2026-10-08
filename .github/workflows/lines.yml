@@ -1,3 +1,4 @@
+
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
 # (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
 # odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
@@ -161,14 +162,14 @@ jobs:
         continue-on-error: true
         run: |
           cat > "$RUNNER_TEMP/ph.js" <<'EOF'
-          // Post Hockey skater ratings and team stats (used with permission): this season and the two before, regular season.
+          // Post Hockey skater ratings and team stats (used with permission): this season and the three before, regular season.
           const fs = require('fs');
           const log = (...a) => console.log(...a);
           async function run({ fetchImpl = fetch, now = new Date() } = {}) {
             const y = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1, code = k => `${y - k}${y - k + 1}`;
             let old = {}; try { old = JSON.parse(fs.readFileSync('posthockey.json', 'utf8')).seasons || {}; } catch (e) {}
             const out = { source: 'Post Hockey (posthockey.com), used with permission', updated: now.toISOString(), cols: ['n', 'tm', 'pos', 'gp', 'toi', 'o', 'd', 'net', 'est', 'sh'], seasons: {} };
-            for (const k of [0, 1, 2]) {
+            for (const k of [0, 1, 2, 3]) {
               const s = code(k);
               if (k >= 2 && old[s] && old[s].length) { out.seasons[s] = old[s]; log(`${s}: kept ${old[s].length} saved players`); continue; } // finished seasons don't change
               const rows = [];
@@ -188,7 +189,7 @@ jobs:
             let oldAll = {}; try { oldAll = JSON.parse(fs.readFileSync('posthockey.json', 'utf8')); } catch (e) {}
             out.teamCols = ['tm', 'gp', 'toi', 'xgf', 'xga', 'gf', 'ga', 'cf', 'ca', 'gsax'];
             out.teams = {};
-            for (const k of [0, 1, 2]) {
+            for (const k of [0, 1, 2, 3]) {
               const s = code(k), prev = (oldAll.teams || {})[s];
               if (k >= 1 && prev && prev['5v5']) { out.teams[s] = prev; continue; } // finished seasons don't change
               const t = {};
