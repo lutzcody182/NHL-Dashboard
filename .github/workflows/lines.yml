@@ -193,7 +193,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican };`);
             return w.__t;
           }
 
@@ -204,7 +204,7 @@ jobs:
             T.A.season = T.S.curSeason; T.A.range = 'season'; T.A.types = 'reg'; T.A.note = '';
             // saved processed games from earlier runs (GitHub cache) so only new games are downloaded
             const cache = readJSON('.cache/games.json', []);
-            let pre = 0; for (const g of cache) if (g && g.v === T.VER && g.final) { T.A.games.set(g.id, g); T.addTeam(g.home); T.addTeam(g.away); pre++; }
+            let pre = 0; for (const g of cache) if (g && g.v === T.VER && g.final) { T.A.games.set(g.id, T.fixFinal(g)); T.addTeam(g.home); T.addTeam(g.away); pre++; }
             log(`Loaded ${pre} saved games from cache.`);
             if (preload) await preload(T); else await T.ensureData(true);
             log(`Model data: ${T.A.filtered.length} completed games this season.`);
