@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-09",
- "updated": "2026-10-09T19:17:56.739Z",
+ "updated": "2026-10-09T23:24:44.494Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -482,11 +482,6 @@
          "pp": ""
         },
         {
-         "n": "Vincent Desharnais",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Dylan McIlrath",
          "pos": "D",
          "pp": ""
@@ -509,7 +504,7 @@
    "teams": [
     {
      "team": "Seattle Kraken",
-     "goalie": "Joey Daccord",
+     "goalie": "Philipp Grubauer",
      "groups": [
       {
        "label": "Line 1",
@@ -668,7 +663,7 @@
         {
          "n": "Michael Brandsegg-Nygard",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -721,9 +716,9 @@
          "pp": ""
         },
         {
-         "n": "Axel Sandin-Pellikka",
+         "n": "Anton Johansson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Ben Chiarot",
@@ -731,7 +726,7 @@
          "pp": ""
         },
         {
-         "n": "Anton Johansson",
+         "n": "William Wallinder",
          "pos": "D",
          "pp": ""
         },
