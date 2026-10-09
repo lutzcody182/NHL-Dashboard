@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-08",
- "updated": "2026-10-08T19:41:38.947Z",
+ "updated": "2026-10-09T00:09:58.556Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -138,14 +138,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Josh Doan",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Jiri Kulich",
+         "pos": "C",
+         "pp": ""
         },
         {
-         "n": "Josh Norris",
+         "n": "Peyton Krebs",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Tage Thompson",
@@ -178,19 +178,19 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Jiri Kulich",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Konsta Helenius",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Peyton Krebs",
+         "n": "Ryan McLeod",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Josh Norris",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -198,8 +198,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ryan McLeod",
-         "pos": "C",
+         "n": "Josh Doan",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -983,11 +983,6 @@
          "n": "Nikolas Matinpalo",
          "pos": "D",
          "pp": ""
-        },
-        {
-         "n": "Cameron Crotty",
-         "pos": "D",
-         "pp": ""
         }
        ]
       }
@@ -1292,6 +1287,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Reid Schaefer",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Mavrik Bourque",
          "pos": "C",
          "pp": "PP2"
@@ -1300,11 +1300,6 @@
          "n": "Jonathan Marchessault",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Ross Colton",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -1314,6 +1309,11 @@
         {
          "n": "Jack Drury",
          "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Ross Colton",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -1344,7 +1344,7 @@
         {
          "n": "Brady Skjei",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Adam Wilsby",
@@ -1362,7 +1362,7 @@
     },
     {
      "team": "Montreal Canadiens",
-     "goalie": "",
+     "goalie": "Jacob Fowler",
      "groups": [
       {
        "label": "Line 1",
@@ -1378,7 +1378,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Chris Kreider",
+         "n": "Juraj Slafkovsky",
          "pos": "W",
          "pp": "PP1"
         }
@@ -1388,19 +1388,19 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Kirby Dach",
+         "n": "Josh Anderson",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Juraj Slafkovsky",
-         "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Alex Newhook",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Chris Kreider",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -1433,9 +1433,9 @@
          "pp": ""
         },
         {
-         "n": "Josh Anderson",
+         "n": "Kirby Dach",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jake Evans",
@@ -1453,14 +1453,14 @@
          "pp": ""
         },
         {
-         "n": "Noah Dobson",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Alexandre Carrier",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Noah Dobson",
+         "pos": "D",
+         "pp": "PP2"
         },
         {
          "n": "Lane Hutson",
@@ -1490,7 +1490,7 @@
    "teams": [
     {
      "team": "Chicago Blackhawks",
-     "goalie": "Spencer Knight",
+     "goalie": "Arvid Soderblom",
      "groups": [
       {
        "label": "Line 1",
@@ -2175,9 +2175,19 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Aydar Suniev",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Adam Klapka",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Jonathan Castagna",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -2253,14 +2263,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Gavin McKenna",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "William Nylander",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Easton Cowan",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "John Tavares",
@@ -2283,7 +2293,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Easton Cowan",
+         "n": "Gavin McKenna",
          "pos": "W",
          "pp": "PP2"
         }
@@ -2348,7 +2358,7 @@
     },
     {
      "team": "Vegas Golden Knights",
-     "goalie": "Carter Hart",
+     "goalie": "Adin Hill",
      "groups": [
       {
        "label": "Line 1",
