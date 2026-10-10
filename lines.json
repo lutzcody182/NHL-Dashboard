@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-10",
- "updated": "2026-10-10T18:14:28.424Z",
+ "updated": "2026-10-10T21:55:56.250Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -260,7 +260,7 @@
    "teams": [
     {
      "team": "Vancouver Canucks",
-     "goalie": "Kevin Lankinen",
+     "goalie": "Leevi Merilainen",
      "groups": [
       {
        "label": "Line 1",
@@ -296,9 +296,9 @@
          "pp": ""
         },
         {
-         "n": "Brock Boeser",
+         "n": "Linus Karlsson",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -311,14 +311,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Max Sasson",
-         "pos": "C",
+         "n": "Drew O'Connor",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Linus Karlsson",
+         "n": "Brock Boeser",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -326,12 +326,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Aatu Raty",
+         "n": "Max Sasson",
          "pos": "C",
          "pp": ""
         },
         {
-         "n": "Drew O'Connor",
+         "n": "Brendan Gallagher",
          "pos": "W",
          "pp": ""
         },
@@ -366,12 +366,12 @@
          "pp": ""
         },
         {
-         "n": "Elias Nils Pettersson",
+         "n": "Luke Schenn",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Victor Mancini",
+         "n": "Elias Nils Pettersson",
          "pos": "D",
          "pp": ""
         }
@@ -477,12 +477,7 @@
          "pp": ""
         },
         {
-         "n": "Johnathan Kovacevic",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Declan Chisholm",
+         "n": "Jonas Siegenthaler",
          "pos": "D",
          "pp": ""
         },
@@ -490,6 +485,11 @@
          "n": "Dougie Hamilton",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Declan Chisholm",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Brenden Dillon",
@@ -597,7 +597,7 @@
         {
          "n": "Mattias Ekholm",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Evan Bouchard",
@@ -615,14 +615,14 @@
          "pp": ""
         },
         {
-         "n": "Ty Emberson",
+         "n": "Shakir Mukhamadullin",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Jake Walman",
+         "n": "Ty Emberson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -636,17 +636,17 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Igor Chernyshov",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Mason Marchment",
          "pos": "W",
          "pp": "PP2"
         },
         {
          "n": "Will Smith",
+         "pos": "C",
+         "pp": "PP1"
+        },
+        {
+         "n": "Macklin Celebrini",
          "pos": "C",
          "pp": "PP1"
         }
@@ -663,10 +663,10 @@
         {
          "n": "Ivar Stenberg",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
-         "n": "Adam Gaudette",
+         "n": "Kiefer Sherwood",
          "pos": "W",
          "pp": "PP2"
         }
@@ -701,9 +701,9 @@
          "pp": ""
         },
         {
-         "n": "Ty Dellandrea",
+         "n": "Igor Chernyshov",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Zack Ostapchuk",
@@ -769,14 +769,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Joel Eriksson Ek",
-         "pos": "C",
+         "n": "Kirill Kaprizov",
+         "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Blake Coleman",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Joel Eriksson Ek",
+         "pos": "C",
+         "pp": "PP1"
         }
        ]
       },
@@ -789,13 +789,13 @@
          "pp": "PP1"
         },
         {
-         "n": "Kirill Kaprizov",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Ryan Hartman",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
-         "n": "Danila Yurov",
-         "pos": "C",
+         "n": "Blake Coleman",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -804,12 +804,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Marcus Foligno",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Ryan Hartman",
+         "n": "Danila Yurov",
          "pos": "C",
          "pp": "PP2"
         },
@@ -864,12 +859,12 @@
          "pp": ""
         },
         {
-         "n": "Zach Bogosian",
+         "n": "Daemon Hunt",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Daemon Hunt",
+         "n": "David Spacek",
          "pos": "D",
          "pp": ""
         }
@@ -2068,11 +2063,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Brandon Duhaime",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Teddy Blueger",
          "pos": "C",
