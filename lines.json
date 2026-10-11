@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-11",
- "updated": "2026-10-11T13:50:50.530Z",
+ "updated": "2026-10-11T22:41:48.542Z",
  "games": [
   {
    "time": "5:00 PM ET",
@@ -138,12 +138,12 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Dylan Strome",
+         "n": "Ilya Protas",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
-         "n": "Anthony Beauvillier",
+         "n": "Aliaksei Protas",
          "pos": "W",
          "pp": ""
         },
@@ -158,6 +158,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Justin Sourdif",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Alex Tuch",
          "pos": "W",
          "pp": "PP2"
@@ -166,11 +171,6 @@
          "n": "Tom Wilson",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Pierre-Luc Dubois",
-         "pos": "C",
-         "pp": "PP1"
         }
        ]
       },
@@ -178,14 +178,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Ilya Protas",
+         "n": "Dylan Strome",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Aliaksei Protas",
+         "n": "Ryan Leonard",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Jordan Kyrou",
@@ -198,19 +198,19 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Ethen Frank",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Boone Jenner",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Justin Sourdif",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Ryan Leonard",
+         "n": "Anthony Beauvillier",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -296,9 +296,9 @@
          "pp": ""
         },
         {
-         "n": "Linus Karlsson",
+         "n": "Brock Boeser",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -316,9 +316,9 @@
          "pp": ""
         },
         {
-         "n": "Brock Boeser",
+         "n": "Linus Karlsson",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -336,8 +336,8 @@
          "pp": ""
         },
         {
-         "n": "Arshdeep Bains",
-         "pos": "W",
+         "n": "Aatu Raty",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -361,7 +361,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Jamie Oleksiak",
+         "n": "Guillaume Brisebois",
          "pos": "D",
          "pp": ""
         },
@@ -560,8 +560,8 @@
          "pp": ""
         },
         {
-         "n": "Jordan Staal",
-         "pos": "C",
+         "n": "Jesperi Kotkaniemi",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -580,7 +580,7 @@
          "pp": ""
         },
         {
-         "n": "Jesperi Kotkaniemi",
+         "n": "Nicolas Deslauriers",
          "pos": "W",
          "pp": ""
         },
@@ -641,9 +641,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Trevor Zegras",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Denver Barkey",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Christian Dvorak",
@@ -656,9 +656,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Matvei Michkov",
+         "n": "Porter Martone",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Owen Tippett",
@@ -676,19 +676,19 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Denver Barkey",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Matvei Michkov",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
-         "n": "Porter Martone",
+         "n": "Trevor Zegras",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Michael Bunting",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Noah Cates",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -701,12 +701,12 @@
          "pp": ""
         },
         {
-         "n": "Michael Bunting",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Noah Cates",
+         "pos": "C",
+         "pp": ""
         },
         {
-         "n": "Garrett Wilson",
+         "n": "Carl Grundstrom",
          "pos": "W",
          "pp": ""
         }
@@ -716,12 +716,17 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Travis Sanheim",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Jamie Drysdale",
          "pos": "D",
          "pp": "PP2"
         },
         {
-         "n": "Travis Sanheim",
+         "n": "Nick Seeler",
          "pos": "D",
          "pp": ""
         },
@@ -731,17 +736,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Nick Seeler",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Simon Benoit",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Helge Grans",
          "pos": "D",
          "pp": ""
         }
