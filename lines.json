@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-10",
- "updated": "2026-10-10T21:55:56.250Z",
+ "updated": "2026-10-11T00:43:39.583Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1362,7 +1362,7 @@
          "pp": ""
         },
         {
-         "n": "Emil Andrae",
+         "n": "Jake Christiansen",
          "pos": "D",
          "pp": ""
         }
@@ -1672,8 +1672,8 @@
          "pp": "PP2"
         },
         {
-         "n": "Ville Koivunen",
-         "pos": "W",
+         "n": "Elmer Soderblom",
+         "pos": "C",
          "pp": "PP2"
         },
         {
@@ -1727,7 +1727,7 @@
          "pp": ""
         },
         {
-         "n": "Trevor van Riemsdyk",
+         "n": "Spencer Stastney",
          "pos": "D",
          "pp": ""
         },
@@ -1760,14 +1760,14 @@
          "pp": "PP1"
         },
         {
+         "n": "Lawson Crouse",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Nick Schmaltz",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Vincent Trocheck",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -1780,14 +1780,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Anders Lee",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Logan Cooley",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Vincent Trocheck",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -1795,9 +1795,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Lawson Crouse",
+         "n": "Kailer Yamamoto",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Barrett Hayton",
@@ -1805,9 +1805,9 @@
          "pp": ""
         },
         {
-         "n": "Jack McBain",
+         "n": "Anders Lee",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1825,9 +1825,9 @@
          "pp": ""
         },
         {
-         "n": "Michael Carcone",
+         "n": "Jack McBain",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2024,9 +2024,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Gavin McKenna",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Nick Paul",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
          "n": "William Nylander",
@@ -2034,9 +2034,9 @@
          "pp": "PP1"
         },
         {
-         "n": "John Tavares",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Easton Cowan",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -2049,14 +2049,14 @@
          "pp": ""
         },
         {
-         "n": "Nick Paul",
-         "pos": "C",
+         "n": "Gavin McKenna",
+         "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Easton Cowan",
+         "n": "Bo Groulx",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2064,13 +2064,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Teddy Blueger",
-         "pos": "C",
+         "n": "Brandon Duhaime",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Bo Groulx",
-         "pos": "W",
+         "n": "Teddy Blueger",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -2091,7 +2091,7 @@
         {
          "n": "Jake McCabe",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Chris Tanev",
@@ -2472,6 +2472,11 @@
          "n": "Kaiden Guhle",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Jayden Struble",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -2486,7 +2491,7 @@
    "teams": [
     {
      "team": "Nashville Predators",
-     "goalie": "Juuse Saros",
+     "goalie": "",
      "groups": [
       {
        "label": "Line 1",
@@ -2497,14 +2502,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Alexander Kerfoot",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Ryan O'Reilly",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Jonathan Marchessault",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -2532,9 +2537,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Reid Schaefer",
+         "n": "Alexander Kerfoot",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Vitali Pinchuk",
@@ -2542,7 +2547,7 @@
          "pp": ""
         },
         {
-         "n": "Jonathan Marchessault",
+         "n": "Ross Colton",
          "pos": "W",
          "pp": "PP2"
         }
@@ -2552,13 +2557,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Jack Drury",
-         "pos": "C",
+         "n": "Reid Schaefer",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Ross Colton",
-         "pos": "W",
+         "n": "Jack Drury",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -2593,11 +2598,6 @@
         },
         {
          "n": "Adam Wilsby",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Ryan Ufko",
          "pos": "D",
          "pp": ""
         }
@@ -2801,14 +2801,14 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Scott Sabourin",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Conor Geekie",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Jeffrey Viel",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -3385,7 +3385,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Samuel Honzek",
+         "n": "Maxim Tsyplakov",
          "pos": "W",
          "pp": ""
         },
