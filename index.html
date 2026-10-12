@@ -3237,7 +3237,7 @@ async function renderModel() {
           <p class="muted" style="font-size:12px">If the model is well calibrated, favorites it gives 60% should win about 60% of the time. Brier score: lower is better; 0.25 is a coin flip.</p></div></div>
       <h3 class="cmp-sec">Most recent predictions</h3><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Ice Lab pick</th><th>Market</th><th class="l">Final</th><th>Result</th></tr></thead><tbody>${recent.map(p => { const pick = p.pH >= .5 ? p.h : p.a, pp = Math.max(p.pH, 1 - p.pH), ok = (p.pH >= .5) === p.hw; const mk = fin(p.mk) ? pct1(p.pH >= .5 ? p.mk : 1 - p.mk) + '%' : '–'; return `<tr class="click" data-game="${p.id}"><td class="l">${new Date(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.a, 16)}${esc(TM(p.a).abbr)} @ ${logoImg(p.h, 16)}${esc(TM(p.h).abbr)}</div></td><td class="l">${esc(TM(pick).abbr)} ${pct1(pp)}%${p.hn < 5 || p.an < 5 ? ' <span class="muted">(early)</span>' : ''}</td><td>${mk}</td><td class="l">${p.as}–${p.hs}${p.ot ? ' OT' : ''}</td><td>${ok ? '<b style="color:var(--good)">✓</b>' : '<b style="color:var(--neg)">✗</b>'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
   }
-  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid"><div id="gmSec"></div><div id="trustSec"></div><div id="gmPickSec"></div><div id="accSec"></div>${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid"><div id="gmSec"></div><div id="trustSec"></div><div id="ofSec"></div><div id="gmPickSec"></div><div id="accSec"></div>${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
   const u = $('#mdUse'); if (u) u.onclick = e => { const b = e.target.closest('button'); if (!b) return; A.useTrained = b.dataset.v === '1'; for (const g of A.filtered) applyModel(g); recalib(); invalidate(); renderModel(); };
   renderGameModelCard(); renderModelExtras();
   $('#mdAdj').onclick = e => { const b = e.target.closest('button'); if (!b) return; A.adj = b.dataset.v === '1'; invalidate(); renderModel(); };
@@ -5336,7 +5336,7 @@ async function renderScorers() {
       <div class="ctl"><label>Player</label><input id="gsQ" type="search" placeholder="Search a name" value="${esc(GS.q)}" autocomplete="off"></div></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores tonight. It starts from where he shoots, how dangerous those shots are, his finishing and tonight's projected minutes and power-play role, then adjusts for his team's scoring environment (betting total and moneyline), the opponent's shot volume and quality allowed by zone, how often they take penalties and how good their penalty kill is, and the goalie's results by zone, by shot type and on rebounds and rush chances. How much each adjustment counts is learned from the loaded games and rebuilds every time new games load. Hover a chance for the breakdown. Lineups come from RotoGrinders when posted (otherwise each team's last game), and players ESPN lists as out or on injured reserve are left off; goalies are the confirmed or probable starter when ESPN lists one. Uses the analytics range above; <b>Full season</b> gives the best samples.</p>
     <p class="muted" id="gsPriorMsg" style="margin:-6px 0 12px;font-size:12.5px">${GS.prior ? `✓ Using last season (${GS.prior.length.toLocaleString()} games) as the starting point, counted at half weight, so a hot or cold first week can't fool the model.` : GS.priorLoading ? esc(GS.priorMsg || 'Checking for last season\'s games…') : /^need:/.test(GS.priorMsg) ? `Last season isn't loaded, so early-season numbers rest on few games. <button class="btn sm" id="gsPriorGo">Load last season</button> (one-time download of about ${GS.priorMsg.split(':')[1]} games; saved after; training the game model in Model Lab also loads it).` : /^err:/.test(GS.priorMsg) ? `Couldn't load last season (${esc(GS.priorMsg.slice(4))}).` : ''}</p>
-    ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${trustCard(PK, 'gs')}${pickTrackerCard(PK)}${accuracyCard(PK, 'gs')}${btCard}
+    ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${trustCard(PK, 'gs')}${overfitCard(PK, 'gs')}${pickTrackerCard(PK)}${accuracyCard(PK, 'gs')}${btCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For fun and analysis, not betting advice.</p>`;
   RERENDER.gs = renderScorers;
   const pg = $('#gsPriorGo'); if (pg) pg.onclick = () => { GS.priorMsg = ''; gsLoadPrior(true); renderScorers(); };
@@ -5802,9 +5802,10 @@ function accuracyCard(PK, which = 'both') {
 }
 // Model Lab: tracker + accuracy, from picks.json
 async function renderModelExtras() {
-  const a = $('#gmPickSec'), b = $('#accSec'), t = $('#trustSec'); if (!a && !b && !t) return;
+  const a = $('#gmPickSec'), b = $('#accSec'), t = $('#trustSec'), o = $('#ofSec'); if (!a && !b && !t && !o) return;
   const PK = await getPicksFile();
   if (t) t.innerHTML = trustCard(PK, 'both');
+  if (o) o.innerHTML = overfitCard(PK, 'both');
   if (a) a.innerHTML = gamePickCard(PK);
   if (b) b.innerHTML = accuracyCard(PK, 'both');
 }
@@ -5909,6 +5910,77 @@ function trustCard(PK, which = 'both') {
   return `<div class="card"${which === 'gs' ? ' style="margin-top:14px"' : ''}><div class="card-h"><h3>🧭 Trust scorecard</h3><p>Is the model worth listening to?</p></div>
     <p class="muted" style="margin:-4px 0 6px;font-size:12.5px">Picking winners isn't the test: the betting favorite already wins most games. The question is whether the model knows something the price doesn't. Checks run from strongest to weakest evidence, and each shows a range, so a hot or cold streak isn't mistaken for skill.</p>
     ${which !== 'gs' ? trustGame(PK) : ''}${which !== 'gm' ? trustScorer(PK) : ''}</div>`;
+}
+
+/* ============================== OVERFITTING CHECK (backtest vs. live) ==============================
+   A model that memorized noise looks great in testing and then disappoints on new games. Signs of that, using the
+   predictions saved before each game: (1) live edge over the market much smaller than the test promised,
+   (2) chances too extreme (calibration slope below 1: 70% calls come in at 60%), (3) bigger errors than its own
+   chances say it should make. Each with a 95% range so a bad week isn't mistaken for a broken model. */
+function calSlope(pts) { // logistic fit: outcome ~ a + b·logit(chance); b = 1 is right, b < 1 = too confident
+  const xs = pts.map(q => { const p = clamp(q.p, 1e-3, 1 - 1e-3); return [Math.log(p / (1 - p)), q.y ? 1 : 0]; });
+  if (xs.length < 30) return { n: xs.length, b: NaN, lo: NaN, hi: NaN };
+  let a = 0, b = 1;
+  for (let it = 0; it < 30; it++) {
+    let g0 = 0, g1 = 0, h00 = 0, h01 = 0, h11 = 0;
+    for (const [x, y] of xs) { const p = 1 / (1 + Math.exp(-(a + b * x))), w = p * (1 - p); g0 += y - p; g1 += (y - p) * x; h00 += w; h01 += w * x; h11 += w * x * x; }
+    const det = h00 * h11 - h01 * h01; if (!(det > 1e-12)) break;
+    const da = (h11 * g0 - h01 * g1) / det, db = (h00 * g1 - h01 * g0) / det; a += da; b += db; if (Math.abs(da) + Math.abs(db) < 1e-7) break;
+  }
+  let h00 = 0, h01 = 0, h11 = 0; for (const [x] of xs) { const p = 1 / (1 + Math.exp(-(a + b * x))), w = p * (1 - p); h00 += w; h01 += w * x; h11 += w * x * x; }
+  const se = Math.sqrt(h00 / (h00 * h11 - h01 * h01));
+  return { n: xs.length, a, b, se, lo: b - 1.96 * se, hi: b + 1.96 * se };
+}
+// errors vs. what its own chances say to expect: (outcome − chance)² − chance·(1 − chance); averages 0 when honest, above 0 when overconfident
+const selfErr = pts => ciMean(pts.map(q => (((q.y ? 1 : 0) - q.p) ** 2) - q.p * (1 - q.p)));
+function overfitCard(PK, which = 'both') {
+  const hist = ((PK && PK.hist) || []).slice().sort((a, b) => a.date < b.date ? -1 : 1);
+  const tag = (k, t) => `<b style="color:${k === 'good' ? 'var(--good)' : k === 'bad' ? 'var(--neg)' : k === 'warn' ? '#e8a33d' : 'var(--text-2)'}">${t}</b>`;
+  const slopeRow = (lab, sl, need) => [lab, 'Fit of what happened against its chances. 1.00 = just right; below 1 = its chances are too extreme (the classic sign of overfitting); above 1 = too timid.', '<span class="muted">1.00 if honest</span>',
+    fin(sl.b) ? `${sl.b.toFixed(2)}<div class="muted" style="font-size:11.5px">range ${sl.lo.toFixed(2)} to ${sl.hi.toFixed(2)} · ${sl.n.toLocaleString()} predictions</div>` : `<span class="muted">${sl.n} so far</span>`,
+    sl.n < need || !fin(sl.b) ? ['wait', `Too early (${sl.n}/${need})`] : sl.hi < 1 ? ['bad', 'Too confident'] : sl.lo > 1 ? ['warn', 'Too timid'] : ['good', 'Holding up']];
+  const errRow = (pts, need, scale, unit) => { const e = selfErr(pts); return ['Errors vs. its own chances', 'Are its misses bigger than its chances say to expect? An overfit model is surprised more often than it admits.', '<span class="muted">0 if honest</span>',
+    e.n ? `${e.m >= 0 ? '+' : '−'}${Math.abs(e.m * scale).toFixed(2)} ${unit}<div class="muted" style="font-size:11.5px">${fin(e.lo) ? `range ${(e.lo * scale).toFixed(2)} to ${(e.hi * scale).toFixed(2)}` : ''} · ${e.n.toLocaleString()} predictions</div>` : '<span class="muted">No graded predictions yet</span>',
+    e.n < need ? ['wait', `Too early (${e.n}/${need})`] : e.lo > 0 ? ['bad', 'Bigger misses than claimed'] : e.hi < 0 ? ['good', 'Fine (cautious)'] : ['good', 'Holding up']]; };
+  const verdictOf = rows => { const ks = rows.map(r => r[4][0]); if (ks.includes('bad')) return ['bad', '⚠️ Signs of overfitting', 'Live results fall short of what testing promised. Lean on the market or the blended numbers, and hold off on adding factors.']; if (ks.every(k => k === 'wait')) return ['wait', '⏳ Not enough live games yet', 'Needs more graded predictions saved before games. Testing numbers alone can\'t rule out overfitting.']; if (ks.includes('wait')) return ['good', '✅ So far, so good', 'The checks with enough data look consistent with testing; the rest need more games.']; return ['good', '✅ Holding up live', 'Live results match what testing promised, within luck. No sign of overfitting.']; };
+  const block = (title, rows, foot) => { const v = verdictOf(rows), col = v[0] === 'bad' ? 'var(--neg)' : v[0] === 'good' ? 'var(--good)' : 'var(--text-2)';
+    return `<h3 class="cmp-sec">${title}</h3><div class="trust-v" style="border-color:${col}"><div style="font-size:17px;font-weight:800;color:${col}">${v[1]}</div><div style="font-size:13px;margin-top:2px">${v[2]}</div></div>
+    <div class="twrap" style="margin-top:10px"><table class="trust-t"><colgroup><col style="width:34%"><col style="width:18%"><col style="width:30%"><col style="width:18%"></colgroup><thead><tr><th class="l">Check</th><th class="l">Testing said</th><th class="l">Live (saved before games)</th><th class="l">Reads as</th></tr></thead><tbody>${rows.map(r => `<tr><td class="l"><b>${r[0]}</b><div class="muted" style="font-size:11.5px">${r[1]}</div></td><td class="l">${r[2]}</td><td class="l">${r[3]}</td><td class="l">${tag(r[4][0], r[4][1])}</td></tr>`).join('')}</tbody></table></div>${foot ? `<p class="muted" style="font-size:12px;margin:6px 0 0">${foot}</p>` : ''}`; };
+  let out = '';
+  if (which !== 'gs') {
+    const gs = ((PK && PK.games) || []).filter(g => g.hw != null && fin(g.p)), lm = gs.filter(g => fin(g.mk));
+    const gh = hist.filter(h => h.gm && fin(h.gm.ll) && fin(h.gm.mktLl)), recent = gh.slice(-14);
+    const testEdge = recent.length ? recent.reduce((s, h) => s + (h.gm.mktLl - h.gm.ll), 0) / recent.length : NaN;
+    const testAcc = recent.length ? recent.reduce((s, h) => s + h.gm.acc, 0) / recent.length : NaN;
+    const live = ciMean(lm.map(g => llOne(g.mk, g.hw) - llOne(g.p, g.hw))), need = 150;
+    const accN = gs.length, acc = div(gs.filter(g => (g.p >= .5) === !!g.hw).length, accN), accSe = Math.sqrt(acc * (1 - acc) / Math.max(1, accN));
+    const rows = [
+      ['Edge over the betting market', 'How much closer its chances are to reality than the market\'s (log loss × 1,000; above 0 = model better). The headline overfitting test.', fin(testEdge) ? `${testEdge >= 0 ? '+' : '−'}${Math.abs(testEdge * 1000).toFixed(1)}<div class="muted" style="font-size:11.5px">avg of the last ${recent.length} daily tests</div>` : '<span class="muted">No test snapshots yet</span>',
+        live.n ? `${live.m >= 0 ? '+' : '−'}${Math.abs(live.m * 1000).toFixed(1)}<div class="muted" style="font-size:11.5px">${fin(live.lo) ? `range ${(live.lo * 1000).toFixed(1)} to ${(live.hi * 1000).toFixed(1)}` : ''} · ${live.n} games</div>` : '<span class="muted">No graded games yet</span>',
+        live.n < need || !fin(testEdge) ? ['wait', `Too early (${live.n}/${need})`] : live.hi < testEdge ? ['bad', 'Worse than tested'] : live.lo > testEdge ? ['good', 'Better than tested'] : ['good', 'Matches testing']],
+      ['Picked the winner', 'How often the team it favored won.', fin(testAcc) ? `${pct1(testAcc)}%` : '–', accN ? `${pct1(acc)}%<div class="muted" style="font-size:11.5px">range ${pct1(Math.max(0, acc - 1.96 * accSe))}% to ${pct1(Math.min(1, acc + 1.96 * accSe))}% · ${accN} games</div>` : '<span class="muted">No graded games yet</span>',
+        accN < need || !fin(testAcc) ? ['wait', `Too early (${accN}/${need})`] : acc + 1.96 * accSe < testAcc ? ['bad', 'Worse than tested'] : ['good', 'Matches testing']],
+      slopeRow('Confidence (calibration slope)', calSlope(gs.map(g => ({ p: g.p, y: !!g.hw }))), need),
+      errRow(gs.map(g => ({ p: g.p, y: !!g.hw })), need, 1000, '(× 1,000)')];
+    out += block('🧠 Game model v2', rows, 'Testing = the daily retrain\'s score on recent games it didn\'t learn from. Live = the moneyline picks the GitHub job saved before each game.');
+  }
+  if (which !== 'gm') {
+    const ps = ((PK && PK.picks) || []).filter(p => (p.res === 'W' || p.res === 'L') && fin(p.pRaw));
+    const pts = ps.map(p => ({ p: p.pRaw, y: p.res === 'W' })), ptsB = ps.filter(p => fin(p.p)).map(p => ({ p: p.p, y: p.res === 'W' })), need = 500;
+    const exp = pts.reduce((s, q) => s + q.p, 0), act = pts.filter(q => q.y).length, sd = Math.sqrt(pts.reduce((s, q) => s + q.p * (1 - q.p), 0));
+    const sh = hist.filter(h => h.gs), last = sh[sh.length - 1];
+    const rows = [
+      ['Expected vs. actual scorers', 'Model alone (before the DraftKings blend): how many goal scorers it expected vs. how many there were.', '<span class="muted">equal if honest</span>',
+        pts.length ? `${f0(exp)} expected · ${act} scored<div class="muted" style="font-size:11.5px">${pts.length.toLocaleString()} player-games · luck range ±${f0(1.96 * sd)}</div>` : '<span class="muted">No graded picks yet</span>',
+        pts.length < need ? ['wait', `Too early (${pts.length}/${need})`] : act < exp - 1.96 * sd ? ['bad', 'Expects too many'] : act > exp + 1.96 * sd ? ['warn', 'Expects too few'] : ['good', 'Holding up']],
+      slopeRow('Confidence, model alone', calSlope(pts), need),
+      slopeRow('Confidence, blended with DraftKings', calSlope(ptsB), need),
+      errRow(pts, need, 1000, '(× 1,000)')];
+    out += block('🎯 Goal scorer model', rows, `Live = every player with a DraftKings price that the job saved before the game.${last ? ` Testing: Brier ${last.gs.brier.toFixed(4)} on ${last.gs.n.toLocaleString()} recent player-games it didn't learn from (${last.gs.brier < last.gs.brierBase ? 'matchup factors helping' : 'matchup factors not helping'}).` : ''}`);
+  }
+  return `<div class="card"${which === 'gs' ? ' style="margin-top:14px"' : ''}><div class="card-h"><h3>🔍 Overfitting check</h3><p>Does it do as well on new games as it did in testing?</p></div>
+    <p class="muted" style="margin:-4px 0 6px;font-size:12.5px">A model that memorized noise looks great in testing and then disappoints on new games. These checks compare testing with the predictions saved before each game, with 95% ranges so one bad week isn't mistaken for a broken model. The warning signs: a smaller live edge than testing promised, chances that are too extreme, and bigger misses than its own chances allow.</p>
+    ${out}</div>`;
 }
 
 /* ============================== PLAYER RATINGS (on-ice impact) ==============================
