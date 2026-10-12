@@ -6270,9 +6270,9 @@ function fgShiftIdx(PF) {
       o.toi = o.p[0] + o.p[1] + o.p[2] + o.ot; if (!o.gp || !o.toi) continue;
       o.goalie = o.p[0] / o.gp > 1000; // goalies play the whole period
       const k = normName(o.n); if (!m.has(k)) m.set(k, []); m.get(k).push(o);
-      if (!o.goalie && o.gp >= 10) { e += o.early; t += o.toi; p1 += o.p[0]; }
+      if (!o.goalie) { e += o.early; t += o.toi; p1 += o.p[0]; } // every skater, weighted by minutes (works from the first week of the season)
     }
-    m.lgE = t ? e / t : null; m.lgP1 = t ? p1 / t : null; idx[s] = m;
+    m.lgE = t > 36000 ? e / t : null; m.lgP1 = t > 36000 ? p1 / t : null; idx[s] = m;
   }
   FG.idx = idx; FG.idxSrc = SH.updated; return idx;
 }
@@ -6295,7 +6295,7 @@ function fgAttempts(games) {
 function fgProfile(season, pid, name, tmAbbr, ATT) {
   const cur = fgFind(season, name, tmAbbr), prev = fgFind(season - 1, name, tmAbbr);
   const Lc = FG.idx && FG.idx[phCode(season)], Lp = FG.idx && FG.idx[phCode(season - 1)];
-  const lgE = (Lc && Lc.lgE) || (Lp && Lp.lgE); if (!lgE || (!cur && !prev)) return null;
+  const lgE = (Lc && Lc.lgE) || (Lp && Lp.lgE) || (PRF.data && PRF.data.shifts ? PRF.data.shifts.I / 1200 / 3.1 : null); if (!lgE || (!cur && !prev)) return null;
   const w = [[cur, 1], [prev, .5]].filter(x => x[0]);
   const sum = f => w.reduce((s, [o, k]) => s + f(o) * k, 0);
   const gp = sum(o => o.gp), toi = sum(o => o.toi), early = sum(o => o.early), st = sum(o => o.st), p = [0, 1, 2].map(i => sum(o => o.p[i])), ot = sum(o => o.ot);
