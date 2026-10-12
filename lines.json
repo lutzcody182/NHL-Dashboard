@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-12",
- "updated": "2026-10-12T16:05:12.136Z",
+ "updated": "2026-10-12T21:59:08.678Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -24,7 +24,7 @@
         {
          "n": "Sam Bennett",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Matthew Tkachuk",
@@ -39,7 +39,7 @@
         {
          "n": "Carter Verhaeghe",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Sam Reinhart",
@@ -138,14 +138,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Jack Quinn",
+         "n": "Josh Doan",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
-         "n": "Josh Norris",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Peyton Krebs",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Tage Thompson",
@@ -163,14 +163,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Zach Benson",
+         "n": "Jack Quinn",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Josh Doan",
+         "n": "Zach Benson",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -178,19 +178,19 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Jiri Kulich",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Konsta Helenius",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Ryan McLeod",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Peyton Krebs",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Justin Danforth",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -198,9 +198,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Sam Carrick",
+         "n": "Josh Norris",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Beck Malenstyn",
@@ -228,7 +228,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Olen Zellweger",
+         "n": "Zach Metsa",
          "pos": "D",
          "pp": ""
         },
@@ -238,7 +238,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Zach Metsa",
+         "n": "Olen Zellweger",
          "pos": "D",
          "pp": ""
         },
@@ -276,9 +276,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Andre Burakovsky",
+         "n": "Warren Foegele",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       },
@@ -311,13 +311,13 @@
          "pp": "PP2"
         },
         {
-         "n": "Fabian Zetterlund",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Dylan Cozens",
          "pos": "C",
+         "pp": "PP1"
+        },
+        {
+         "n": "Andre Burakovsky",
+         "pos": "W",
          "pp": "PP1"
         }
        ]
@@ -326,17 +326,17 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Fabian Zetterlund",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Stephen Halliday",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Nick Cousins",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Warren Foegele",
          "pos": "W",
          "pp": ""
         }
@@ -381,7 +381,7 @@
     },
     {
      "team": "New Jersey Devils",
-     "goalie": "Jake Allen",
+     "goalie": "Nico Daws",
      "groups": [
       {
        "label": "Line 1",
@@ -736,12 +736,12 @@
          "pp": ""
         },
         {
-         "n": "Daemon Hunt",
+         "n": "Zach Bogosian",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "David Spacek",
+         "n": "Daemon Hunt",
          "pos": "D",
          "pp": ""
         }
