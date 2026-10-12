@@ -306,7 +306,7 @@ jobs:
                 if (gp && gp.ml) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
                   const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
-                  if (!gByKey.has(k) || gByKey.get(k).hw == null) { if (!gByKey.has(k)) gAdded++; gByKey.set(k, rec); }
+                  if (!gByKey.has(k) || gByKey.get(k).hw == null) { const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */ if (!old) gAdded++; gByKey.set(k, rec); }
                 }
               }
               if (gs) {
@@ -372,7 +372,7 @@ jobs:
           git push
 
   close:
-    # every 30 minutes in the evening: record closing prices for picks starting in the next 45 minutes (closing line value)
+    # every 30 minutes in the evening: record closing prices for picks starting in the next 90 minutes (the last reading before puck drop wins) (closing line value)
     needs: lines
     if: always() && github.event_name == 'schedule' && github.event.schedule != '7 15 * * *' && github.event.schedule != '7 21 * * *'
     runs-on: ubuntu-latest
@@ -398,14 +398,16 @@ jobs:
           const etDay = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, '');
           async function run({ fetchImpl = fetch, now = Date.now(), key = process.env.ODDS_API_KEY } = {}) {
             let P; try { P = JSON.parse(fs.readFileSync('picks.json', 'utf8')); } catch (e) { log('No picks.json yet.'); return 0; }
-            const W = 45 * 60e3, soon = x => { const t = new Date(x.start).getTime(); return t > now && t - now <= W; };
+            const W = 90 * 60e3, LATE = 15 * 60e3, inWin = t => t > now - LATE && t - now <= W, soon = x => inWin(new Date(x.start).getTime()); // up to 90 min before the listed start, and a few minutes after it (puck drop runs late; ESPN must still say pre-game)
             const fresh = x => !x.closeAt || now - new Date(x.closeAt).getTime() > 20 * 60e3; // refresh at most every 20 minutes
             const games = (P.games || []).filter(soon), picks = (P.picks || []).filter(p => soon(p) && p.dk != null && fresh(p));
-            if (!games.length && !picks.length) { log('No saved picks starting in the next 45 minutes.'); return 0; }
+            if (!games.length && !picks.length) { log('No saved picks starting in the next 90 minutes.'); return 0; }
             let changed = 0;
             // moneylines (ESPN, free)
-            for (const day of new Set(games.map(g => etDay(g.start)))) {
+            const pre = new Set(); // games ESPN still lists as pre-game (never record a price once the game is live)
+            for (const day of new Set([...games, ...picks].map(g => etDay(g.start)))) {
               let sb = null; try { const r = await fetchImpl(`https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=${day}`); sb = r.ok ? await r.json() : null; } catch (e) { log('ESPN error: ' + e.message); }
+              for (const e of (sb && sb.events) || []) if (e.competitions[0].status.type.state === 'pre') pre.add(String(e.id));
               for (const g of games.filter(x => etDay(x.start) === day)) {
                 const e = sb && (sb.events || []).find(x => String(x.id) === g.gid), c = e && e.competitions[0];
                 if (!c || c.status.type.state !== 'pre') continue;
@@ -419,8 +421,8 @@ jobs:
               const BASE = 'https://api.the-odds-api.com/v4/sports/icehockey_nhl';
               let events = []; try { const r = await fetchImpl(`${BASE}/events?apiKey=${key}`); events = r.ok ? await r.json() : []; } catch (e) { log('Odds API error: ' + e.message); }
               for (const ev of events) {
-                const t = new Date(ev.commence_time).getTime(); if (!(t > now && t - now <= W)) continue;
-                const mine = picks.filter(p => Math.abs(new Date(p.start).getTime() - t) < 20 * 60e3); if (!mine.length) continue;
+                const t = new Date(ev.commence_time).getTime(); if (!inWin(t)) continue;
+                const mine = picks.filter(p => pre.has(String(p.gid)) && Math.abs(new Date(p.start).getTime() - t) < 20 * 60e3); if (!mine.length) continue;
                 try {
                   const r = await fetchImpl(`${BASE}/events/${ev.id}/odds?apiKey=${key}&regions=us&markets=player_goal_scorer_anytime&bookmakers=draftkings&oddsFormat=american`);
                   if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -586,7 +588,7 @@ jobs:
                 if (gp && gp.ml) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
                   const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
-                  if (!gByKey.has(k) || gByKey.get(k).hw == null) { if (!gByKey.has(k)) gAdded++; gByKey.set(k, rec); }
+                  if (!gByKey.has(k) || gByKey.get(k).hw == null) { const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */ if (!old) gAdded++; gByKey.set(k, rec); }
                 }
               }
               if (gs) {
