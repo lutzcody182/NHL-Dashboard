@@ -6313,13 +6313,9 @@ function fgFit(games, PF) {
   if (FG.fit && FG.fitKey === key) return FG.fit;
   const sorted = [...games].filter(g => g && g.final && g.shots).sort((a, b) => a.date < b.date ? -1 : 1);
   const W = {}, ATT = {}, groups = []; let curS = null, firstP1 = 0, firstN = 0, firstSec = 0;
-  // experiment: do some goalies start games badly? (team-level: which team scores first)
-  const TS = {}, GK = {}, tgroups = [], ts = id => TS[id] || (TS[id] = { gp: 0, gf: 0, ga: 0 }), gks = id => GK[id] || (GK[id] = { ga1: 0, x1: 0, ga: 0, x: 0 });
-  const LGT = { gp: 0, g: 0 };
   for (const g of sorted) {
     const season = seasonOf(g.date);
-    if (season !== curS) { for (const o of Object.values(W)) { o.gp *= .5; o.g *= .5; o.x *= .5; } for (const o of [...Object.values(TS), ...Object.values(GK), LGT]) for (const k in o) o[k] *= .5; curS = season; }
-    const starter = t => { const l = Object.entries(g.gk || {}).filter(([, x]) => x.tm === t).sort((a, b) => b[1].toi - a[1].toi)[0]; return l ? l[0] : null; };
+    if (season !== curS) { for (const o of Object.values(W)) { o.gp *= .5; o.g *= .5; o.x *= .5; } curS = season; }
     const fg = g.shots.filter(x => x.t === 0 && x.per >= 1 && x.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0];
     if (fg && fg.pl && !fg.en && g.sk[fg.pl]) {
       firstN++; if (fg.per === 1) { firstP1++; firstSec += fg.sec; }
@@ -6332,21 +6328,11 @@ function fgFit(games, PF) {
         grp.push([Math.log(Math.max(lam, .005)), pf ? Math.log(pf.X) : 0, pf ? Math.log(pf.R) : 0, pid === fg.pl ? 1 : 0, !!pf]);
       }
       if (grp.length >= 10 && grp.some(r => r[3])) groups.push(grp);
-      // team-level row: each team's expected goals (attack × opponent's defense, both pulled toward average) and each starter's early-game factor
-      const H = g.home.id, Aw = g.away.id, lg = LGT.gp > 20 ? LGT.g / LGT.gp : 3;
-      const rate = (o, k) => (o[k] + lg * 8) / (o.gp + 8);
-      const lH = rate(ts(H), 'gf') * rate(ts(Aw), 'ga') / lg, lA = rate(ts(Aw), 'gf') * rate(ts(H), 'ga') / lg;
-      const gf = id => { if (!id) return 1; const o = gks(id); return ((o.ga1 + 6) / (o.x1 + 6)) / ((o.ga + 20) / (o.x + 20)); };
-      const gH = starter(H), gA = starter(Aw);
-      if (gH && gA && LGT.gp > 40) tgroups.push([Math.log(lH), Math.log(lA), Math.log(gf(gA)), Math.log(gf(gH)), T === H ? 1 : 0]);
     }
     // add this game to the running totals
     const A = ATT[season] || (ATT[season] = {});
     for (const x of g.shots) { if (!x.pl) continue; if (x.t !== 3 && !x.en && x.per >= 1) { const o = A[x.pl] || (A[x.pl] = [0, 0, 0, 0]); o[Math.min(x.per, 4) - 1]++; } if (!x.en && x.t !== 3) { const w = W[x.pl] || (W[x.pl] = { gp: 0, g: 0, x: 0 }); w.x += x.xg || 0; if (x.t === 0) w.g++; } }
     for (const [pid, s] of Object.entries(g.sk)) if (s.toi > 0) { const w = W[pid] || (W[pid] = { gp: 0, g: 0, x: 0 }); w.gp++; }
-    for (const [t, o] of [[g.home.id, g.away.id], [g.away.id, g.home.id]]) { const gfor = g.shots.filter(x => x.tm === t && x.t === 0 && !x.en && x.per <= 4).length; ts(t).gp++; ts(t).gf += gfor; ts(o).ga += gfor; LGT.g += gfor; }
-    LGT.gp += 2;
-    for (const x of g.shots) if (x.gl && x.t !== 3 && !x.en && x.per <= 4) { const o = gks(x.gl); o.x += x.xg || 0; if (x.t === 0) o.ga++; if (x.per === 1) { o.x1 += x.xg || 0; if (x.t === 0) o.ga1++; } }
   }
   const ll = (gs, a, b) => { let s = 0; for (const grp of gs) { let tot = 0, sc = 0; for (const r of grp) { const v = Math.exp(r[0] + a * r[1] + b * r[2]); tot += v; if (r[3]) sc = v; } s += Math.log(sc / tot); } return -s / (gs.length || 1); };
   const grid = []; for (let a = 0; a <= 3.001; a += .25) for (let b = 0; b <= 2.001; b += .25) grid.push([a, b]);
@@ -6360,18 +6346,6 @@ function fgFit(games, PF) {
     // how much more likely the real first scorer looked, on held-out games
     fit.lift = Math.exp(fit.testBase - fit.testFull) - 1;
   } else fit = { a: 1, b: .5, untested: true, n: groups.length, firstP1: firstN ? firstP1 / firstN : null, firstMin: firstP1 ? firstSec / firstP1 / 60 : null, firstN };
-  // goalie early-game factor: learn its weight on the oldest 60%, test on the newest 40% (team that scores first)
-  if (tgroups.length >= 150) {
-    const llT = (r, d) => { const h = r[0] + d * r[2], a = r[1] + d * r[3], pH = 1 / (1 + Math.exp(a - h)); return -Math.log(r[4] ? pH : 1 - pH); };
-    const mean = (gs, d) => gs.reduce((s2, r) => s2 + llT(r, d), 0) / gs.length;
-    const ds = []; for (let d = -1; d <= 3.001; d += .25) ds.push(+d.toFixed(2));
-    const cutT = Math.floor(tgroups.length * .6), trT = tgroups.slice(0, cutT), teT = tgroups.slice(cutT);
-    const dBest = ds.reduce((m, d) => { const v = mean(trT, d); return v < m.v ? { d, v } : m; }, { v: Infinity }).d;
-    const diffs = teT.map(r => llT(r, 0) - llT(r, dBest)), md = diffs.reduce((a, b) => a + b, 0) / diffs.length;
-    const se = Math.sqrt(diffs.reduce((a, b) => a + (b - md) ** 2, 0) / Math.max(1, diffs.length - 1) / diffs.length);
-    const spread = (() => { const v = tgroups.map(r => r[2]); const m = v.reduce((a, b) => a + b, 0) / v.length; return Math.exp(Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / v.length)) - 1; })();
-    fit.goalie = { d: dBest, n: tgroups.length, nTest: teT.length, gain: md, se, lift: Math.exp(md) - 1, spread, verdict: dBest > 0 && md > 2 * se ? 'helps' : dBest > 0 && md > 0 ? 'maybe' : 'no' };
-  }
   FG.fit = fit; FG.fitKey = key; return fit;
 }
 // DraftKings first goal scorer prices for one game
@@ -6466,14 +6440,6 @@ async function renderFirstGoal() {
         <div class="tile"><div class="k">P1 shooting weight</div><div class="v num">${f2(fit.b)}</div><div class="s">1 = counts fully, 0 = ignored</div></div>
         <div class="tile"><div class="k">First goals in period 1</div><div class="v num">${pct1(fit.firstP1)}%</div><div class="s">${fin(fit.firstMin) ? `at ${f1(fit.firstMin)} minutes in, on average` : ''}</div></div></div>
       <p class="muted" style="font-size:12px;margin:0">${fit.lift > .01 ? 'The first-period habits pick out the real first scorer better than anytime goal chances alone, so they are in the model.' : 'So far the first-period habits barely beat anytime goal chances alone, so they count for little. Prices that look off here mostly come from the anytime model and the team-first split.'} Each player's numbers only use games before the one being tested; season ice-time totals include the game itself, a small leak.</p></div>`;
-  const goalieCard = fit.goalie ? (() => { const G = fit.goalie; return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Experiment: goalies who start games badly <span class="pill">tested, not used</span></h3></div>
-      <p style="margin:0 0 8px;font-size:13px">Does a starter's first-period record (goals allowed vs. expected goals in the first period, compared with his usual) help predict which team scores first? Learned on ${Math.round(G.n - G.nTest).toLocaleString()} games, tested on the newest ${G.nTest.toLocaleString()}.</p>
-      <div class="tiles" style="margin-bottom:8px">
-        <div class="tile"><div class="k">Verdict</div><div class="v num" style="color:${G.verdict === 'helps' ? 'var(--good)' : G.verdict === 'maybe' ? 'inherit' : 'var(--neg)'}">${G.verdict === 'helps' ? 'Helps' : G.verdict === 'maybe' ? 'Too close to call' : 'No help'}</div><div class="s">${G.verdict === 'helps' ? 'better on games it never saw, by more than chance' : G.verdict === 'maybe' ? 'slightly better on new games, but within luck' : 'not better than leaving it out'}</div></div>
-        <div class="tile"><div class="k">Held-out improvement</div><div class="v num">${G.lift >= 0 ? '+' : ''}${(G.lift * 100).toFixed(2)}%</div><div class="s">± ${(G.se * 200).toFixed(2)}% (95% range) in how likely the real first-scoring team looked</div></div>
-        <div class="tile"><div class="k">Weight learned</div><div class="v num">${f2(G.d)}</div><div class="s">0 = ignore it, 1 = take it at face value</div></div>
-        <div class="tile"><div class="k">Typical goalie factor</div><div class="v num">±${pct1(G.spread)}%</div><div class="s">how far starters' early-game factors spread (after pulling small samples toward average)</div></div></div><p class="muted" style="font-size:12px;margin:0">This doesn't change any chances on this page. It's here so you can decide whether to add it.</p></div>` })()
-    : `<div class="note" style="margin-top:14px"><b>Experiment: goalies who start games badly (tested, not used).</b> Needs about 150 games with a first goal to test, so it shows up once last season is loaded (open <b>Goal Scorers</b> and load last season if asked). ${fit.firstN ? `${fit.firstN} games so far.` : ''}</div>`;
   body.innerHTML = `<div class="bar"><h2 class="grow">First goal scorer</h2>
       <div class="ctl"><label>Date</label><input type="date" id="fgDate" value="${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}"></div>
       <div class="ctl"><label>Game</label><select id="fgGame"><option value="">All games</option>${gameOpts}</select></div>
@@ -6485,7 +6451,7 @@ async function renderFirstGoal() {
     ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best first goal values</h3><p>Ranked by expected return; long odds, so expect long losing runs</p></div><div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)} · early ice ${f2(r.X)}× · P1 shooting ${f2(r.R)}×</div><div style="margin-top:4px"><b>${pct1(r.fp)}%</b> vs. DK ${fmtML(r.fdk)} (${pct1(r.fImp)}%) · <span style="color:var(--good)">${money(r.fEv)}</span></div></div>`).join('')}</div></div>` : ''}
     <div class="empty" id="fgNoMatch" hidden>No player matching that name in these games.</div>
     ${rows.length ? `<div class="card">${table('fg', cols, rows, { sort: anyDk ? 'fEv' : 'fp', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}
-    ${fitCard}${goalieCard}
+    ${fitCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">First goal bets hit rarely and sportsbooks build in a large margin, so even good prices lose most nights. For fun and analysis, not betting advice.</p>`;
   RERENDER.fg = renderFirstGoal;
   $('#fgDate').onchange = e => { FG.date = e.target.value.replace(/-/g, ''); FG.game = ''; FG.team = ''; renderFirstGoal(); };
