@@ -1,7 +1,6 @@
-
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
-# (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime goal scorer
-# odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern). The same run saves the goal scorer model's
+# (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime and first goal scorer
+# odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern) plus period-by-period ice time from the NHL's shift charts. The same run saves the goal scorer model's
 # pre-game picks with DraftKings prices to picks.json and grades finished games. In the evening, every 30 minutes, the
 # close job records the price just before puck drop for saved picks (closing line value), and the repick job re-runs
 # both models when a starting goalie is confirmed or changed. All run on demand from the Actions tab.
@@ -116,7 +115,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Fetch DraftKings anytime goal scorer odds
+      - name: Fetch DraftKings anytime and first goal scorer odds
         continue-on-error: true
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
@@ -141,7 +140,7 @@ jobs:
             const games = []; let remaining = null;
             for (const e of soon) {
               try {
-                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&regions=us&markets=player_goal_scorer_anytime&bookmakers=draftkings&oddsFormat=american`);
+                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&regions=us&markets=player_goal_scorer_anytime,player_goal_scorer_first&bookmakers=draftkings&oddsFormat=american`);
                 remaining = left ?? remaining;
                 const bk = (data.bookmakers || []).find(b => b.key === 'draftkings');
                 const mk = bk && (bk.markets || []).find(m => m.key === 'player_goal_scorer_anytime');
@@ -149,8 +148,13 @@ jobs:
                   .filter(o => !/^no$/i.test(o.name || ''))
                   .map(o => ({ n: o.description || o.name, price: o.price }))
                   .filter(o => o.n && Number.isFinite(o.price));
-                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players });
-                console.log(`${e.away_team} @ ${e.home_team}: ${players.length} players`);
+                const fm = bk && (bk.markets || []).find(m => m.key === 'player_goal_scorer_first');
+                const first = ((fm && fm.outcomes) || [])
+                  .filter(o => !/^no$|no goal/i.test(o.name || '') && !/no goal/i.test(o.description || ''))
+                  .map(o => ({ n: o.description || o.name, price: o.price }))
+                  .filter(o => o.n && Number.isFinite(o.price));
+                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players, first });
+                console.log(`${e.away_team} @ ${e.home_team}: ${players.length} anytime, ${first.length} first goal prices`);
               } catch (err) { console.log(`::warning::${e.away_team} @ ${e.home_team}: ${err.message}`); }
             }
             const out = { source: 'DraftKings via The Odds API', updated: new Date().toISOString(), remaining, games };
@@ -225,6 +229,85 @@ jobs:
           path: .cache
           key: espn-games-${{ github.run_id }}
           restore-keys: espn-games-
+
+      - name: Period ice time from NHL shift charts
+        continue-on-error: true
+        run: |
+          cat > "$RUNNER_TEMP/shifts.js" <<'EOF'
+          // Period-by-period ice time for every skater, from the NHL's public shift charts (this season and the two before).
+          // Saves per-game totals in the GitHub cache (so each game is downloaded once) and adds season totals to props.json.
+          const fs = require('fs');
+          const log = (...a) => console.log(...a);
+          const K = 6.1 / 3600, I = (1 - Math.exp(-K * 1200)) / K; // league goals per second (both teams); exposure of a full first period
+          const toS = t => { if (!t) return 0; const [m, s] = String(t).split(':').map(Number); return (m || 0) * 60 + (s || 0); };
+          const etDay = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+          const addDay = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+          async function pool(items, n, fn) { const out = []; let i = 0; await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) { const k = i++; out[k] = await fn(items[k]); } })); return out; }
+          // one game's shifts → per player [name, team, P1, P2, P3, OT seconds, early-weighted P1 exposure, on ice at opening faceoff]
+          function aggGame(rows) {
+            const pl = {};
+            for (const r of rows || []) {
+              if (r.typeCode !== 517 || !r.playerId) continue;
+              const a = toS(r.startTime), b = toS(r.endTime), dur = r.duration ? toS(r.duration) : Math.max(0, b - a);
+              const o = pl[r.playerId] || (pl[r.playerId] = [`${r.firstName || ''} ${r.lastName || ''}`.trim(), r.teamAbbrev || '', 0, 0, 0, 0, 0, 0]);
+              const per = r.period >= 4 ? 5 : r.period + 1; if (per < 2) continue;
+              o[per] += dur;
+              if (r.period === 1) { const end = a + dur; o[6] += (Math.exp(-K * a) - Math.exp(-K * end)) / K; if (a === 0) o[7] = 1; }
+            }
+            for (const o of Object.values(pl)) o[6] = Math.round(o[6]);
+            return pl;
+          }
+          async function run({ fetchImpl = fetch, now = new Date(), budgetMs = 12 * 60e3 } = {}) {
+            const t0 = Date.now(), y = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1, today = etDay(now);
+            let C = { days: {}, games: {} }; try { C = JSON.parse(fs.readFileSync('.cache/shifts.json', 'utf8')); } catch (e) {}
+            C.days = C.days || {}; C.games = C.games || {};
+            const getJ = async url => { const r = await fetchImpl(url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
+            let fetched = 0, failed = 0, stopped = false;
+            for (const k of [0, 1, 2]) {
+              const code = `${y - k}${y - k + 1}`, end = k ? `${y - k + 1}-06-30` : today;
+              const days = []; for (let d = `${y - k}-09-25`; d <= end; d = addDay(d, 1)) if (!C.days[d]) days.push(d);
+              await pool(days, 6, async d => {
+                if (Date.now() - t0 > budgetMs) { stopped = true; return; }
+                let sc; try { sc = await getJ(`https://api-web.nhle.com/v1/score/${d}`); } catch (e) { failed++; return; }
+                const gs = (sc.games || []).filter(g => (g.gameType === 2 || g.gameType === 3));
+                let allDone = d < today;
+                for (const g of gs) {
+                  if (!/^(OFF|FINAL)$/.test(g.gameState || '')) { allDone = false; continue; }
+                  if (C.games[g.id]) continue;
+                  if (Date.now() - t0 > budgetMs) { stopped = true; allDone = false; break; }
+                  try {
+                    const j = await getJ(`https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId=${g.id}`);
+                    const pl = aggGame(j.data);
+                    if (Object.keys(pl).length < 20) { allDone = false; continue; } // shift charts not posted yet
+                    C.games[g.id] = { s: code, d, h: g.homeTeam && g.homeTeam.abbrev, a: g.awayTeam && g.awayTeam.abbrev, pl }; fetched++;
+                  } catch (e) { failed++; allDone = false; }
+                }
+                if (allDone) C.days[d] = 1;
+              });
+            }
+            fs.mkdirSync('.cache', { recursive: true }); fs.writeFileSync('.cache/shifts.json', JSON.stringify(C));
+            // season totals per player: [name, team, games, P1, P2, P3, OT, early exposure, opening-faceoff starts]
+            const seasons = {};
+            for (const g of Object.values(C.games)) {
+              const S = seasons[g.s] || (seasons[g.s] = {});
+              for (const [id, o] of Object.entries(g.pl)) {
+                const t = S[id] || (S[id] = [o[0], o[1], 0, 0, 0, 0, 0, 0, 0, '']);
+                if (!t[9] || g.d >= t[9]) { t[1] = o[1]; t[9] = g.d; } // latest team
+                t[2]++; for (let i = 2; i <= 7; i++) t[i + 1] += o[i];
+              }
+            }
+            for (const S of Object.values(seasons)) for (const t of Object.values(S)) t.length = 9;
+            let P = {}; try { P = JSON.parse(fs.readFileSync('props.json', 'utf8')); } catch (e) {}
+            P.shifts = { source: 'NHL shift charts', updated: now.toISOString(), K, I, cols: ['n', 'tm', 'gp', 'p1', 'p2', 'p3', 'ot', 'early', 'starts'], seasons };
+            fs.writeFileSync('props.json', JSON.stringify(P));
+            log(`Shift charts: ${fetched} new games (${Object.keys(C.games).length} saved), ${failed} failed requests${stopped ? ', stopped early to stay within time (continues next run)' : ''}.`);
+            for (const [s, S] of Object.entries(seasons)) log(`  ${s}: ${Object.keys(S).length} players`);
+            return P.shifts;
+          }
+          module.exports = { run, aggGame, K, I };
+          if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::warning::' + (e.stack || e.message)); process.exit(0); });
+          EOF
+          node "$RUNNER_TEMP/shifts.js"
 
       - name: Install page runner
         run: npm install --prefix "$RUNNER_TEMP/tk" jsdom@24 --no-audit --no-fund --silent
