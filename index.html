@@ -494,6 +494,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
       <button data-tab="faceoffs" data-g="players">Faceoffs</button>
       <button data-tab="props" data-g="players">Player Props</button>
       <button data-tab="scorers" data-g="players">Goal Scorers</button>
+      <button data-tab="firstgoal" data-g="players">First Goal</button>
       <button data-tab="compare" data-g="players">Compare</button>
       <button data-tab="birth" data-g="players">Birthplaces</button>
       <button data-tab="quads" data-g="league">Quadrants</button>
@@ -542,6 +543,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
   <section class="tab" id="tab-quads"><div class="abar"></div><div id="qdBody"></div></section>
   <section class="tab" id="tab-profiles"><div class="abar"></div><div id="sprBody"></div></section>
   <section class="tab" id="tab-scorers"><div class="abar"></div><div id="gsBody2"></div></section>
+  <section class="tab" id="tab-firstgoal"><div class="abar"></div><div id="fgBody"></div></section>
   <section class="tab" id="tab-props"><div class="abar"></div><div id="prBody"></div></section>
   <section class="tab" id="tab-periods"><div class="abar"></div><div id="pdBody"></div></section>
   <section class="tab" id="tab-faceoffs"><div class="abar"></div><div id="foBody"></div></section>
@@ -1477,7 +1479,7 @@ async function ensureData(force) {
   const tok = ++A.token; A.loading = true; invalidate();
   const cancelled = () => tok !== A.token;
   renderAbar();
-  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody', 'prBody', 'pdBody', 'sprBody', 'qdBody', 'gsBody2'];
+  const bodyIds = ['teamsBody', 'skBody', 'gkBody', 'luckBody', 'cmpBody', 'pwBody', 'stBody', 'spBody', 'rkBody', 'mdBody', 'rcBody', 'clBody', 'sosBody', 'trBody', 'skrBody', 'foBody', 'refBody', 'arBody', 'upBody', 'btBody', 'prBody', 'pdBody', 'sprBody', 'qdBody', 'gsBody2', 'fgBody'];
   bodyIds.forEach(b => { $('#' + b).innerHTML = `<div class="empty"><div class="spinner"></div>Crunching play-by-play… the first load of a big range can take a minute. It's much faster after that.</div>`; });
   try {
     const cal = await seasonCalendar(A.season); if (cancelled()) return;
@@ -5099,7 +5101,7 @@ async function gsLoadPrior(force) {
     GS.prior = games.filter(g => g && g.final); GS.priorMsg = '';
   } catch (e) { GS.priorMsg = 'err:' + (e.message || e); }
   GS.priorLoading = false;
-  if (activeTab() === 'scorers') renderScorers();
+  if (activeTab() === 'scorers') renderScorers(); else if (activeTab() === 'firstgoal') renderFirstGoal();
 }
 // tonight's role from the RotoGrinders lines: line/pair slot → minutes, PP1/PP2 → share of the team's power play
 function gsRoleMap(S, lf, tid) {
@@ -5475,7 +5477,7 @@ const mbDefaultStake = odds => odds < 0 ? -odds : 100; // your rule: $100 on plu
 function alertBox(msg) { const n = document.createElement('div'); n.className = 'toast'; n.textContent = msg; document.body.appendChild(n); setTimeout(() => n.remove(), 2600); }
 // bet form (new or edit)
 function mbOpenForm(seed, editId) {
-  if (seed && seed.type && seed.type !== 'goal') return mbOpenGameForm(null, editId);
+  if (seed && seed.type && seed.type !== 'goal' && seed.type !== 'fg') return mbOpenGameForm(null, editId);
   const old = $('#mbModal'); if (old) old.remove();
   const b = seed || {};
   const odds = b.odds != null ? b.odds : (b.dk != null ? b.dk : '');
@@ -5483,7 +5485,7 @@ function mbOpenForm(seed, editId) {
   const m = document.createElement('div'); m.id = 'mbModal'; m.className = 'mbmodal';
   m.innerHTML = `<div class="mbbox" role="dialog" aria-label="Log a bet">
     <div class="card-h"><h3>${editId ? 'Edit bet' : 'Log my bet'}</h3><button class="btn" data-mbclose>✕</button></div>
-    <div class="tcell" style="margin-bottom:8px">${b.tm ? logoImg(b.tm, 22) : ''}<b>${esc(b.n || 'Player')}</b> <span class="muted">anytime goal · ${esc(TM(b.tm || '').abbr || '')} vs. ${esc(TM(b.opp || '').abbr || '')}${b.start ? ' · ' + new Date(b.start).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}</span></div>
+    <div class="tcell" style="margin-bottom:8px">${b.tm ? logoImg(b.tm, 22) : ''}<b>${esc(b.n || 'Player')}</b> <span class="muted">${b.type === 'fg' ? 'first goal of the game' : 'anytime goal'} · ${esc(TM(b.tm || '').abbr || '')} vs. ${esc(TM(b.opp || '').abbr || '')}${b.start ? ' · ' + new Date(b.start).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}</span></div>
     ${b.p != null ? `<p class="muted" style="margin:0 0 10px;font-size:12.5px">Ice Lab chance ${pct1(b.p)}% (fair ${fairAmerican(b.p)})${b.dk != null ? ` · DraftKings listed ${fmtML(b.dk)}` : ''}</p>` : ''}
     <div class="mbgrid">
       <label>Odds I got (American)<input id="mbOdds" type="number" step="1" value="${esc(String(odds))}" placeholder="+250 or -120"></label>
@@ -5504,17 +5506,17 @@ function mbOpenForm(seed, editId) {
     if (!(Math.abs(o) >= 100) || !(s > 0)) { alertBox('Enter valid odds (like +250 or -120) and an amount.'); return; }
     const list = mbLoad();
     if (editId) { const x = list.find(q => q.id === editId); if (x) Object.assign(x, { odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim() }); }
-    else list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type: 'goal', placed: new Date().toISOString(), gid: b.gid, start: b.start, date: b.start ? localDay(b.start) : todayStr(), pid: b.pid, n: b.n, tm: b.tm, opp: b.opp, gl: b.gl || '', p: b.p, dk: b.dk, odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim(), res: null });
-    if (mbSave(list)) { m.remove(); alertBox(editId ? 'Bet updated' : `Bet logged: ${b.n} ${fmtML(o)} for ${money(s).replace('+', '')}`); if (activeTab() === 'mybets') renderMyBets(); else if (activeTab() === 'scorers') mbMarkButtons(); }
+    else list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type: b.type === 'fg' ? 'fg' : 'goal', placed: new Date().toISOString(), gid: b.gid, start: b.start, date: b.start ? localDay(b.start) : todayStr(), pid: b.pid, n: b.n, tm: b.tm, opp: b.opp, gl: b.gl || '', p: b.p, dk: b.dk, odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim(), res: null });
+    if (mbSave(list)) { m.remove(); alertBox(editId ? 'Bet updated' : `Bet logged: ${b.n} ${fmtML(o)} for ${money(s).replace('+', '')}`); if (activeTab() === 'mybets') renderMyBets(); else if (activeTab() === 'scorers') mbMarkButtons(); else if (activeTab() === 'firstgoal') fgMarkButtons(); }
   };
 }
 // mark "logged" buttons on the Goal Scorers tab
-async function mbMarkButtons() { await mbInit(); const keys = new Set(mbLoad().map(b => b.gid + '|' + b.pid)); $$('[data-mybet]').forEach(el => { const on = keys.has(el.dataset.key); el.classList.toggle('on', on); el.textContent = on ? '✓ Bet' : '＋ Bet'; }); }
+async function mbMarkButtons() { await mbInit(); const keys = new Set(mbLoad().filter(b => (b.type || 'goal') === 'goal').map(b => b.gid + '|' + b.pid)); $$('[data-mybet]').forEach(el => { const on = keys.has(el.dataset.key); el.classList.toggle('on', on); el.textContent = on ? '✓ Bet' : '＋ Bet'; }); }
 document.addEventListener('click', async e => {
   const btn = e.target.closest('[data-mybet]'); if (!btn) return;
   await mbInit();
   const r = (GS.rows || [])[+btn.dataset.mybet]; if (!r) return;
-  const existing = mbLoad().find(b => b.gid === r.gid && b.pid === r.pid);
+  const existing = mbLoad().find(b => (b.type || 'goal') === 'goal' && b.gid === r.gid && b.pid === r.pid);
   if (existing) { mbOpenForm(existing, existing.id); return; }
   mbOpenForm({ gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', p: r.p, dk: r.dk });
 });
@@ -5525,7 +5527,7 @@ async function mbGrade() {
   for (const gid of [...new Set(open.map(b => b.gid))]) {
     let g = null; try { g = await getGame(gid); } catch (e) {}
     if (!g || !g.final) continue;
-    for (const b of open.filter(x => x.gid === gid)) { if (b.type && b.type !== 'goal') { const r = gbGrade(b, g); if (r) { b.res = r; b.final = `${g.away.score}-${g.home.score}`; b.auto = true; changed++; } continue; } const s = g.sk[b.pid]; if (!s || !(s.toi > 0)) { b.res = 'V'; b.goals = 0; } else { b.goals = s.g; b.res = s.g > 0 ? 'W' : 'L'; } b.auto = true; changed++; }
+    for (const b of open.filter(x => x.gid === gid)) { if (b.type && b.type !== 'goal' && b.type !== 'fg') { const r = gbGrade(b, g); if (r) { b.res = r; b.final = `${g.away.score}-${g.home.score}`; b.auto = true; changed++; } continue; } const s = g.sk[b.pid]; if (b.type === 'fg') { if (!s || !(s.toi > 0)) { b.res = 'V'; b.goals = 0; } else { b.goals = s.g; b.res = fgFirstScorer(g) === b.pid ? 'W' : 'L'; } b.auto = true; changed++; continue; } if (!s || !(s.toi > 0)) { b.res = 'V'; b.goals = 0; } else { b.goals = s.g; b.res = s.g > 0 ? 'W' : 'L'; } b.auto = true; changed++; }
   }
   if (changed) mbSave(list);
   return changed;
@@ -5560,11 +5562,11 @@ async function renderMyBets() {
   // by odds range
   const ob = [[-10000, 0, 'Favorites (minus odds)'], [100, 200, '+100 to +199'], [200, 400, '+200 to +399'], [400, 100000, '+400 and longer']].map(([lo, hi, l]) => { const g = done.filter(b => b.odds >= lo && b.odds < hi); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s, b) => s + b.stake, 0), p: g.reduce((s, b) => s + mbProfit(b), 0) }; }).filter(x => x.n);
   const obRows = ob.map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
-  const tyRows = [['goal', 'Goal scorer'], ['ml', 'Moneyline'], ['total', 'Total'], ['pl', 'Puck line']].map(([k, l]) => { const g = done.filter(b => (b.type || 'goal') === k); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s2, b) => s2 + b.stake, 0), p: g.reduce((s2, b) => s2 + mbProfit(b), 0) }; }).filter(x => x.n).map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
+  const tyRows = [['goal', 'Goal scorer'], ['fg', 'First goal scorer'], ['ml', 'Moneyline'], ['total', 'Total'], ['pl', 'Puck line']].map(([k, l]) => { const g = done.filter(b => (b.type || 'goal') === k); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s2, b) => s2 + b.stake, 0), p: g.reduce((s2, b) => s2 + mbProfit(b), 0) }; }).filter(x => x.n).map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
   // bet list
   const all = [...list].sort((a, b) => (b.start || b.placed).localeCompare(a.start || a.placed)), shown = MB.all ? all : all.slice(0, 50);
-  const resCell = b => b.res === 'W' ? `<b style="color:var(--good)">✓ Won${b.goals > 1 ? ` (${b.goals} G)` : ''}</b>` : b.res === 'L' ? '<span style="color:var(--neg)">✗ Lost</span>' : b.res === 'V' ? '<span class="muted">Void / refunded</span>' : b.res === 'PU' ? '<span class="muted">Push / refunded</span>' : '<span class="muted">Pending</span>';
-  const rows = shown.map(b => `<tr><td class="l">${new Date(b.start || b.placed).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${b.type && b.type !== 'goal' ? `<div class="tcell">${b.type !== 'total' ? logoImg(b.tm, 16) : ''}<b>${mbLabel(b)}</b></div><div class="muted" style="font-size:11.5px">${GB_TYPES[b.type]} · ${esc(TM(b.aid || '').abbr || '')} @ ${esc(TM(b.hid || '').abbr || '')}${b.final ? ' · final ' + esc(b.final) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>` : `<div class="tcell">${b.tm ? logoImg(b.tm, 16) : ''}${b.pid ? plink(b.pid, b.n) : esc(b.n)}</div><div class="muted" style="font-size:11.5px">Goal scorer · vs. ${esc(TM(b.opp || '').abbr || '')}${b.gl ? ' · ' + esc(b.gl) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>`}</td><td><b>${fmtML(b.odds)}</b><div class="muted" style="font-size:11.5px">${esc(b.book || '')}</div></td><td>${money(b.stake).replace('+', '')}</td><td>${money(mbToWin(b.stake, b.odds)).replace('+', '')}</td><td>${fin(b.p) ? pct1(b.p) + '%' : '–'}</td><td class="l">${resCell(b)}</td><td>${b.res === 'W' || b.res === 'L' ? moneyCell(mbProfit(b)) : '–'}</td>
+  const resCell = b => b.res === 'W' ? `<b style="color:var(--good)">✓ Won${b.goals > 1 && b.type !== 'fg' ? ` (${b.goals} G)` : ''}</b>` : b.res === 'L' ? '<span style="color:var(--neg)">✗ Lost</span>' : b.res === 'V' ? '<span class="muted">Void / refunded</span>' : b.res === 'PU' ? '<span class="muted">Push / refunded</span>' : '<span class="muted">Pending</span>';
+  const rows = shown.map(b => `<tr><td class="l">${new Date(b.start || b.placed).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${b.type && b.type !== 'goal' ? `<div class="tcell">${b.type !== 'total' ? logoImg(b.tm, 16) : ''}<b>${mbLabel(b)}</b></div><div class="muted" style="font-size:11.5px">${GB_TYPES[b.type]} · ${esc(TM(b.aid || '').abbr || '')} @ ${esc(TM(b.hid || '').abbr || '')}${b.final ? ' · final ' + esc(b.final) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>` : `<div class="tcell">${b.tm ? logoImg(b.tm, 16) : ''}${b.pid ? plink(b.pid, b.n) : esc(b.n)}</div><div class="muted" style="font-size:11.5px">${b.type === 'fg' ? 'First goal scorer' : 'Goal scorer'} · vs. ${esc(TM(b.opp || '').abbr || '')}${b.gl ? ' · ' + esc(b.gl) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>`}</td><td><b>${fmtML(b.odds)}</b><div class="muted" style="font-size:11.5px">${esc(b.book || '')}</div></td><td>${money(b.stake).replace('+', '')}</td><td>${money(mbToWin(b.stake, b.odds)).replace('+', '')}</td><td>${fin(b.p) ? pct1(b.p) + '%' : '–'}</td><td class="l">${resCell(b)}</td><td>${b.res === 'W' || b.res === 'L' ? moneyCell(mbProfit(b)) : '–'}</td>
     <td class="l"><div class="mbact"><button class="btn sm" data-mbedit="${b.id}" title="Edit odds or amount">Edit</button><select data-mbres="${b.id}" title="Set the result yourself"><option value="">${b.res ? 'Change…' : 'Settle…'}</option><option value="W">Won</option><option value="L">Lost</option><option value="V">Void</option><option value="PU">Push</option><option value="P">Back to pending</option></select><button class="btn sm" data-mbdel="${b.id}" title="Delete this bet">✕</button></div></td></tr>`).join('');
   body.innerHTML = `<div class="bar"><h2 class="grow">My bets</h2><button class="btn" id="mbExport">⬇ Export backup</button><label class="btn" style="cursor:pointer">⬆ Import<input type="file" id="mbImport" accept=".json,application/json" hidden></label></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Log a goal scorer bet from <b>Players → Goal Scorers</b> with the <b>＋ Bet</b> button, or a moneyline, total or puck line bet with the <b>Bet</b> button on any game (Today tab or the game page). Enter the odds you got and how much you bet, and it's tracked here all season. Results settle automatically from ESPN once the game is final (a player who doesn't play is void; a total or puck line landing exactly on the number is a push; a shootout winner counts as one goal, like the sportsbook), or you can settle one yourself. ${graded ? `<b>${graded} bet${graded > 1 ? 's' : ''} just settled.</b>` : ''}</p>
@@ -6248,6 +6250,229 @@ function gbGrade(b, g) {
   return null;
 }
 
+/* ============================== FIRST GOAL SCORER ==============================
+   Chance a player scores the game's first goal =
+     chance anyone scores (before a shootout) × chance his team scores first × his share of his team's early scoring.
+   His share starts from his anytime goal expectation (empty-net goals removed) and is adjusted by two first-period habits:
+     • early ice time: how front-loaded his minutes are (NHL shift charts: first-period minutes, weighted toward the opening minutes
+       when first goals happen, and how often he's on for the opening faceoff), vs. his total minutes
+     • first-period shooting: his shot attempts per minute in the first period vs. the rest of the game (ESPN play-by-play)
+   How much each habit counts is learned from real first goals (last season + this season), and tested on games it didn't learn from. */
+const FG = { game: '', team: '', q: '', fit: null, fitKey: '', idx: null, idxSrc: null, att: null, attKey: '' };
+function fgShiftIdx(PF) {
+  const SH = PF && PF.shifts; if (!SH || !SH.seasons) return null;
+  if (FG.idx && FG.idxSrc === SH.updated) return FG.idx;
+  const idx = {};
+  for (const [s, rows] of Object.entries(SH.seasons)) {
+    const m = new Map(); let e = 0, t = 0, p1 = 0;
+    for (const [id, r] of Object.entries(rows)) {
+      const o = { id, n: r[0], tm: r[1], gp: +r[2] || 0, p: [+r[3] || 0, +r[4] || 0, +r[5] || 0], ot: +r[6] || 0, early: +r[7] || 0, st: +r[8] || 0 };
+      o.toi = o.p[0] + o.p[1] + o.p[2] + o.ot; if (!o.gp || !o.toi) continue;
+      o.goalie = o.p[0] / o.gp > 1000; // goalies play the whole period
+      const k = normName(o.n); if (!m.has(k)) m.set(k, []); m.get(k).push(o);
+      if (!o.goalie && o.gp >= 10) { e += o.early; t += o.toi; p1 += o.p[0]; }
+    }
+    m.lgE = t ? e / t : null; m.lgP1 = t ? p1 / t : null; idx[s] = m;
+  }
+  FG.idx = idx; FG.idxSrc = SH.updated; return idx;
+}
+function fgFind(season, name, tmAbbr) {
+  const m = FG.idx && FG.idx[phCode(season)]; if (!m) return null;
+  const l = (m.get(normName(name)) || []).filter(o => !o.goalie); if (!l.length) return null; if (l.length === 1) return l[0];
+  const t = PH_TM[tmAbbr] || tmAbbr; return l.find(o => o.tm === t) || l[0];
+}
+// shot attempts by period for each player, per season (ESPN play-by-play; unblocked attempts, empty net excluded)
+function fgAttempts(games) {
+  const out = {};
+  for (const g of games) {
+    if (!g || !g.shots) continue;
+    const s = seasonOf(g.date), M = out[s] || (out[s] = {});
+    for (const x of g.shots) { if (!x.pl || x.t === 3 || x.en || !(x.per >= 1)) continue; const o = M[x.pl] || (M[x.pl] = [0, 0, 0, 0]); o[Math.min(x.per, 4) - 1]++; }
+  }
+  return out;
+}
+// one player's first-period profile: current season + last season at half weight
+function fgProfile(season, pid, name, tmAbbr, ATT) {
+  const cur = fgFind(season, name, tmAbbr), prev = fgFind(season - 1, name, tmAbbr);
+  const Lc = FG.idx && FG.idx[phCode(season)], Lp = FG.idx && FG.idx[phCode(season - 1)];
+  const lgE = (Lc && Lc.lgE) || (Lp && Lp.lgE); if (!lgE || (!cur && !prev)) return null;
+  const w = [[cur, 1], [prev, .5]].filter(x => x[0]);
+  const sum = f => w.reduce((s, [o, k]) => s + f(o) * k, 0);
+  const gp = sum(o => o.gp), toi = sum(o => o.toi), early = sum(o => o.early), st = sum(o => o.st), p = [0, 1, 2].map(i => sum(o => o.p[i])), ot = sum(o => o.ot);
+  // early ice time vs. a typical skater with the same total minutes, pulled toward average by 10 games
+  const X = ((early / toi) * gp + lgE * 10) / (gp + 10) / lgE;
+  // shot attempts: first period vs. what his first-period minutes would predict, pulled toward average by 15 attempts
+  const a = [0, 0, 0, 0]; for (const [s, k] of [[season, 1], [season - 1, .5]]) { const o = ATT && ATT[s] && ATT[s][pid]; if (o) o.forEach((v, i) => a[i] += v * k); }
+  const aAll = a[0] + a[1] + a[2] + a[3], e1 = aAll * p[0] / toi, R = (a[0] + 15) / (e1 + 15);
+  const per60 = (n, sec) => sec > 60 ? n / sec * 3600 : null;
+  return { gp, X, R, start: gp ? st / gp : null, toiPer: p.map(x => x / gp), p1share: p[0] / toi, att60: [0, 1, 2].map(i => per60(a[i], p[i])), aAll, src: cur ? 'this season' + (prev ? ' + last' : '') : 'last season' };
+}
+// learn how much the two first-period habits count, from real first goals (walk-forward: only games before each one)
+function fgFit(games, PF) {
+  const key = games.length + '|' + (PF && PF.shifts ? PF.shifts.updated : '');
+  if (FG.fit && FG.fitKey === key) return FG.fit;
+  const sorted = [...games].filter(g => g && g.final && g.shots).sort((a, b) => a.date < b.date ? -1 : 1);
+  const W = {}, ATT = {}, groups = []; let curS = null, firstP1 = 0, firstN = 0, firstSec = 0;
+  for (const g of sorted) {
+    const season = seasonOf(g.date);
+    if (season !== curS) { for (const o of Object.values(W)) { o.gp *= .5; o.g *= .5; o.x *= .5; } curS = season; }
+    const fg = g.shots.filter(x => x.t === 0 && x.per >= 1 && x.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0];
+    if (fg && fg.pl && !fg.en && g.sk[fg.pl]) {
+      firstN++; if (fg.per === 1) { firstP1++; firstSec += fg.sec; }
+      const T = fg.tm, grp = [];
+      for (const [pid, s] of Object.entries(g.sk)) {
+        if (s.tm !== T || !(s.toi > 0)) continue;
+        const o = W[pid] || { gp: 0, g: 0, x: 0 }, pri = s.pos === 'D' ? .06 : .17;
+        const lam = ((o.g + o.x) / 2 + pri * 5) / (o.gp + 5);
+        const pf = fgProfile(season, pid, s.n, TM(T).abbr, ATT);
+        grp.push([Math.log(Math.max(lam, .005)), pf ? Math.log(pf.X) : 0, pf ? Math.log(pf.R) : 0, pid === fg.pl ? 1 : 0, !!pf]);
+      }
+      if (grp.length >= 10 && grp.some(r => r[3])) groups.push(grp);
+    }
+    // add this game to the running totals
+    const A = ATT[season] || (ATT[season] = {});
+    for (const x of g.shots) { if (!x.pl) continue; if (x.t !== 3 && !x.en && x.per >= 1) { const o = A[x.pl] || (A[x.pl] = [0, 0, 0, 0]); o[Math.min(x.per, 4) - 1]++; } if (!x.en && x.t !== 3) { const w = W[x.pl] || (W[x.pl] = { gp: 0, g: 0, x: 0 }); w.x += x.xg || 0; if (x.t === 0) w.g++; } }
+    for (const [pid, s] of Object.entries(g.sk)) if (s.toi > 0) { const w = W[pid] || (W[pid] = { gp: 0, g: 0, x: 0 }); w.gp++; }
+  }
+  const ll = (gs, a, b) => { let s = 0; for (const grp of gs) { let tot = 0, sc = 0; for (const r of grp) { const v = Math.exp(r[0] + a * r[1] + b * r[2]); tot += v; if (r[3]) sc = v; } s += Math.log(sc / tot); } return -s / (gs.length || 1); };
+  const grid = []; for (let a = 0; a <= 3.001; a += .25) for (let b = 0; b <= 2.001; b += .25) grid.push([a, b]);
+  const best = gs => grid.reduce((m, [a, b]) => { const v = ll(gs, a, b); return v < m.v ? { a, b, v } : m; }, { v: Infinity });
+  const cut = Math.floor(groups.length * .6), tr = groups.slice(0, cut), te = groups.slice(cut);
+  const withData = groups.filter(gr => gr.filter(r => r[4]).length >= gr.length * .6).length;
+  let fit = null;
+  if (groups.length >= 150 && withData >= groups.length * .5) {
+    const bTr = best(tr), all = best(groups);
+    fit = { a: all.a, b: all.b, n: groups.length, nTest: te.length, testBase: ll(te, 0, 0), testFull: ll(te, bTr.a, bTr.b), testA: bTr.a, testB: bTr.b, firstP1: firstP1 / firstN, firstMin: firstP1 ? firstSec / firstP1 / 60 : null, firstN };
+    // how much more likely the real first scorer looked, on held-out games
+    fit.lift = Math.exp(fit.testBase - fit.testFull) - 1;
+  } else fit = { a: 1, b: .5, untested: true, n: groups.length, firstP1: firstN ? firstP1 / firstN : null, firstMin: firstP1 ? firstSec / firstP1 / 60 : null, firstN };
+  FG.fit = fit; FG.fitKey = key; return fit;
+}
+// DraftKings first goal scorer prices for one game
+function fgDkMap(PF, dateIso, hId, aId) {
+  if (!PF || !PF.games) return null;
+  const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
+  const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
+  const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
+  if (!g || !g.first || !g.first.length) return null;
+  const m = {}; for (const p of g.first) m[normName(p.n)] = p.price; return m;
+}
+// tonight's first goal chances for one game, from the anytime rows (gsTonight)
+function fgGame(S, e, rows, PF, ATT, fit) {
+  const c = e.competitions[0], H = String(c.competitors.find(x => x.homeAway === 'home').team.id), Aw = String(c.competitors.find(x => x.homeAway === 'away').team.id);
+  const season = seasonOf(e.date), dkm = fgDkMap(PF, e.date, H, Aw), out = [];
+  for (const r of rows) {
+    const lamB = fin(r.p) && r.p > 0 && r.p < 1 ? -Math.log(1 - r.p) : r.lam, enFrac = r.lam > 0 ? clamp((r.lamEN || 0) * S.c * (r.anchor || 1) / r.lam, 0, .5) : 0;
+    const lamNE = lamB * (1 - enFrac), pf = FG.idx ? fgProfile(season, r.pid, r.n, TM(r.tm).abbr, ATT) : null;
+    const X = pf ? pf.X : 1, R = pf ? pf.R : 1;
+    out.push({ ...r, lamNE, pf, X, R, w: lamNE * Math.pow(X, fit.a) * Math.pow(R, fit.b) });
+  }
+  const tl = t => out.filter(r => r.tm === t).reduce((s, r) => s + r.lamNE, 0), LH = tl(H), LA = tl(Aw), L = LH + LA;
+  const pAny = 1 - Math.exp(-L) * .5;
+  const imps = dkm ? Object.values(dkm).filter(fin).map(amImplied) : [], over = imps.length >= 20 ? imps.reduce((s, p) => s + p, 0) : null;
+  for (const t of [H, Aw]) {
+    const tr = out.filter(r => r.tm === t), sw = tr.reduce((s, r) => s + r.w, 0), pTeam = L > 0 ? (t === H ? LH : LA) / L : .5;
+    for (const r of tr) {
+      r.pTeam = pTeam * pAny; r.share = sw > 0 ? r.w / sw : 0; r.fp = r.pTeam * r.share;
+      r.fdk = dkm ? dkLookup(dkm, r.n) : null; r.fImp = r.fdk != null ? amImplied(r.fdk) : NaN; r.fFair = r.fdk != null && over ? r.fImp / over : NaN;
+      if (r.fdk != null) { const b = betEV(r.fp, r.fdk); r.fEdge = r.fp - r.fImp; r.fEv = b.ev; r.fRoi = b.roi; } else { r.fEdge = r.fEv = r.fRoi = NaN; }
+      // the habits' combined effect on his share, vs. anytime goals alone
+      const base = tr.reduce((s, x) => s + x.lamNE, 0); r.habit = base > 0 && r.lamNE > 0 ? r.share / (r.lamNE / base) - 1 : 0;
+    }
+  }
+  out.over = over; return out;
+}
+async function renderFirstGoal() {
+  const body = $('#fgBody');
+  if (!GS.prior && !GS.priorLoading && !/^need|^err/.test(GS.priorMsg)) gsLoadPrior(false);
+  if (!A.filtered.length && !(GS.prior && GS.prior.length)) { body.innerHTML = `<div class="empty">No completed games loaded yet. Open <b>Goal Scorers</b> once to load last season as the starting point.</div>`; return; }
+  body.innerHTML = `<div class="empty"><div class="spinner"></div>Finding tonight's games…</div>`;
+  const { S } = gsGetState();
+  let d = FG.date || GS.date || todayStr(), sb = null;
+  for (let i = 0; i < 8; i++) { try { sb = await getJSON(`${API}/scoreboard?dates=${d}`); } catch (e) { sb = null; } if (FG.date || (sb && (sb.events || []).some(e => e.competitions[0].status.type.state === 'pre'))) break; d = addDays(d, 1); }
+  if (activeTab() !== 'firstgoal') return;
+  const evs = (sb && sb.events) || [];
+  const LF = await getLinesFile(), PF = await getPropsFile(), PK = await getPicksFile();
+  gsBlendFit(PK); await getPHFile(); fgShiftIdx(PF);
+  const games = [...(GS.prior || []), ...A.filtered], ATT = fgAttempts(games);
+  const fit = fgFit(games, PF);
+  const MATE = gsMateMap(S, LF, evs), INJS = {};
+  await pool(evs.filter(e => e.competitions[0].status.type.state === 'pre'), 6, async e => { INJS[e.id] = await getInjuries(e.id); });
+  if (activeTab() !== 'firstgoal') return;
+  const rows = []; let anyDk = false;
+  for (const e of evs) {
+    const c = e.competitions[0]; c.competitors.forEach(x => addTeam(x.team));
+    if (FG.game && FG.game !== String(e.id)) continue;
+    const g = fgGame(S, e, gsTonight(S, e, LF, PF, INJS[e.id], MATE), PF, ATT, fit);
+    if (g.some(r => r.fdk != null)) anyDk = true;
+    rows.push(...g.filter(r => !FG.team || FG.team === r.tm));
+  }
+  rows.forEach((r, i) => r.idx = i); FG.rows = rows;
+  const gameOpts = evs.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); return `<option value="${e.id}" ${String(e.id) === FG.game ? 'selected' : ''}>${esc(a.team.abbreviation)} @ ${esc(h.team.abbreviation)}</option>`; }).join('');
+  const teamsTonight = [...new Set(rows.map(r => r.tm))];
+  const mmss2 = s => fin(s) ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}` : '–';
+  const fx = v => fin(v) ? `<span style="color:${v > 1.04 ? 'var(--good)' : v < .96 ? 'var(--neg)' : 'inherit'}">${v.toFixed(2)}×</span>` : '–';
+  const cols = [
+    { k: 'n', h: 'Player', l: 1, v: r => r.n, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}${plink(r.pid, v)} <span class="muted">${esc(r.pos)}</span>${injBadge(r.inj)}</div>` },
+    { k: 'role', h: 'Role', l: 1, v: r => r.role || '', f: v => v ? `<span style="font-size:12.5px">${esc(v)}</span>` : '<span class="muted" style="font-size:12px">usual</span>' },
+    { k: 'p', h: 'Anytime', v: r => r.p, f: v => `<span class="muted">${pct1(v)}%</span>`, t: 'His chance to score at any point tonight (from the Goal Scorers page).' },
+    { k: 'p1', h: 'P1 ice time', v: r => r.pf ? r.pf.toiPer[0] : NaN, f: (v, r) => r.pf ? `${mmss2(v)}<div class="muted" style="font-size:11px">P2 ${mmss2(r.pf.toiPer[1])} · P3 ${mmss2(r.pf.toiPer[2])}</div>` : '<span class="muted">–</span>', t: 'Average ice time per game in the first period, with the second and third periods underneath (NHL shift charts; this season plus last season at half weight).' },
+    { k: 'start', h: 'Opening faceoff', v: r => r.pf ? r.pf.start : NaN, f: v => fin(v) ? pct1(v) + '%' : '–', t: 'How often he is on the ice for the game\'s opening faceoff.' },
+    { k: 'a1', h: 'P1 attempts /60', v: r => r.pf ? r.pf.att60[0] : NaN, f: (v, r) => fin(v) ? `${f1(v)}<div class="muted" style="font-size:11px">P2 ${fin(r.pf.att60[1]) ? f1(r.pf.att60[1]) : '–'} · P3 ${fin(r.pf.att60[2]) ? f1(r.pf.att60[2]) : '–'}</div>` : '–', t: 'Unblocked shot attempts per 60 minutes of his ice time in the first period, with the second and third periods underneath.' },
+    { k: 'X', h: 'Early ice', v: r => r.X, f: fx, dir: 1, t: 'How front-loaded his minutes are: his ice time in the opening minutes (when first goals happen), compared with a typical skater who plays the same total minutes. Above 1× means he plays more early.' },
+    { k: 'R', h: 'P1 shooting', v: r => r.R, f: fx, dir: 1, t: 'His shot attempts per minute in the first period compared with the rest of his game. Above 1× means he shoots more early.' },
+    { k: 'pTeam', h: 'Team first', v: r => r.pTeam, f: v => pct1(v) + '%', t: 'Chance his team scores the game\'s first goal.' },
+    { k: 'fp', h: 'First goal', v: r => r.fp, f: (v, r) => `<b>${pct1(v)}%</b>${Math.abs(r.habit) >= .03 ? ` <span class="muted" style="font-size:11.5px">(${r.habit > 0 ? '+' : ''}${pct1(r.habit)}% from P1 habits)</span>` : ''}`, t: 'Ice Lab\'s chance he scores the first goal of the game.' },
+    { k: 'fair', h: 'Fair odds', v: r => r.fp, f: (v, r) => fairAmerican(r.fp) },
+    { k: 'fdk', h: 'DraftKings', v: r => r.fdk, f: v => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>`, t: 'DraftKings first goal scorer price.' },
+    { k: 'fImp', h: 'DK implied', v: r => r.fImp, f: (v, r) => fin(v) ? `${pct1(v)}%${fin(r.fFair) ? `<div class="muted" style="font-size:11px">${pct1(r.fFair)}% no margin</div>` : ''}` : '–', t: 'The chance DraftKings\' price implies, and underneath with its margin removed. First goal markets carry a big margin.' },
+    { k: 'fEdge', h: 'Edge', v: r => r.fEdge, f: v => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>` : '–', t: 'Ice Lab\'s chance minus DraftKings\' implied chance.' },
+    { k: 'fEv', h: 'Exp. profit', v: r => r.fEv, f: (v, r) => fin(v) ? `${moneyCell(v)} <span class="muted" style="font-size:11.5px">${r.fRoi > 0 ? '+' : ''}${pct1(r.fRoi)}%</span>` : '–', t: 'Expected profit per bet with your bet sizes ($100 on plus odds).' },
+    { k: 'bet', h: '', l: 1, v: () => 0, f: (v, r) => `<button class="btn sm mybet" data-fgbet="${r.idx}" title="Log a first goal scorer bet you placed on this player">＋ Bet</button>` }];
+  const best = rows.filter(r => fin(r.fEv) && r.fEv > 0 && !r.lowN).sort((a, b) => b.fRoi - a.fRoi).slice(0, 6);
+  const noShift = !(PF && PF.shifts);
+  const fitCard = fit.untested
+    ? `<div class="note">Not enough first goals with period ice time loaded yet to test the first-period habits (${fit.n} games). Until then they count at a starting weight (early ice ${f2(fit.a)}, first-period shooting ${f2(fit.b)}). Loading last season on the <b>Goal Scorers</b> page fixes this.</div>`
+    : `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Do first-period habits help?</h3><p>Learned from ${fit.n.toLocaleString()} first goals; tested on the newest ${fit.nTest.toLocaleString()} it didn't learn from</p></div>
+      <div class="tiles" style="margin-bottom:10px">
+        <div class="tile"><div class="k">Real first scorer looked</div><div class="v num" style="color:${fit.lift > .01 ? 'var(--good)' : fit.lift < -.01 ? 'var(--neg)' : 'inherit'}">${fit.lift >= 0 ? '+' : ''}${pct1(fit.lift)}%</div><div class="s">more likely with P1 habits than with anytime goals alone (held-out games)</div></div>
+        <div class="tile"><div class="k">Early ice time weight</div><div class="v num">${f2(fit.a)}</div><div class="s">1 = counts fully as designed, 0 = ignored</div></div>
+        <div class="tile"><div class="k">P1 shooting weight</div><div class="v num">${f2(fit.b)}</div><div class="s">1 = counts fully, 0 = ignored</div></div>
+        <div class="tile"><div class="k">First goals in period 1</div><div class="v num">${pct1(fit.firstP1)}%</div><div class="s">${fin(fit.firstMin) ? `at ${f1(fit.firstMin)} minutes in, on average` : ''}</div></div></div>
+      <p class="muted" style="font-size:12px;margin:0">${fit.lift > .01 ? 'The first-period habits pick out the real first scorer better than anytime goal chances alone, so they are in the model.' : 'So far the first-period habits barely beat anytime goal chances alone, so they count for little. Prices that look off here mostly come from the anytime model and the team-first split.'} Each player's numbers only use games before the one being tested; season ice-time totals include the game itself, a small leak.</p></div>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">First goal scorer</h2>
+      <div class="ctl"><label>Date</label><input type="date" id="fgDate" value="${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}"></div>
+      <div class="ctl"><label>Game</label><select id="fgGame"><option value="">All games</option>${gameOpts}</select></div>
+      <div class="ctl"><label>Team</label><select id="fgTeam"><option value="">All</option>${teamsTonight.map(t => `<option value="${t}" ${t === FG.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>
+      <div class="ctl"><label>Player</label><input id="fgQ" type="search" placeholder="Search a name" value="${esc(FG.q)}" autocomplete="off"></div></div>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores the game's first goal: the chance his team scores first (from both teams' expected goals) times his share of his team's early scoring. His share starts from his anytime goal chance, without empty-net goals, then adjusts for how much he plays early in games (first-period minutes, weighted toward the opening minutes, and opening-faceoff shifts) and how much he shoots in the first period compared with later periods. A shootout winner doesn't count as a goal scorer.</p>
+    ${noShift ? '<div class="note">Period-by-period ice time isn\'t loaded yet. It comes from the NHL\'s shift charts, which the GitHub job adds to props.json on its next 11 AM or 5 PM run. Until then the chances use anytime goals and the team-first split only.</div>' : ''}
+    ${PF && !anyDk ? '<div class="note">No DraftKings first goal scorer prices for these games yet. The job pulls them with the anytime prices (about 11 AM and 5 PM Eastern).</div>' : ''}
+    ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best first goal values</h3><p>Ranked by expected return; long odds, so expect long losing runs</p></div><div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)} · early ice ${f2(r.X)}× · P1 shooting ${f2(r.R)}×</div><div style="margin-top:4px"><b>${pct1(r.fp)}%</b> vs. DK ${fmtML(r.fdk)} (${pct1(r.fImp)}%) · <span style="color:var(--good)">${money(r.fEv)}</span></div></div>`).join('')}</div></div>` : ''}
+    <div class="empty" id="fgNoMatch" hidden>No player matching that name in these games.</div>
+    ${rows.length ? `<div class="card">${table('fg', cols, rows, { sort: anyDk ? 'fEv' : 'fp', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}
+    ${fitCard}
+    <p class="muted" style="font-size:12px;margin:10px 0 0">First goal bets hit rarely and sportsbooks build in a large margin, so even good prices lose most nights. For fun and analysis, not betting advice.</p>`;
+  RERENDER.fg = renderFirstGoal;
+  $('#fgDate').onchange = e => { FG.date = e.target.value.replace(/-/g, ''); FG.game = ''; FG.team = ''; renderFirstGoal(); };
+  $('#fgGame').onchange = e => { FG.game = e.target.value; renderFirstGoal(); };
+  $('#fgTeam').onchange = e => { FG.team = e.target.value; renderFirstGoal(); };
+  const applyQ = () => { const q = normName(FG.q); let shown = 0; $$('#fgBody [data-pname]').forEach(el => { const on = !q || el.dataset.pname.includes(q); el.style.display = on ? '' : 'none'; if (on && el.tagName === 'TR') shown++; }); const nm = $('#fgNoMatch'); if (nm) nm.hidden = !(q && !shown); };
+  const qi = $('#fgQ'); if (qi) { qi.oninput = () => { FG.q = qi.value; applyQ(); }; applyQ(); }
+  fgMarkButtons();
+}
+async function fgMarkButtons() { await mbInit(); const l = mbLoad().filter(b => b.type === 'fg'); $$('[data-fgbet]').forEach(el => { const r = (FG.rows || [])[+el.dataset.fgbet]; const on = !!r && l.some(b => b.gid === r.gid && b.pid === r.pid); el.classList.toggle('on', on); el.textContent = on ? '✓ Bet' : '＋ Bet'; }); }
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('[data-fgbet]'); if (!btn) return;
+  await mbInit();
+  const r = (FG.rows || [])[+btn.dataset.fgbet]; if (!r) return;
+  const ex = mbLoad().find(b => b.type === 'fg' && b.gid === r.gid && b.pid === r.pid);
+  if (ex) { mbOpenForm(ex, ex.id); return; }
+  mbOpenForm({ type: 'fg', gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', p: r.fp, dk: r.fdk });
+});
+// who scored the first goal (shootouts don't count); null if no goal before a shootout
+const fgFirstScorer = g => { const x = (g.shots || []).filter(s => s.t === 0 && s.per >= 1 && s.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0]; return x ? x.pl : null; };
+
 /* ============================== UPSET TRACKER ============================== */
 function renderUpsets() {
   const body = $('#upBody');
@@ -6461,6 +6686,7 @@ markGloss(document.body);
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
 function renderActiveAnalytics() {
   const t = activeTab();
+  if (t === 'firstgoal') { renderFirstGoal(); return; }
   if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets(); else if (t === 'props') renderProps(); else if (t === 'periods') renderPeriods(); else if (t === 'profiles') renderProfiles(); else if (t === 'quads') renderQuads(); else if (t === 'scorers') renderScorers();
 }
 const LASTTAB = {};
@@ -6474,7 +6700,7 @@ function setTab(t) {
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
   if (t === 'mybets') renderMyBets();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers'].includes(t)) {
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers', 'firstgoal'].includes(t)) {
     // every tab opens on the full current season
     if (A.range !== 'season' || (S.curSeason && A.season !== S.curSeason)) { A.range = 'season'; if (S.curSeason) A.season = S.curSeason; A.note = ''; }
     renderAbar(); if (A.loading) return; ensureData();
