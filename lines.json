@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-13",
- "updated": "2026-10-13T17:53:12.052Z",
+ "updated": "2026-10-13T20:06:10.526Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -224,6 +224,11 @@
         },
         {
          "n": "Anton Johansson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Albert Johansson",
          "pos": "D",
          "pp": ""
         },
@@ -585,14 +590,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Olen Zellweger",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
          "n": "Mattias Samuelsson",
          "pos": "D",
          "pp": ""
-        },
-        {
-         "n": "Rasmus Dahlin",
-         "pos": "D",
-         "pp": "PP1"
         },
         {
          "n": "Zach Metsa",
@@ -602,12 +607,7 @@
         {
          "n": "Owen Power",
          "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Olen Zellweger",
-         "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Louis Crevier",
@@ -3402,7 +3402,7 @@
         {
          "n": "Judd Caulfield",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Tim Washe",
@@ -3457,7 +3457,7 @@
    "teams": [
     {
      "team": "Edmonton Oilers",
-     "goalie": "Tristan Jarry",
+     "goalie": "Devon Levi",
      "groups": [
       {
        "label": "Line 1",
@@ -3669,14 +3669,14 @@
          "pp": "PP2"
         },
         {
+         "n": "Erik Gustafsson",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
          "n": "Brandt Clarke",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Joel Edmundson",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Cody Ceci",
