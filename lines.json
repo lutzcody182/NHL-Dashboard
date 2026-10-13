@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-13",
- "updated": "2026-10-13T12:58:15.345Z",
+ "updated": "2026-10-13T15:03:32.721Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -376,7 +376,7 @@
     },
     {
      "team": "Columbus Blue Jackets",
-     "goalie": "Jet Greaves",
+     "goalie": "Cam Talbot",
      "groups": [
       {
        "label": "Line 1",
@@ -625,7 +625,7 @@
     },
     {
      "team": "Montreal Canadiens",
-     "goalie": "Jakub Dobes",
+     "goalie": "Jacob Fowler",
      "groups": [
       {
        "label": "Line 1",
@@ -676,6 +676,11 @@
          "pp": ""
         },
         {
+         "n": "Adam Engstrom",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Zachary Bolduc",
          "pos": "W",
          "pp": "PP2"
@@ -690,11 +695,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Adam Engstrom",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Kirby Dach",
          "pos": "W",
@@ -721,7 +721,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Mike Matheson",
+         "n": "Kaiden Guhle",
          "pos": "D",
          "pp": ""
         },
@@ -732,11 +732,6 @@
         },
         {
          "n": "Arber Xhekaj",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Kaiden Guhle",
          "pos": "D",
          "pp": ""
         }
@@ -874,7 +869,7 @@
     },
     {
      "team": "Carolina Hurricanes",
-     "goalie": "Brandon Bussi",
+     "goalie": "Pyotr Kochetkov",
      "groups": [
       {
        "label": "Line 1",
@@ -1136,7 +1131,7 @@
         {
          "n": "Denver Barkey",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Christian Dvorak",
@@ -1149,9 +1144,29 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Matvei Michkov",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Porter Martone",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Noah Cates",
+         "pos": "C",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Trevor Zegras",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Owen Tippett",
@@ -1166,26 +1181,6 @@
        ]
       },
       {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Matvei Michkov",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Trevor Zegras",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "Michael Bunting",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
        "label": "Line 4",
        "players": [
         {
@@ -1194,14 +1189,9 @@
          "pp": ""
         },
         {
-         "n": "Noah Cates",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Carl Grundstrom",
+         "n": "Michael Bunting",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1443,7 +1433,7 @@
          "pp": ""
         },
         {
-         "n": "Jaroslav Chmelar",
+         "n": "Matt Rempe",
          "pos": "W",
          "pp": ""
         },
