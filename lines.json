@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-13",
- "updated": "2026-10-13T20:06:10.526Z",
+ "updated": "2026-10-13T23:48:33.302Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -17,14 +17,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Anthony Mantha",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Jack Hughes",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Arseny Gritsyuk",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Jesper Bratt",
@@ -37,9 +37,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Luke Evangelista",
+         "n": "Dawson Mercer",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Nico Hischier",
@@ -49,7 +49,7 @@
         {
          "n": "Timo Meier",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -57,9 +57,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Dawson Mercer",
+         "n": "Anthony Mantha",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Evan Rodrigues",
@@ -67,7 +67,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Arseny Gritsyuk",
+         "n": "Stefan Noesen",
          "pos": "W",
          "pp": "PP2"
         }
@@ -117,12 +117,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Declan Chisholm",
+         "n": "Johnathan Kovacevic",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Brenden Dillon",
+         "n": "Declan Chisholm",
          "pos": "D",
          "pp": ""
         }
@@ -191,6 +191,11 @@
          "n": "Michael Rasmussen",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Andreas Englund",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -198,8 +203,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Nate Danielson",
-         "pos": "C",
+         "n": "Carter Mazur",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -223,17 +228,7 @@
          "pp": ""
         },
         {
-         "n": "Anton Johansson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Albert Johansson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "William Wallinder",
          "pos": "D",
          "pp": ""
         },
@@ -241,6 +236,11 @@
          "n": "Justin Faulk",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Anton Johansson",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -281,6 +281,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Lars Eller",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Carter Verhaeghe",
          "pos": "W",
          "pp": "PP1"
@@ -289,11 +294,6 @@
          "n": "Sam Reinhart",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Sam Lafferty",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -321,17 +321,17 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Lars Eller",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Garnet Hathaway",
          "pos": "W",
          "pp": ""
         },
         {
          "n": "Bokondji Imama",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Sam Lafferty",
          "pos": "W",
          "pp": ""
         }
@@ -361,12 +361,12 @@
          "pp": ""
         },
         {
-         "n": "Dmitry Kulikov",
+         "n": "Uvis Balinskis",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Radko Gudas",
+         "n": "Dmitry Kulikov",
          "pos": "D",
          "pp": ""
         }
@@ -552,7 +552,7 @@
         {
          "n": "Jiri Kulich",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Konsta Helenius",
@@ -562,7 +562,7 @@
         {
          "n": "Ryan McLeod",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -580,7 +580,7 @@
          "pp": ""
         },
         {
-         "n": "Tyson Kozak",
+         "n": "Justin Danforth",
          "pos": "W",
          "pp": ""
         }
@@ -749,26 +749,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Ilya Protas",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Aliaksei Protas",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Alex Ovechkin",
-         "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
          "n": "Alex Tuch",
          "pos": "W",
          "pp": "PP2"
@@ -781,6 +761,26 @@
         {
          "n": "Dylan Strome",
          "pos": "C",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Ilya Protas",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Aliaksei Protas",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Alex Ovechkin",
+         "pos": "W",
          "pp": "PP1"
         }
        ]
@@ -987,7 +987,7 @@
    "teams": [
     {
      "team": "Seattle Kraken",
-     "goalie": "Joey Daccord",
+     "goalie": "Philipp Grubauer",
      "groups": [
       {
        "label": "Line 1",
@@ -1114,6 +1114,26 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Trevor Zegras",
+         "pos": "C",
+         "pp": "PP1"
+        },
+        {
+         "n": "Owen Tippett",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Sean Couturier",
+         "pos": "C",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
          "n": "Tyson Foerster",
          "pos": "W",
          "pp": "PP1"
@@ -1131,7 +1151,7 @@
        ]
       },
       {
-       "label": "Line 2",
+       "label": "Line 3",
        "players": [
         {
          "n": "Matvei Michkov",
@@ -1145,26 +1165,6 @@
         },
         {
          "n": "Noah Cates",
-         "pos": "C",
-         "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Trevor Zegras",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "Owen Tippett",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Sean Couturier",
          "pos": "C",
          "pp": ""
         }
@@ -1951,14 +1951,14 @@
          "pp": ""
         },
         {
+         "n": "Matthew Kessel",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Tony DeAngelo",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Scott Mayfield",
-         "pos": "D",
-         "pp": ""
         }
        ]
       }
