@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-13",
- "updated": "2026-10-13T15:03:32.721Z",
+ "updated": "2026-10-13T17:53:12.052Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -224,11 +224,6 @@
         },
         {
          "n": "Anton Johansson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Albert Johansson",
          "pos": "D",
          "pp": ""
         },
@@ -472,7 +467,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Carson Soucy",
+         "n": "Jake Christiansen",
          "pos": "D",
          "pp": ""
         },
@@ -487,7 +482,7 @@
          "pp": ""
         },
         {
-         "n": "Jake Christiansen",
+         "n": "Carson Soucy",
          "pos": "D",
          "pp": ""
         }
@@ -854,11 +849,6 @@
          "pp": ""
         },
         {
-         "n": "Dylan McIlrath",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Cole Hutson",
          "pos": "D",
          "pp": "PP2"
@@ -1131,7 +1121,7 @@
         {
          "n": "Denver Barkey",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Christian Dvorak",
@@ -1146,7 +1136,7 @@
         {
          "n": "Matvei Michkov",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Porter Martone",
@@ -1166,7 +1156,7 @@
         {
          "n": "Trevor Zegras",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Owen Tippett",
@@ -1191,7 +1181,7 @@
         {
          "n": "Michael Bunting",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -1307,11 +1297,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Scott Sabourin",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Charle-Edouard D'Astous",
          "pos": "W",
          "pp": "PP2"
@@ -1320,6 +1305,11 @@
          "n": "Conor Geekie",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Jeffrey Viel",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1734,7 +1724,7 @@
    "teams": [
     {
      "team": "Vancouver Canucks",
-     "goalie": "Kevin Lankinen",
+     "goalie": "Leevi Merilainen",
      "groups": [
       {
        "label": "Line 1",
@@ -1742,7 +1732,7 @@
         {
          "n": "Jonathan Lekkerimaki",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Elias Pettersson",
@@ -1762,17 +1752,17 @@
         {
          "n": "Marco Rossi",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Paul Cotter",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
-         "n": "Brock Boeser",
+         "n": "Linus Karlsson",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -1790,9 +1780,9 @@
          "pp": ""
         },
         {
-         "n": "Linus Karlsson",
+         "n": "Brock Boeser",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -1810,8 +1800,8 @@
          "pp": ""
         },
         {
-         "n": "Aatu Raty",
-         "pos": "C",
+         "n": "Arshdeep Bains",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -1820,9 +1810,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Zeev Buium",
+         "n": "Elias Nils Pettersson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Filip Hronek",
@@ -1835,7 +1825,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Guillaume Brisebois",
+         "n": "Jamie Oleksiak",
          "pos": "D",
          "pp": ""
         },
@@ -1845,7 +1835,7 @@
          "pp": ""
         },
         {
-         "n": "Elias Nils Pettersson",
+         "n": "Zeev Buium",
          "pos": "D",
          "pp": ""
         }
@@ -1983,7 +1973,7 @@
    "teams": [
     {
      "team": "Pittsburgh Penguins",
-     "goalie": "Arturs Silovs",
+     "goalie": "Sergei Murashov",
      "groups": [
       {
        "label": "Line 1",
@@ -2150,26 +2140,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Dominic Toninato",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Ryan Donato",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Oliver Moore",
-         "pos": "C",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
          "n": "Cole Smith",
          "pos": "W",
          "pp": ""
@@ -2183,6 +2153,26 @@
          "n": "Ryan Greene",
          "pos": "C",
          "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Dominic Toninato",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Ryan Donato",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Oliver Moore",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -2562,24 +2552,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Cale Makar",
-         "pos": "D",
-         "pp": "PP1"
-        },
-        {
-         "n": "Devon Toews",
+         "n": "Sam Malinski",
          "pos": "D",
          "pp": "PP2"
         },
         {
-         "n": "Brett Kulak",
+         "n": "Devon Toews",
          "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Sam Malinski",
-         "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Josh Manson",
@@ -2588,6 +2568,16 @@
         },
         {
          "n": "Brent Burns",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Brett Kulak",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Noah Juulsen",
          "pos": "D",
          "pp": ""
         }
@@ -2643,6 +2633,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Arttu Hyry",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Tyler Seguin",
          "pos": "W",
          "pp": "PP2"
@@ -2651,11 +2646,6 @@
          "n": "Justin Hryckowian",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Oskar Back",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -2663,12 +2653,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Arttu Hyry",
+         "n": "Radek Faksa",
          "pos": "C",
          "pp": ""
         },
         {
-         "n": "Joel Kiviranta",
+         "n": "Oskar Back",
          "pos": "W",
          "pp": ""
         },
@@ -2974,7 +2964,7 @@
    "teams": [
     {
      "team": "Toronto Maple Leafs",
-     "goalie": "Sergei Bobrovsky",
+     "goalie": "Anthony Stolarz",
      "groups": [
       {
        "label": "Line 1",
@@ -3027,7 +3017,7 @@
         {
          "n": "Nick Paul",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Gavin McKenna",
@@ -3082,7 +3072,7 @@
         {
          "n": "Nick Blankenburg",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Oliver Ekman-Larsson",
@@ -3350,14 +3340,14 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Alex Killorn",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Beckett Sennecke",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Sam Colangelo",
-         "pos": "W",
-         "pp": "PP2"
         },
         {
          "n": "Leo Carlsson",
@@ -3370,14 +3360,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Alex Killorn",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Mikael Granlund",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Sam Colangelo",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Nikita Nesterenko",
@@ -3393,11 +3383,6 @@
          "n": "Frank Vatrano",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Nikita Klepov",
-         "pos": "W",
-         "pp": "PP1"
         },
         {
          "n": "A.J. Greer",
