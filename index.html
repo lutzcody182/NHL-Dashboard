@@ -655,9 +655,24 @@ const sgn2 = v => fin(v) ? (v > 0 ? '+' : '') + v.toFixed(2) : '–';
 const div = (a, b) => b ? a / b : NaN;
 const per60 = (x, sec) => sec > 0 ? x * 3600 / sec : NaN;
 
+// ESPN moved scoreboard prices (Oct 2026): the moneyline now sits in odds.moneyline.home.close.odds ("-130") instead of
+// homeTeamOdds.moneyLine. Fill the old fields from the new ones so everything that reads prices keeps working.
+function espnOddsFix(j) {
+  const num = x => { if (x == null) return null; const n = parseFloat(String(x).replace(/^even$/i, '100')); return isFinite(n) && Math.abs(n) >= 100 ? n : null; };
+  const pick = side => side ? num(side.close && side.close.odds) ?? num(side.open && side.open.odds) : null;
+  const line = side => { const s = side && ((side.close && side.close.line) || (side.open && side.open.line)); const n = s == null ? NaN : parseFloat(String(s).replace(/^[ou]/i, '')); return isFinite(n) ? n : null; };
+  for (const e of (j && j.events) || []) for (const c of e.competitions || []) for (const o of c.odds || []) {
+    const ml = o.moneyline, ps = o.pointSpread, tot = o.total;
+    o.homeTeamOdds = o.homeTeamOdds || {}; o.awayTeamOdds = o.awayTeamOdds || {};
+    if (ml) { if (!isFinite(parseFloat(o.homeTeamOdds.moneyLine)) && pick(ml.home) != null) o.homeTeamOdds.moneyLine = pick(ml.home); if (!isFinite(parseFloat(o.awayTeamOdds.moneyLine)) && pick(ml.away) != null) o.awayTeamOdds.moneyLine = pick(ml.away); }
+    if (ps) { if (o.homeTeamOdds.spreadOdds == null && pick(ps.home) != null) o.homeTeamOdds.spreadOdds = pick(ps.home); if (o.awayTeamOdds.spreadOdds == null && pick(ps.away) != null) o.awayTeamOdds.spreadOdds = pick(ps.away); }
+    if (tot) { if (o.overOdds == null && pick(tot.over) != null) o.overOdds = pick(tot.over); if (o.underOdds == null && pick(tot.under) != null) o.underOdds = pick(tot.under); if (o.overUnder == null && line(tot.over) != null) o.overUnder = line(tot.over); }
+  }
+  return j;
+}
 async function getJSON(url, tries = 3) {
   for (let i = 0; i < tries; i++) {
-    try { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+    try { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); return /\/scoreboard/.test(url) ? espnOddsFix(j) : j; }
     catch (e) { if (i === tries - 1) throw e; await sleep(500 * (i + 1)); }
   }
 }
