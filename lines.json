@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-13",
- "updated": "2026-10-13T23:48:33.302Z",
+ "updated": "2026-10-14T02:32:21.095Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -2253,7 +2253,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Ryan Hartman",
+         "n": "Danila Yurov",
          "pos": "C",
          "pp": "PP2"
         },
@@ -2268,7 +2268,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Danila Yurov",
+         "n": "Ryan Hartman",
          "pos": "C",
          "pp": "PP2"
         },
@@ -2308,17 +2308,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Jared Spurgeon",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Olli Maatta",
+         "n": "Jonas Brodin",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Jonas Brodin",
+         "n": "Olli Maatta",
          "pos": "D",
          "pp": ""
         },
@@ -2329,6 +2324,11 @@
         },
         {
          "n": "Daemon Hunt",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "David Spacek",
          "pos": "D",
          "pp": ""
         }
@@ -2537,11 +2537,6 @@
          "pp": ""
         },
         {
-         "n": "Zachary L'Heureux",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Nicolas Roy",
          "pos": "C",
          "pp": ""
@@ -2593,9 +2588,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Wyatt Johnston",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Justin Hryckowian",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Mikko Rantanen",
@@ -2605,7 +2600,7 @@
         {
          "n": "Sam Steel",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -2640,12 +2635,12 @@
         {
          "n": "Tyler Seguin",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Justin Hryckowian",
+         "n": "Oskar Back",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2655,11 +2650,6 @@
         {
          "n": "Radek Faksa",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Oskar Back",
-         "pos": "W",
          "pp": ""
         },
         {
@@ -2811,14 +2801,14 @@
          "pp": ""
         },
         {
+         "n": "Jeremy Lauzon",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Rasmus Andersson",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Noah Hanifin",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Dylan Coghlan",
@@ -2826,7 +2816,7 @@
          "pp": ""
         },
         {
-         "n": "Jeremy Lauzon",
+         "n": "Noah Hanifin",
          "pos": "D",
          "pp": ""
         }
@@ -2902,11 +2892,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Reid Schaefer",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Jack Drury",
          "pos": "C",
          "pp": ""
@@ -2939,7 +2924,7 @@
         {
          "n": "Brady Skjei",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Adam Wilsby",
@@ -3038,11 +3023,6 @@
          "n": "Teddy Blueger",
          "pos": "C",
          "pp": ""
-        },
-        {
-         "n": "Bo Groulx",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -3111,11 +3091,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Kailer Yamamoto",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Dylan Guenther",
          "pos": "W",
          "pp": "PP1"
@@ -3124,12 +3099,22 @@
          "n": "Logan Cooley",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Vincent Trocheck",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
       {
        "label": "Line 3",
        "players": [
+        {
+         "n": "Kailer Yamamoto",
+         "pos": "W",
+         "pp": "PP2"
+        },
         {
          "n": "Barrett Hayton",
          "pos": "C",
@@ -3138,11 +3123,6 @@
         {
          "n": "Anders Lee",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Vincent Trocheck",
-         "pos": "C",
          "pp": "PP2"
         }
        ]
