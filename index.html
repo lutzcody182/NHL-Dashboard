@@ -4317,6 +4317,19 @@ function gmFeatures(S, hId, aId, dateIso, gH, gA) {
     (gq(gH) - gq(gA)) / .5, (stv(h) - stv(a)) / .25, penv(a) - penv(h), (formv(h) - formv(a)) / .05, cook(h) / .05, cook(a) / .05];
   return { x, ready: h.n >= 5 && a.n >= 5, lh, la };
 }
+// tonight's goalie for the game model: ESPN's listed starter, else RotoGrinders' projected goalie, else his usual starter
+function gmPickGoalie(S, tid, pg, LF, dateIso, skip) {
+  if (pg && pg[tid] && pg[tid].id) return { id: pg[tid].id, n: pg[tid].n, st: pg[tid].st || 'Probable', src: 'espn' };
+  const rg = LF ? linesFor(LF, { date: dateIso }, tid) : null;
+  if (rg && rg.goalie) {
+    const key = normName(rg.goalie), last = normName(rg.goalie.split(' ').slice(-1)[0]), t = S.T[tid], names = S.Gn || {};
+    const mine = Object.keys((t && t.gks) || {}), pool = [...mine, ...Object.keys(names).filter(id => !mine.includes(id))];
+    const id = pool.find(id => normName(names[id]) === key) || mine.find(id => normName(String(names[id] || '').split(' ').slice(-1)[0]) === last) || null;
+    return { id, n: rg.goalie, st: 'Projected by RotoGrinders', src: 'rg' }; // a goalie with no games yet counts as league average
+  }
+  const id = gmUsualGoalie(S, tid, skip);
+  return id ? { id, n: (S.Gn || {})[id] || '', st: 'Usual starter (not announced)', src: 'usual' } : { id: null, n: '', st: '', src: 'none' };
+}
 function gmUsualGoalie(S, tid, skip) { const t = S.T[tid]; if (!t || !t.gks) return null; let best = null, bt = -1; for (const [id, v] of Object.entries(t.gks)) if (v > bt && !(skip && skip.has(id))) { bt = v; best = id; } return best; }
 function gmStarter(g, tid) { let best = null, bt = -1; for (const [id, p] of Object.entries(g.gk || {})) if (p.tm === tid && p.toi > bt) { bt = p.toi; best = id; } return best; }
 // update state with a finished game
@@ -4615,7 +4628,7 @@ async function renderGameModelPreview(s, g) {
   let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === g.id) || null; } catch (e) {}
   const pg = probableGoalies(ev), M = GM.model, inj = injParse(s);
   const skip = t => new Set(((inj.byTeam[t]) || []).filter(x => x.out).map(x => x.id));
-  const gH = (pg[g.home.id] && pg[g.home.id].id) || gmUsualGoalie(M.S, g.home.id, skip(g.home.id)), gA = (pg[g.away.id] && pg[g.away.id].id) || gmUsualGoalie(M.S, g.away.id, skip(g.away.id));
+  const LFg = await getLinesFile(), GH = gmPickGoalie(M.S, g.home.id, pg, LFg, g.date, skip(g.home.id)), GA = gmPickGoalie(M.S, g.away.id, pg, LFg, g.date, skip(g.away.id)), gH = GH.id, gA = GA.id;
   const pk = (s.pickcenter && s.pickcenter[0]) || null;
   const ml = pk && pk.homeTeamOdds && pk.awayTeamOdds && isFinite(pk.homeTeamOdds.moneyLine) && isFinite(pk.awayTeamOdds.moneyLine) ? { h: +pk.homeTeamOdds.moneyLine, a: +pk.awayTeamOdds.moneyLine } : null;
   if (ml) ml.open = mlOpenOf(pk);
@@ -4625,7 +4638,7 @@ async function renderGameModelPreview(s, g) {
   const injTxt = [[g.away, r.inj.a], [g.home, r.inj.h]].filter(([, x]) => x.who.length).map(([t, x]) => `<p style="margin:0 0 4px;font-size:13px"><b>${esc(t.abbr)}</b> missing ${x.who.slice(0, 4).map(w => `${esc(w.n)} <span class="muted">(${pct1(w.share)}% of recent xG)</span>`).join(', ')}${x.who.length > 4 ? ` +${x.who.length - 4} more` : ''}${r.inj.viaLineup ? ' <span class="muted">→ counted through lineup strength</span>' : ` → scoring −${pct1(x.cut)}%`}</p>`).join('');
   const meter = (l, p) => fin(p) ? `<div class="pred-row"><span>${l}</span><div class="meter"><i style="width:${(1 - p) * 100}%;background:var(--away)"></i><i style="width:${p * 100}%;background:var(--home)"></i></div><span class="num">${f0((1 - p) * 100)}% – ${f0(p * 100)}%</span></div>` : '';
   const parts = r.parts.slice(0, 6).map(x => { const favH = x.d >= 0; return `<li><span>${esc(x.l)}</span><b style="color:var(${favH ? '--home' : '--away'})">${favH ? '+' : '−'}${Math.abs(x.d * 100).toFixed(1)} pts ${esc(favH ? g.home.abbr : g.away.abbr)}</b></li>`; }).join('');
-  const gName = (id, t) => pg[t] ? `${esc(pg[t].n)} ${gBadge(pg[t].st)}` : id ? `${esc((M.S.Gn || {})[id] || 'Usual starter')} <span class="muted">(not announced yet: assumes his usual starter)</span>` : '<span class="muted">unknown</span>';
+  const gName = (id, t) => { const G = t === g.home.id ? GH : GA; return pg[t] ? `${esc(pg[t].n)} ${gBadge(pg[t].st)}` : G.src === 'rg' ? `${esc(G.n)} <span class="muted">(projected by RotoGrinders; not announced yet${G.id ? '' : ', no games yet so treated as an average goalie'})</span>` : id ? `${esc((M.S.Gn || {})[id] || 'Usual starter')} <span class="muted">(not announced yet: assumes his usual starter)</span>` : '<span class="muted">unknown</span>'; };
   box().innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><p>Weighs every factor by how much it has actually mattered</p></div>
     <div style="display:flex;justify-content:space-between;font-weight:700"><span>${esc(g.away.abbr)}</span><span>${esc(g.home.abbr)}</span></div>
     ${meter('Game model v2', r.p)}${fin(r.pb) ? meter('v2 + market', r.pb) : ''}${fin(r.mk) ? meter('Betting market', r.mk) : ''}
@@ -5769,11 +5782,11 @@ function gmEventPick(e, inj, LF) {
   const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
   const H = String(h.team.id), Aw = String(a.team.id), pg = probableGoalies(e), ml = gmEventML(e);
   const skip = t => new Set(((inj && inj.byTeam[t]) || []).filter(x => x.out).map(x => x.id));
-  const gH = (pg[H] && pg[H].id) || gmUsualGoalie(M.S, H, skip(H)), gA = (pg[Aw] && pg[Aw].id) || gmUsualGoalie(M.S, Aw, skip(Aw));
+  const GH = gmPickGoalie(M.S, H, pg, LF, e.date, skip(H)), GA = gmPickGoalie(M.S, Aw, pg, LF, e.date, skip(Aw)), gH = GH.id, gA = GA.id;
   const r = gmPredict(H, Aw, e.date, gH, gA, ml, inj, LF); if (!r) return null;
   const side = ml ? [['h', r.p, ml.h], ['a', 1 - r.p, ml.a]].map(([s, q, price]) => ({ s, q, price, edge: q - amImplied(price) })).sort((x, y) => y.edge - x.edge)[0] : null;
-  const gn = (id, t) => pg[t] ? pg[t].n : ((M.S.Gn || {})[id] || '');
-  return { H, Aw, ha: h.team.abbreviation, aa: a.team.abbreviation, ml, r, gHn: gn(gH, H), gAn: gn(gA, Aw), side, verdict: side ? (side.edge >= .03 ? 'bet' : side.edge > 0 ? 'lean' : 'pass') : null };
+  const gn = (id, t) => pg[t] ? pg[t].n : (t === H ? GH : GA).n || ((M.S.Gn || {})[id] || '');
+  return { H, Aw, ha: h.team.abbreviation, aa: a.team.abbreviation, ml, r, gHn: gn(gH, H), gAn: gn(gA, Aw), gHs: GH.st, gAs: GA.st, side, verdict: side ? (side.edge >= .03 ? 'bet' : side.edge > 0 ? 'lean' : 'pass') : null };
 }
 
 /* ---- game model pick tracker (picks.json → games, saved and graded by the GitHub job) ---- */
