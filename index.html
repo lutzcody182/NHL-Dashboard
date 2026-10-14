@@ -350,6 +350,7 @@ svg{display:block;max-width:100%}
 .lead li{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px dashed var(--border);cursor:pointer;border-radius:6px}
 .lead li:hover{background:var(--surface-2)}
 .lead li:last-child{border-bottom:0}
+.lead.fgl .ln>span{display:block;white-space:normal;line-height:1.4}.lead.fgl .ln>span img{vertical-align:-3px;margin-right:3px}.lead.fgl .ln .fge{display:block}
 .lead .rk{width:14px;color:var(--muted);font-size:12px;font-weight:700;text-align:center;flex:none}
 .lead .hs{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--surface-2);flex:none}
 .lead .ln{flex:1;min-width:0}
@@ -1105,10 +1106,25 @@ async function loadLeaders(evs, d) {
     { t: 'Hits', l: sk, v: p => p.ht, tie: p => -p.toi, f: f0, sub: p => `${mmss(p.toi)} TOI` },
     { t: 'Blocked shots', l: sk, v: p => p.bs, tie: p => -p.toi, f: f0, sub: p => `${mmss(p.toi)} TOI` }];
   const shot = id => `https://a.espncdn.com/i/headshots/nhl/players/full/${id}.png`;
+  // first goal scorers, with the DraftKings first goal price and Ice Lab's chance saved before the game
+  const [PKf, PFf] = await Promise.all([getPicksFile(), getPropsFile()]);
+  if (S.date !== d || !box()) return;
+  const firsts = games.map(g => {
+    const x = (g.shots || []).filter(q => q.t === 0 && q.per >= 1 && q.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0];
+    if (!x || !x.pl) return null;
+    const p = g.sk[x.pl] || {}, recs = ((PKf && PKf.first) || []).filter(r => r.gid === String(g.id)), rec = recs.find(r => r.pid === x.pl);
+    const dkm = !rec ? fgDkMap(PFf, g.date, g.home.id, g.away.id) : null, dk = rec ? rec.dk : dkm ? dkLookup(dkm, p.n || '') : null;
+    const top = recs.length ? recs.reduce((m, r) => r.p > m.p ? r : m) : null;
+    return { g, x, id: x.pl, n: p.n || 'Unknown', tm: x.tm, vs: (x.tm === g.home.id ? 'vs ' : '@ ') + (x.tm === g.home.id ? g.away.abbr : g.home.abbr), dk, rec, topHit: top ? top.pid === x.pl : null, topN: top ? top.n : '' };
+  }).filter(Boolean).sort((a, b) => a.g.date < b.g.date ? -1 : 1);
+  const fgTime = x => `${x.per >= 4 ? 'OT' : 'P' + x.per} ${mmss(x.sec)}`;
+  const fgSub = f => `${fgTime(f.x)}<span class="fge">${f.rec && fin(f.rec.p) ? `Ice Lab ${pct1(f.rec.p)}%` : ''}${f.rec && fin(f.rec.edge) ? ` · <b style="color:${f.rec.edge > 0 ? 'var(--good)' : 'var(--neg)'}">edge ${f.rec.edge > 0 ? '+' : '−'}${Math.abs(f.rec.edge * 100).toFixed(1)} pts</b>` : f.dk != null ? 'no Ice Lab price saved' : 'no DraftKings price'}</span>`;
+  const tops = firsts.filter(f => f.topHit != null), topHits = tops.filter(f => f.topHit).length;
+  const fgCard = `<div class="card lead fgl"><h3>First goal scorers${firsts.length > 5 ? `<span class="cnt">${firsts.length} games · scroll</span>` : ''}</h3>${firsts.length ? `<ol>${firsts.map((f, i) => `<li data-game="${f.g.id}" title="Open this game"><span class="rk">${i + 1}</span><img class="hs" src="${shot(f.id)}" alt="" onerror="this.style.visibility='hidden'"><div class="ln"><b>${plink(f.id, f.n)}</b><span>${logoImg(f.tm, 14)}${esc(TM(f.tm).abbr)} ${esc(f.vs)} · ${fgSub(f)}</span></div><div class="lv">${f.dk != null ? fmtML(f.dk) : '–'}</div></li>`).join('')}</ol>${tops.length ? `<p class="muted" style="margin:6px 0 0;font-size:11.5px">Ice Lab's most likely first scorer hit in ${topHits} of ${tops.length} game${tops.length === 1 ? '' : 's'}. Odds are DraftKings' first goal price saved before the game.</p>` : ''}` : '<p class="muted" style="margin:0;font-size:13px">No goals yet.</p>'}</div>`;
   const html = `<div class="leadgrid">${cats.map(c => {
     const top = c.l.filter(p => c.neg ? fin(c.v(p)) : c.v(p) > 0).sort((a, b) => (c.v(b) - c.v(a)) || (c.tie(b) - c.tie(a)));
     const rows = top.map((p, i) => `<li data-game="${p.gid}" title="Open this game"><span class="rk">${i + 1}</span><img class="hs" src="${shot(p.id)}" alt="" onerror="this.style.visibility='hidden'"><div class="ln"><b>${plink(p.id, p.n)}</b><span>${logoImg(p.tm, 14)}${esc(TM(p.tm).abbr)} ${esc(p.vs)} · ${esc(c.sub(p))}</span></div><div class="lv">${c.f(c.v(p))}</div></li>`).join('');
-    return `<div class="card lead"><h3>${c.t}${top.length > 5 ? `<span class="cnt">${top.length} players · scroll</span>` : ''}</h3>${rows ? `<ol>${rows}</ol>` : '<p class="muted" style="margin:0;font-size:13px">Nobody yet.</p>'}</div>`;
+    return `<div class="card lead"><h3>${c.t}${top.length > 5 ? `<span class="cnt">${top.length} players · scroll</span>` : ''}</h3>${rows ? `<ol>${rows}</ol>` : '<p class="muted" style="margin:0;font-size:13px">Nobody yet.</p>'}</div>` + (c.t === 'Goals' ? fgCard : '');
   }).join('')}</div>`;
   S.lead = { d, html };
   loadMilestones(games.filter(g => g.stype === 2), d);
