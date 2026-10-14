@@ -136,8 +136,8 @@ jobs:
           (async () => {
             // events list (does not count against the quota)
             const { data: events } = await get(`${BASE}/events?apiKey=${KEY}`);
-            const now = Date.now(), soon = events.filter(e => { const t = new Date(e.commence_time).getTime(); return t > now - 3600e3 && t < now + 30 * 3600e3; });
-            console.log(`${events.length} upcoming events, ${soon.length} in the next 30 hours`);
+            const now = Date.now(), soon = events.filter(e => { const t = new Date(e.commence_time).getTime(); return t > now - 600e3 && t < now + 16 * 3600e3; }); // today's slate only (each game costs Odds API credits)
+            console.log(`${events.length} upcoming events, ${soon.length} in the next 16 hours`);
             const games = []; let remaining = null;
             for (const e of soon) {
               try {
@@ -510,7 +510,7 @@ jobs:
             let P; try { P = JSON.parse(fs.readFileSync('picks.json', 'utf8')); } catch (e) { log('No picks.json yet.'); return 0; }
             const W = 90 * 60e3, LATE = 15 * 60e3, inWin = t => t > now - LATE && t - now <= W, soon = x => inWin(new Date(x.start).getTime()); // up to 90 min before the listed start, and a few minutes after it (puck drop runs late; ESPN must still say pre-game)
             const fresh = x => !x.closeAt || now - new Date(x.closeAt).getTime() > 20 * 60e3; // refresh at most every 20 minutes
-            const games = (P.games || []).filter(soon), picks = (P.picks || []).filter(p => soon(p) && p.dk != null && fresh(p));
+            const games = (P.games || []).filter(soon), picks = (P.picks || []).filter(p => soon(p) && p.dk != null && fresh(p) && (p.dkClose == null || new Date(p.start).getTime() - now <= 35 * 60e3)); // DraftKings: at most twice per game (credits)
             if (!games.length && !picks.length) { log('No saved picks starting in the next 90 minutes.'); return 0; }
             let changed = 0;
             // moneylines (ESPN, free)
@@ -521,7 +521,10 @@ jobs:
               for (const g of games.filter(x => etDay(x.start) === day)) {
                 const e = sb && (sb.events || []).find(x => String(x.id) === g.gid), c = e && e.competitions[0];
                 if (!c || c.status.type.state !== 'pre') continue;
-                const o = c.odds && c.odds[0], h = o && o.homeTeamOdds && o.homeTeamOdds.moneyLine, a = o && o.awayTeamOdds && o.awayTeamOdds.moneyLine;
+                // ESPN moved the moneyline to odds.moneyline.home.close.odds ("-130"); read either place
+                const o = c.odds && c.odds[0], num = x => { const n = x == null ? NaN : parseFloat(String(x).replace(/^even$/i, '100')); return Number.isFinite(n) && Math.abs(n) >= 100 ? n : null; };
+                const nw = s => s ? num(s.close && s.close.odds) ?? num(s.open && s.open.odds) : null, mo = o && o.moneyline;
+                const h = num(o && o.homeTeamOdds && o.homeTeamOdds.moneyLine) ?? nw(mo && mo.home), a = num(o && o.awayTeamOdds && o.awayTeamOdds.moneyLine) ?? nw(mo && mo.away);
                 if (h != null && a != null && h !== '' && a !== '' && isFinite(h) && isFinite(a)) { g.mlCloseH = +h; g.mlCloseA = +a; g.closeAt = new Date(now).toISOString(); changed++; log(`${g.aa} @ ${g.ha}: closing moneyline ${a} / ${h}`); }
               }
             }
