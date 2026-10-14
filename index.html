@@ -6606,7 +6606,16 @@ const fgFirstScorer = g => { const x = (g.shots || []).filter(s => s.t === 0 && 
    One strip on Today: is every data feed fresh and doing its job? Catches silent breaks (like ESPN moving its odds)
    the same day instead of a week later. Times are Eastern; the GitHub job runs lines every 30 minutes (10 AM–midnight)
    and DraftKings odds + picks about 11 AM and 5 PM. */
-const HEALTH = { open: false };
+const HEALTH = { open: false, runs: undefined, runsT: 0 };
+// the GitHub job's recent runs (public API, no login needed; cached 5 minutes)
+async function ghRuns() {
+  if (HEALTH.runs !== undefined && Date.now() - HEALTH.runsT < 5 * 60e3) return HEALTH.runs;
+  let repo = 'lutzcody182/NHL-Dashboard'; const h = location.hostname;
+  if (/\.github\.io$/.test(h)) { const seg = location.pathname.split('/').filter(Boolean)[0]; if (seg && !/\./.test(seg)) repo = h.split('.')[0] + '/' + seg; }
+  try { const r = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/lines.yml/runs?per_page=40`); if (!r.ok) throw new Error(r.status); HEALTH.runs = (await r.json()).workflow_runs || []; }
+  catch (e) { HEALTH.runs = null; }
+  HEALTH.runsT = Date.now(); return HEALTH.runs;
+}
 async function loadHealth(evs) {
   const box = $('#healthBox'); if (!box) return;
   if (S.date !== todayStr()) { box.innerHTML = ''; return; }
@@ -6621,11 +6630,25 @@ async function loadHealth(evs) {
   const pre = evs.filter(e => e.competitions[0].status.type.state === 'pre'), started = evs.filter(e => e.competitions[0].status.type.state !== 'pre');
   const games = evs.length, C = [];
   const add = (k, name, st, detail, fix) => C.push({ k, name, st, detail, fix });
-  // 1) RotoGrinders lines
+  // 1) is the scheduler (cron-job.org → GitHub) actually starting runs? (GitHub's public run history)
+  const runs = await ghRuns(), taskOf = r => (/^(lines|props|all)\b/.exec(r.display_title || '') || [])[1] || null;
+  const inWin = etH >= 10 || etH < 1;
+  if (runs) {
+    const last = t => runs.find(r => { const k = taskOf(r); return k === t || k === 'all'; });
+    const runTxt = r => `${r.status !== 'completed' ? 'running now' : r.conclusion === 'success' ? 'succeeded' : r.conclusion || 'finished'} ${ago(r.created_at)}`;
+    const L = last('lines'), P = last('props');
+    if (!L) add('runL', 'Scheduler: lines runs', inWin ? 'bad' : 'warn', 'no "lines" runs found yet', 'Check the "Ice Lab lines" job at cron-job.org: it should be enabled and its last result 204.');
+    else { const a = ageMin(L.created_at), failed = L.status === 'completed' && L.conclusion !== 'success';
+      add('runL', 'Scheduler: lines runs', failed ? 'bad' : !inWin ? 'ok' : a <= 45 ? 'ok' : a <= 120 ? 'warn' : 'bad', `last run ${runTxt(L)} (every 30 min, 10 AM–12:30 AM)`, failed ? 'The last run failed. Open it in the GitHub Actions tab to see which step broke.' : inWin && a > 45 ? 'Runs should start every 30 minutes. Check the "Ice Lab lines" job at cron-job.org (enabled, last result 204) and that your GitHub token hasn\'t expired.' : ''); }
+    if (!P) add('runP', 'Scheduler: odds runs', 'warn', 'no "props" runs found yet', 'Check the "Ice Lab odds" job at cron-job.org.');
+    else { const a = ageMin(P.created_at), failed = P.status === 'completed' && P.conclusion !== 'success', late = a > lastRunAgo + 30;
+      add('runP', 'Scheduler: odds runs', failed ? 'bad' : late && a > 24 * 60 ? 'bad' : late ? 'warn' : 'ok', `last run ${runTxt(P)} (11:07 AM and 5:07 PM)`, failed ? 'The last odds run failed. Open it in the GitHub Actions tab to see which step broke.' : late ? 'The 11:07 / 5:07 run didn\'t start. Check the "Ice Lab odds" job at cron-job.org (enabled, last result 204).' : ''); }
+  }
+  // 2) RotoGrinders lines (the job only saves when the lines change, so judge by date, not by last change)
   if (!LF) add('lines', 'Line combinations', 'bad', 'lines.json not found', 'Check the "lines" job in GitHub Actions.');
-  else { const a = ageMin(LF.updated), inWin = etH >= 10; const n = (LF.games || []).length;
-    add('lines', 'Line combinations', !inWin ? 'ok' : a <= 75 ? 'ok' : a <= 180 ? 'warn' : 'bad', `updated ${ago(LF.updated)} · ${n} game${n === 1 ? '' : 's'} posted`, a > 75 && inWin ? 'Should update every 30 minutes from 10 AM. Check that the "Ice Lab lines" job at cron-job.org is enabled and its last result was 204, then look for failed runs in the GitHub Actions tab. Also check your GitHub token hasn\'t expired.' : ''); }
-  // 2) DraftKings prices (The Odds API)
+  else { const n = (LF.games || []).length, isToday = LF.date === new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    add('lines', 'Line combinations', isToday || !games || etMin < 11 * 60 ? 'ok' : 'warn', `${isToday ? 'today\'s' : 'not today\'s'} lines · ${n} game${n === 1 ? '' : 's'} posted · last changed ${ago(LF.updated)}`, !isToday && games && etMin >= 11 * 60 ? 'RotoGrinders hasn\'t posted today\'s lines yet, or the lines runs aren\'t working (see Scheduler above).' : ''); }
+  // 3) DraftKings prices (The Odds API)
   if (!PF) add('props', 'DraftKings prices', 'bad', 'props.json not found', 'Check the "props" job and the ODDS_API_KEY secret.');
   else { const a = ageMin(PF.updated), late = a > lastRunAgo + 30; const pg = (PF.games || []).filter(g => (g.players || []).length).length, fg = (PF.games || []).filter(g => (g.first || []).length).length;
     add('props', 'DraftKings prices', late && a > 24 * 60 ? 'bad' : late ? 'warn' : games && !pg && etMin > 11 * 60 + 30 ? 'warn' : 'ok', `updated ${ago(PF.updated)} · anytime prices for ${pg} game${pg === 1 ? '' : 's'}, first goal for ${fg}`, late ? 'The 11 AM / 5 PM run looks like it was skipped or failed. Check the "Ice Lab odds" job at cron-job.org (last result should be 204), then the "props" job in GitHub Actions.' : games && !pg ? 'DraftKings may not have posted goal scorer props yet; the 5 PM run usually catches them.' : '');
