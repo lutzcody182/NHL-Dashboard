@@ -398,7 +398,7 @@ jobs:
                 const gp = T.gmEventPick(e, inj, LF);
                 if (gp && gp.ml) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) { const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */ if (!old) gAdded++; gByKey.set(k, rec); }
                 }
               }
@@ -597,13 +597,22 @@ jobs:
             const soon = (P.games || []).filter(g => { const t = new Date(g.start).getTime(); return g.hw == null && t > now && t - now < 5 * 3600e3; });
             if (!soon.length) { console.log('No saved game picks starting in the next 5 hours.'); return false; }
             const conf = st => /confirm/i.test(st || '') ? 'C' : 'P';
+            // RotoGrinders' projected goalie is the backup source when ESPN hasn't listed one
+            let LF = null; try { LF = JSON.parse(fs.readFileSync('lines.json', 'utf8')); } catch (e) {}
+            const nn = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+            const rgGoalie = (teamName, start) => { if (!LF || !LF.games || LF.date !== new Date(start).toLocaleDateString('en-CA', { timeZone: 'America/New_York' })) return ''; const t = LF.games.flatMap(x => x.teams || []).find(x => nn(x.team) === nn(teamName)); return (t && t.goalie) || ''; };
             let changed = false;
             for (const day of new Set(soon.map(g => etDay(g.start)))) {
               let sb = null; try { const r = await fetchImpl(`https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=${day}`); sb = r.ok ? await r.json() : null; } catch (e) {}
               for (const g of soon.filter(x => etDay(x.start) === day)) {
                 const e = sb && (sb.events || []).find(x => String(x.id) === g.gid); if (!e || e.competitions[0].status.type.state !== 'pre') continue;
                 for (const c of e.competitions[0].competitors) {
-                  const p = (c.probables || []).find(q => /goalie/i.test(q.name || '')) || (c.probables || [])[0]; if (!p || !p.athlete) continue;
+                  const p = (c.probables || []).find(q => /goalie/i.test(q.name || '')) || (c.probables || [])[0];
+                  if (!p || !p.athlete) { // no ESPN starter yet: did RotoGrinders' projection change?
+                    const home = c.homeAway === 'home', rg = rgGoalie(c.team && c.team.displayName, g.start), savedN = home ? g.gH : g.gA;
+                    if (rg && nn(rg) !== nn(savedN)) { console.log(`${g.aa} @ ${g.ha}: ${home ? 'home' : 'road'} goalie projected by RotoGrinders now ${rg}, saved ${savedN || '?'}`); changed = true; }
+                    continue;
+                  }
                   const n = p.athlete.fullName || p.athlete.displayName || '', st = (p.status && (p.status.name || p.status.abbreviation)) || 'Probable', home = c.homeAway === 'home';
                   const savedN = home ? g.gH : g.gA, savedS = home ? g.gHs : g.gAs;
                   if (n && (n !== savedN || conf(st) !== conf(savedS))) { console.log(`${g.aa} @ ${g.ha}: ${home ? 'home' : 'road'} goalie now ${n} (${st}), saved ${savedN || '?'} (${savedS || 'not announced'})`); changed = true; }
@@ -709,7 +718,7 @@ jobs:
                 const gp = T.gmEventPick(e, inj, LF);
                 if (gp && gp.ml) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) { const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */ if (!old) gAdded++; gByKey.set(k, rec); }
                 }
               }
