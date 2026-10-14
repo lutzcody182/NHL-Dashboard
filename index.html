@@ -352,6 +352,7 @@ svg{display:block;max-width:100%}
 .lead li{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px dashed var(--border);cursor:pointer;border-radius:6px}
 .lead li:hover{background:var(--surface-2)}
 .lead li:last-child{border-bottom:0}
+.govl{display:inline-flex;align-items:center;gap:6px;font-size:13px}.govl>span{display:inline-flex;align-items:center;gap:4px;font-weight:700}.govl select{font:inherit;font-size:13px;padding:4px 6px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);max-width:260px}
 .health{border:1px solid var(--border);border-left:4px solid var(--good);background:var(--surface);border-radius:12px;padding:8px 12px;margin:0 0 12px}.health.warn{border-left-color:#e8a33d}.health.bad{border-left-color:var(--neg)}
 .hhead{all:unset;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%;font-size:13.5px}.hhead:focus-visible{outline:2px solid var(--accent);border-radius:6px}
 .htab{table-layout:fixed;width:100%}.htab td{white-space:normal;vertical-align:top}
@@ -1262,7 +1263,27 @@ async function gcDecRender(g) {
   const r = ev ? readyOf(ev, LF) : { gConf: 0, lines: 0, ready: false };
   box.innerHTML = `<div class="card" data-gw="${esc(g.id)}" data-rdy="${r.ready ? 1 : 0}" style="padding:10px 14px"><div class="gdec" data-decbar="${esc(g.id)}" style="padding:0"><span class="rchip${r.ready ? ' ok' : ''}">${r.ready ? '✓ Ready to review: both goalies confirmed and lines posted' : `Goalies ${r.gConf}/2 confirmed · lines ${r.lines === 2 ? 'posted' : r.lines + '/2 posted'}`}</span><span class="muted" style="font-size:12px">Your call:</span><button class="dbtn bet" data-dec="bet" data-gid="${esc(g.id)}">Bet</button><button class="dbtn pass" data-dec="pass" data-gid="${esc(g.id)}">Pass</button></div></div>`;
   decPaint(String(g.id));
+  if (ev) box.insertAdjacentHTML('beforeend', govPicker(g, ev));
 }
+// "Starting goalies" picker: choose the starter yourself when ESPN is wrong or hasn't updated
+function govPicker(g, ev) {
+  const espn = probableGoaliesESPN(ev), m = govLoad();
+  const side = (t, abbr) => {
+    const cur = m[ev.id + '|' + t], e = espn[t], list = teamGoalies(t);
+    if (e && e.n && !list.some(x => normName(x.n) === normName(e.n))) list.unshift({ id: e.id, n: e.n });
+    const opts = [`<option value="">Automatic${e ? ` (ESPN: ${esc(e.n)}, ${esc(/confirm/i.test(e.st || '') ? 'confirmed' : (e.st || 'probable').toLowerCase())})` : ' (not announced)'}</option>`, ...list.map(x => `<option value="${esc(x.id || '')}|${esc(x.n)}" ${cur && normName(cur.n) === normName(x.n) ? 'selected' : ''}>${esc(x.n)}${x.gp ? ` · ${x.gp} GP` : ''}</option>`)];
+    return `<label class="govl"><span>${logoImg(t, 16)}${esc(abbr)}</span><select data-gov="${esc(ev.id)}|${esc(t)}">${opts.join('')}</select>${cur ? '<span class="badge ok">✓ Set by you</span>' : ''}</label>`;
+  };
+  return `<div class="card" style="padding:10px 14px;margin-top:8px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px"><b style="font-size:13px">🥅 Starting goalies</b>${side(g.away.id, g.away.abbr)}${side(g.home.id, g.home.abbr)}</div>
+    <p class="muted" style="margin:6px 0 0;font-size:12px">Normally automatic (ESPN, then RotoGrinders). If it's wrong or slow, pick the starter here: every prediction on this page, the Goal Scorers and First Goal pages, and the Ready glow use your pick in this browser. Picks saved by the GitHub job still use ESPN.</p></div>`;
+}
+document.addEventListener('change', e => {
+  const sel = e.target.closest('[data-gov]'); if (!sel) return;
+  const [gid, tid] = sel.dataset.gov.split('|'), v = sel.value;
+  if (!v) govSet(gid, tid, null); else { const i = v.indexOf('|'); govSet(gid, tid, { id: v.slice(0, i) || null, n: v.slice(i + 1) }); }
+  alertBox(v ? `Starting goalie set to ${v.slice(v.indexOf('|') + 1)}` : 'Back to automatic goalie');
+  if (GC.id === gid) gcPreRefresh(gid); // re-run every prediction on the game page
+});
 // pre-game: when the starting goalies, referees or injury list change (e.g. a goalie gets confirmed), re-run every prediction on the card
 async function gcPreRefresh(id, first) {
   let s = null, ev = null;
@@ -2583,7 +2604,34 @@ document.addEventListener('click', e => {
 });
 
 /* ============================== LINEUPS & STARTING GOALIES ============================== */
+// your own starting-goalie picks (when ESPN is wrong or slow), saved in this browser, per game and team; kept 3 days
+const GOV = { map: null };
+function govLoad() {
+  if (GOV.map) return GOV.map;
+  try { GOV.map = JSON.parse(localStorage.getItem('icelab-goalie-override') || '{}') || {}; } catch (e) { GOV.map = {}; }
+  const cut = Date.now() - 3 * 864e5; for (const k of Object.keys(GOV.map)) if (!(GOV.map[k].t > cut)) delete GOV.map[k];
+  return GOV.map;
+}
+function govSet(gid, tid, v) {
+  const m = govLoad(), k = gid + '|' + tid; if (v) m[k] = { id: v.id || null, n: v.n, t: Date.now() }; else delete m[k];
+  try { localStorage.setItem('icelab-goalie-override', JSON.stringify(m)); } catch (e) {}
+}
+// goalies who have played for a team (most recent first), from the loaded games
+function teamGoalies(tid) {
+  const seen = {};
+  for (const g of [...A.games.values(), ...(GS.prior || [])]) {
+    if (!g || !g.gk) continue;
+    for (const [id, p] of Object.entries(g.gk)) { if (p.tm !== tid || !(p.toi > 0)) continue; const o = seen[id] || (seen[id] = { id, n: p.n, gp: 0, last: '' }); o.gp++; if (g.date > o.last) { o.last = g.date; o.n = p.n || o.n; } }
+  }
+  return Object.values(seen).sort((a, b) => b.last.localeCompare(a.last)).slice(0, 6);
+}
 function probableGoalies(ev) {
+  const out = probableGoaliesESPN(ev); if (!ev) return out;
+  const m = govLoad();
+  for (const c of ev.competitions[0].competitors) { const t = String(c.team.id), o = m[ev.id + '|' + t]; if (o) out[t] = { id: o.id, n: o.n, st: 'Confirmed (set by you)', manual: true }; }
+  return out;
+}
+function probableGoaliesESPN(ev) {
   const out = {};
   if (!ev) return out;
   for (const c of ev.competitions[0].competitors) {
@@ -2592,7 +2640,7 @@ function probableGoalies(ev) {
   }
   return out;
 }
-const gBadge = st => /confirm/i.test(st) ? `<span class="badge ok">✓ Confirmed</span>` : `<span class="badge maybe">◔ ${esc(st || 'Probable')}</span>`;
+const gBadge = st => /set by you/i.test(st || '') ? `<span class="badge ok">✓ Set by you</span>` : /confirm/i.test(st) ? `<span class="badge ok">✓ Confirmed</span>` : `<span class="badge maybe">◔ ${esc(st || 'Probable')}</span>`;
 const RGL = { data: null, t: 0 };
 async function getLinesFile() {
   if (RGL.data !== null && Date.now() - RGL.t < 5 * 60e3) return RGL.data;
@@ -6692,13 +6740,13 @@ async function loadHealth(evs) {
     const last = n => normName(String(n || '').split(' ').slice(-1)[0]), ab = id => TM(id).abbr || '';
     let both = 0; const soonUnconf = [], clash = [], wrong = [];
     for (const e of pre) {
-      const c = e.competitions[0], pg = probableGoalies(e), sides = c.competitors.map(x => ({ id: String(x.team.id), ha: x.homeAway }));
+      const c = e.competitions[0], pg = probableGoalies(e), pgE = probableGoaliesESPN(e), sides = c.competitors.map(x => ({ id: String(x.team.id), ha: x.homeAway }));
       const conf = sides.filter(x => pg[x.id] && /confirm/i.test(pg[x.id].st || ''));
       if (conf.length === 2) both++;
       const mins = (new Date(e.date) - now) / 60000;
       if (conf.length < 2 && mins <= 60) soonUnconf.push(`${sides.find(x => x.ha === 'away') ? ab(sides.find(x => x.ha === 'away').id) : ''} @ ${sides.find(x => x.ha === 'home') ? ab(sides.find(x => x.ha === 'home').id) : ''} (${Math.max(0, Math.round(mins))} min)`);
       for (const x of sides) {
-        const espn = pg[x.id], rg = LF ? linesFor(LF, { date: e.date }, x.id) : null;
+        const espn = pgE[x.id], rg = LF ? linesFor(LF, { date: e.date }, x.id) : null;
         if (espn && rg && rg.goalie && last(espn.n) !== last(rg.goalie)) clash.push(`${ab(x.id)}: ESPN ${espn.n.split(' ').slice(-1)[0]}, RotoGrinders ${rg.goalie.split(' ').slice(-1)[0]}`);
         const pk = PK && (PK.games || []).find(g => g.gid === String(e.id));
         const saved = pk && (x.ha === 'home' ? pk.gH : pk.gA);
