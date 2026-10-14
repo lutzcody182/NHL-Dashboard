@@ -87,6 +87,8 @@ select,input[type=text],input[type=date],input[type=search]{background:var(--sur
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}
 .seg button{border:0;background:none;padding:7px 12px;cursor:pointer;font-weight:600;color:var(--text-2)}
+[data-mlv][hidden]{display:none!important}
+#mlNav{flex-wrap:wrap}
 .seg button.on{background:var(--surface-2);color:var(--text);box-shadow:inset 0 -2px 0 var(--accent)}
 
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;min-width:0}
@@ -3204,6 +3206,15 @@ function calibChart(series) {
   return `<svg class="chart" viewBox="0 0 ${W} ${H}"><g class="axis">${g}</g><line class="ref" x1="${sx(0)}" y1="${sy(0)}" x2="${sx(mx)}" y2="${sy(mx)}"/>${ser}
     <text x="${(m.l + W - m.r) / 2}" y="${H - 6}" text-anchor="middle" fill="var(--text-2)" font-size="12" font-weight="600">Predicted chance of a goal →</text><text transform="translate(13 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle" fill="var(--text-2)" font-size="12" font-weight="600">Actual goal rate →</text></svg>`;
 }
+const ML = { view: (() => { try { return localStorage.getItem('icelab-mlview') || 'tonight'; } catch (e) { return 'tonight'; } })() };
+// quick read for the Tonight view: the verdicts from the Trust scorecard and Overfitting check, with links to the details
+function mlSummary() {
+  const box = $('#mlSum'); if (!box) return;
+  const read = sel => { const v = $(sel + ' .trust-v'); if (!v) return null; const t = v.querySelector('div'); return { txt: t ? t.textContent.trim() : '', col: v.style.borderColor || 'var(--border)', why: (v.querySelectorAll('div')[1] || {}).textContent || '' }; };
+  const tr = read('#trustSec'), of = read('#ofSec');
+  const tile = (k, r, go) => `<div class="tile" style="border-left:4px solid ${r ? r.col : 'var(--border)'};cursor:pointer" data-mlgo="${go}" title="See the details"><div class="k">${k}</div><div class="v" style="font-size:17px;font-weight:800">${r ? esc(r.txt) : '–'}</div><div class="s">${r ? esc(r.why) : 'Fills in once picks are graded'} <b>Details →</b></div></div>`;
+  box.innerHTML = `<div class="card"><div class="card-h"><h3>Should I trust the game model?</h3><p>From the picks it saved before each game</p></div><div class="tiles">${tile('Beating the market?', tr, 'trust')}${tile('Holding up on new games?', of, 'trust')}<div class="tile" style="cursor:pointer" data-mlgo="gm" title="See the details"><div class="k">What's in it</div><div class="v" style="font-size:17px;font-weight:800">Team ratings + ~30 factors</div><div class="s">Which factors count right now <b>Details →</b></div></div></div></div>`;
+}
 async function renderModel() {
   const body = $('#mdBody');
   if (!A.filtered.length) { body.innerHTML = `<div class="empty">No completed games in this range yet.</div>`; return; }
@@ -3253,9 +3264,24 @@ async function renderModel() {
           <p class="muted" style="font-size:12px">If the model is well calibrated, favorites it gives 60% should win about 60% of the time. Brier score: lower is better; 0.25 is a coin flip.</p></div></div>
       <h3 class="cmp-sec">Most recent predictions</h3><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Game</th><th class="l">Ice Lab pick</th><th>Market</th><th class="l">Final</th><th>Result</th></tr></thead><tbody>${recent.map(p => { const pick = p.pH >= .5 ? p.h : p.a, pp = Math.max(p.pH, 1 - p.pH), ok = (p.pH >= .5) === p.hw; const mk = fin(p.mk) ? pct1(p.pH >= .5 ? p.mk : 1 - p.mk) + '%' : '–'; return `<tr class="click" data-game="${p.id}"><td class="l">${new Date(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.a, 16)}${esc(TM(p.a).abbr)} @ ${logoImg(p.h, 16)}${esc(TM(p.h).abbr)}</div></td><td class="l">${esc(TM(pick).abbr)} ${pct1(pp)}%${p.hn < 5 || p.an < 5 ? ' <span class="muted">(early)</span>' : ''}</td><td>${mk}</td><td class="l">${p.as}–${p.hs}${p.ot ? ' OT' : ''}</td><td>${ok ? '<b style="color:var(--good)">✓</b>' : '<b style="color:var(--neg)">✗</b>'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
   }
-  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2></div><div class="grid"><div id="gmSec"></div><div id="trustSec"></div><div id="ofSec"></div><div id="gmPickSec"></div><div id="accSec"></div>${xgSec}${seSec}${predSec}<div id="mdToday"></div></div>`;
+  const VIEWS = [['tonight', 'Tonight', 'Tonight\'s picks from the game model, plus a quick read on whether its picks have been worth trusting.'],
+    ['trust', 'Is it working?', 'How the saved picks have actually done: the Trust scorecard (does it beat the market?), the Overfitting check (does it hold up on new games?), profit, and accuracy over time.'],
+    ['gm', 'Game model v2', 'How the game model is built: what it learned, which factors count right now, and its test scores. Retrain it here.'],
+    ['under', 'Behind the scenes', 'The building blocks underneath: the expected goals model every shot runs through, score effects, and the older ratings-only predictions.']];
+  if (!VIEWS.some(v => v[0] === ML.view)) ML.view = 'tonight';
+  const vd = VIEWS.find(v => v[0] === ML.view);
+  body.innerHTML = `<div class="bar"><h2 class="grow">Model lab</h2><div class="seg" id="mlNav">${VIEWS.map(([k, l]) => `<button data-v="${k}" class="${k === ML.view ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+    <p class="muted" id="mlDesc" style="margin:-4px 0 12px;font-size:13px">${vd[2]}</p>
+    <div class="grid" data-mlv="tonight"><div id="mlSum"></div><div id="mdToday"><div class="card muted">Loading tonight's games…</div></div></div>
+    <div class="grid" data-mlv="trust"><div id="trustSec"></div><div id="ofSec"></div><div id="gmPickSec"></div><div id="accSec"></div></div>
+    <div class="grid" data-mlv="gm"><div id="gmSec"></div></div>
+    <div class="grid" data-mlv="under">${xgSec}${seSec}${predSec}</div>`;
+  const showView = () => { $$('#mdBody [data-mlv]').forEach(el => el.hidden = el.dataset.mlv !== ML.view); $$('#mlNav button').forEach(b => b.classList.toggle('on', b.dataset.v === ML.view)); const v = VIEWS.find(x => x[0] === ML.view); $('#mlDesc').textContent = v[2]; };
+  showView();
+  $('#mlNav').onclick = e => { const b = e.target.closest('button'); if (!b) return; ML.view = b.dataset.v; try { localStorage.setItem('icelab-mlview', ML.view); } catch (err) {} showView(); };
+  document.getElementById('mdBody').onclick = e => { const g = e.target.closest('[data-mlgo]'); if (!g) return; ML.view = g.dataset.mlgo; showView(); window.scrollTo({ top: 0 }); };
   const u = $('#mdUse'); if (u) u.onclick = e => { const b = e.target.closest('button'); if (!b) return; A.useTrained = b.dataset.v === '1'; for (const g of A.filtered) applyModel(g); recalib(); invalidate(); renderModel(); };
-  renderGameModelCard(); renderModelExtras();
+  renderGameModelCard(); renderModelExtras().then(mlSummary);
   $('#mdAdj').onclick = e => { const b = e.target.closest('button'); if (!b) return; A.adj = b.dataset.v === '1'; invalidate(); renderModel(); };
   // tonight's picks (current season only)
   if (A.season === S.curSeason) {
@@ -3269,9 +3295,9 @@ async function renderModel() {
         if (GM.model) { const pg = probableGoalies(e), H = String(h.team.id), Aw = String(a.team.id); const o = c.odds && c.odds[0]; const ml = o && o.homeTeamOdds && o.awayTeamOdds && isFinite(o.homeTeamOdds.moneyLine) && isFinite(o.awayTeamOdds.moneyLine) ? { h: +o.homeTeamOdds.moneyLine, a: +o.awayTeamOdds.moneyLine } : null; const gp0 = gmEventPick(e, INJS[e.id], LFm), r = gp0 && gp0.r; if (r) { const p = r.p, t2 = p >= .5 ? h.team : a.team; v2 = `<b>${esc(t2.abbreviation)}</b> ${pct1(Math.max(p, 1 - p))}% <span class="muted">fair ${fairAmerican(Math.max(p, 1 - p))}</span>${r.parts[0] ? ` <span class="muted" style="font-size:12px">· ${esc(r.parts[0].l.toLowerCase())}</span>` : ''}`;
           if (ml) { const sides = [[r.p, ml.h, h.team], [1 - r.p, ml.a, a.team]].map(([q, price, tm]) => ({ q, price, tm, edge: q - amImplied(price) })).sort((x, y) => y.edge - x.edge)[0]; v2 += sides.edge >= .03 ? `<div style="font-size:12px"><b style="color:var(--good)">✓ Value: ${esc(sides.tm.abbreviation)} ${fmtML(sides.price)}</b> (+${(sides.edge * 100).toFixed(1)} pts)</div>` : sides.edge > 0 ? `<div style="font-size:12px;color:var(--good)">Lean ${esc(sides.tm.abbreviation)} ${fmtML(sides.price)} (+${(sides.edge * 100).toFixed(1)} pts)</div>` : '<div class="muted" style="font-size:12px">No value at posted prices</div>'; } } }
         return `<tr class="click" data-game="${e.id}"><td class="l"><div class="tcell">${logoImg(String(a.team.id), 16)}${esc(a.team.abbreviation)} @ ${logoImg(String(h.team.id), 16)}${esc(h.team.abbreviation)}</div></td><td class="l"><b>${esc(pick.abbreviation)}</b> ${pct1(Math.max(pr.pH, 1 - pr.pH))}%</td><td class="l">${v2}</td><td>${f2(pr.la)} – ${f2(pr.lh)}</td><td>${esc((c.odds && c.odds[0] && c.odds[0].details) || '–')}</td></tr>`; }).filter(Boolean).join('');
-      const el = $('#mdToday'); if (el && rowsT) el.innerHTML = `<div class="card"><div class="card-h"><h3>Tonight's picks</h3><p>Ratings-only pick and the game model v2 pick (with its biggest factor)</p></div><div class="twrap"><table><thead><tr><th class="l">Game</th><th class="l">Ratings pick</th><th class="l">Game model v2</th><th>Projected xG</th><th>Line</th></tr></thead><tbody>${rowsT}</tbody></table></div></div>`;
-    } catch (e) {}
-  }
+      const el = $('#mdToday'); if (el && !rowsT) el.innerHTML = `<div class="card muted">No games left to play today. Tomorrow's picks show up here once the day's games are scheduled.</div>`; if (el && rowsT) el.innerHTML = `<div class="card"><div class="card-h"><h3>Tonight's picks</h3><p>Ratings-only pick and the game model v2 pick (with its biggest factor)</p></div><div class="twrap"><table><thead><tr><th class="l">Game</th><th class="l">Ratings pick</th><th class="l">Game model v2</th><th>Projected xG</th><th>Line</th></tr></thead><tbody>${rowsT}</tbody></table></div></div>`;
+    } catch (e) { const el = $('#mdToday'); if (el) el.innerHTML = `<div class="card muted">Couldn't load tonight's games from ESPN. Try again in a moment.</div>`; }
+  } else { const el = $('#mdToday'); if (el) el.innerHTML = `<div class="card muted">Tonight's picks show when the current season is selected.</div>`; }
 }
 function coefTable(W) {
   const rows = FEATS.map(([k, l], i) => {
