@@ -1,3 +1,4 @@
+
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders, and props.json with
 # DraftKings anytime and first goal scorer odds (The Odds API) plus period-by-period ice time from the NHL's shift charts.
 # The same run saves the models' pre-game picks to picks.json and grades finished games. Evening runs also record the
@@ -9,6 +10,7 @@
 #   props  11:07 AM and 5:07 PM Eastern: DraftKings odds, Post Hockey ratings, shift charts, picks and grading
 #   all    lines + props (the default when you press "Run workflow" in the Actions tab)
 name: Update NHL lines
+run-name: "${{ github.event.inputs.task || 'all' }} · Update NHL lines"
 
 on:
   workflow_dispatch:
