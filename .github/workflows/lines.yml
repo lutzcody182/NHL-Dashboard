@@ -1,19 +1,23 @@
-
-# Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders
-# (every 30 minutes from 10 AM to midnight Eastern), and props.json with DraftKings anytime and first goal scorer
-# odds from The Odds API (twice a day, about 11 AM and 5 PM Eastern) plus period-by-period ice time from the NHL's shift charts. The same run saves the goal scorer model's
-# pre-game picks with DraftKings prices to picks.json and grades finished games. In the evening, every 30 minutes, the
-# close job records the price just before puck drop for saved picks (closing line value), and the repick job re-runs
-# both models when a starting goalie is confirmed or changed. All run on demand from the Actions tab.
+# Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders, and props.json with
+# DraftKings anytime and first goal scorer odds (The Odds API) plus period-by-period ice time from the NHL's shift charts.
+# The same run saves the models' pre-game picks to picks.json and grades finished games. Evening runs also record the
+# price just before puck drop (closing line value) and re-run both models when a starting goalie is confirmed or changed.
+#
+# Timing comes from an outside scheduler (cron-job.org) instead of GitHub's own schedule, which often runs hours late or
+# skips runs. It starts this workflow through GitHub's API with one of these tasks:
+#   lines  every 30 minutes, 10 AM to 12:30 AM Eastern: lines + closing prices + goalie re-picks
+#   props  11:07 AM and 5:07 PM Eastern: DraftKings odds, Post Hockey ratings, shift charts, picks and grading
+#   all    lines + props (the default when you press "Run workflow" in the Actions tab)
 name: Update NHL lines
 
 on:
-  schedule:
-    - cron: '*/30 14-23 * * *'
-    - cron: '*/30 0-4 * * *'
-    - cron: '7 15 * * *'
-    - cron: '7 21 * * *'
   workflow_dispatch:
+    inputs:
+      task:
+        description: 'What to run: all = lines + odds/picks, lines = lines + closing prices + goalie re-picks, props = odds + picks'
+        type: choice
+        options: [all, lines, props]
+        default: all
 
 permissions:
   contents: write
@@ -24,7 +28,7 @@ concurrency:
 
 jobs:
   lines:
-    if: github.event.schedule != '7 15 * * *' && github.event.schedule != '7 21 * * *'
+    if: github.event.inputs.task != 'props'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -107,7 +111,7 @@ jobs:
           git push || { echo "::error::Push failed. In the repo go to Settings > Actions > General > Workflow permissions, choose 'Read and write permissions', and run again."; exit 1; }
 
   props:
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '7 15 * * *' || github.event.schedule == '7 21 * * *'
+    if: github.event.inputs.task != 'lines'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -484,7 +488,7 @@ jobs:
   close:
     # every 30 minutes in the evening: record closing prices for picks starting in the next 90 minutes (the last reading before puck drop wins) (closing line value)
     needs: lines
-    if: always() && github.event_name == 'schedule' && github.event.schedule != '7 15 * * *' && github.event.schedule != '7 21 * * *'
+    if: always() && github.event.inputs.task == 'lines'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -569,7 +573,7 @@ jobs:
     # evening, every 30 minutes: if a starting goalie got confirmed or switched for a game with saved picks,
     # re-run both models and re-save those picks (no Odds API requests used)
     needs: close
-    if: always() && github.event_name == 'schedule' && github.event.schedule != '7 15 * * *' && github.event.schedule != '7 21 * * *'
+    if: always() && github.event.inputs.task == 'lines'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
