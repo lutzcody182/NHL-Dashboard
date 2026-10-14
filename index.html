@@ -6674,7 +6674,28 @@ async function loadHealth(evs) {
     const h = (PK.hist || []).slice().sort((a, b) => a.date < b.date ? -1 : 1).pop();
     add('train', 'Daily model retrain', h && h.date === today ? 'ok' : h && etMin < 11 * 60 + 30 ? 'ok' : 'warn', h ? `last snapshot ${parseYmd(h.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}${h.gm ? ` · game model test ${pct1(h.gm.acc)}%` : ' · no game model'}` : 'none yet', h && h.date !== today && etMin >= 11 * 60 + 30 ? 'Today\'s retrain hasn\'t run yet (11 AM job).' : '');
   }
-  // 8) period ice time + Post Hockey
+  // 7b) starting goalies: confirmed? do ESPN and RotoGrinders agree? were picks saved with the goalie who's actually starting?
+  if (pre.length) {
+    const last = n => normName(String(n || '').split(' ').slice(-1)[0]), ab = id => TM(id).abbr || '';
+    let both = 0; const soonUnconf = [], clash = [], wrong = [];
+    for (const e of pre) {
+      const c = e.competitions[0], pg = probableGoalies(e), sides = c.competitors.map(x => ({ id: String(x.team.id), ha: x.homeAway }));
+      const conf = sides.filter(x => pg[x.id] && /confirm/i.test(pg[x.id].st || ''));
+      if (conf.length === 2) both++;
+      const mins = (new Date(e.date) - now) / 60000;
+      if (conf.length < 2 && mins <= 60) soonUnconf.push(`${sides.find(x => x.ha === 'away') ? ab(sides.find(x => x.ha === 'away').id) : ''} @ ${sides.find(x => x.ha === 'home') ? ab(sides.find(x => x.ha === 'home').id) : ''} (${Math.max(0, Math.round(mins))} min)`);
+      for (const x of sides) {
+        const espn = pg[x.id], rg = LF ? linesFor(LF, { date: e.date }, x.id) : null;
+        if (espn && rg && rg.goalie && last(espn.n) !== last(rg.goalie)) clash.push(`${ab(x.id)}: ESPN ${espn.n.split(' ').slice(-1)[0]}, RotoGrinders ${rg.goalie.split(' ').slice(-1)[0]}`);
+        const pk = PK && (PK.games || []).find(g => g.gid === String(e.id));
+        const saved = pk && (x.ha === 'home' ? pk.gH : pk.gA);
+        if (espn && /confirm/i.test(espn.st || '') && saved && last(saved) !== last(espn.n)) wrong.push(`${ab(x.id)}: pick saved with ${String(saved).split(' ').slice(-1)[0]}, ${espn.n.split(' ').slice(-1)[0]} confirmed`);
+      }
+    }
+    add('gconf', 'Starting goalies confirmed', soonUnconf.length ? 'warn' : 'ok', `${both} of ${pre.length} upcoming game${pre.length === 1 ? ' has' : 's have'} both starters confirmed${soonUnconf.length ? ` · still unconfirmed close to puck drop: ${soonUnconf.join(', ')}` : ''}`, soonUnconf.length ? 'Teams usually confirm in the morning skate or about an hour before the game. Treat edges in these games with caution until the starter is known.' : '');
+    add('gclash', 'ESPN vs. RotoGrinders goalies', clash.length ? 'warn' : 'ok', clash.length ? clash.join(' · ') : 'both sources agree (or one hasn\'t posted yet)', clash.length ? 'One source is behind. The models use ESPN\'s starter, so check team news before betting these games.' : '');
+    add('gpick', 'Picks match the confirmed goalie', wrong.length ? 'bad' : 'ok', wrong.length ? wrong.join(' · ') : 'every saved game pick used the goalie who\'s starting', wrong.length ? 'The saved pick and its edge assume the wrong goalie. The repick job should re-save it on its next run (every 30 minutes); if this stays red after that, open the latest "lines" run in GitHub Actions and check the repick job. The game card itself always uses the latest goalie.' : '');
+  }
   const sh = PF && PF.shifts;
   add('shifts', 'Period ice time (NHL shifts)', !sh ? 'warn' : ageMin(sh.updated) <= 26 * 60 ? 'ok' : 'warn', sh ? `updated ${ago(sh.updated)} · ${Object.keys(sh.seasons || {}).length} seasons` : 'not loaded yet', !sh ? 'Comes from the props job; used by the First Goal page.' : ageMin(sh.updated) > 26 * 60 ? 'Not refreshed in over a day. Check the "Period ice time" step in the props job.' : '');
   add('ph', 'Post Hockey ratings', !PH ? 'warn' : ageMin(PH.updated) <= 26 * 60 ? 'ok' : 'warn', PH ? `updated ${ago(PH.updated)}` : 'not loaded', PH && ageMin(PH.updated) > 26 * 60 ? 'Not refreshed in over a day. Check the "Post Hockey" step in the props job.' : '');
