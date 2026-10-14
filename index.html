@@ -352,6 +352,10 @@ svg{display:block;max-width:100%}
 .lead li{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px dashed var(--border);cursor:pointer;border-radius:6px}
 .lead li:hover{background:var(--surface-2)}
 .lead li:last-child{border-bottom:0}
+.health{border:1px solid var(--border);border-left:4px solid var(--good);background:var(--surface);border-radius:12px;padding:8px 12px;margin:0 0 12px}.health.warn{border-left-color:#e8a33d}.health.bad{border-left-color:var(--neg)}
+.hhead{all:unset;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%;font-size:13.5px}.hhead:focus-visible{outline:2px solid var(--accent);border-radius:6px}
+.htab{table-layout:fixed;width:100%}.htab td{white-space:normal;vertical-align:top}
+.hchips{display:flex;flex-wrap:wrap;gap:6px}.hchip{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--surface-2)}.hchip.bad{color:var(--neg)}.hmore{margin-left:auto;font-size:12.5px;color:var(--accent);font-weight:600}
 .lead.fgl .ln>span{display:block;white-space:normal;line-height:1.4}.lead.fgl .ln>span img{vertical-align:-3px;margin-right:3px}.lead.fgl .ln .fge{display:block}
 .lead .rk{width:14px;color:var(--muted);font-size:12px;font-weight:700;text-align:center;flex:none}
 .lead .hs{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--surface-2);flex:none}
@@ -524,6 +528,7 @@ ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
       <button class="btn" id="nextDay" aria-label="Next day">›</button>
       <button class="btn" id="todayBtn">Today</button>
     </div>
+    <div id="healthBox"></div>
     <div id="scoresBody"></div>
   </section>
 
@@ -1192,7 +1197,7 @@ async function loadScores(silent) {
   try { sb = await getJSON(`${API}/scoreboard?dates=${d}`); }
   catch (e) { body.innerHTML = `<div class="empty">Couldn't reach ESPN (${esc(e.message)}). Try again in a moment.</div>`; return; }
   if (d !== S.date) return;
-  const evs = sb.events || []; evs.forEach(x => SBEV[String(x.id)] = x);
+  const evs = sb.events || []; evs.forEach(x => SBEV[String(x.id)] = x); loadHealth(evs);
   if (!evs.length) { body.innerHTML = `<div class="empty">No NHL games on this date.</div>`; clearInterval(S.timer); return; }
   let anyLive = false;
   const cards = evs.map(e => {
@@ -6596,6 +6601,68 @@ document.addEventListener('click', async e => {
 });
 // who scored the first goal (shootouts don't count); null if no goal before a shootout
 const fgFirstScorer = g => { const x = (g.shots || []).filter(s => s.t === 0 && s.per >= 1 && s.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0]; return x ? x.pl : null; };
+
+/* ============================== DATA HEALTH CHECK ==============================
+   One strip on Today: is every data feed fresh and doing its job? Catches silent breaks (like ESPN moving its odds)
+   the same day instead of a week later. Times are Eastern; the GitHub job runs lines every 30 minutes (10 AM–midnight)
+   and DraftKings odds + picks about 11 AM and 5 PM. */
+const HEALTH = { open: false };
+async function loadHealth(evs) {
+  const box = $('#healthBox'); if (!box) return;
+  if (S.date !== todayStr()) { box.innerHTML = ''; return; }
+  const [LF, PF, PK, PH] = await Promise.all([getLinesFile(), getPropsFile(), getPicksFile(), getPHFile()]);
+  if (S.date !== todayStr()) return;
+  const now = Date.now(), etH = +new Date().toLocaleString('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }) % 24, etM = +new Date().toLocaleString('en-US', { timeZone: 'America/New_York', minute: 'numeric' });
+  const etMin = etH * 60 + etM, today = todayStr();
+  const ago = iso => { if (!iso) return 'never'; const m = Math.round((now - new Date(iso)) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 48 * 60 ? `${Math.round(m / 6) / 10} hr ago` : `${Math.round(m / 1440)} days ago`; };
+  const ageMin = iso => iso ? (now - new Date(iso)) / 60000 : Infinity;
+  // when the twice-a-day odds run should last have happened (minutes ago)
+  const lastRunAgo = etMin >= 17 * 60 + 20 ? etMin - (17 * 60 + 7) : etMin >= 11 * 60 + 20 ? etMin - (11 * 60 + 7) : etMin + 24 * 60 - (17 * 60 + 7);
+  const pre = evs.filter(e => e.competitions[0].status.type.state === 'pre'), started = evs.filter(e => e.competitions[0].status.type.state !== 'pre');
+  const games = evs.length, C = [];
+  const add = (k, name, st, detail, fix) => C.push({ k, name, st, detail, fix });
+  // 1) RotoGrinders lines
+  if (!LF) add('lines', 'Line combinations', 'bad', 'lines.json not found', 'Check the "lines" job in GitHub Actions.');
+  else { const a = ageMin(LF.updated), inWin = etH >= 10; const n = (LF.games || []).length;
+    add('lines', 'Line combinations', !inWin ? 'ok' : a <= 75 ? 'ok' : a <= 180 ? 'warn' : 'bad', `updated ${ago(LF.updated)} · ${n} game${n === 1 ? '' : 's'} posted`, a > 75 && inWin ? 'Should update every 30 minutes from 10 AM. GitHub often delays scheduled runs at busy times; if it stays stale for hours, check the Actions tab for failed runs or a "scheduled workflows disabled" banner.' : ''); }
+  // 2) DraftKings prices (The Odds API)
+  if (!PF) add('props', 'DraftKings prices', 'bad', 'props.json not found', 'Check the "props" job and the ODDS_API_KEY secret.');
+  else { const a = ageMin(PF.updated), late = a > lastRunAgo + 30; const pg = (PF.games || []).filter(g => (g.players || []).length).length, fg = (PF.games || []).filter(g => (g.first || []).length).length;
+    add('props', 'DraftKings prices', late && a > 24 * 60 ? 'bad' : late ? 'warn' : games && !pg && etMin > 11 * 60 + 30 ? 'warn' : 'ok', `updated ${ago(PF.updated)} · anytime prices for ${pg} game${pg === 1 ? '' : 's'}, first goal for ${fg}`, late ? 'The 11 AM / 5 PM run looks like it was skipped or failed. Check the "props" job in GitHub Actions.' : games && !pg ? 'DraftKings may not have posted goal scorer props yet; the 5 PM run usually catches them.' : '');
+    const rem = parseFloat(PF.remaining);
+    if (isFinite(rem)) add('credits', 'Odds API credits', rem >= 300 ? 'ok' : rem >= 100 ? 'warn' : 'bad', `${rem.toLocaleString()} left`, rem < 300 ? `Each run uses about 2 credits per game. ${rem < 100 ? 'You\'ll run out within a day or two, so avoid' : 'Avoid'} manual runs, drop first goal prices, or upgrade your Odds API plan.` : ''); }
+  // 3) ESPN moneylines (the game model needs them)
+  if (pre.length) { const withMl = pre.filter(e => gmEventML(e)).length;
+    add('espn', 'ESPN betting lines', withMl ? (withMl < pre.length ? 'warn' : 'ok') : 'bad', `${withMl} of ${pre.length} upcoming game${pre.length === 1 ? ' has' : 's have'} a moneyline`, !withMl ? 'ESPN may have changed its data format again (it did in October). Ask Claude to check.' : withMl < pre.length ? 'Some lines aren\'t posted yet; usually fine early in the day.' : ''); }
+  // 4) picks saved before games
+  if (!PK) add('picks', 'Saved picks', 'bad', 'picks.json not found', 'Check the "props" job in GitHub Actions.');
+  else {
+    const gT = (PK.games || []).filter(g => g.date === today).length, sT = (PK.picks || []).filter(p => p.date === today).length, fT = (PK.first || []).filter(p => p.date === today).length;
+    const due = games && etMin > 11 * 60 + 30 && lastRunAgo < 24 * 60, priced = evs.filter(e => gmEventML(e) || e.competitions[0].status.type.state !== 'pre').length;
+    add('picks', 'Picks saved today', !due ? 'ok' : !gT && priced ? 'bad' : !sT ? 'warn' : 'ok', `${gT} game model · ${sT} goal scorer · ${fT} first goal · saved ${ago(PK.updated)}`, due && !gT && priced ? 'No game model picks were saved even though games have lines. This is what broke the closing-line checks before; ask Claude to check the job log.' : due && !sT ? 'No goal scorer picks yet: usually DraftKings props aren\'t posted. The 5 PM run should add them.' : '');
+    // 5) closing prices on games that already started (last 36 hours)
+    const recent = (PK.games || []).filter(g => { const t = new Date(g.start).getTime(); return t < now && t > now - 36 * 3600e3; });
+    if (recent.length) { const c = recent.filter(g => g.mlCloseH != null).length;
+      add('close', 'Closing prices', c === 0 && recent.length >= 2 ? 'bad' : c < recent.length * .5 ? 'warn' : 'ok', `${c} of ${recent.length} recent game picks have a closing line`, c < recent.length * .5 ? 'The "close" job runs every 30 minutes in the evening and needs a run within 90 minutes before each puck drop. GitHub delays can miss some; missing all of them means the job is failing.' : ''); }
+    // 6) grading
+    const ungraded = (PK.games || []).filter(g => g.hw == null && new Date(g.start).getTime() < now - 8 * 3600e3), old = ungraded.filter(g => new Date(g.start).getTime() < now - 36 * 3600e3);
+    add('grade', 'Grading', old.length ? 'bad' : ungraded.length ? 'warn' : 'ok', ungraded.length ? `${ungraded.length} finished game pick${ungraded.length === 1 ? '' : 's'} not graded yet` : 'all finished picks graded', old.length ? 'Games from more than a day ago are still ungraded. Check the "props" job log.' : ungraded.length ? 'Grading happens on the next 11 AM run.' : '');
+    // 7) daily model snapshot
+    const h = (PK.hist || []).slice().sort((a, b) => a.date < b.date ? -1 : 1).pop();
+    add('train', 'Daily model retrain', h && h.date === today ? 'ok' : h && etMin < 11 * 60 + 30 ? 'ok' : 'warn', h ? `last snapshot ${parseYmd(h.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}${h.gm ? ` · game model test ${pct1(h.gm.acc)}%` : ' · no game model'}` : 'none yet', h && h.date !== today && etMin >= 11 * 60 + 30 ? 'Today\'s retrain hasn\'t run yet (11 AM job).' : '');
+  }
+  // 8) period ice time + Post Hockey
+  const sh = PF && PF.shifts;
+  add('shifts', 'Period ice time (NHL shifts)', !sh ? 'warn' : ageMin(sh.updated) <= 26 * 60 ? 'ok' : 'warn', sh ? `updated ${ago(sh.updated)} · ${Object.keys(sh.seasons || {}).length} seasons` : 'not loaded yet', !sh ? 'Comes from the props job; used by the First Goal page.' : ageMin(sh.updated) > 26 * 60 ? 'Not refreshed in over a day. Check the "Period ice time" step in the props job.' : '');
+  add('ph', 'Post Hockey ratings', !PH ? 'warn' : ageMin(PH.updated) <= 26 * 60 ? 'ok' : 'warn', PH ? `updated ${ago(PH.updated)}` : 'not loaded', PH && ageMin(PH.updated) > 26 * 60 ? 'Not refreshed in over a day. Check the "Post Hockey" step in the props job.' : '');
+  const bad = C.filter(c => c.st === 'bad'), warn = C.filter(c => c.st === 'warn');
+  const ico = st => st === 'ok' ? '✅' : st === 'warn' ? '⚠️' : '⛔';
+  const head = bad.length ? `⛔ ${bad.length} problem${bad.length === 1 ? '' : 's'}${warn.length ? ` · ${warn.length} to watch` : ''}` : warn.length ? `⚠️ ${warn.length} thing${warn.length === 1 ? '' : 's'} to watch` : '✅ All data feeds healthy';
+  const chips = [...bad, ...warn].map(c => `<span class="hchip ${c.st}">${ico(c.st)} ${esc(c.name)}</span>`).join('');
+  box.innerHTML = `<div class="health ${bad.length ? 'bad' : warn.length ? 'warn' : 'ok'}"><button class="hhead" id="healthToggle" aria-expanded="${HEALTH.open}"><b>🩺 Data health:</b> <span>${head}</span>${chips ? `<span class="hchips">${chips}</span>` : ''}<span class="hmore">${HEALTH.open ? 'Hide' : 'Details'}</span></button>
+    ${HEALTH.open ? `<div class="twrap" style="margin-top:8px"><table class="htab"><colgroup><col style="width:24%"><col style="width:34%"><col style="width:42%"></colgroup><thead><tr><th class="l">Check</th><th class="l">Status</th><th class="l">What to do</th></tr></thead><tbody>${C.map(c => `<tr><td class="l">${ico(c.st)} <b>${esc(c.name)}</b></td><td class="l">${esc(c.detail)}</td><td class="l muted" style="font-size:12.5px">${esc(c.fix || '–')}</td></tr>`).join('')}</tbody></table></div>` : ''}</div>`;
+  $('#healthToggle').onclick = () => { HEALTH.open = !HEALTH.open; loadHealth(evs); };
+}
 
 /* ============================== UPSET TRACKER ============================== */
 function renderUpsets() {
