@@ -1210,7 +1210,6 @@ async function loadScores(silent) {
   }).join('');
   const cached = S.lead && S.lead.d === d ? S.lead.html : `<div class="empty"><div class="spinner"></div>Finding today's top performers…</div>`;
   body.innerHTML = `<div class="games">${cards}</div>
-    <section class="lead-sec"><div class="card-h"><h2>🎯 Best bets</h2><p>Game model value and top goal scorer edges, saved by the daily job</p></div><div id="dayPkBody">${S.dp && S.dp.d === d ? S.dp.html : '<div class="card empty"><div class="spinner"></div>Loading picks…</div>'}</div></section>
     <section class="lead-sec"><div class="card-h"><h2>Upset watch</h2><p>${isToday ? "Today's" : "This day's"} favorites and underdogs</p></div><div id="dayUpBody">${S.up && S.up.d === d ? S.up.html : '<div class="card empty"><div class="spinner"></div>Checking for upsets…</div>'}</div></section>
     <section class="ms-sec" id="msSec">${S.ms && S.ms.d === d ? S.ms.html : ''}</section>
     <section class="lead-sec"><div class="card-h"><h2>${isToday ? "Today's" : 'Daily'} leaders</h2><p id="leadNote"></p></div><div id="leadersBody">${cached}</div></section>`;
@@ -1222,7 +1221,6 @@ async function loadScores(silent) {
     if (!$('#tab-scores').classList.contains('on') || document.hidden || S.date !== d) return;
     try { RGL.data = null; const sb = await getJSON(`${API}/scoreboard?dates=${d}`); readyMark(sb.events || [], d); } catch (e) {}
   }, 120000);
-  loadDayPicks(evs, d);
   clearInterval(S.timer);
   if (anyLive && isToday) S.timer = setInterval(() => { if ($('#tab-scores').classList.contains('on') && !document.hidden) loadScores(true); }, 30000);
 }
@@ -3873,7 +3871,6 @@ function schedCtx() {
   return (A.memo.sched = out);
 }
 const SITS = [
-  ['all', 'Every bet', () => true],
   ['home', 'Home', c => c.home], ['road', 'Road', c => !c.home],
   ['fav', 'Favorite', c => c.fav], ['dog', 'Underdog', c => !c.fav],
   ['bigfav', 'Big favorite (−200 or shorter)', c => c.odds <= -200], ['homedog', 'Home underdog', c => c.home && !c.fav], ['roadfav', 'Road favorite', c => !c.home && c.fav],
@@ -5433,8 +5430,7 @@ const PK_STRATS = [
   ['pos', 'Every positive edge', ps => ps.filter(p => p.edge > 0)],
   ['e5', 'Edge 5+ pts', ps => ps.filter(p => p.edge >= .05)],
   ['e10', 'Edge 10+ pts', ps => ps.filter(p => p.edge >= .10)],
-  ['top3', 'Top 3 each day', ps => { const by = {}; ps.filter(p => p.edge > 0).forEach(p => (by[p.date] = by[p.date] || []).push(p)); return Object.values(by).flatMap(l => l.sort((a, b) => b.roi - a.roi).slice(0, 3)); }],
-  ['all', 'Every priced player (baseline)', ps => ps]];
+  ['top3', 'Top 3 each day', ps => { const by = {}; ps.filter(p => p.edge > 0).forEach(p => (by[p.date] = by[p.date] || []).push(p)); return Object.values(by).flatMap(l => l.sort((a, b) => b.roi - a.roi).slice(0, 3)); }]];
 function pickTrackerCard(PK) {
   if (!PK) return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 Profit tracker</h3></div><p class="muted" style="margin:0">Not started yet. Once the GitHub job runs with the updated workflow, it saves each day's picks with DraftKings prices before the games and grades them the next morning. Results build up here.</p></div>`;
   const ps = (PK.picks || []).filter(p => p.dk != null && fin(p.edge));
@@ -5464,7 +5460,7 @@ function pickTrackerCard(PK) {
   return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 Profit tracker</h3><p>${done.length} graded bets · ${pending.length} pending${voids ? ` · ${voids} void` : ''} · updated ${PK.updated ? new Date(PK.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</p></div>
     <p class="muted" style="margin:-4px 0 10px;font-size:12px">Picks are saved by the GitHub job before each game (around 11 AM and 5 PM Eastern, using the latest pre-game price) and graded the next morning. Bet sizes follow your rule: $100 on plus odds, bet to win $100 on minus odds. Players who don't play are void, as at DraftKings.</p>
     ${tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit</h3>${chart}
-    <div class="grid" style="margin-top:14px"><div><h3 class="cmp-sec" style="margin-top:0">Results by edge size</h3>${ebT}<p class="muted" style="font-size:12px;margin:6px 0 0">If the model finds real value, bigger edges should score more often than DraftKings expects and make more money.</p></div><div><h3 class="cmp-sec" style="margin-top:0">Calibration</h3>${cbT || '<p class="muted" style="margin:0">Needs graded bets.</p>'}<p class="muted" style="font-size:12px;margin:6px 0 0">Do players the model gives 25% actually score about 25% of the time?</p></div></div>
+    <div style="margin-top:14px"><div><h3 class="cmp-sec" style="margin-top:0">Results by edge size</h3>${ebT}<p class="muted" style="font-size:12px;margin:6px 0 0">If the model finds real value, bigger edges should score more often than DraftKings expects and make more money.</p></div></div>
     ${logT}
     <p class="muted" style="font-size:12px;margin:10px 0 0">Goal scorer bets swing a lot: most lose and a few plus-money hits carry the results. Give it a few hundred bets before judging.</p></div>`;
 }
@@ -6580,7 +6576,6 @@ async function renderFirstGoal() {
     ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best first goal values</h3><p>Ranked by expected return; long odds, so expect long losing runs</p></div><div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)} · early ice ${f2(r.X)}× · P1 shooting ${f2(r.R)}×</div><div style="margin-top:4px"><b>${pct1(r.fp)}%</b> vs. DK ${fmtML(r.fdk)} (${pct1(r.fImp)}%) · <span style="color:var(--good)">${money(r.fEv)}</span></div></div>`).join('')}</div></div>` : ''}
     <div class="empty" id="fgNoMatch" hidden>No player matching that name in these games.</div>
     ${rows.length ? `<div class="card">${table('fg', cols, rows, { sort: anyDk ? 'fEv' : 'fp', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}
-    ${fitCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">First goal bets hit rarely and sportsbooks build in a large margin, so even good prices lose most nights. For fun and analysis, not betting advice.</p>`;
   RERENDER.fg = renderFirstGoal;
   $('#fgDate').onchange = e => { FG.date = e.target.value.replace(/-/g, ''); FG.game = ''; FG.team = ''; renderFirstGoal(); };
