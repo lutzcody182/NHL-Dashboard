@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-14",
- "updated": "2026-10-14T22:14:09.826Z",
+ "updated": "2026-10-14T23:01:11.812Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -443,11 +443,6 @@
        "players": [
         {
          "n": "Parker Kelly",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Zachary L'Heureux",
          "pos": "W",
          "pp": ""
         },
