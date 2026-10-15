@@ -7,7 +7,7 @@
 # Timing comes from an outside scheduler (cron-job.org) instead of GitHub's own schedule, which often runs hours late or
 # skips runs. It starts this workflow through GitHub's API with one of these tasks:
 #   lines  every 30 minutes, 10 AM to 12:30 AM Eastern: lines + closing prices + goalie re-picks
-#   props  11:07 AM and 5:07 PM Eastern: DraftKings odds, Post Hockey ratings, shift charts, picks and grading
+#   props  every 2 hours, 11:07 AM to 7:07 PM Eastern: DraftKings odds, Post Hockey ratings, shift charts, picks and grading
 #   all    lines + props (the default when you press "Run workflow" in the Actions tab)
 name: Update NHL lines
 run-name: "${{ github.event.inputs.task || 'all' }} · Update NHL lines"
@@ -122,7 +122,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Fetch DraftKings anytime and first goal scorer odds
+      - name: Fetch DraftKings and FanDuel odds (anytime, first goal, moneyline)
         continue-on-error: true
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
@@ -147,24 +147,23 @@ jobs:
             const games = []; let remaining = null;
             for (const e of soon) {
               try {
-                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&regions=us&markets=player_goal_scorer_anytime,player_goal_scorer_first&bookmakers=draftkings&oddsFormat=american`);
+                // DraftKings + FanDuel in one request: credits are charged per market, not per book (up to 10 books)
+                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&regions=us&markets=player_goal_scorer_anytime,player_goal_scorer_first,h2h&bookmakers=draftkings,fanduel&oddsFormat=american`);
                 remaining = left ?? remaining;
-                const bk = (data.bookmakers || []).find(b => b.key === 'draftkings');
-                const mk = bk && (bk.markets || []).find(m => m.key === 'player_goal_scorer_anytime');
-                const players = ((mk && mk.outcomes) || [])
-                  .filter(o => !/^no$/i.test(o.name || ''))
-                  .map(o => ({ n: o.description || o.name, price: o.price }))
-                  .filter(o => o.n && Number.isFinite(o.price));
-                const fm = bk && (bk.markets || []).find(m => m.key === 'player_goal_scorer_first');
-                const first = ((fm && fm.outcomes) || [])
-                  .filter(o => !/^no$|no goal/i.test(o.name || '') && !/no goal/i.test(o.description || ''))
-                  .map(o => ({ n: o.description || o.name, price: o.price }))
-                  .filter(o => o.n && Number.isFinite(o.price));
-                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players, first });
-                console.log(`${e.away_team} @ ${e.home_team}: ${players.length} anytime, ${first.length} first goal prices`);
+                const book = k => (data.bookmakers || []).find(b => b.key === k), mkt = (b, m) => b && (b.markets || []).find(x => x.key === m);
+                const nn = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+                const outs = (b, m) => { const mm = mkt(b, m); return ((mm && mm.outcomes) || []).filter(o => !/^no$|no goal/i.test(o.name || '') && !/no goal/i.test(o.description || '')).map(o => ({ n: o.description || o.name, price: o.price })).filter(o => o.n && Number.isFinite(o.price)); };
+                // one entry per player: price = DraftKings, fd = FanDuel (either can be missing)
+                const merge = m => { const map = new Map(); for (const o of outs(book('draftkings'), m)) map.set(nn(o.n), { n: o.n, price: o.price }); for (const o of outs(book('fanduel'), m)) { const k = nn(o.n), x = map.get(k) || { n: o.n, price: null }; x.fd = o.price; map.set(k, x); } return [...map.values()]; };
+                const players = merge('player_goal_scorer_anytime'), first = merge('player_goal_scorer_first');
+                const h2h = b => { const mm = mkt(b, 'h2h'); if (!mm) return null; const f = nm => (mm.outcomes.find(o => o.name === nm) || {}).price; const h = f(e.home_team), a = f(e.away_team); return Number.isFinite(h) && Number.isFinite(a) ? { h, a } : null; };
+                const mk = mkt(book('draftkings'), 'player_goal_scorer_anytime') || mkt(book('fanduel'), 'player_goal_scorer_anytime');
+                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players, first, ml: { dk: h2h(book('draftkings')), fd: h2h(book('fanduel')) } });
+                const c = (l, k) => l.filter(x => x[k] != null).length;
+                console.log(`${e.away_team} @ ${e.home_team}: anytime DK ${c(players, 'price')} / FD ${c(players, 'fd')}, first goal DK ${c(first, 'price')} / FD ${c(first, 'fd')}, moneyline FD ${h2h(book('fanduel')) ? 'yes' : 'no'}`);
               } catch (err) { console.log(`::warning::${e.away_team} @ ${e.home_team}: ${err.message}`); }
             }
-            const out = { source: 'DraftKings via The Odds API', updated: new Date().toISOString(), remaining, games };
+            const out = { source: 'DraftKings and FanDuel via The Odds API', updated: new Date().toISOString(), remaining, games };
             fs.writeFileSync('props.json', JSON.stringify(out));
             console.log(`Saved ${games.reduce((s, g) => s + g.players.length, 0)} player prices for ${games.length} games.`);
           })().catch(err => { console.log('::error::' + err.message); process.exit(1); });
@@ -395,10 +394,10 @@ jobs:
               const inj = await T.getInjuries(e.id);
               // game model moneyline pick
               if (gmOK) {
-                const gp = T.gmEventPick(e, inj, LF);
-                if (gp && gp.ml) {
+                const gp = T.gmEventPick(e, inj, LF, PF);
+                if (gp && gp.side) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml ? gp.ml.h : null, mlA: gp.ml ? gp.ml.a : null, fdH: gp.fd ? gp.fd.h : null, fdA: gp.fd ? gp.fd.a : null, bH: gp.bH ? gp.bH.price : null, bA: gp.bA ? gp.bA.price : null, book: gp.side.book, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) {
                     const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
                     // line history: one snapshot per run when anything changed (fair chance, market price, goalies), with each factor's share, so the dashboard can chart and explain the moves
@@ -411,13 +410,13 @@ jobs:
                 }
               }
               if (gs) {
-                const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.dk != null);
+                const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.dk != null || r.fd != null);
                 // first goal scorer: every player with a DraftKings first goal price
                 if (fgFitV) {
                   try {
                     const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null;
-                    for (const r of T.fgGame(gs.S, e, allRows, PF, fgATT, fgFitV).filter(x => x.fdk != null)) {
-                      const k = `f|${e.id}|${r.pid}`, rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
+                    for (const r of T.fgGame(gs.S, e, allRows, PF, fgATT, fgFitV).filter(x => x.fBest != null)) {
+                      const k = `f|${e.id}|${r.pid}`, rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
                       if (fByKey.has(k)) { if (fByKey.get(k).res == null) Object.assign(fByKey.get(k), rec); } else { fByKey.set(k, rec); fAdded++; }
                     }
                   } catch (err) { log(`Game ${e.id}: first goal model error: ${err.message}`); }
@@ -425,7 +424,7 @@ jobs:
                 if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
                 for (const r of rows) {
                   const k = `${e.id}|${r.pid}`;
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, imp: +r.dkImp.toFixed(4), edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
                   if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
               }
@@ -443,7 +442,7 @@ jobs:
                 const s = g.sk[p.pid];
                 if (!s || !(s.toi > 0)) { p.res = 'V'; p.goals = 0; } // didn't play: sportsbooks void the bet
                 else { p.goals = s.g; p.res = s.g > 0 ? 'W' : 'L'; }
-                p.profit = p.res === 'W' ? (p.dk < 0 ? 100 : p.dk) : p.res === 'L' ? -(p.dk < 0 ? -p.dk : 100) : 0;
+                { const px = p.best != null ? p.best : p.dk; p.profit = p.res === 'W' ? (px < 0 ? 100 : px) : p.res === 'L' ? -(px < 0 ? -px : 100) : 0; } // the better book's price
                 graded++;
               }
             }
@@ -453,7 +452,7 @@ jobs:
               let g = null; try { g = await T.getGame(p.gid); } catch (e) { log(`Game ${p.gid}: ${e.message}`); }
               if (!g || !g.final) continue;
               p.hs = g.home.score; p.as = g.away.score; p.hw = g.home.score > g.away.score; p.ot = !!(g.ot || g.so);
-              const price = p.side === 'h' ? p.mlH : p.mlA, won = p.side === 'h' ? p.hw : !p.hw;
+              const price = p.side === 'h' ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA), won = p.side === 'h' ? p.hw : !p.hw; // the better book's price
               p.profit = won ? (price < 0 ? 100 : price) : -(price < 0 ? -price : 100);
               gGraded++;
             }
@@ -466,7 +465,7 @@ jobs:
               for (const p of fOpen.filter(x => x.gid === gid)) {
                 const s = g.sk[p.pid];
                 p.res = !s || !(s.toi > 0) ? 'V' : first === p.pid ? 'W' : 'L';
-                p.profit = p.res === 'W' ? (p.dk < 0 ? 100 : p.dk) : p.res === 'L' ? -(p.dk < 0 ? -p.dk : 100) : 0;
+                { const px = p.best != null ? p.best : p.dk; p.profit = p.res === 'W' ? (px < 0 ? 100 : px) : p.res === 'L' ? -(px < 0 ? -px : 100) : 0; } // the better book's price
                 fGraded++;
               }
             }
@@ -524,7 +523,7 @@ jobs:
             let P; try { P = JSON.parse(fs.readFileSync('picks.json', 'utf8')); } catch (e) { log('No picks.json yet.'); return 0; }
             const W = 90 * 60e3, LATE = 15 * 60e3, inWin = t => t > now - LATE && t - now <= W, soon = x => inWin(new Date(x.start).getTime()); // up to 90 min before the listed start, and a few minutes after it (puck drop runs late; ESPN must still say pre-game)
             const fresh = x => !x.closeAt || now - new Date(x.closeAt).getTime() > 20 * 60e3; // refresh at most every 20 minutes
-            const games = (P.games || []).filter(soon), picks = (P.picks || []).filter(p => soon(p) && p.dk != null && fresh(p) && (p.dkClose == null || new Date(p.start).getTime() - now <= 35 * 60e3)); // DraftKings: at most twice per game (credits)
+            const games = (P.games || []).filter(soon), picks = (P.picks || []).filter(p => soon(p) && p.dk != null && fresh(p)); // DraftKings: refreshed every 20 minutes in the last 90 minutes (the last reading before puck drop wins)
             if (!games.length && !picks.length) { log('No saved picks starting in the next 90 minutes.'); return 0; }
             let changed = 0;
             // moneylines (ESPN, free)
@@ -724,10 +723,10 @@ jobs:
               const inj = await T.getInjuries(e.id);
               // game model moneyline pick
               if (gmOK) {
-                const gp = T.gmEventPick(e, inj, LF);
-                if (gp && gp.ml) {
+                const gp = T.gmEventPick(e, inj, LF, PF);
+                if (gp && gp.side) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml ? gp.ml.h : null, mlA: gp.ml ? gp.ml.a : null, fdH: gp.fd ? gp.fd.h : null, fdA: gp.fd ? gp.fd.a : null, bH: gp.bH ? gp.bH.price : null, bA: gp.bA ? gp.bA.price : null, book: gp.side.book, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) {
                     const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
                     // line history: one snapshot per run when anything changed (fair chance, market price, goalies), with each factor's share, so the dashboard can chart and explain the moves
@@ -740,13 +739,13 @@ jobs:
                 }
               }
               if (gs) {
-                const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.dk != null);
+                const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.dk != null || r.fd != null);
                 // first goal scorer: every player with a DraftKings first goal price
                 if (fgFitV) {
                   try {
                     const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null;
-                    for (const r of T.fgGame(gs.S, e, allRows, PF, fgATT, fgFitV).filter(x => x.fdk != null)) {
-                      const k = `f|${e.id}|${r.pid}`, rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
+                    for (const r of T.fgGame(gs.S, e, allRows, PF, fgATT, fgFitV).filter(x => x.fBest != null)) {
+                      const k = `f|${e.id}|${r.pid}`, rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
                       if (fByKey.has(k)) { if (fByKey.get(k).res == null) Object.assign(fByKey.get(k), rec); } else { fByKey.set(k, rec); fAdded++; }
                     }
                   } catch (err) { log(`Game ${e.id}: first goal model error: ${err.message}`); }
@@ -754,7 +753,7 @@ jobs:
                 if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
                 for (const r of rows) {
                   const k = `${e.id}|${r.pid}`;
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, imp: +r.dkImp.toFixed(4), edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
                   if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
               }
@@ -772,7 +771,7 @@ jobs:
                 const s = g.sk[p.pid];
                 if (!s || !(s.toi > 0)) { p.res = 'V'; p.goals = 0; } // didn't play: sportsbooks void the bet
                 else { p.goals = s.g; p.res = s.g > 0 ? 'W' : 'L'; }
-                p.profit = p.res === 'W' ? (p.dk < 0 ? 100 : p.dk) : p.res === 'L' ? -(p.dk < 0 ? -p.dk : 100) : 0;
+                { const px = p.best != null ? p.best : p.dk; p.profit = p.res === 'W' ? (px < 0 ? 100 : px) : p.res === 'L' ? -(px < 0 ? -px : 100) : 0; } // the better book's price
                 graded++;
               }
             }
@@ -782,7 +781,7 @@ jobs:
               let g = null; try { g = await T.getGame(p.gid); } catch (e) { log(`Game ${p.gid}: ${e.message}`); }
               if (!g || !g.final) continue;
               p.hs = g.home.score; p.as = g.away.score; p.hw = g.home.score > g.away.score; p.ot = !!(g.ot || g.so);
-              const price = p.side === 'h' ? p.mlH : p.mlA, won = p.side === 'h' ? p.hw : !p.hw;
+              const price = p.side === 'h' ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA), won = p.side === 'h' ? p.hw : !p.hw; // the better book's price
               p.profit = won ? (price < 0 ? 100 : price) : -(price < 0 ? -price : 100);
               gGraded++;
             }
@@ -795,7 +794,7 @@ jobs:
               for (const p of fOpen.filter(x => x.gid === gid)) {
                 const s = g.sk[p.pid];
                 p.res = !s || !(s.toi > 0) ? 'V' : first === p.pid ? 'W' : 'L';
-                p.profit = p.res === 'W' ? (p.dk < 0 ? 100 : p.dk) : p.res === 'L' ? -(p.dk < 0 ? -p.dk : 100) : 0;
+                { const px = p.best != null ? p.best : p.dk; p.profit = p.res === 'W' ? (px < 0 ? 100 : px) : p.res === 'L' ? -(px < 0 ? -px : 100) : 0; } // the better book's price
                 fGraded++;
               }
             }
