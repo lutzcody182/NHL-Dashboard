@@ -352,6 +352,7 @@ svg{display:block;max-width:100%}
 .lead li{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px dashed var(--border);cursor:pointer;border-radius:6px}
 .lead li:hover{background:var(--surface-2)}
 .lead li:last-child{border-bottom:0}
+.lue-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 6px}.lue-l{width:34px;font-weight:700;font-size:13px}.lue-row select{flex:1;min-width:120px;font:inherit;font-size:13px;padding:5px 6px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text)}
 .bestb{color:#e8a33d;font-size:12px}
 .govl{display:inline-flex;align-items:center;gap:6px;font-size:13px}.govl>span{display:inline-flex;align-items:center;gap:4px;font-weight:700}.govl select{font:inherit;font-size:13px;padding:4px 6px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);max-width:260px}
 .health{border:1px solid var(--border);border-left:4px solid var(--good);background:var(--surface);border-radius:12px;padding:8px 12px;margin:0 0 12px}.health.warn{border-left-color:#e8a33d}.health.bad{border-left-color:var(--neg)}
@@ -2650,7 +2651,21 @@ async function getLinesFile() {
   RGL.t = Date.now(); return RGL.data;
 }
 const normName = x => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '');
-function linesFor(data, g, teamId) {
+// your own lineups (when you have them before RotoGrinders), saved in this browser by game day and team; kept 3 days
+const LOV = { map: null };
+const lovKey = (dateIso, tid) => new Date(dateIso).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }) + '|' + tid;
+function lovLoad() {
+  if (LOV.map) return LOV.map;
+  try { LOV.map = JSON.parse(localStorage.getItem('icelab-lineup-override') || '{}') || {}; } catch (e) { LOV.map = {}; }
+  const cut = Date.now() - 3 * 864e5; for (const k of Object.keys(LOV.map)) if (!(LOV.map[k].t > cut)) delete LOV.map[k];
+  return LOV.map;
+}
+function lovSet(dateIso, tid, groups) {
+  const m = lovLoad(), k = lovKey(dateIso, tid); if (groups) m[k] = { groups, t: Date.now() }; else delete m[k];
+  try { localStorage.setItem('icelab-lineup-override', JSON.stringify(m)); } catch (e) {}
+}
+function linesFor(data, g, teamId, raw) {
+  if (!raw && g && g.date) { const o = lovLoad()[lovKey(g.date, teamId)]; if (o) { const base = linesFor(data, g, teamId, true); return { team: TM(teamId).name, goalie: (base && base.goalie) || '', groups: o.groups, manual: true }; } }
   if (!data || !data.games) return null;
   const etDay = iso => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
   if (data.date && data.date !== etDay(g.date)) return null;
@@ -2667,7 +2682,7 @@ function linesHTML(rg, ids, updated) {
     else if (/def/i.test(gr.label)) { for (let i = 0; i < gr.players.length; i += 2) dm += `<div class="lrow"><span class="llbl">D${i / 2 + 1}</span><div class="lplayers">${gr.players.slice(i, i + 2).map(who).join('')}</div></div>`; }
     else if (gr.players.length) other += `<div class="lrow"><span class="llbl" style="width:auto;padding:0 6px">${esc(gr.label)}</span><div class="lplayers">${gr.players.map(who).join('')}</div></div>`;
   }
-  return `<h4 class="lu-h">Forward lines <span>RotoGrinders · ${esc(updated)}</span></h4>${fw || '<p class="muted" style="margin:0;font-size:12px">Not posted yet.</p>'}<h4 class="lu-h">Defense pairs</h4>${dm || '<p class="muted" style="margin:0;font-size:12px">Not posted yet.</p>'}${other}`;
+  return `<h4 class="lu-h">Forward lines <span>${rg.manual ? 'Your lineup' : `RotoGrinders · ${esc(updated)}`}</span></h4>${fw || '<p class="muted" style="margin:0;font-size:12px">Not posted yet.</p>'}<h4 class="lu-h">Defense pairs</h4>${dm || '<p class="muted" style="margin:0;font-size:12px">Not posted yet.</p>'}${other}`;
 }
 async function renderLineups(s, g) {
   const box = () => $('#luBody'), gid = g.id, H = g.home.id, W = g.away.id;
@@ -2688,6 +2703,7 @@ async function renderLineups(s, g) {
   };
   const LUX = {};
   const col = async t => {
+    LUED[t] = null;
     const gm = await lastGameOf(t);
     const rg = linesFor(LF, g, t);
     let pg = probs[t];
@@ -2716,7 +2732,9 @@ async function renderLineups(s, g) {
       if (outNow) note += ` · ${outNow} of these players now listed as injured`;
     } else sk = `<p class="muted" style="margin:8px 0 0">No recent game to project from.</p>`;
     if (!LUX[t]) LUX[t] = { src: 'none', players: [], goalie: pg };
-    return `<div class="lu-col"><div class="tcell" style="margin-bottom:8px">${logoImg(t, 22)}<b>${esc(TM(t).name)}</b></div>${goalie}${sk}${note ? `<p class="muted" style="font-size:11px;margin:8px 0 0">${note}</p>` : ''}</div>`;
+    LUED[t] = { rg, gm, g };
+    const editBtn = g.state === 'pre' ? `<button class="btn sm" data-lued="${esc(t)}" style="margin-left:auto">${rg && rg.manual ? '✏️ Edit my lineup' : '✏️ Set lineup'}</button>${rg && rg.manual ? ` <button class="btn sm" data-luclear="${esc(t)}" title="Go back to RotoGrinders / last game">Clear</button>` : ''}` : '';
+    return `<div class="lu-col"><div class="tcell" style="margin-bottom:8px;flex-wrap:wrap">${logoImg(t, 22)}<b>${esc(TM(t).name)}</b>${rg && rg.manual ? ' <span class="badge ok">✓ Set by you</span>' : ''}${editBtn}</div>${goalie}${sk}${note ? `<p class="muted" style="font-size:11px;margin:8px 0 0">${note}</p>` : ''}</div>`;
   };
   const [ca, ch] = await Promise.all([col(W), col(H)]);
   if (!box() || GC.id !== gid) return;
@@ -2726,6 +2744,63 @@ async function renderLineups(s, g) {
     <div class="grid g2">${ca}${ch}</div>
     <p class="muted" style="font-size:12px;margin:10px 0 0">${haveLines ? `Lines and defense pairs come from <a href="${esc((LF && LF.url) || 'https://rotogrinders.com/lineups/nhl')}" target="_blank" rel="noopener">RotoGrinders</a>, refreshed every 30 minutes by your GitHub job; PP1/PP2 are power-play units. Goalie confirmations come from ESPN.` : `Lines aren't posted for this game yet, so the skater lists show who dressed in each team's last game, ordered by ice time (PP = regular power-play time). Lines appear here once RotoGrinders posts them.`} The official lineup appears in the box score at puck drop.</p></div>`;
 }
+
+/* ---- ✏️ set a lineup yourself (forward lines, defense pairs, power-play units) ---- */
+const LUED = {};
+// skaters who have played for a team, most recent first (current season first), with average ice time
+function teamSkaters(tid) {
+  const seen = {};
+  for (const g of [...A.games.values(), ...(GS.prior || [])]) {
+    if (!g || !g.sk) continue;
+    for (const [id, p] of Object.entries(g.sk)) { if (p.tm !== tid || !(p.toi > 0)) continue; const o = seen[id] || (seen[id] = { id, n: p.n, pos: p.pos === 'D' ? 'D' : 'F', gp: 0, toi: 0, last: '' }); o.gp++; o.toi += p.toi; if (g.date > o.last) { o.last = g.date; o.n = p.n || o.n; o.pos = p.pos === 'D' ? 'D' : 'F'; } }
+  }
+  const newest = Object.values(seen).reduce((m, o) => o.last > m ? o.last : m, '');
+  return Object.values(seen).filter(o => newest && (new Date(newest) - new Date(o.last)) < 120 * 864e5).sort((a, b) => b.last.slice(0, 10).localeCompare(a.last.slice(0, 10)) || b.toi / b.gp - a.toi / a.gp).slice(0, 40);
+}
+function luOpenEditor(t) {
+  const ctx = LUED[t]; if (!ctx) return;
+  const old = $('#mbModal'); if (old) old.remove();
+  const sk = teamSkaters(t), F = sk.filter(x => x.pos === 'F'), Dm = sk.filter(x => x.pos === 'D');
+  // prefill: your saved lineup or RotoGrinders' lines, otherwise last game's ice time order
+  const cur = { L: [[], [], [], []], D: [[], [], []], PP1: [], PP2: [] };
+  if (ctx.rg) { let di = 0; for (const gr of ctx.rg.groups || []) { const lm = (gr.label || '').match(/line\s*(\d)/i), isD = /def/i.test(gr.label || ''); for (const p of gr.players || []) { if (lm && cur.L[+lm[1] - 1]) cur.L[+lm[1] - 1].push(p.n); else if (isD) { if (cur.D[Math.floor(di / 2)]) cur.D[Math.floor(di / 2)].push(p.n); di++; } if (/PP1/i.test(p.pp || '')) cur.PP1.push(p.n); else if (/PP2/i.test(p.pp || '')) cur.PP2.push(p.n); } } }
+  else if (ctx.gm) { const ps = Object.values(ctx.gm.sk).filter(p => p.tm === t && p.toi > 0), f = ps.filter(p => p.pos !== 'D').sort((a, b) => b.toi - a.toi), d = ps.filter(p => p.pos === 'D').sort((a, b) => b.toi - a.toi);
+    f.slice(0, 12).forEach((p, i) => cur.L[Math.floor(i / 3)].push(p.n)); d.slice(0, 6).forEach((p, i) => cur.D[Math.floor(i / 2)].push(p.n));
+    ps.filter(p => (p.pp || 0) > 0).sort((a, b) => b.pp - a.pp).forEach((p, i) => (i < 5 ? cur.PP1 : i < 10 ? cur.PP2 : []).push(p.n)); }
+  const opts = (list, sel) => `<option value="">—</option>${list.map(x => `<option value="${esc(x.n)}" ${normName(x.n) === normName(sel || '') ? 'selected' : ''}>${esc(x.n)} · ${x.pos} · ${mmss(x.toi / x.gp)}</option>`).join('')}${sel && !list.some(x => normName(x.n) === normName(sel)) ? `<option value="${esc(sel)}" selected>${esc(sel)}</option>` : ''}`;
+  const all = [...F, ...Dm];
+  const row = (lab, list, n, picked, key) => `<div class="lue-row"><span class="lue-l">${lab}</span>${Array.from({ length: n }, (_, i) => `<select data-lue="${key}">${opts(list, picked[i])}</select>`).join('')}</div>`;
+  const m = document.createElement('div'); m.id = 'mbModal'; m.className = 'mbmodal';
+  m.innerHTML = `<div class="mbbox" style="width:min(820px,100%);max-height:90vh;overflow:auto" role="dialog" aria-label="Set lineup">
+    <div class="card-h"><h3>${logoImg(t, 20)} Set ${esc(TM(t).name)} lineup</h3><button class="btn" data-mbclose>✕</button></div>
+    <p class="muted" style="margin:0 0 10px;font-size:12.5px">Started from ${ctx.rg ? (ctx.rg.manual ? 'your saved lineup' : 'RotoGrinders\' lines') : 'last game\'s ice time'}. Change anyone, then save: every prediction on this game, the Goal Scorers and First Goal pages use it in this browser. It's for this game day only.</p>
+    <h4 class="cmp-sec" style="margin-top:0">Forward lines</h4>${[0, 1, 2, 3].map(i => row('L' + (i + 1), F.length ? F : all, 3, cur.L[i], 'L' + (i + 1))).join('')}
+    <h4 class="cmp-sec">Defense pairs</h4>${[0, 1, 2].map(i => row('D' + (i + 1), Dm.length ? Dm : all, 2, cur.D[i], 'D' + (i + 1))).join('')}
+    <h4 class="cmp-sec">Power play</h4>${row('PP1', all, 5, cur.PP1, 'PP1')}${row('PP2', all, 5, cur.PP2, 'PP2')}
+    <p id="lueMsg" class="muted" style="margin:8px 0 0;font-size:12.5px"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" data-mbclose>Cancel</button><button class="btn primary" id="lueSave">Save lineup</button></div></div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-mbclose]')) m.remove(); });
+  $('#lueSave').onclick = () => {
+    const get = key => $$(`#mbModal [data-lue="${key}"]`).map(x => x.value).filter(Boolean);
+    const pp1 = new Set(get('PP1').map(normName)), pp2 = new Set(get('PP2').map(normName)), used = new Set();
+    const pl = (n, pos) => { used.add(normName(n)); return { n, pos, pp: pp1.has(normName(n)) ? 'PP1' : pp2.has(normName(n)) ? 'PP2' : '' }; };
+    const groups = [1, 2, 3, 4].map(i => ({ label: 'Line ' + i, players: get('L' + i).map(n => pl(n, 'F')) })).filter(g2 => g2.players.length);
+    const dp = [1, 2, 3].flatMap(i => { const two = get('D' + i); return two.length === 2 ? two : two.concat(Array(2 - two.length).fill(null)); }).filter((x, i, arr) => x || arr.slice(i).some(Boolean));
+    if (dp.some(Boolean)) groups.push({ label: 'Defense', players: dp.map(n => n ? pl(n, 'D') : { n: '', pos: 'D', pp: '' }) });
+    const extraPP = [...get('PP1'), ...get('PP2')].filter(n => !used.has(normName(n)));
+    if (extraPP.length) groups.push({ label: 'Power play only', players: extraPP.map(n => ({ n, pos: '', pp: pp1.has(normName(n)) ? 'PP1' : 'PP2' })) });
+    const names = groups.flatMap(g2 => g2.players.map(p => p.n)).filter(Boolean), dupes = names.filter((n, i) => names.indexOf(n) !== i && !extraPP.includes(n));
+    if (new Set(names).size < 8) { $('#lueMsg').innerHTML = '<b style="color:var(--neg)">Pick at least 8 skaters</b> (the models need most of the lineup).'; return; }
+    if (dupes.length) { $('#lueMsg').innerHTML = `<b style="color:var(--neg)">${esc(dupes[0])} is in two spots.</b> Each skater can be on one line or pair (the power play is separate).`; return; }
+    lovSet(ctx.g.date, t, groups); m.remove(); alertBox(`${TM(t).abbr || 'Team'} lineup saved: predictions updating`); luRefresh();
+  };
+}
+function luRefresh() { if (!GC.g || !GC.raw) return; renderLineups(GC.raw, GC.g); renderGameModelPreview(GC.raw, GC.g); renderScorerPreview(GC.g); gcDecRender(GC.g); }
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-lued]'); if (b) { luOpenEditor(b.dataset.lued); return; }
+  const c = e.target.closest('[data-luclear]'); if (c) { const ctx = LUED[c.dataset.luclear]; if (ctx) { lovSet(ctx.g.date, c.dataset.luclear, null); alertBox('Back to RotoGrinders / last game lineup'); luRefresh(); } }
+});
 
 /* lineup minutes by slot (used by the goal scorer model) */
 const SLOT_F = [19.5, 17, 14.5, 11.5], SLOT_D = [23.5, 21, 17]; // typical all-situation minutes by line / pair
@@ -4370,7 +4445,7 @@ function gmFeatures(S, hId, aId, dateIso, gH, gA) {
 // tonight's goalie for the game model: ESPN's listed starter, else RotoGrinders' projected goalie, else his usual starter
 function gmPickGoalie(S, tid, pg, LF, dateIso, skip) {
   if (pg && pg[tid] && pg[tid].id) return { id: pg[tid].id, n: pg[tid].n, st: pg[tid].st || 'Probable', src: 'espn' };
-  const rg = LF ? linesFor(LF, { date: dateIso }, tid) : null;
+  const rg = linesFor(LF, { date: dateIso }, tid);
   if (rg && rg.goalie) {
     const key = normName(rg.goalie), last = normName(rg.goalie.split(' ').slice(-1)[0]), t = S.T[tid], names = S.Gn || {};
     const mine = Object.keys((t && t.gks) || {}), pool = [...mine, ...Object.keys(names).filter(id => !mine.includes(id))];
@@ -6317,7 +6392,7 @@ function readyOf(e, LF) {
   const c = e.competitions[0], pg = probableGoalies(e);
   const teams = c.competitors.map(x => String(x.team.id));
   const gConf = teams.filter(t => pg[t] && /confirm/i.test(pg[t].st || '')).length;
-  const lines = LF ? teams.filter(t => linesFor(LF, { date: e.date }, t)).length : 0;
+  const lines = teams.filter(t => linesFor(LF, { date: e.date }, t)).length;
   return { gConf, lines, ready: gConf === 2 && lines === 2 };
 }
 async function readyMark(evs, d) {
@@ -6790,7 +6865,7 @@ async function loadHealth(evs) {
       const mins = (new Date(e.date) - now) / 60000;
       if (conf.length < 2 && mins <= 60) soonUnconf.push(`${sides.find(x => x.ha === 'away') ? ab(sides.find(x => x.ha === 'away').id) : ''} @ ${sides.find(x => x.ha === 'home') ? ab(sides.find(x => x.ha === 'home').id) : ''} (${Math.max(0, Math.round(mins))} min)`);
       for (const x of sides) {
-        const espn = pgE[x.id], rg = LF ? linesFor(LF, { date: e.date }, x.id) : null;
+        const espn = pgE[x.id], rg = LF ? linesFor(LF, { date: e.date }, x.id, true) : null;
         if (espn && rg && rg.goalie && last(espn.n) !== last(rg.goalie)) clash.push(`${ab(x.id)}: ESPN ${espn.n.split(' ').slice(-1)[0]}, RotoGrinders ${rg.goalie.split(' ').slice(-1)[0]}`);
         const pk = PK && (PK.games || []).find(g => g.gid === String(e.id));
         const saved = pk && (x.ha === 'home' ? pk.gH : pk.gA);
