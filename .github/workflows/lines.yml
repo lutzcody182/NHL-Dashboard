@@ -399,7 +399,15 @@ jobs:
                 if (gp && gp.ml) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
                   const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
-                  if (!gByKey.has(k) || gByKey.get(k).hw == null) { const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */ if (!old) gAdded++; gByKey.set(k, rec); }
+                  if (!gByKey.has(k) || gByKey.get(k).hw == null) {
+                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
+                    // line history: one snapshot per run when anything changed (fair chance, market price, goalies), with each factor's share, so the dashboard can chart and explain the moves
+                    const snap = { t: now.toISOString(), p: rec.p, mlH: rec.mlH, mlA: rec.mlA, gH: rec.gH, gA: rec.gA, gHs: rec.gHs, gAs: rec.gAs, inj: out, crew: rec.crew, f: Object.fromEntries((gp.r.parts || []).map(x => [x.k, +x.d.toFixed(4)])) };
+                    const hist = (old && old.hist) || [], prev = hist[hist.length - 1];
+                    const same = prev && Math.abs(prev.p - snap.p) < .001 && prev.mlH === snap.mlH && prev.mlA === snap.mlA && prev.gH === snap.gH && prev.gA === snap.gA && prev.gHs === snap.gHs && prev.gAs === snap.gAs;
+                    rec.hist = same ? hist : [...hist, snap].slice(-60);
+                    if (!old) gAdded++; gByKey.set(k, rec);
+                  }
                 }
               }
               if (gs) {
@@ -584,7 +592,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check for goalie news
+      - name: Check for upcoming games (goalie news, line history)
         id: check
         run: |
           git pull --quiet || true
@@ -594,8 +602,8 @@ jobs:
           const etDay = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, '');
           async function run({ fetchImpl = fetch, now = Date.now() } = {}) {
             let P; try { P = JSON.parse(fs.readFileSync('picks.json', 'utf8')); } catch (e) { return false; }
-            const soon = (P.games || []).filter(g => { const t = new Date(g.start).getTime(); return g.hw == null && t > now && t - now < 5 * 3600e3; });
-            if (!soon.length) { console.log('No saved game picks starting in the next 5 hours.'); return false; }
+            const soon = (P.games || []).filter(g => { const t = new Date(g.start).getTime(); return g.hw == null && t > now && t - now < 14 * 3600e3; });
+            if (!soon.length) { console.log('No saved game picks starting in the next 14 hours.'); return false; }
             const conf = st => /confirm/i.test(st || '') ? 'C' : 'P';
             // RotoGrinders' projected goalie is the backup source when ESPN hasn't listed one
             let LF = null; try { LF = JSON.parse(fs.readFileSync('lines.json', 'utf8')); } catch (e) {}
@@ -619,10 +627,11 @@ jobs:
                 }
               }
             }
-            return changed;
+            if (!changed) console.log('No goalie changes; re-running anyway to add a line-history snapshot.');
+            return true; // re-run every 30 minutes before games so the line history captures market, injury and referee moves too
           }
           module.exports = { run };
-          if (require.main === module) run().then(c => { console.log(c ? 'Goalie news changed: re-running picks.' : 'No goalie changes.'); if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${c ? 'yes' : 'no'}\n`); process.exit(0); }).catch(e => { console.log('::warning::' + e.message); process.exit(0); });
+          if (require.main === module) run().then(c => { console.log(c ? 'Re-running picks.' : 'Nothing to re-run.'); if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${c ? 'yes' : 'no'}\n`); process.exit(0); }).catch(e => { console.log('::warning::' + e.message); process.exit(0); });
           EOF
           node "$RUNNER_TEMP/precheck.js"
 
@@ -719,7 +728,15 @@ jobs:
                 if (gp && gp.ml) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
                   const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml.h, mlA: gp.ml.a, p: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
-                  if (!gByKey.has(k) || gByKey.get(k).hw == null) { const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */ if (!old) gAdded++; gByKey.set(k, rec); }
+                  if (!gByKey.has(k) || gByKey.get(k).hw == null) {
+                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
+                    // line history: one snapshot per run when anything changed (fair chance, market price, goalies), with each factor's share, so the dashboard can chart and explain the moves
+                    const snap = { t: now.toISOString(), p: rec.p, mlH: rec.mlH, mlA: rec.mlA, gH: rec.gH, gA: rec.gA, gHs: rec.gHs, gAs: rec.gAs, inj: out, crew: rec.crew, f: Object.fromEntries((gp.r.parts || []).map(x => [x.k, +x.d.toFixed(4)])) };
+                    const hist = (old && old.hist) || [], prev = hist[hist.length - 1];
+                    const same = prev && Math.abs(prev.p - snap.p) < .001 && prev.mlH === snap.mlH && prev.mlA === snap.mlA && prev.gH === snap.gH && prev.gA === snap.gA && prev.gHs === snap.gHs && prev.gAs === snap.gAs;
+                    rec.hist = same ? hist : [...hist, snap].slice(-60);
+                    if (!old) gAdded++; gByKey.set(k, rec);
+                  }
                 }
               }
               if (gs) {
