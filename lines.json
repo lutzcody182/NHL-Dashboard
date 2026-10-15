@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-14",
- "updated": "2026-10-14T23:01:11.812Z",
+ "updated": "2026-10-15T01:00:20.017Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -133,34 +133,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Alex Tuch",
+         "n": "Ivan Miroshnichenko",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
-        {
-         "n": "Tom Wilson",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Dylan Strome",
-         "pos": "C",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
         {
          "n": "Ilya Protas",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Aliaksei Protas",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Alex Ovechkin",
@@ -170,16 +150,16 @@
        ]
       },
       {
-       "label": "Line 3",
+       "label": "Line 2",
        "players": [
         {
-         "n": "Boone Jenner",
-         "pos": "C",
-         "pp": ""
+         "n": "Alex Tuch",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
-         "n": "Ryan Leonard",
-         "pos": "W",
+         "n": "Dylan Strome",
+         "pos": "C",
          "pp": "PP1"
         },
         {
@@ -190,17 +170,37 @@
        ]
       },
       {
-       "label": "Line 4",
+       "label": "Line 3",
        "players": [
-        {
-         "n": "Ethen Frank",
-         "pos": "W",
-         "pp": "PP2"
-        },
         {
          "n": "Justin Sourdif",
          "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Aliaksei Protas",
+         "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Tom Wilson",
+         "pos": "W",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Boone Jenner",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Ryan Leonard",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "Anthony Beauvillier",
@@ -261,19 +261,19 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Justin Hryckowian",
+         "n": "Tyler Seguin",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Roope Hintz",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Mikko Rantanen",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Sam Steel",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -281,14 +281,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Roope Hintz",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
          "n": "Jason Robertson",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Sam Steel",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Jamie Benn",
@@ -306,9 +306,9 @@
          "pp": ""
         },
         {
-         "n": "Tyler Seguin",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Justin Hryckowian",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Oskar Back",
@@ -445,11 +445,6 @@
          "n": "Parker Kelly",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Nicolas Roy",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -467,22 +462,22 @@
          "pp": "PP2"
         },
         {
-         "n": "Josh Manson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Brent Burns",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Brett Kulak",
          "pos": "D",
          "pp": ""
         },
         {
          "n": "Sam Malinski",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Josh Manson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Brent Burns",
          "pos": "D",
          "pp": ""
         }
