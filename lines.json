@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-15",
- "updated": "2026-10-15T21:00:18.094Z",
+ "updated": "2026-10-15T23:01:29.979Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -160,7 +160,7 @@
         {
          "n": "Dawson Mercer",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Nico Hischier",
@@ -190,7 +190,7 @@
         {
          "n": "Stefan Noesen",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
