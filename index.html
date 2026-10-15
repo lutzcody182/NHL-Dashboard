@@ -1209,7 +1209,8 @@ async function loadScores(silent) {
     [h, a].forEach(x => addTeam(x.team));
     const live = st.state === 'in'; if (live) anyLive = true;
     const post = st.state === 'post';
-    const row = x => { const other = x === h ? a : h; const lose = post && +x.score < +other.score; const rec = (x.records && x.records[0] && x.records[0].summary) || ''; const pr = st.state === 'pre' ? ((x.probables || []).find(q => /goalie/i.test(q.name || '')) || null) : null; const gl = pr && pr.athlete ? `<span class="gline">G: ${esc((pr.athlete.fullName || pr.athlete.displayName || '').split(' ').slice(-1)[0])} ${/confirm/i.test((pr.status && pr.status.name) || '') ? '✓' : '(probable)'}</span>` : ''; return `<div class="trow ${lose ? 'lose' : ''}">${logoImg(x.team.id, 30)}<div class="tn"><b>${esc(x.team.shortDisplayName || x.team.abbreviation)}</b><span>${esc(rec)}</span>${gl}</div>${st.state !== 'pre' ? `<div class="sc num">${esc(x.score)}</div>` : ''}</div>`; };
+    const PGc = st.state === 'pre' ? probableGoalies(e) : {};
+    const row = x => { const other = x === h ? a : h; const lose = post && +x.score < +other.score; const rec = (x.records && x.records[0] && x.records[0].summary) || ''; const gl = st.state === 'pre' ? `<span class="gline" data-gl="${esc(e.id + '|' + x.team.id)}">${glTxt(PGc[String(x.team.id)])}</span>` : ''; return `<div class="trow ${lose ? 'lose' : ''}">${logoImg(x.team.id, 30)}<div class="tn"><b>${esc(x.team.shortDisplayName || x.team.abbreviation)}</b><span>${esc(rec)}</span>${gl}</div>${st.state !== 'pre' ? `<div class="sc num">${esc(x.score)}</div>` : ''}</div>`; };
     const odds = c.odds && c.odds[0];
     const bc = (c.broadcasts || []).flatMap(b => b.names || []).slice(0, 2).join(', ');
     const typ = e.season && e.season.type === 1 ? '<span class="pill">Preseason</span>' : e.season && e.season.type === 3 ? '<span class="pill">Playoffs</span>' : '';
@@ -1264,7 +1265,7 @@ async function gcDecRender(g) {
   let ev = null; try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === String(g.id)) || null; if (ev) SBEV[String(ev.id)] = ev; } catch (e) {}
   const LF = await getLinesFile(); await decLoad(); if (!$('#gcDec')) return;
   const r = ev ? readyOf(ev, LF) : { gConf: 0, lines: 0, ready: false };
-  box.innerHTML = `<div class="card" data-gw="${esc(g.id)}" data-rdy="${r.ready ? 1 : 0}" style="padding:10px 14px"><div class="gdec" data-decbar="${esc(g.id)}" style="padding:0"><span class="rchip${r.ready ? ' ok' : ''}">${r.ready ? '✓ Ready to review: both goalies confirmed and lines posted' : `Goalies ${r.gConf}/2 confirmed · lines ${r.lines === 2 ? 'posted' : r.lines + '/2 posted'}`}</span><span class="muted" style="font-size:12px">Your call:</span><button class="dbtn bet" data-dec="bet" data-gid="${esc(g.id)}">Bet</button><button class="dbtn pass" data-dec="pass" data-gid="${esc(g.id)}">Pass</button></div></div>`;
+  box.innerHTML = `<div class="card" data-gw="${esc(g.id)}" data-rdy="${r.ready ? 1 : 0}" style="padding:10px 14px"><div class="gdec" data-decbar="${esc(g.id)}" style="padding:0"><span class="rchip${r.ready ? ' ok' : ''}">${r.ready ? `✓ Ready to review: both goalies confirmed and lines posted${r.gMine || r.lMine ? ' (includes your picks)' : ''}` : readyTxt(r)}</span><span class="muted" style="font-size:12px">Your call:</span><button class="dbtn bet" data-dec="bet" data-gid="${esc(g.id)}">Bet</button><button class="dbtn pass" data-dec="pass" data-gid="${esc(g.id)}">Pass</button></div></div>`;
   decPaint(String(g.id));
   if (ev) box.insertAdjacentHTML('beforeend', govPicker(g, ev));
 }
@@ -1285,6 +1286,7 @@ document.addEventListener('change', e => {
   const [gid, tid] = sel.dataset.gov.split('|'), v = sel.value;
   if (!v) govSet(gid, tid, null); else { const i = v.indexOf('|'); govSet(gid, tid, { id: v.slice(0, i) || null, n: v.slice(i + 1) }); }
   alertBox(v ? `Starting goalie set to ${v.slice(v.indexOf('|') + 1)}` : 'Back to automatic goalie');
+  readyRefresh();
   if (GC.id === gid) gcPreRefresh(gid); // re-run every prediction on the game page
 });
 // pre-game: when the starting goalies, referees or injury list change (e.g. a goalie gets confirmed), re-run every prediction on the card
@@ -2796,7 +2798,10 @@ function luOpenEditor(t) {
     lovSet(ctx.g.date, t, groups); m.remove(); alertBox(`${TM(t).abbr || 'Team'} lineup saved: predictions updating`); luRefresh();
   };
 }
-function luRefresh() { if (!GC.g || !GC.raw) return; renderLineups(GC.raw, GC.g); renderGameModelPreview(GC.raw, GC.g); renderScorerPreview(GC.g); gcDecRender(GC.g); }
+// goalie line on the Today cards: ✓ when confirmed (by ESPN or by you), else (probable)
+const glTxt = g => g && g.n ? `G: ${esc(String(g.n).split(' ').slice(-1)[0])} ${/confirm/i.test(g.st || '') ? (g.manual ? '✓ <span class="muted" style="font-size:11px">(set by you)</span>' : '✓') : '(probable)'}` : '';
+function readyRefresh() { if (GC.gkRender) GC.gkRender(); document.querySelectorAll('[data-gl]').forEach(el => { const [gid, tid] = el.dataset.gl.split('|'), ev = SBEV[gid]; if (ev) el.innerHTML = glTxt(probableGoalies(ev)[tid]); }); const evs = Object.values(SBEV).filter(e => localDay(e.date) === S.date); if (evs.length && $('[data-gw]')) readyMark(evs, S.date); }
+function luRefresh() { readyRefresh(); if (!GC.g || !GC.raw) return; renderLineups(GC.raw, GC.g); renderGameModelPreview(GC.raw, GC.g); renderScorerPreview(GC.g); gcDecRender(GC.g); }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-lued]'); if (b) { luOpenEditor(b.dataset.lued); return; }
   const c = e.target.closest('[data-luclear]'); if (c) { const ctx = LUED[c.dataset.luclear]; if (ctx) { lovSet(ctx.g.date, c.dataset.luclear, null); alertBox('Back to RotoGrinders / last game lineup'); luRefresh(); } }
@@ -2900,14 +2905,18 @@ async function renderMatchup(s, g) {
   // --- goalies
   const gs = s.goalies || {}, gName = t => (t === H ? gs.homeTeam : gs.awayTeam) || {};
   const gCol = t => {
+    const mine = govLoad()[g.id + '|' + t];
+    if (mine) return `<div class="gk-row"><img class="hs" src="${headshot(mine.id)}" alt="" onerror="this.style.visibility='hidden'"><div>${plink(mine.id, mine.n)} ${gBadge('Confirmed (set by you)')}</div></div>`;
     const ath = gName(t).athletes || [];
-    if (ath.length) return ath.map(x => { const a = x.athlete || x; return `<div class="gk-row"><img class="hs" src="${headshot(a.id)}" alt="" onerror="this.style.visibility='hidden'"><div>${plink(a.id, a.displayName || a.fullName || 'Goalie')}<div class="muted" style="font-size:12px">${esc((x.status && x.status.name) || 'Probable')}</div></div></div>`; }).join('');
+    if (ath.length) return ath.map(x => { const a = x.athlete || x; return `<div class="gk-row"><img class="hs" src="${headshot(a.id)}" alt="" onerror="this.style.visibility='hidden'"><div>${plink(a.id, a.displayName || a.fullName || 'Goalie')}<div style="font-size:12px">${gBadge((x.status && x.status.name) || 'Probable')}</div></div></div>`; }).join('');
     const fb = GC.gkFallback && (t === H ? GC.gkFallback.h : GC.gkFallback.a);
     if (fb && fb.length) return fb.map(x => `<div class="gk-row"><img class="hs" src="${headshot(x.id)}" alt="" onerror="this.style.visibility='hidden'"><div>${plink(x.id, x.n)}<div class="muted" style="font-size:12px">${x.gp} GP · ${f3(div(x.sv, x.sa))} SV% · ${sgn1(x.xga - x.gan)} GSAx</div></div></div>`).join('');
     return '<p class="muted" style="margin:0">Not announced yet.</p>';
   };
   const anyProb = (gs.homeTeam && (gs.homeTeam.athletes || []).length) || (gs.awayTeam && (gs.awayTeam.athletes || []).length);
-  const goalies = `<div class="card"><div class="card-h"><h3>Goalie matchup</h3><p>${anyProb ? 'Probable starters from ESPN' : 'Starters not announced · showing each team\'s top goalies in the loaded range'}</p></div><div class="grid g2"><div>${gCol(W)}</div><div>${gCol(H)}</div></div></div>`;
+  const gkInner = () => { const any = anyProb || [W, H].some(t => govLoad()[g.id + '|' + t]); return `<div class="card-h"><h3>Goalie matchup</h3><p>${any ? 'Starters from ESPN, or the goalie you set' : 'Starters not announced · showing each team\'s top goalies in the loaded range'}</p></div><div class="grid g2"><div>${gCol(W)}</div><div>${gCol(H)}</div></div>`; };
+  GC.gkRender = () => { const el = $('#gkCard'); if (el && String(GC.id) === String(g.id)) el.innerHTML = gkInner(); };
+  const goalies = `<div class="card" id="gkCard">${gkInner()}</div>`;
   // --- injuries
   const inj = s.injuries || [];
   const injCol = t => { const x = inj.find(q => q.team && String(q.team.id) === t); const list = (x && x.injuries) || []; if (!list.length) return '<p class="muted" style="margin:0">No injuries reported.</p>'; return `<ul class="inj">${list.map(i => { const a = i.athlete || {}; const det = i.details || {}; return `<li>${plink(a.id, a.displayName || '')} <span class="muted">${esc((a.position && a.position.abbreviation) || '')}</span><span class="pill">${esc(i.status || '')}</span><div class="muted" style="font-size:12px">${esc([det.type, det.detail].filter(Boolean).join(' · '))}${det.returnDate ? ` · expected back ${new Date(det.returnDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}` : ''}</div></li>`; }).join('')}</ul>`; };
@@ -6387,13 +6396,14 @@ function decPaint(gid) {
   $$(`[data-decbar="${gid}"]`).forEach(bar => { bar.querySelectorAll('.dbtn').forEach(b => b.classList.toggle('on', !!v && b.dataset.dec === v.d)); });
   $$(`[data-gw="${gid}"]`).forEach(w => { w.classList.toggle('decided', !!v); w.classList.toggle('ready', w.dataset.rdy === '1' && !v); if (v) w.classList.remove('flash'); });
 }
+const readyTxt = r => `Goalies ${r.gConf}/2 confirmed${r.gMine ? ` (${r.gMine} by you)` : ''} · lines ${r.lines === 2 ? 'posted' : r.lines + '/2 posted'}${r.lMine ? ` (${r.lMine} by you)` : ''}`;
 // goalies confirmed + lines posted, for one scoreboard event
 function readyOf(e, LF) {
   const c = e.competitions[0], pg = probableGoalies(e);
   const teams = c.competitors.map(x => String(x.team.id));
-  const gConf = teams.filter(t => pg[t] && /confirm/i.test(pg[t].st || '')).length;
-  const lines = teams.filter(t => linesFor(LF, { date: e.date }, t)).length;
-  return { gConf, lines, ready: gConf === 2 && lines === 2 };
+  const gConf = teams.filter(t => pg[t] && /confirm/i.test(pg[t].st || '')).length, gMine = teams.filter(t => pg[t] && pg[t].manual).length;
+  const lf = teams.map(t => linesFor(LF, { date: e.date }, t)), lines = lf.filter(Boolean).length, lMine = lf.filter(x => x && x.manual).length;
+  return { gConf, lines, gMine, lMine, ready: gConf === 2 && lines === 2 };
 }
 async function readyMark(evs, d) {
   const LF = await getLinesFile(); await decLoad();
@@ -6404,7 +6414,7 @@ async function readyMark(evs, d) {
     if (st === 'pre') {
       const r = readyOf(e, LF), was = w.dataset.rdy === '1';
       w.dataset.rdy = r.ready ? '1' : '0';
-      if (chip) { chip.className = 'rchip' + (r.ready ? ' ok' : ''); chip.innerHTML = r.ready ? '✓ Ready to review' : `Goalies ${r.gConf}/2 confirmed · lines ${r.lines === 2 ? 'posted' : r.lines + '/2 posted'}`; chip.title = 'Ready = both starting goalies confirmed (ESPN) and both teams\' lines posted (RotoGrinders). Open the game to check the value, then mark Bet or Pass.'; }
+      if (chip) { chip.className = 'rchip' + (r.ready ? ' ok' : ''); chip.innerHTML = r.ready ? `✓ Ready to review${r.gMine || r.lMine ? ' (includes your picks)' : ''}` : readyTxt(r); chip.title = 'Ready = both starting goalies confirmed (ESPN) and both teams\' lines posted (RotoGrinders). Open the game to check the value, then mark Bet or Pass.'; }
       if (r.ready && !was && !(DEC.map || {})[gid]) { w.classList.remove('flash'); void w.offsetWidth; w.classList.add('flash'); }
     } else { w.dataset.rdy = '0'; if (chip) chip.textContent = ''; }
     decPaint(gid);
