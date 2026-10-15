@@ -4702,6 +4702,7 @@ async function renderGameModelPreview(s, g) {
       <h4 class="cmp-sec">Referees</h4>${r.ref.names.length ? `<p style="margin:0 0 4px;font-size:13px">${r.ref.names.map(esc).join(' & ')}: <b style="color:${r.ref.crew > 1.03 ? 'var(--neg)' : r.ref.crew < .97 ? 'var(--good)' : 'inherit'}">${r.ref.crew >= 1 ? '+' : '−'}${pct1(Math.abs(r.ref.crew - 1))}%</b> penalties vs. an average crew</p>${(() => { const pt = r.parts.find(x => x.k === 'ref'); return `<p class="muted" style="margin:0;font-size:12px">${r.ref.goals.h || r.ref.goals.a ? `Expected power-play goals: ${esc(g.home.abbr)} ${r.ref.goals.h >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.h))}, ${esc(g.away.abbr)} ${r.ref.goals.a >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.a))}${pt ? ` → ${esc(pt.d >= 0 ? g.home.abbr : g.away.abbr)} +${Math.abs(pt.d * 100).toFixed(1)} pts` : ''}. ` : ''}${fin(r.ref.beta) ? `${Math.round(r.ref.beta * 100)}% of a crew's past rate carries into its next game (learned from past games).` : 'Retrain in Model Lab to use referee crews.'}</p>`; })()}` : '<p class="muted" style="margin:0;font-size:13px">Not posted yet (usually the day of the game).</p>'}
       <h4 class="cmp-sec">Injuries factored in</h4>${injTxt || '<p class="muted" style="margin:0;font-size:13px">No regulars listed as out.</p>'}</div></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">Points = how much each factor moves ${esc(g.home.abbr)}'s win chance. The model was last trained ${new Date(M.t).toLocaleDateString()}; retrain it in Model Lab to include the newest games. For fun and analysis, not betting advice.</p></div>`;
+  renderLineHistory(g);
 }
 
 /* ============================== SHOT PROFILES ============================== */
@@ -6767,6 +6768,57 @@ async function loadHealth(evs) {
   box.innerHTML = `<div class="health ${bad.length ? 'bad' : warn.length ? 'warn' : 'ok'}"><button class="hhead" id="healthToggle" aria-expanded="${HEALTH.open}"><b>🩺 Data health:</b> <span>${head}</span>${chips ? `<span class="hchips">${chips}</span>` : ''}<span class="hmore">${HEALTH.open ? 'Hide' : 'Details'}</span></button>
     ${HEALTH.open ? `<div class="twrap" style="margin-top:8px"><table class="htab"><colgroup><col style="width:24%"><col style="width:34%"><col style="width:42%"></colgroup><thead><tr><th class="l">Check</th><th class="l">Status</th><th class="l">What to do</th></tr></thead><tbody>${C.map(c => `<tr><td class="l">${ico(c.st)} <b>${esc(c.name)}</b></td><td class="l">${esc(c.detail)}</td><td class="l muted" style="font-size:12.5px">${esc(c.fix || '–')}</td></tr>`).join('')}</tbody></table></div>` : ''}</div>`;
   $('#healthToggle').onclick = () => { HEALTH.open = !HEALTH.open; loadHealth(evs); };
+}
+
+/* ---- 📈 how the fair line moved today (snapshots saved by the GitHub job every 30 minutes) ---- */
+const LH_LABEL = { inj: 'Injuries', ref: 'Referee crew' };
+function lhReasons(a, b, ha, aa) {
+  const out = [], lastN = n => String(n || '?').split(' ').slice(-1)[0], conf = s => /confirm/i.test(s || '');
+  for (const [k, ks, ab] of [['gH', 'gHs', ha], ['gA', 'gAs', aa]]) {
+    if (a[k] !== b[k]) out.push(`${ab} goalie: ${lastN(a[k])} → ${lastN(b[k])}${conf(b[ks]) ? ' (confirmed)' : ''}`);
+    else if (conf(b[ks]) && !conf(a[ks])) out.push(`${ab}: ${lastN(b[k])} confirmed`);
+    else if ((a[ks] || '') !== (b[ks] || '') && /rotogrinders/i.test(b[ks] || '')) out.push(`${ab}: ${lastN(b[k])} projected by RotoGrinders`);
+  }
+  if (a.mlH !== b.mlH || a.mlA !== b.mlA) out.push(`Market: ${ha} ${fmtML(a.mlH)} → ${fmtML(b.mlH)}, ${aa} ${fmtML(a.mlA)} → ${fmtML(b.mlA)}`);
+  const ai = new Set(a.inj || []), bi = new Set(b.inj || []), outN = [...bi].filter(x => !ai.has(x)), back = [...ai].filter(x => !bi.has(x));
+  if (outN.length) out.push(`Ruled out: ${outN.join(', ')}`); if (back.length) out.push(`Back in: ${back.join(', ')}`);
+  if (a.crew !== b.crew) out.push(`Referees ${a.crew === 1 ? 'assigned' : 'changed'} (crew ${b.crew > 1.03 ? 'calls more penalties' : b.crew < .97 ? 'calls fewer penalties' : 'about average'})`);
+  // which factors moved the number
+  const keys = new Set([...Object.keys(a.f || {}), ...Object.keys(b.f || {})]), lab = k => LH_LABEL[k] || (GM_FEATS.find(x => x[0] === k) || [k, k])[1];
+  const fd = [...keys].map(k => ({ k, d: ((b.f || {})[k] || 0) - ((a.f || {})[k] || 0) })).filter(x => Math.abs(x.d) >= .003).sort((x, y) => Math.abs(y.d) - Math.abs(x.d));
+  const pts = d => `${Math.abs(d * 100).toFixed(1)} pts ${d >= 0 ? ha : aa}`;
+  const parts = fd.slice(0, 3).map(x => `${lab(x.k)} +${pts(x.d)}`);
+  const resid = (b.p - a.p) - fd.reduce((s, x) => s + x.d, 0);
+  if (Math.abs(resid) >= .003) parts.push(`Team ratings & other factors +${pts(resid)}`);
+  return { news: out, parts };
+}
+async function renderLineHistory(g) {
+  const gm = $('#gmBody'); if (!gm) return;
+  const PK = await getPicksFile(); if (!$('#gmBody')) return;
+  const old = $('#lineHist'); if (old) old.remove();
+  const rec = PK && (PK.games || []).find(x => x.gid === String(g.id)), H = (rec && rec.hist) || [];
+  const card = inner => gm.insertAdjacentHTML('afterend', `<div class="card" id="lineHist" style="margin-top:14px"><div class="card-h"><h3>📈 How the line moved today</h3><p>Ice Lab's fair line vs. the market, saved by the GitHub job</p></div>${inner}</div>`);
+  if (!H.length) { card(`<p class="muted" style="margin:0;font-size:13px">${rec ? 'History starts with the next job run.' : 'No saved pick for this game yet.'} The job saves the first prediction about 11 AM and then a snapshot every 30 minutes whenever anything changes (goalies, injuries, referees, the market line), so you can see what moved the number and why.</p>`); return; }
+  const ha = rec.ha, aa = rec.aa, t = s => new Date(s.t).getTime();
+  const mk = s => { const v = devig({ h: s.mlH, a: s.mlA }); return fin(v) ? v : null; };
+  const t0 = t(H[0]), t1 = Math.max(t(H[H.length - 1]), t0 + 3600e3), pt = (x, v) => [(x - t0) / 60000, v * 100];
+  const model = H.map(s => pt(t(s), s.p)), market = H.filter(s => mk(s) != null).map(s => pt(t(s), mk(s)));
+  if (model.length === 1) { model.push([(t1 - t0) / 60000, model[0][1]]); if (market.length === 1) market.push([(t1 - t0) / 60000, market[0][1]]); }
+  const ev = H.map((s, i) => i ? { s, i, ...lhReasons(H[i - 1], s, ha, aa), d: s.p - H[i - 1].p } : { s, i, news: ['First prediction saved'], parts: [], d: 0 });
+  const ys = [...model, ...market].map(p => p[1]), lo = Math.min(...ys), hi = Math.max(...ys), pad = Math.max(2, (hi - lo) * .2);
+  const span = (t1 - t0) / 60000, step = span > 600 ? 180 : span > 240 ? 120 : 60, ticks = [];
+  for (let m = 0; m <= span + 1; m += step) ticks.push({ v: m, l: new Date(t0 + m * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) });
+  const tipOf = e => `<b>${new Date(e.s.t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</b> · ${ha} ${pct1(e.s.p)}% (fair ${fairAmerican(e.s.p)})${e.i ? ` · ${e.d >= 0 ? '+' : '−'}${Math.abs(e.d * 100).toFixed(1)} pts ${e.d >= 0 ? ha : aa}` : ''}<br>${[...e.news, ...e.parts].map(esc).join('<br>')}`;
+  const markers = ev.filter(e => e.i === 0 || e.news.length || Math.abs(e.d) >= .003).map(e => ({ x: (t(e.s) - t0) / 60000, y: e.s.p * 100, color: e.i === 0 ? 'var(--muted)' : e.d >= 0 ? 'var(--home)' : 'var(--away)', tip: tipOf(e) }));
+  const chart = lineChart({ series: [{ name: `Ice Lab: ${ha} win chance`, color: 'var(--accent)', pts: model }, ...(market.length ? [{ name: `Market (margin removed)`, color: 'var(--text-2)', pts: market }] : [])], x0: 0, x1: span, y0: lo - pad, y1: hi + pad, xTicks: ticks, fx: v => new Date(t0 + v * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), fy: v => v.toFixed(0) + '%', step: true, markers, H: 230 });
+  const first = H[0], last = H[H.length - 1], tot = last.p - first.p;
+  const rows = ev.slice().reverse().filter(e => e.i === 0 || e.news.length || Math.abs(e.d) >= .002).map(e => `<tr><td class="l" style="white-space:nowrap">${new Date(e.s.t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</td><td class="l">${e.news.length ? `<b>${e.news.map(esc).join(' · ')}</b>` : '<span class="muted">No news: model update</span>'}${e.parts.length ? `<div class="muted" style="font-size:12px">${e.parts.map(esc).join(' · ')}</div>` : ''}</td><td>${e.i ? `<b style="color:var(${e.d >= 0 ? '--home' : '--away'})">${e.d >= 0 ? '+' : '−'}${Math.abs(e.d * 100).toFixed(1)} ${e.d >= 0 ? esc(ha) : esc(aa)}</b>` : '–'}</td><td style="white-space:nowrap">${esc(ha)} ${fairAmerican(e.s.p)}<div class="muted" style="font-size:11.5px">${esc(aa)} ${fairAmerican(1 - e.s.p)}</div></td><td style="white-space:nowrap">${e.s.mlH != null ? `${fmtML(e.s.mlH)} / ${fmtML(e.s.mlA)}` : '–'}</td></tr>`).join('');
+  card(`<div class="tiles" style="margin-bottom:10px"><div class="tile"><div class="k">Ice Lab fair line now</div><div class="v num">${esc(ha)} ${fairAmerican(last.p)}</div><div class="s">${esc(aa)} ${fairAmerican(1 - last.p)} · ${pct1(last.p)}% ${esc(ha)}</div></div>
+      <div class="tile"><div class="k">Moved today</div><div class="v num" style="color:var(${Math.abs(tot) < .003 ? '--text' : tot > 0 ? '--home' : '--away'})">${Math.abs(tot) < .0005 ? '0.0' : `${tot > 0 ? '+' : '−'}${Math.abs(tot * 100).toFixed(1)} ${tot > 0 ? esc(ha) : esc(aa)}`}</div><div class="s">pts of win chance since ${new Date(first.t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · ${H.length} snapshot${H.length === 1 ? '' : 's'}</div></div>
+      ${last.mlH != null ? `<div class="tile"><div class="k">Market now</div><div class="v num">${esc(ha)} ${fmtML(last.mlH)}</div><div class="s">${esc(aa)} ${fmtML(last.mlA)}${first.mlH != null && first.mlH !== last.mlH ? ` · opened today at ${fmtML(first.mlH)}` : ''}</div></div>` : ''}</div>
+    ${chart}<div class="legend"><span><i class="lg-dot" style="background:var(--accent)"></i>Ice Lab: ${esc(ha)} win chance</span>${market.length ? '<span><i class="lg-dot" style="background:var(--text-2)"></i>Market, margin removed</span>' : ''}<span class="muted">Dots = a change; hover for why</span></div>
+    <h4 class="cmp-sec">What changed</h4><div class="twrap"><table><thead><tr><th class="l">Time</th><th class="l">Why</th><th>Move</th><th>Fair line after</th><th>Market</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Moves are in percentage points of ${esc(ha)}'s win chance, credited to the factors that changed. "Team ratings & other" is everything else, mostly the morning retrain on last night's games. Snapshots come from the GitHub job (11 AM, 5 PM, and every 30 minutes before games), so the newest news can take up to 30 minutes to appear here; the prediction above is always live.</p>`);
 }
 
 /* ============================== UPSET TRACKER ============================== */
