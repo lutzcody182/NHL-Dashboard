@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-15",
- "updated": "2026-10-15T15:39:21.455Z",
+ "updated": "2026-10-15T16:00:18.027Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -515,13 +515,13 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Marco Rossi",
-         "pos": "C",
+         "n": "Liam Ohgren",
+         "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Paul Cotter",
-         "pos": "W",
+         "n": "Marco Rossi",
+         "pos": "C",
          "pp": "PP2"
         },
         {
@@ -535,13 +535,13 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Liam Ohgren",
-         "pos": "W",
+         "n": "Filip Chytil",
+         "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Drew O'Connor",
-         "pos": "C",
+         "n": "Paul Cotter",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -565,8 +565,8 @@
          "pp": ""
         },
         {
-         "n": "Arshdeep Bains",
-         "pos": "W",
+         "n": "Drew O'Connor",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -600,7 +600,7 @@
          "pp": ""
         },
         {
-         "n": "Zeev Buium",
+         "n": "Guillaume Brisebois",
          "pos": "D",
          "pp": ""
         }
@@ -998,9 +998,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Emil Heineman",
+         "n": "Matias Maccelli",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       },
@@ -1053,9 +1053,9 @@
          "pp": ""
         },
         {
-         "n": "Matias Maccelli",
+         "n": "Emil Heineman",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Simon Holmstrom",
@@ -1109,6 +1109,11 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Stephen Halliday",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Drake Batherson",
          "pos": "W",
          "pp": "PP1"
@@ -1117,11 +1122,6 @@
          "n": "Tim Stutzle",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Warren Foegele",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -1129,14 +1129,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Michael Amadio",
-         "pos": "W",
-         "pp": ""
+         "n": "Dylan Cozens",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
-         "n": "Shane Pinto",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Andre Burakovsky",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "Claude Giroux",
@@ -1149,19 +1149,19 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Ridly Greig",
+         "n": "Nick Cousins",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Dylan Cozens",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Michael Amadio",
+         "pos": "W",
+         "pp": ""
         },
         {
-         "n": "Andre Burakovsky",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Shane Pinto",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -1169,17 +1169,17 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Ridly Greig",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Fabian Zetterlund",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Stephen Halliday",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Nick Cousins",
+         "n": "Warren Foegele",
          "pos": "W",
          "pp": ""
         }
@@ -1189,14 +1189,19 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Jordan Spence",
+         "n": "Thomas Chabot",
+         "pos": "D",
+         "pp": "PP1"
+        },
+        {
+         "n": "Cameron Crotty",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Thomas Chabot",
+         "n": "Jordan Spence",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Tyler Kleven",
@@ -1207,16 +1212,6 @@
          "n": "Carter Yakemchuk",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Hoyt Stanley",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Jorian Donovan",
-         "pos": "D",
-         "pp": ""
         }
        ]
       }
@@ -1941,12 +1936,12 @@
          "pp": ""
         },
         {
-         "n": "Olli Maatta",
+         "n": "Zach Bogosian",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Zach Bogosian",
+         "n": "Matt Kiersted",
          "pos": "D",
          "pp": ""
         },
@@ -2159,11 +2154,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Dominic Toninato",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Ryan Donato",
          "pos": "W",
