@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-15",
- "updated": "2026-10-15T16:00:18.027Z",
+ "updated": "2026-10-15T17:01:19.039Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -440,6 +440,11 @@
          "n": "Conor Geekie",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Jeffrey Viel",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1418,11 +1423,6 @@
          "pp": ""
         },
         {
-         "n": "J.T. Compher",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Sheldon Dries",
          "pos": "W",
          "pp": ""
@@ -1475,7 +1475,7 @@
    "teams": [
     {
      "team": "San Jose Sharks",
-     "goalie": "Yaroslav Askarov",
+     "goalie": "Alex Nedeljkovic",
      "groups": [
       {
        "label": "Line 1",
@@ -1661,6 +1661,11 @@
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Reid Schaefer",
+         "pos": "W",
+         "pp": ""
+        },
         {
          "n": "Jack Drury",
          "pos": "C",
@@ -2074,7 +2079,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Tyrel Bauer",
+         "n": "Jack St. Ivany",
          "pos": "D",
          "pp": ""
         },
@@ -2117,7 +2122,7 @@
         {
          "n": "Teuvo Teravainen",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Tyler Bertuzzi",
@@ -2133,6 +2138,26 @@
       },
       {
        "label": "Line 3",
+       "players": [
+        {
+         "n": "Ryan Donato",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Oliver Moore",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Frank Nazar",
+         "pos": "C",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
        "players": [
         {
          "n": "Cole Smith",
@@ -2152,21 +2177,6 @@
        ]
       },
       {
-       "label": "Line 4",
-       "players": [
-        {
-         "n": "Ryan Donato",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Oliver Moore",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
        "label": "Defensive Pairs",
        "players": [
         {
@@ -2175,9 +2185,9 @@
          "pp": ""
         },
         {
-         "n": "Bowen Byram",
+         "n": "Ethan Del Mastro",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Ian Cole",
