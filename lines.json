@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-15",
- "updated": "2026-10-15T19:00:04.086Z",
+ "updated": "2026-10-15T20:00:17.860Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1246,7 +1246,7 @@
    "teams": [
     {
      "team": "Philadelphia Flyers",
-     "goalie": "Dan Vladar",
+     "goalie": "Joseph Woll",
      "groups": [
       {
        "label": "Line 1",
@@ -2041,7 +2041,7 @@
         {
          "n": "Alex Iafallo",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
