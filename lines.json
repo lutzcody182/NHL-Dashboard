@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-15",
- "updated": "2026-10-15T17:47:56.592Z",
+ "updated": "2026-10-15T19:00:04.086Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -76,6 +76,11 @@
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Justin Dowling",
+         "pos": "C",
+         "pp": ""
+        },
         {
          "n": "Matt Rempe",
          "pos": "W",
@@ -407,6 +412,11 @@
          "pp": "PP1"
         },
         {
+         "n": "Conor Geekie",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Jake Guentzel",
          "pos": "W",
          "pp": "PP1"
@@ -437,7 +447,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Conor Geekie",
+         "n": "Dominic James",
          "pos": "C",
          "pp": "PP2"
         },
@@ -870,7 +880,7 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Kirill Marchenko",
+         "n": "William Nylander",
          "pos": "W",
          "pp": "PP1"
         },
@@ -890,14 +900,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "William Nylander",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Nick Paul",
+         "pos": "C",
+         "pp": ""
         },
         {
-         "n": "Easton Cowan",
+         "n": "Kirill Marchenko",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "John Tavares",
@@ -915,12 +925,12 @@
          "pp": ""
         },
         {
-         "n": "Nick Paul",
-         "pos": "C",
-         "pp": ""
+         "n": "Gavin McKenna",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
-         "n": "Gavin McKenna",
+         "n": "Easton Cowan",
          "pos": "W",
          "pp": "PP2"
         }
@@ -937,6 +947,11 @@
         {
          "n": "Teddy Blueger",
          "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Zack MacEwen",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -1562,11 +1577,6 @@
        "players": [
         {
          "n": "Michael Kesselring",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Darnell Nurse",
          "pos": "D",
          "pp": ""
         },
