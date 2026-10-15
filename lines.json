@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-15",
- "updated": "2026-10-15T17:01:19.039Z",
+ "updated": "2026-10-15T17:47:56.592Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1443,7 +1443,7 @@
          "pp": ""
         },
         {
-         "n": "Albert Johansson",
+         "n": "Axel Sandin-Pellikka",
          "pos": "D",
          "pp": ""
         },
@@ -1453,7 +1453,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Anton Johansson",
+         "n": "Albert Johansson",
          "pos": "D",
          "pp": ""
         },
@@ -1699,7 +1699,7 @@
         {
          "n": "Brady Skjei",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Adam Wilsby",
@@ -1775,13 +1775,13 @@
          "pp": "PP1"
         },
         {
-         "n": "Dalibor Dvorsky",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Zach Dean",
+         "pos": "W",
+         "pp": ""
         },
         {
-         "n": "Pavel Buchnevich",
-         "pos": "W",
+         "n": "Dalibor Dvorsky",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -1795,13 +1795,13 @@
          "pp": ""
         },
         {
-         "n": "Zach Dean",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Pius Suter",
          "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Dylan Peterson",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -2369,14 +2369,14 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Trent Frederic",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Jason Dickinson",
          "pos": "C",
          "pp": ""
-        },
-        {
-         "n": "Filip Hallander",
-         "pos": "W",
-         "pp": "PP2"
         },
         {
          "n": "Kasperi Kapanen",
@@ -2414,14 +2414,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Trent Frederic",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Josh Samanski",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Filip Hallander",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
