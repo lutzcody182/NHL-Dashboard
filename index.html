@@ -352,6 +352,7 @@ svg{display:block;max-width:100%}
 .lead li{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px dashed var(--border);cursor:pointer;border-radius:6px}
 .lead li:hover{background:var(--surface-2)}
 .lead li:last-child{border-bottom:0}
+.bestb{color:#e8a33d;font-size:12px}
 .govl{display:inline-flex;align-items:center;gap:6px;font-size:13px}.govl>span{display:inline-flex;align-items:center;gap:4px;font-weight:700}.govl select{font:inherit;font-size:13px;padding:4px 6px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);max-width:260px}
 .health{border:1px solid var(--border);border-left:4px solid var(--good);background:var(--surface);border-radius:12px;padding:8px 12px;margin:0 0 12px}.health.warn{border-left-color:#e8a33d}.health.bad{border-left-color:var(--neg)}
 .hhead{all:unset;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%;font-size:13.5px}.hhead:focus-visible{outline:2px solid var(--accent);border-radius:6px}
@@ -1136,14 +1137,15 @@ async function loadLeaders(evs, d) {
     const x = (g.shots || []).filter(q => q.t === 0 && q.per >= 1 && q.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0];
     if (!x || !x.pl) return null;
     const p = g.sk[x.pl] || {}, recs = ((PKf && PKf.first) || []).filter(r => r.gid === String(g.id)), rec = recs.find(r => r.pid === x.pl);
-    const dkm = !rec ? fgDkMap(PFf, g.date, g.home.id, g.away.id) : null, dk = rec ? rec.dk : dkm ? dkLookup(dkm, p.n || '') : null;
+    const dkm = !rec ? fgDkMap(PFf, g.date, g.home.id, g.away.id) : null, fdm = !rec ? fdPriceMap(PFf, g.date, g.home.id, g.away.id, 'first') : null;
+    const bp = rec ? (rec.best != null ? { price: rec.best, book: rec.book || 'dk' } : rec.dk != null ? { price: rec.dk, book: 'dk' } : null) : bestPrice(dkm ? dkLookup(dkm, p.n || '') : null, fdm ? dkLookup(fdm, p.n || '') : null), dk = bp ? bp.price : null, book = bp ? bp.book : null;
     const top = recs.length ? recs.reduce((m, r) => r.p > m.p ? r : m) : null;
-    return { g, x, id: x.pl, n: p.n || 'Unknown', tm: x.tm, vs: (x.tm === g.home.id ? 'vs ' : '@ ') + (x.tm === g.home.id ? g.away.abbr : g.home.abbr), dk, rec, topHit: top ? top.pid === x.pl : null, topN: top ? top.n : '' };
+    return { g, x, id: x.pl, n: p.n || 'Unknown', book, tm: x.tm, vs: (x.tm === g.home.id ? 'vs ' : '@ ') + (x.tm === g.home.id ? g.away.abbr : g.home.abbr), dk, rec, topHit: top ? top.pid === x.pl : null, topN: top ? top.n : '' };
   }).filter(Boolean).sort((a, b) => a.g.date < b.g.date ? -1 : 1);
   const fgTime = x => `${x.per >= 4 ? 'OT' : 'P' + x.per} ${mmss(x.sec)}`;
   const fgSub = f => `${fgTime(f.x)}<span class="fge">${f.rec && fin(f.rec.p) ? `Ice Lab ${pct1(f.rec.p)}%` : ''}${f.rec && fin(f.rec.edge) ? ` · <b style="color:${f.rec.edge > 0 ? 'var(--good)' : 'var(--neg)'}">edge ${f.rec.edge > 0 ? '+' : '−'}${Math.abs(f.rec.edge * 100).toFixed(1)} pts</b>` : f.dk != null ? 'no Ice Lab price saved' : 'no DraftKings price'}</span>`;
   const tops = firsts.filter(f => f.topHit != null), topHits = tops.filter(f => f.topHit).length;
-  const fgCard = `<div class="card lead fgl"><h3>First goal scorers${firsts.length > 5 ? `<span class="cnt">${firsts.length} games · scroll</span>` : ''}</h3>${firsts.length ? `<ol>${firsts.map((f, i) => `<li data-game="${f.g.id}" title="Open this game"><span class="rk">${i + 1}</span><img class="hs" src="${shot(f.id)}" alt="" onerror="this.style.visibility='hidden'"><div class="ln"><b>${plink(f.id, f.n)}</b><span>${logoImg(f.tm, 14)}${esc(TM(f.tm).abbr)} ${esc(f.vs)} · ${fgSub(f)}</span></div><div class="lv">${f.dk != null ? fmtML(f.dk) : '–'}</div></li>`).join('')}</ol>${tops.length ? `<p class="muted" style="margin:6px 0 0;font-size:11.5px">Ice Lab's most likely first scorer hit in ${topHits} of ${tops.length} game${tops.length === 1 ? '' : 's'}. Odds are DraftKings' first goal price saved before the game.</p>` : ''}` : '<p class="muted" style="margin:0;font-size:13px">No goals yet.</p>'}</div>`;
+  const fgCard = `<div class="card lead fgl"><h3>First goal scorers${firsts.length > 5 ? `<span class="cnt">${firsts.length} games · scroll</span>` : ''}</h3>${firsts.length ? `<ol>${firsts.map((f, i) => `<li data-game="${f.g.id}" title="Open this game"><span class="rk">${i + 1}</span><img class="hs" src="${shot(f.id)}" alt="" onerror="this.style.visibility='hidden'"><div class="ln"><b>${plink(f.id, f.n)}</b><span>${logoImg(f.tm, 14)}${esc(TM(f.tm).abbr)} ${esc(f.vs)} · ${fgSub(f)}</span></div><div class="lv">${f.dk != null ? fmtML(f.dk) : '–'}${f.dk != null && f.book ? `<div class="muted" style="font-size:10.5px;font-weight:600;text-align:right">${BK[f.book]}</div>` : ''}</div></li>`).join('')}</ol>${tops.length ? `<p class="muted" style="margin:6px 0 0;font-size:11.5px">Ice Lab's most likely first scorer hit in ${topHits} of ${tops.length} game${tops.length === 1 ? '' : 's'}. Odds are the better of DraftKings' and FanDuel's first goal prices, saved before the game.</p>` : ''}` : '<p class="muted" style="margin:0;font-size:13px">No goals yet.</p>'}</div>`;
   const html = `<div class="leadgrid">${cats.map(c => {
     const top = c.l.filter(p => c.neg ? fin(c.v(p)) : c.v(p) > 0).sort((a, b) => (c.v(b) - c.v(a)) || (c.tie(b) - c.tie(a)));
     const rows = top.map((p, i) => `<li data-game="${p.gid}" title="Open this game"><span class="rk">${i + 1}</span><img class="hs" src="${shot(p.id)}" alt="" onerror="this.style.visibility='hidden'"><div class="ln"><b>${plink(p.id, p.n)}</b><span>${logoImg(p.tm, 14)}${esc(TM(p.tm).abbr)} ${esc(p.vs)} · ${esc(c.sub(p))}</span></div><div class="lv">${c.f(c.v(p))}</div></li>`).join('');
@@ -3359,7 +3361,7 @@ async function renderModel() {
       const rowsT = up.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); const pr = predictMatch(String(h.team.id), String(a.team.id)); if (!pr) return ''; const pick = pr.pH >= .5 ? h.team : a.team;
         let v2 = '<span class="muted">train in Model Lab</span>';
         if (GM.model) { const pg = probableGoalies(e), H = String(h.team.id), Aw = String(a.team.id); const o = c.odds && c.odds[0]; const ml = o && o.homeTeamOdds && o.awayTeamOdds && isFinite(o.homeTeamOdds.moneyLine) && isFinite(o.awayTeamOdds.moneyLine) ? { h: +o.homeTeamOdds.moneyLine, a: +o.awayTeamOdds.moneyLine } : null; const gp0 = gmEventPick(e, INJS[e.id], LFm), r = gp0 && gp0.r; if (r) { const p = r.p, t2 = p >= .5 ? h.team : a.team; v2 = `<b>${esc(t2.abbreviation)}</b> ${pct1(Math.max(p, 1 - p))}% <span class="muted">fair ${fairAmerican(Math.max(p, 1 - p))}</span>${r.parts[0] ? ` <span class="muted" style="font-size:12px">· ${esc(r.parts[0].l.toLowerCase())}</span>` : ''}`;
-          if (ml) { const sides = [[r.p, ml.h, h.team], [1 - r.p, ml.a, a.team]].map(([q, price, tm]) => ({ q, price, tm, edge: q - amImplied(price) })).sort((x, y) => y.edge - x.edge)[0]; v2 += sides.edge >= .03 ? `<div style="font-size:12px"><b style="color:var(--good)">✓ Value: ${esc(sides.tm.abbreviation)} ${fmtML(sides.price)}</b> (+${(sides.edge * 100).toFixed(1)} pts)</div>` : sides.edge > 0 ? `<div style="font-size:12px;color:var(--good)">Lean ${esc(sides.tm.abbreviation)} ${fmtML(sides.price)} (+${(sides.edge * 100).toFixed(1)} pts)</div>` : '<div class="muted" style="font-size:12px">No value at posted prices</div>'; } } }
+          if (gp0.side) { const sides = { ...gp0.side, tm: gp0.side.s === 'h' ? h.team : a.team }; sides.price = `${fmtML(gp0.side.price)} ${BK[gp0.side.book] || ''}`; v2 += sides.edge >= .03 ? `<div style="font-size:12px"><b style="color:var(--good)">✓ Value: ${esc(sides.tm.abbreviation)} ${sides.price}</b> (+${(sides.edge * 100).toFixed(1)} pts)</div>` : sides.edge > 0 ? `<div style="font-size:12px;color:var(--good)">Lean ${esc(sides.tm.abbreviation)} ${sides.price} (+${(sides.edge * 100).toFixed(1)} pts)</div>` : '<div class="muted" style="font-size:12px">No value at posted prices</div>'; } } }
         return `<tr class="click" data-game="${e.id}"><td class="l"><div class="tcell">${logoImg(String(a.team.id), 16)}${esc(a.team.abbreviation)} @ ${logoImg(String(h.team.id), 16)}${esc(h.team.abbreviation)}</div></td><td class="l"><b>${esc(pick.abbreviation)}</b> ${pct1(Math.max(pr.pH, 1 - pr.pH))}%</td><td class="l">${v2}</td><td>${f2(pr.la)} – ${f2(pr.lh)}</td><td>${esc((c.odds && c.odds[0] && c.odds[0].details) || '–')}</td></tr>`; }).filter(Boolean).join('');
       const el = $('#mdToday'); if (el && !rowsT) el.innerHTML = `<div class="card muted">No games left to play today. Tomorrow's picks show up here once the day's games are scheduled.</div>`; if (el && rowsT) el.innerHTML = `<div class="card"><div class="card-h"><h3>Tonight's picks</h3><p>Ratings-only pick and the game model v2 pick (with its biggest factor)</p></div><div class="twrap"><table><thead><tr><th class="l">Game</th><th class="l">Ratings pick</th><th class="l">Game model v2</th><th>Projected xG</th><th>Line</th></tr></thead><tbody>${rowsT}</tbody></table></div></div>`;
     } catch (e) { const el = $('#mdToday'); if (el) el.innerHTML = `<div class="card muted">Couldn't load tonight's games from ESPN. Try again in a moment.</div>`; }
@@ -4656,17 +4658,18 @@ async function renderGameModelCard() {
 }
 // preview card for an upcoming game
 // fair moneyline + value check for both sides of a game, from a model win chance (home) and the posted moneylines
-function gmValueTable(pH, ml, aAbbr, hAbbr, label) {
-  const side = (p, price, abbr) => {
-    const o = { abbr, p, fair: fairAmerican(p), price };
+function gmValueTable(pH, ml, aAbbr, hAbbr, label, fdml) {
+  const side = (p, dkP, fdP, abbr) => {
+    const b = bestPrice(dkP, fdP), price = b ? b.price : null;
+    const o = { abbr, p, fair: fairAmerican(p), price, book: b ? b.book : null, dkP, fdP };
     if (price != null && isFinite(price)) { o.be = amImplied(price); o.edge = p - o.be; const ev = betEV(p, price); o.ev = ev.ev; o.roi = ev.roi; o.verdict = o.edge >= .03 ? 'bet' : o.edge > 0 ? 'lean' : 'pass'; }
     return o;
   };
-  const A_ = side(1 - pH, ml ? ml.a : null, aAbbr), H_ = side(pH, ml ? ml.h : null, hAbbr);
+  const A_ = side(1 - pH, ml ? ml.a : null, fdml ? fdml.a : null, aAbbr), H_ = side(pH, ml ? ml.h : null, fdml ? fdml.h : null, hAbbr);
   const best = [A_, H_].filter(x => x.verdict === 'bet' || x.verdict === 'lean').sort((a, b) => b.edge - a.edge)[0];
   const vCell = x => x.verdict === 'bet' ? '<b style="color:var(--good)">✓ Value bet</b>' : x.verdict === 'lean' ? '<span style="color:var(--good)">Lean (small edge)</span>' : x.price != null ? '<span class="muted">Pass</span>' : '<span class="muted">No line yet</span>';
-  const row = x => `<tr><td class="l"><b>${esc(x.abbr)}</b></td><td>${pct1(x.p)}%</td><td><b>${x.fair}</b></td><td>${x.price != null ? fmtML(x.price) : '–'}</td><td>${fin(x.be) ? pct1(x.be) + '%' : '–'}</td><td style="color:${fin(x.edge) ? (x.edge > 0 ? 'var(--good)' : 'var(--neg)') : 'inherit'}">${fin(x.edge) ? `${x.edge > 0 ? '+' : ''}${(x.edge * 100).toFixed(1)} pts` : '–'}</td><td>${fin(x.ev) ? moneyCell(x.ev) : '–'}</td><td class="l">${vCell(x)}</td></tr>`;
-  const summary = !ml ? 'No betting line posted yet, so only the fair odds are shown.' : best ? `<b>${best.verdict === 'bet' ? 'Value' : 'Small lean'} on ${esc(best.abbr)}</b> at ${fmtML(best.price)}: ${label} gives them ${pct1(best.p)}%, the price needs ${pct1(best.be)}% to break even (${best.edge > 0 ? '+' : ''}${(best.edge * 100).toFixed(1)} pts). Fair price is ${best.fair}, so anything better than that is a value bet by the model.` : `<b>No bet.</b> Neither price beats ${label}'s fair odds: the sportsbook's margin eats any difference.`;
+  const row = x => `<tr><td class="l"><b>${esc(x.abbr)}</b></td><td>${pct1(x.p)}%</td><td><b>${x.fair}</b></td><td>${x.price != null ? `${fmtML(x.price)} <span class="muted" style="font-size:11px">${BK[x.book]}</span>${x.dkP != null && x.fdP != null && x.dkP !== x.fdP ? `<div class="muted" style="font-size:11px">${x.book === 'dk' ? 'FD' : 'DK'} ${fmtML(x.book === 'dk' ? x.fdP : x.dkP)}</div>` : ''}` : '–'}</td><td>${fin(x.be) ? pct1(x.be) + '%' : '–'}</td><td style="color:${fin(x.edge) ? (x.edge > 0 ? 'var(--good)' : 'var(--neg)') : 'inherit'}">${fin(x.edge) ? `${x.edge > 0 ? '+' : ''}${(x.edge * 100).toFixed(1)} pts` : '–'}</td><td>${fin(x.ev) ? moneyCell(x.ev) : '–'}</td><td class="l">${vCell(x)}</td></tr>`;
+  const summary = !ml && !fdml ? 'No betting line posted yet, so only the fair odds are shown.' : best ? `<b>${best.verdict === 'bet' ? 'Value' : 'Small lean'} on ${esc(best.abbr)}</b> at ${fmtML(best.price)} (${BOOKS[best.book]}): ${label} gives them ${pct1(best.p)}%, the price needs ${pct1(best.be)}% to break even (${best.edge > 0 ? '+' : ''}${(best.edge * 100).toFixed(1)} pts). Fair price is ${best.fair}, so anything better than that is a value bet by the model.` : `<b>No bet.</b> Neither price beats ${label}'s fair odds: the sportsbook's margin eats any difference.`;
   return `<p style="margin:8px 0;font-size:13.5px">${summary}</p><div class="twrap"><table><thead><tr><th class="l">Team</th><th data-gloss="The model's chance this team wins (including overtime and shootout).">Win chance</th><th data-gloss="The American odds that exactly match the model's win chance, with no sportsbook margin. If you can get a better price than this, the model sees value.">Fair line</th><th data-gloss="The posted moneyline from ESPN's sportsbook.">Market</th><th data-gloss="The win chance this price needs just to break even, including the sportsbook margin.">Break-even</th><th data-gloss="Model win chance minus break-even chance. 3+ points = value bet; 0–3 = small lean; negative = pass.">Edge</th><th data-gloss="Expected profit per bet using your sizes ($100 on plus odds; bet to win $100 on minus odds), if the model's chance is right.">Exp. profit</th><th class="l">Verdict</th></tr></thead><tbody>${row(A_)}${row(H_)}</tbody></table></div>`;
 }
 async function renderGameModelPreview(s, g) {
@@ -4680,7 +4683,7 @@ async function renderGameModelPreview(s, g) {
   const pk = (s.pickcenter && s.pickcenter[0]) || null;
   const ml = pk && pk.homeTeamOdds && pk.awayTeamOdds && isFinite(pk.homeTeamOdds.moneyLine) && isFinite(pk.awayTeamOdds.moneyLine) ? { h: +pk.homeTeamOdds.moneyLine, a: +pk.awayTeamOdds.moneyLine } : null;
   if (ml) ml.open = mlOpenOf(pk);
-  const LFp = await getLinesFile(); await getPHFile();
+  const LFp = await getLinesFile(); await getPHFile(); const fdmlG = fdMoneyline(await getPropsFile(), g.date, g.home.id, g.away.id);
   const r = gmPredict(g.home.id, g.away.id, g.date || new Date().toISOString(), gH, gA, ml, inj, LFp);
   if (!r || !box()) return;
   const injTxt = [[g.away, r.inj.a], [g.home, r.inj.h]].filter(([, x]) => x.who.length).map(([t, x]) => `<p style="margin:0 0 4px;font-size:13px"><b>${esc(t.abbr)}</b> missing ${x.who.slice(0, 4).map(w => `${esc(w.n)} <span class="muted">(${pct1(w.share)}% of recent xG)</span>`).join(', ')}${x.who.length > 4 ? ` +${x.who.length - 4} more` : ''}${r.inj.viaLineup ? ' <span class="muted">→ counted through lineup strength</span>' : ` → scoring −${pct1(x.cut)}%`}</p>`).join('');
@@ -4690,7 +4693,7 @@ async function renderGameModelPreview(s, g) {
   box().innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><p>Weighs every factor by how much it has actually mattered</p></div>
     <div style="display:flex;justify-content:space-between;font-weight:700"><span>${esc(g.away.abbr)}</span><span>${esc(g.home.abbr)}</span></div>
     ${meter('Game model v2', r.p)}${fin(r.pb) ? meter('v2 + market', r.pb) : ''}${fin(r.mk) ? meter('Betting market', r.mk) : ''}
-    <h4 class="cmp-sec" style="margin-top:12px">Fair line & value</h4>${gmValueTable(r.p, ml, g.away.abbr, g.home.abbr, 'Game model v2')}
+    <h4 class="cmp-sec" style="margin-top:12px">Fair line & value</h4>${gmValueTable(r.p, ml, g.away.abbr, g.home.abbr, 'Game model v2', fdmlG)}
     ${fin(r.pb) ? `<p class="muted" style="font-size:12px;margin:6px 0 0">More cautious view: the v2 + market blend says ${esc(g.home.abbr)} ${pct1(r.pb)}% (fair ${fairAmerican(r.pb)}) and ${esc(g.away.abbr)} ${pct1(1 - r.pb)}% (fair ${fairAmerican(1 - r.pb)}). When both point the same way, the edge is more trustworthy.</p>` : ''}
     <div class="grid g2" style="margin-top:10px"><div><h4 class="cmp-sec" style="margin-top:0">Why</h4>${parts ? `<ul class="gmwhy">${parts}</ul>` : '<p class="muted" style="margin:0">Mostly team strength and home ice.</p>'}</div>
     <div><h4 class="cmp-sec" style="margin-top:0">Goalies used</h4><p style="margin:0 0 4px;font-size:13px">${esc(g.away.abbr)}: ${gName(gA, g.away.id)}</p><p style="margin:0;font-size:13px">${esc(g.home.abbr)}: ${gName(gH, g.home.id)}</p>
@@ -5266,7 +5269,7 @@ function gsMateMap(S, LF, games) {
 function gsTonight(S, e, LF, PF, INJ, MATE) {
   const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
   const H = String(h.team.id), Aw = String(a.team.id); addTeam(h.team); addTeam(a.team);
-  const gLike = { date: e.date, home: { id: H }, away: { id: Aw } }, probs = probableGoalies(e), dkm = PF ? dkPriceMap(PF, e.date, H, Aw) : null;
+  const gLike = { date: e.date, home: { id: H }, away: { id: Aw } }, probs = probableGoalies(e), dkm = PF ? dkPriceMap(PF, e.date, H, Aw) : null, fdm = PF ? fdPriceMap(PF, e.date, H, Aw) : null;
   const o = c.odds && c.odds[0], tot = o ? parseFloat(o.overUnder) : NaN, mlH = o && o.homeTeamOdds ? +o.homeTeamOdds.moneyLine : NaN, mlA = o && o.awayTeamOdds ? +o.awayTeamOdds.moneyLine : NaN;
   // referee crew: busier crews mean more power-play time (how much of a crew's rate carries over is learned)
   const crew = S.ref ? S.ref.crew(INJ && INJ.refs) : 1;
@@ -5295,11 +5298,11 @@ function gsTonight(S, e, LF, PF, INJ, MATE) {
       const phv = PHF.idx ? phTalent(r0.n, TM(t).abbr, r0.pos, seasonOf(e.date), 'now') : null;
       const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied, crew, pWin, mate, finPH: phv && fin(phv.sh) ? phv.sh : undefined });
       if (!r) continue;
-      const dk = dkm ? dkLookup(dkm, r0.n) : null, ev = dk != null ? betEV(r.p, dk) : null;
-      rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt, crew, INJ && INJ.refs), crew, dk, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
+      const dk = dkm ? dkLookup(dkm, r0.n) : null, fd = fdm ? dkLookup(fdm, r0.n) : null, ev = dk != null ? betEV(r.p, dk) : null;
+      rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt, crew, INJ && INJ.refs), crew, dk, fd, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
     }
   }
-  return gsRefine(rows, dkm, tot);
+  return gsRefine(rows, dkm, tot, fdm);
 }
 // Keep the chances realistic:
 // 1) a team's skaters together can only score what the team is expected to score tonight (betting line or ratings),
@@ -5311,19 +5314,23 @@ function gsDkFair(dkm, tot) {
   const m = imps.length >= 20 && fin(tot) && tot > 1 ? clamp(imps.reduce((s, p) => s - Math.log(1 - p), 0) / (tot - .12), 1.05, 1.6) : 1.22;
   return { m, fair: imp => 1 - Math.exp(Math.log(1 - imp) / m) };
 }
-function gsRefine(rows, dkm, tot) {
+function gsRefine(rows, dkm, tot, fdm) {
   for (const t of new Set(rows.map(r => r.tm))) {
     const tr = rows.filter(r => r.tm === t), imp = tr[0] && tr[0].implied, sum = tr.reduce((s, r) => s + r.lam, 0);
     const k = tr.length >= 14 && fin(imp) && sum > 0 ? clamp((imp - .12) / sum, .7, 1.3) : 1;
     tr.forEach(r => { r.anchor = k; r.lam *= k; });
   }
-  const F = gsDkFair(dkm, tot), w = GS.blendW;
+  const F = gsDkFair(dkm, tot), Ffd = gsDkFair(fdm, tot), w = GS.blendW;
   for (const r of rows) {
     r.pModel = 1 - Math.exp(-r.lam);
-    if (r.dk != null) {
-      r.dkFair = F.fair(r.dkImp); r.margin = F.m;
+    const ref = r.dk != null ? r.dk : r.fd; // market reference for the blend: DraftKings, or FanDuel when DraftKings has no price
+    if (ref != null) {
+      const FF = r.dk != null ? F : Ffd;
+      r.dkFair = FF.fair(amImplied(ref)); r.margin = FF.m;
       r.p = sigm(w * logit(clamp(r.pModel, .005, .995)) + (1 - w) * logit(clamp(r.dkFair, .005, .995)));
-      r.edgeP = r.p - r.dkImp; const ev = betEV(r.p, r.dk); r.ev = ev.ev; r.roi = ev.roi;
+      // edge and expected profit at the better of the two books
+      const b = bestPrice(r.dk, r.fd); r.best = b.price; r.book = b.book; r.bestImp = amImplied(b.price);
+      r.edgeP = r.p - r.bestImp; const ev = betEV(r.p, r.best); r.ev = ev.ev; r.roi = ev.roi;
     } else r.p = r.pModel;
     r.lowN = r.gp < 5; r.big = fin(r.edgeP) && r.edgeP >= .08;
     r.why = { ...r.why, html: r.why.html + `<div style='margin-top:6px;border-top:1px solid var(--border);padding-top:4px'>${qRow('Ice Lab model alone', pct1(r.pModel) + '%')}${r.anchor !== 1 ? qRow('Team-total adjustment', (r.anchor > 1 ? '+' : '−') + pct1(Math.abs(r.anchor - 1)) + '%') : ''}${r.dk != null ? qRow('DraftKings, margin removed', pct1(r.dkFair) + '%') + qRow(`Blended (${Math.round(w * 100)}% model)`, '<b>' + pct1(r.p) + '%</b>') : ''}${r.lowN ? `<div style='color:var(--neg)'>Only ${r.gp} game${r.gp === 1 ? '' : 's'} of data: treat with caution</div>` : ''}</div>` };
@@ -5348,13 +5355,35 @@ async function getPropsFile() {
   PRF.t = Date.now(); return PRF.data;
 }
 // DraftKings price for one player in one game (matched by team names, date and player name)
+// best price between the two books: the one that pays more
+const BOOKS = { dk: 'DraftKings', fd: 'FanDuel' }, BK = { dk: 'DK', fd: 'FD' };
+const amDec = o => o > 0 ? 1 + o / 100 : 1 + 100 / -o;
+function bestPrice(dk, fd) { const c = [['dk', dk], ['fd', fd]].filter(([, v]) => v != null && isFinite(v)); if (!c.length) return null; c.sort((a, b) => amDec(b[1]) - amDec(a[1])); return { price: +c[0][1], book: c[0][0] }; }
+// FanDuel anytime (or first goal) prices for one game, by player
+function fdPriceMap(PF, dateIso, hId, aId, list = 'players') {
+  if (!PF || !PF.games) return null;
+  const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
+  const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
+  const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
+  if (!g) return null;
+  const m = {}; for (const p of g[list] || []) if (p.fd != null) m[normName(p.n)] = p.fd;
+  return Object.keys(m).length ? m : null;
+}
+// FanDuel moneyline for one game (from the odds job)
+function fdMoneyline(PF, dateIso, hId, aId) {
+  if (!PF || !PF.games) return null;
+  const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
+  const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
+  const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
+  return g && g.ml && g.ml.fd ? g.ml.fd : null;
+}
 function dkPriceMap(PF, dateIso, hId, aId) {
   if (!PF || !PF.games) return null;
   const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
   const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
   const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
   if (!g) return null;
-  const m = {}; for (const p of g.players) m[normName(p.n)] = p.price;
+  const m = {}; for (const p of g.players) if (p.price != null) m[normName(p.n)] = p.price;
   return m;
 }
 const dkLookup = (m, name) => { if (!m) return null; const k = normName(name); if (m[k] != null) return m[k]; const last = normName(String(name).split(' ').slice(-1)[0]); const hits = Object.keys(m).filter(x => x.endsWith(last) && x[0] === k[0]); return hits.length === 1 ? m[hits[0]] : null; };
@@ -5421,8 +5450,9 @@ async function renderScorers() {
     { k: 'p', h: 'Chance to score', v: r => r.p, f: (v, r) => `<b data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${pct1(v)}%</b>${r.lowN ? ' <span class="injb" data-tip="Fewer than 5 games of data, so his numbers are shaky. Left out of Biggest edges.">small sample</span>' : ''}`, dir: 1, t: 'Estimated chance he scores at least one goal tonight (any situation). When DraftKings has a price, this blends Ice Lab\'s model with DraftKings\' chance (margin removed); hover for both.' },
     { k: 'pModel', h: 'Model alone', v: r => r.pModel, f: v => `<span class="muted">${pct1(v)}%</span>`, t: 'Ice Lab\'s model before blending with DraftKings, after making the team\'s players add up to its expected goals tonight.' },
     { k: 'fair', h: 'Fair odds', v: r => r.p, f: (v, r) => fairAmerican(r.p), t: 'The American odds that exactly match this chance, with no bookmaker margin. A sportsbook price longer than this means the model sees value.' },
-    { k: 'dk', h: 'DraftKings', v: r => r.dk, f: v => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>`, t: 'DraftKings anytime goal scorer price.' },
-    { k: 'dkImp', h: 'DK implied', v: r => r.dkImp, f: v => fin(v) ? pct1(v) + '%' : '–', t: 'The chance DraftKings\' price implies. It includes the sportsbook\'s built-in margin, so it runs a little high.' },
+    { k: 'dk', h: 'DraftKings', v: r => r.dk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.book === 'dk' && r.fd != null && r.fd !== r.dk ? ' <span class="bestb" title="Better price">★</span>' : ''}`, t: 'DraftKings anytime goal scorer price. ★ = the better of the two books.' },
+    { k: 'fd', h: 'FanDuel', v: r => r.fd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.book === 'fd' && r.dk != null && r.fd !== r.dk ? ' <span class="bestb" title="Better price">★</span>' : ''}`, t: 'FanDuel anytime goal scorer price. ★ = the better of the two books. Edge and expected profit use the better price.' },
+    { k: 'bestImp', h: 'Implied (best)', v: r => r.bestImp, f: v => fin(v) ? pct1(v) + '%' : '–', t: 'The chance the better of the two prices implies. It includes the sportsbook\'s built-in margin, so it runs a little high.' },
     { k: 'edgeP', h: 'Edge', v: r => r.edgeP, f: (v, r) => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>${r.big ? ' <span data-tip="Unusually big edge. These are usually news the model doesn\'t know yet (a scratch, a line change, an injury). Double-check before betting.">⚠️</span>' : ''}` : '–', dir: 1, t: 'Ice Lab\'s chance minus DraftKings\' implied chance. Positive = Ice Lab thinks he\'s more likely to score than the price says.' },
     { k: 'ev', h: 'Exp. profit', v: r => r.ev, f: (v, r) => fin(v) ? `${moneyCell(v)} <span class="muted" style="font-size:11.5px">${r.roi > 0 ? '+' : ''}${pct1(r.roi)}%</span>` : '–', dir: 1, t: 'Expected profit per bet using your bet sizes ($100 on plus odds; bet to win $100 on minus odds), if Ice Lab\'s chance is right. The % is return on the amount risked.' },
     { k: 'shots', h: 'Proj. attempts', v: r => r.shots, f: f1, t: 'Projected unblocked shot attempts tonight.' },
@@ -5431,13 +5461,13 @@ async function renderScorers() {
     { k: 'why', h: 'Where it comes from', l: 1, v: r => r.why.short, f: (v, r) => `<span class="muted" style="font-size:12.5px" data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${esc(v)}</span>` }];
   rows.forEach((r, i) => r.idx = i); GS.rows = rows;
   const teamsTonight = [...new Set(rows.map(r => r.tm))];
-  const withDk = rows.filter(r => r.dk != null);
+  const withDk = rows.filter(r => r.dk != null || r.fd != null);
   const best = [...withDk].filter(r => r.ev > 0 && !r.lowN).sort((a, b) => b.roi - a.roi).slice(0, 8);
   const dkAge = PF && PF.updated ? `DraftKings prices updated ${new Date(PF.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : '';
   const dkCard = !PF ? `<div class="note">DraftKings odds aren't set up yet (no props.json found). Once the GitHub job runs with your API key, prices and edges show up here.</div>`
     : !withDk.length ? `<div class="note">${esc(dkAge)}. No DraftKings goal scorer prices matched these games yet. They're usually posted the day of the game; the job updates about 11 AM and 5 PM Eastern.</div>`
     : `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Biggest edges tonight</h3><p>${esc(dkAge)}</p></div>
-      ${best.length ? `<div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)}${r.gl ? ' · ' + esc(r.gl.n) : ''}</div><div class="eg"><span>DK <b>${fmtML(r.dk)}</b></span><span>Fair <b>${fairAmerican(r.p)}</b></span></div><div class="eg"><span>Ice Lab <b>${pct1(r.p)}%</b></span><span>DK ${pct1(r.dkImp)}%</span></div><div class="eg"><b style="color:var(--good)">+${(r.edgeP * 100).toFixed(1)} pts</b>${moneyCell(r.ev)}</div><button class="btn sm mybet" data-mybet="${r.idx}" data-key="${esc(r.gid + '|' + r.pid)}">＋ Bet</button></div>`).join('')}</div>` : '<p class="muted" style="margin:0">No positive edges right now: DraftKings\' prices are at or above Ice Lab\'s chances for everyone.</p>'}
+      ${best.length ? `<div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)}${r.gl ? ' · ' + esc(r.gl.n) : ''}</div><div class="eg"><span>${BK[r.book]} <b>${fmtML(r.best)}</b></span><span>Fair <b>${fairAmerican(r.p)}</b></span></div><div class="eg"><span>Ice Lab <b>${pct1(r.p)}%</b></span><span>${BK[r.book]} ${pct1(r.bestImp)}%</span></div><div class="eg"><b style="color:var(--good)">+${(r.edgeP * 100).toFixed(1)} pts</b>${moneyCell(r.ev)}</div><button class="btn sm mybet" data-mybet="${r.idx}" data-key="${esc(r.gid + '|' + r.pid)}">＋ Bet</button></div>`).join('')}</div>` : '<p class="muted" style="margin:0">No positive edges right now: DraftKings\' and FanDuel\'s prices are at or above Ice Lab\'s chances for everyone.</p>'}
       <p class="muted" style="font-size:12px;margin:8px 0 0">Ranked by expected return on the amount risked, using your bet sizes. Chances blend Ice Lab's model (${Math.round(GS.blendW * 100)}%) with DraftKings' own chance with its margin removed (${Math.round((1 - GS.blendW) * 100)}%)${GS.blendFit != null ? `, a mix learned from ${GS.blendN} graded picks` : `; the mix will be learned from graded picks once there are 150+ (${GS.blendN} so far)`}. That keeps edges realistic: to show an edge, Ice Lab has to disagree with DraftKings by enough to beat its margin. Players with under 5 games are left off this list; ⚠️ marks edges of 8+ points, which usually mean news the model doesn't know about.</p></div>`;
   const btCard = bt ? `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Report card</h3><p>Tested on ${bt.n.toLocaleString()} player-games it never saw (${new Date(bt.from).toLocaleDateString()} – ${new Date(bt.to).toLocaleDateString()})</p></div>
       <div class="tiles" style="margin-bottom:10px"><div class="tile"><div class="k">Predicted scorers</div><div class="v num">${f0(bt.expected)}</div><div class="s">vs. ${bt.actual} who actually scored</div></div>
@@ -5492,7 +5522,8 @@ async function getPicksFile() {
   PKF.t = Date.now(); return PKF.data;
 }
 const pkRisk = o => o < 0 ? -o : 100, pkWin = o => o < 0 ? 100 : o;
-const pkProfit = p => p.res === 'W' ? pkWin(p.dk) : p.res === 'L' ? -pkRisk(p.dk) : 0;
+const pkPx = p => p.best != null ? p.best : p.dk;
+const pkProfit = p => p.res === 'W' ? pkWin(pkPx(p)) : p.res === 'L' ? -pkRisk(pkPx(p)) : 0;
 const PK_STRATS = [
   ['pos', 'Every positive edge', ps => ps.filter(p => p.edge > 0)],
   ['e5', 'Edge 5+ pts', ps => ps.filter(p => p.edge >= .05)],
@@ -5500,7 +5531,7 @@ const PK_STRATS = [
   ['top3', 'Top 3 each day', ps => { const by = {}; ps.filter(p => p.edge > 0).forEach(p => (by[p.date] = by[p.date] || []).push(p)); return Object.values(by).flatMap(l => l.sort((a, b) => b.roi - a.roi).slice(0, 3)); }]];
 function pickTrackerCard(PK) {
   if (!PK) return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 Profit tracker</h3></div><p class="muted" style="margin:0">Not started yet. Once the GitHub job runs with the updated workflow, it saves each day's picks with DraftKings prices before the games and grades them the next morning. Results build up here.</p></div>`;
-  const ps = (PK.picks || []).filter(p => p.dk != null && fin(p.edge));
+  const ps = (PK.picks || []).filter(p => pkPx(p) != null && fin(p.edge));
   const done = ps.filter(p => p.res === 'W' || p.res === 'L'), pending = ps.filter(p => p.res == null), voids = ps.filter(p => p.res === 'V').length;
   const stats = list => { const g = list.filter(p => p.res === 'W' || p.res === 'L'); const pr = g.reduce((s, p) => s + pkProfit(p), 0), risk = g.reduce((s, p) => s + pkRisk(p.dk), 0), w = g.filter(p => p.res === 'W').length; return { n: g.length, w, ls: g.length - w, profit: pr, roi: div(pr, risk), pend: list.filter(p => p.res == null).length }; };
   const S = PK_STRATS.map(([k, l, f]) => ({ k, l, list: f(ps), ...stats(f(ps)) }));
@@ -5521,7 +5552,7 @@ function pickTrackerCard(PK) {
   const cur = S.find(s => s.k === PKF.strat) || S[0];
   const logList = [...cur.list].sort((a, b) => a.start > b.start ? -1 : a.start < b.start ? 1 : b.roi - a.roi), shown = PKF.all ? logList : logList.slice(0, 40);
   const resCell = p => p.res === 'W' ? `<b style="color:var(--good)">✓ Scored${p.goals > 1 ? ` (${p.goals})` : ''}</b>` : p.res === 'L' ? '<span style="color:var(--neg)">✗ No goal</span>' : p.res === 'V' ? '<span class="muted">Void (didn\'t play)</span>' : '<span class="muted">Pending</span>';
-  const logRows = shown.map(p => `<tr><td class="l">${parseYmd(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.tm, 16)}${plink(p.pid, p.n)}</div></td><td class="l"><span class="muted">vs.</span> ${esc(TM(p.opp).abbr || '')}${p.gl ? ` <span class="muted" style="font-size:12px">${esc(p.gl)}</span>` : ''}</td><td>${pct1(p.p)}%</td><td><b>${fmtML(p.dk)}</b></td><td style="color:${p.edge > 0 ? 'var(--good)' : 'var(--neg)'}">${p.edge > 0 ? '+' : ''}${(p.edge * 100).toFixed(1)}</td><td class="l">${resCell(p)}</td><td>${p.res === 'W' || p.res === 'L' ? moneyCell(pkProfit(p)) : '–'}</td></tr>`).join('');
+  const logRows = shown.map(p => `<tr><td class="l">${parseYmd(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.tm, 16)}${plink(p.pid, p.n)}</div></td><td class="l"><span class="muted">vs.</span> ${esc(TM(p.opp).abbr || '')}${p.gl ? ` <span class="muted" style="font-size:12px">${esc(p.gl)}</span>` : ''}</td><td>${pct1(p.p)}%</td><td><b>${fmtML(pkPx(p))}</b>${p.book ? ` <span class="muted" style="font-size:11px">${BK[p.book] || ''}</span>` : ''}</td><td style="color:${p.edge > 0 ? 'var(--good)' : 'var(--neg)'}">${p.edge > 0 ? '+' : ''}${(p.edge * 100).toFixed(1)}</td><td class="l">${resCell(p)}</td><td>${p.res === 'W' || p.res === 'L' ? moneyCell(pkProfit(p)) : '–'}</td></tr>`).join('');
   const logT = `<div class="card-h" style="margin-top:14px"><h3>Pick log</h3><select id="pkStrat">${S.map(s => `<option value="${s.k}" ${s.k === cur.k ? 'selected' : ''}>${esc(s.l)}</option>`).join('')}</select></div>
     ${logRows ? `<div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Player</th><th class="l">Opponent</th><th>Ice Lab</th><th>DK</th><th>Edge</th><th class="l">Result</th><th>Profit</th></tr></thead><tbody>${logRows}</tbody></table></div>${logList.length > 40 ? `<button class="btn" id="pkAll" style="margin-top:8px">${PKF.all ? 'Show fewer' : `Show all ${logList.length}`}</button>` : ''}` : '<p class="muted" style="margin:0">No picks in this strategy yet.</p>'}`;
   return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 Profit tracker</h3><p>${done.length} graded bets · ${pending.length} pending${voids ? ` · ${voids} void` : ''} · updated ${PK.updated ? new Date(PK.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</p></div>
@@ -5600,17 +5631,17 @@ function mbOpenForm(seed, editId) {
   if (seed && seed.type && seed.type !== 'goal' && seed.type !== 'fg') return mbOpenGameForm(null, editId);
   const old = $('#mbModal'); if (old) old.remove();
   const b = seed || {};
-  const odds = b.odds != null ? b.odds : (b.dk != null ? b.dk : '');
+  const odds = b.odds != null ? b.odds : (b.best != null ? b.best : b.dk != null ? b.dk : '');
   const stake = b.stake != null ? b.stake : (odds !== '' ? mbDefaultStake(+odds) : 100);
   const m = document.createElement('div'); m.id = 'mbModal'; m.className = 'mbmodal';
   m.innerHTML = `<div class="mbbox" role="dialog" aria-label="Log a bet">
     <div class="card-h"><h3>${editId ? 'Edit bet' : 'Log my bet'}</h3><button class="btn" data-mbclose>✕</button></div>
     <div class="tcell" style="margin-bottom:8px">${b.tm ? logoImg(b.tm, 22) : ''}<b>${esc(b.n || 'Player')}</b> <span class="muted">${b.type === 'fg' ? 'first goal of the game' : 'anytime goal'} · ${esc(TM(b.tm || '').abbr || '')} vs. ${esc(TM(b.opp || '').abbr || '')}${b.start ? ' · ' + new Date(b.start).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}</span></div>
-    ${b.p != null ? `<p class="muted" style="margin:0 0 10px;font-size:12.5px">Ice Lab chance ${pct1(b.p)}% (fair ${fairAmerican(b.p)})${b.dk != null ? ` · DraftKings listed ${fmtML(b.dk)}` : ''}</p>` : ''}
+    ${b.p != null ? `<p class="muted" style="margin:0 0 10px;font-size:12.5px">Ice Lab chance ${pct1(b.p)}% (fair ${fairAmerican(b.p)})${b.dk != null ? ` · DraftKings ${fmtML(b.dk)}` : ''}${b.fd != null ? ` · FanDuel ${fmtML(b.fd)}` : ''}</p>` : ''}
     <div class="mbgrid">
       <label>Odds I got (American)<input id="mbOdds" type="number" step="1" value="${esc(String(odds))}" placeholder="+250 or -120"></label>
       <label>Amount bet ($)<input id="mbStake" type="number" step="0.01" min="0" value="${esc(String(stake))}"></label>
-      <label>Sportsbook<input id="mbBook" type="text" value="${esc(b.book || 'DraftKings')}"></label>
+      <label>Sportsbook<input id="mbBook" type="text" value="${esc(b.bookName || (BOOKS[b.book] ? BOOKS[b.book] : b.book) || 'DraftKings')}"></label>
       <label>Note (optional)<input id="mbNote" type="text" value="${esc(b.note || '')}"></label>
     </div>
     <p id="mbCalc" class="muted" style="margin:10px 0 0;font-size:13px"></p>
@@ -5638,7 +5669,7 @@ document.addEventListener('click', async e => {
   const r = (GS.rows || [])[+btn.dataset.mybet]; if (!r) return;
   const existing = mbLoad().find(b => (b.type || 'goal') === 'goal' && b.gid === r.gid && b.pid === r.pid);
   if (existing) { mbOpenForm(existing, existing.id); return; }
-  mbOpenForm({ gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', p: r.p, dk: r.dk });
+  mbOpenForm({ gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', p: r.p, dk: r.dk, fd: r.fd, best: r.best, bookName: BOOKS[r.book] });
 });
 // grade pending bets from ESPN box scores
 async function mbGrade() {
@@ -5826,31 +5857,34 @@ function gmInjury(S, tid, inj) {
 }
 const gmEventML = e => { const o = e.competitions[0].odds && e.competitions[0].odds[0]; const h = o && o.homeTeamOdds && o.homeTeamOdds.moneyLine, a = o && o.awayTeamOdds && o.awayTeamOdds.moneyLine; return h != null && a != null && h !== '' && a !== '' && isFinite(h) && isFinite(a) ? { h: +h, a: +a, open: mlOpenOf(o) } : null; };
 // game model prediction + value check for one scoreboard event (Model Lab, Today summary and the GitHub job)
-function gmEventPick(e, inj, LF) {
+function gmEventPick(e, inj, LF, PF = PRF.data) {
   const M = GM.model; if (!M) return null;
   const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
   const H = String(h.team.id), Aw = String(a.team.id), pg = probableGoalies(e), ml = gmEventML(e);
   const skip = t => new Set(((inj && inj.byTeam[t]) || []).filter(x => x.out).map(x => x.id));
   const GH = gmPickGoalie(M.S, H, pg, LF, e.date, skip(H)), GA = gmPickGoalie(M.S, Aw, pg, LF, e.date, skip(Aw)), gH = GH.id, gA = GA.id;
   const r = gmPredict(H, Aw, e.date, gH, gA, ml, inj, LF); if (!r) return null;
-  const side = ml ? [['h', r.p, ml.h], ['a', 1 - r.p, ml.a]].map(([s, q, price]) => ({ s, q, price, edge: q - amImplied(price) })).sort((x, y) => y.edge - x.edge)[0] : null;
+  // best price for each side: ESPN's line (DraftKings) or FanDuel, whichever pays more
+  const fd = PF ? fdMoneyline(PF, e.date, H, Aw) : null, bH = bestPrice(ml && ml.h, fd && fd.h), bA = bestPrice(ml && ml.a, fd && fd.a);
+  const side = bH && bA ? [['h', r.p, bH], ['a', 1 - r.p, bA]].map(([s, q, b]) => ({ s, q, price: b.price, book: b.book, edge: q - amImplied(b.price) })).sort((x, y) => y.edge - x.edge)[0] : null;
   const gn = (id, t) => pg[t] ? pg[t].n : (t === H ? GH : GA).n || ((M.S.Gn || {})[id] || '');
-  return { H, Aw, ha: h.team.abbreviation, aa: a.team.abbreviation, ml, r, gHn: gn(gH, H), gAn: gn(gA, Aw), gHs: GH.st, gAs: GA.st, side, verdict: side ? (side.edge >= .03 ? 'bet' : side.edge > 0 ? 'lean' : 'pass') : null };
+  return { H, Aw, ha: h.team.abbreviation, aa: a.team.abbreviation, ml, r, gHn: gn(gH, H), gAn: gn(gA, Aw), gHs: GH.st, gAs: GA.st, fd, bH, bA, side, verdict: side ? (side.edge >= .03 ? 'bet' : side.edge > 0 ? 'lean' : 'pass') : null };
 }
 
 /* ---- game model pick tracker (picks.json → games, saved and graded by the GitHub job) ---- */
 const GPK = { strat: 'bet', all: false };
-const gpRes = (g, s) => { const price = s === 'h' ? g.mlH : g.mlA, won = s === 'h' ? g.hw : !g.hw; return won ? pkWin(price) : -pkRisk(price); };
+const gpPx = (g, s) => s === 'h' ? (g.bH != null ? g.bH : g.mlH) : (g.bA != null ? g.bA : g.mlA);
+const gpRes = (g, s) => { const price = gpPx(g, s), won = s === 'h' ? g.hw : !g.hw; return won ? pkWin(price) : -pkRisk(price); };
 const GP_STRATS = [
   ['bet', 'Value bets (3+ pts)', gs => gs.filter(g => g.verdict === 'bet').map(g => [g, g.side])],
   ['pos', 'Every positive edge', gs => gs.filter(g => g.edge > 0).map(g => [g, g.side])],
   ['mfav', 'Model\'s pick every game', gs => gs.map(g => [g, g.p >= .5 ? 'h' : 'a'])],
   ['kfav', 'Market favorite every game (baseline)', gs => gs.map(g => [g, g.mlH <= g.mlA ? 'h' : 'a'])]];
 function gamePickCard(PK) {
-  const gs = ((PK && PK.games) || []).filter(g => g.mlH != null && g.mlA != null);
+  const gs = ((PK && PK.games) || []).filter(g => gpPx(g, 'h') != null && gpPx(g, 'a') != null);
   if (!gs.length) return `<div class="card"><div class="card-h"><h3>📒 Game model profit tracker</h3></div><p class="muted" style="margin:0">Not started yet. Once the GitHub job runs with the updated workflow, it trains the game model, saves each day's moneyline picks before the games (around 11 AM and 5 PM Eastern) and grades them the next morning. Results build up here.</p></div>`;
   const done = gs.filter(g => g.hw != null), pend = gs.filter(g => g.hw == null);
-  const stats = list => { const g = list.filter(([x]) => x.hw != null); const pr = g.reduce((s, [x, sd]) => s + gpRes(x, sd), 0), risk = g.reduce((s, [x, sd]) => s + pkRisk(sd === 'h' ? x.mlH : x.mlA), 0), w = g.filter(([x, sd]) => gpRes(x, sd) > 0).length; return { n: g.length, w, ls: g.length - w, profit: pr, roi: div(pr, risk), pend: list.length - g.length }; };
+  const stats = list => { const g = list.filter(([x]) => x.hw != null); const pr = g.reduce((s, [x, sd]) => s + gpRes(x, sd), 0), risk = g.reduce((s, [x, sd]) => s + pkRisk(gpPx(x, sd)), 0), w = g.filter(([x, sd]) => gpRes(x, sd) > 0).length; return { n: g.length, w, ls: g.length - w, profit: pr, roi: div(pr, risk), pend: list.length - g.length }; };
   const S2 = GP_STRATS.map(([k, l, f]) => ({ k, l, list: f(gs), ...stats(f(gs)) }));
   const tiles = `<div class="tiles" style="margin-bottom:12px">${S2.map(s => `<div class="tile"><div class="k">${esc(s.l)}</div><div class="v num" style="color:${s.profit > 0 ? 'var(--good)' : s.profit < 0 ? 'var(--neg)' : 'inherit'}">${money(s.profit)}</div><div class="s">${s.w}-${s.ls} · ROI ${fin(s.roi) ? (s.roi > 0 ? '+' : '') + pct1(s.roi) + '%' : '–'}${s.pend ? ` · ${s.pend} pending` : ''}</div></div>`).join('')}</div>`;
   const run = list => { let c = 0; return list.filter(([x]) => x.hw != null).sort((a, b) => a[0].start < b[0].start ? -1 : 1).map(([x, sd], i) => { c += gpRes(x, sd); return [i + 1, c]; }); };
@@ -5861,7 +5895,7 @@ function gamePickCard(PK) {
   const cur = S2.find(s => s.k === GPK.strat) || S2[0];
   const lst = [...cur.list].sort((a, b) => a[0].start > b[0].start ? -1 : a[0].start < b[0].start ? 1 : 0), shown = GPK.all ? lst : lst.slice(0, 40);
   const ab = (x, sd) => sd === 'h' ? x.ha : x.aa;
-  const rows = shown.map(([x, sd]) => { const q = sd === 'h' ? x.p : 1 - x.p, price = sd === 'h' ? x.mlH : x.mlA, edge = q - amImplied(price), pr = x.hw != null ? gpRes(x, sd) : null;
+  const rows = shown.map(([x, sd]) => { const q = sd === 'h' ? x.p : 1 - x.p, price = gpPx(x, sd), edge = q - amImplied(price), pr = x.hw != null ? gpRes(x, sd) : null;
     return `<tr><td class="l">${parseYmd(x.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${esc(x.aa)} @ ${esc(x.ha)}${x.hw != null ? ` <span class="muted">${x.as}–${x.hs}</span>` : ''}</td><td class="l"><div class="tcell">${logoImg(sd === 'h' ? x.h : x.a, 16)}<b>${esc(ab(x, sd))}</b> ${fmtML(price)}</div></td><td>${pct1(q)}%</td><td style="color:${edge > 0 ? 'var(--good)' : 'var(--neg)'}">${edge > 0 ? '+' : ''}${(edge * 100).toFixed(1)}</td><td class="l">${pr == null ? '<span class="muted">Pending</span>' : pr > 0 ? '<b style="color:var(--good)">✓ Won</b>' : '<span style="color:var(--neg)">✗ Lost</span>'}${(x.inj || []).length ? ` <span class="muted" style="font-size:11.5px" data-tip="${esc('Out: ' + x.inj.map(esc).join(', '))}">🩹</span>` : ''}</td><td>${pr == null ? '–' : moneyCell(pr)}</td><td class="l">${(() => { const fh = x.p >= .5, ab2 = fh ? x.ha : x.aa, q2 = fh ? x.p : 1 - x.p; return `${esc(ab2)} ${pct1(q2)}%${x.hw == null ? '' : (fh === !!x.hw) ? ' <b style="color:var(--good)">✓</b>' : ' <span style="color:var(--neg)">✗</span>'}`; })()}</td></tr>`; }).join('');
   // model vs market accuracy on graded games
   const acc = f => div(done.filter(g => (f(g) >= .5) === !!g.hw).length, done.length);
@@ -5994,12 +6028,12 @@ const readCI = (c, need, goodHigh, unit) => !c.n ? '<span class="muted">No data 
 function trustGame(PK) {
   const gs = ((PK && PK.games) || []).filter(g => g.hw != null && fin(g.p));
   // 1) closing line value on every positive-edge pick: the closing chance (margin removed) minus the break-even chance of the price taken
-  const cl = ((PK && PK.games) || []).filter(g => g.edge > 0 && g.mlCloseH != null && g.mlCloseA != null).map(g => { const pr = g.side === 'h' ? g.mlH : g.mlA, fc = devig({ h: g.mlCloseH, a: g.mlCloseA }), fs = g.side === 'h' ? fc : 1 - fc; return { v: fs - amImplied(pr), beat: amImplied(pr) < amImplied(g.side === 'h' ? g.mlCloseH : g.mlCloseA) }; });
+  const cl = ((PK && PK.games) || []).filter(g => g.edge > 0 && g.mlCloseH != null && g.mlCloseA != null).map(g => { const pr = gpPx(g, g.side), fc = devig({ h: g.mlCloseH, a: g.mlCloseA }), fs = g.side === 'h' ? fc : 1 - fc; return { v: fs - amImplied(pr), beat: amImplied(pr) < amImplied(g.side === 'h' ? g.mlCloseH : g.mlCloseA) }; });
   const clv = ciMean(cl.map(x => x.v)), beat = div(cl.filter(x => x.beat).length, cl.length);
   // 2) log loss vs. the market on the same games (negative = model better)
   const lm = gs.filter(g => fin(g.mk)), ll = ciMean(lm.map(g => llOne(g.p, g.hw) - llOne(g.mk, g.hw)));
   // 3) profit on value bets, per $ risked
-  const vb = gs.filter(g => g.verdict === 'bet'), roi = ciMean(vb.map(g => gpRes(g, g.side) / pkRisk(g.side === 'h' ? g.mlH : g.mlA)));
+  const vb = gs.filter(g => g.verdict === 'bet'), roi = ciMean(vb.map(g => gpRes(g, g.side) / pkRisk(gpPx(g, g.side))));
   const acc = div(gs.filter(g => (g.p >= .5) === !!g.hw).length, gs.length), macc = div(lm.filter(g => (g.mk >= .5) === !!g.hw).length, lm.length);
   const need = { clv: 50, ll: 150, roi: 500 }, v = trustVerdict({ clv, ll, roi, need }); TRUST_DBG.gm = { clv, ll, roi };
   const rows = [
@@ -6009,16 +6043,16 @@ function trustGame(PK) {
   return trustBlock('🧠 Game model v2', v, rows, calibChart(gs.map(g => ({ p: g.p, y: !!g.hw }))), 'Ranges are 95%: if the range includes zero, the result could easily be luck.');
 }
 function trustScorer(PK) {
-  const ps = ((PK && PK.picks) || []).filter(p => p.dk != null && fin(p.p));
+  const ps = ((PK && PK.picks) || []).filter(p => pkPx(p) != null && fin(p.p));
   const done = ps.filter(p => p.res === 'W' || p.res === 'L');
   // 1) closing line value: DraftKings' closing chance (its margin removed, using that game's margin) minus the break-even chance of the price taken
-  const cl = ps.filter(p => p.edge > 0 && p.dkClose != null).map(p => { const imp = amImplied(p.dk), ic = amImplied(p.dkClose); const m = fin(p.fair) && p.fair > 0 && p.fair < 1 ? Math.log(1 - imp) / Math.log(1 - p.fair) : 1.22; const fc = 1 - Math.exp(Math.log(1 - ic) / m); return { v: fc - imp, beat: imp < ic }; });
+  const cl = ps.filter(p => p.edge > 0 && p.dkClose != null && p.dk != null).map(p => { const imp = amImplied(pkPx(p)), ic = amImplied(p.dkClose); const m = fin(p.fair) && p.fair > 0 && p.fair < 1 ? Math.log(1 - imp) / Math.log(1 - p.fair) : 1.22; const fc = 1 - Math.exp(Math.log(1 - ic) / m); return { v: fc - imp, beat: imp < ic }; });
   const clv = ciMean(cl.map(x => x.v)), beat = div(cl.filter(x => x.beat).length, cl.length);
   // 2) log loss of the chance we bet on vs. DraftKings' margin-free chance at the time
   const lm = done.filter(p => fin(p.fair)), y = p => p.res === 'W';
   const ll = ciMean(lm.map(p => llOne(p.p, y(p)) - llOne(p.fair, y(p)))), llRaw = ciMean(lm.filter(p => fin(p.pRaw)).map(p => llOne(p.pRaw, y(p)) - llOne(p.fair, y(p))));
   // 3) profit on every positive edge
-  const pos = done.filter(p => p.edge > 0), roi = ciMean(pos.map(p => pkProfit(p) / pkRisk(p.dk)));
+  const pos = done.filter(p => p.edge > 0), roi = ciMean(pos.map(p => pkProfit(p) / pkRisk(pkPx(p))));
   const need = { clv: 100, ll: 500, roi: 2000 }, v = trustVerdict({ clv, ll, roi, need }); TRUST_DBG.gs = { clv, ll, roi };
   const rows = [
     ['Closing line value', 'Did its picks get better prices than DraftKings\' final price? Trustworthy after ~100 bets.', cl.length ? `${sgnPts(clv.m)} pts per bet after the margin · beat the closing price ${pct1(beat)}% of the time<div class="muted" style="font-size:11.5px">${rangeTxt(clv, sgnPts)} · ${cl.length} bets</div>` : '<span class="muted">Starts once the closing-price job records closes</span>', readCI(clv, need.clv, true)],
@@ -6350,6 +6384,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
   await mbInit();
   const ex = editId ? mbLoad().find(x => x.id === editId) : null;
   const G = ex ? { gid: ex.gid, start: ex.start, hid: ex.hid, aid: ex.aid, ml: null, tot: null, pl: {} } : seed;
+  if (G && !ex) { try { G.fdml = fdMoneyline(await getPropsFile(), G.start, G.hid, G.aid); } catch (err) {} }
   if (!G) { alertBox('Couldn\'t load this game from ESPN. Try again in a moment.'); return; }
   const fav = G.ml ? (G.ml.h <= G.ml.a ? 'h' : 'a') : (G.pl && G.pl.fav) || 'h';
   const st = { type: ex ? ex.type : 'ml', side: ex ? ex.side : fav, line: ex ? ex.line : null, oddsTouched: !!ex, stakeTouched: !!ex, p: null };
@@ -6374,17 +6409,19 @@ async function mbOpenGameForm(seed, editId, onCancel) {
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">${ex ? '' : '<button class="btn" id="gbClear" style="margin-right:auto" title="Remove the Bet mark from this game">Not betting after all</button>'}<button class="btn" data-mbclose>Cancel</button><button class="btn primary" id="mbSaveBtn">${ex ? 'Save changes' : 'Confirm bet'}</button></div></div>`;
   document.body.appendChild(m);
   if (ex) { $('#mbOdds').value = ex.odds; $('#mbStake').value = ex.stake; }
-  const postedOdds = () => st.type === 'ml' ? (G.ml ? G.ml[st.side] : null) : st.type === 'total' ? (G.tot ? G.tot[st.side] : null) : (G.pl ? G.pl[st.side] : null);
+  const mlBest = () => bestPrice(G.ml ? G.ml[st.side] : null, G.fdml ? G.fdml[st.side] : null);
+  const postedOdds = () => st.type === 'ml' ? (mlBest() ? mlBest().price : null) : st.type === 'total' ? (G.tot ? G.tot[st.side] : null) : (G.pl ? G.pl[st.side] : null);
   const defLine = () => st.type === 'total' ? (G.tot ? G.tot.line : 6.5) : st.type === 'pl' ? (st.side === fav ? -1.5 : 1.5) : null;
   const calc = () => {
     const o = +$('#mbOdds').value, s = +$('#mbStake').value;
     $('#mbCalc').innerHTML = o && Math.abs(o) >= 100 && s > 0 ? `To win <b>${money(mbToWin(s, o)).replace('+', '')}</b> · total payout ${money(s + mbToWin(s, o)).replace('+', '')}` : 'Enter odds like −150 or +130 and an amount.';
     const info = [];
     if (st.type === 'ml' && fin(st.p)) { const q = st.side === 'h' ? st.p : 1 - st.p; info.push(`Ice Lab gives ${esc(ab(st.side))} ${pct1(q)}% (fair ${fairAmerican(q)})`); if (Math.abs(o) >= 100) { const ed = q - amImplied(o); info.push(`<b style="color:${ed > 0 ? 'var(--good)' : 'var(--neg)'}">${ed > 0 ? '+' : ''}${(ed * 100).toFixed(1)} pts</b> vs. your price`); } }
-    const po = postedOdds(); if (po != null) info.push(`ESPN line ${fmtML(po)}`);
+    if (st.type === 'ml' && (G.ml || G.fdml)) { const d = G.ml ? G.ml[st.side] : null, f = G.fdml ? G.fdml[st.side] : null; info.push([d != null ? `DraftKings ${fmtML(d)}` : '', f != null ? `FanDuel ${fmtML(f)}` : ''].filter(Boolean).join(' · ') + (d != null && f != null && d !== f ? ` (better: ${BOOKS[mlBest().book]})` : '')); }
+    else { const po = postedOdds(); if (po != null) info.push(`ESPN line ${fmtML(po)}`); }
     $('#gbInfo').innerHTML = info.join(' · ');
   };
-  const setOdds = () => { if (!st.oddsTouched) { const po = postedOdds(); $('#mbOdds').value = po != null ? po : ''; } if (!st.stakeTouched) { const o = +$('#mbOdds').value; $('#mbStake').value = Math.abs(o) >= 100 ? mbDefaultStake(o) : 100; } calc(); };
+  const setOdds = () => { if (!st.oddsTouched) { const po = postedOdds(); $('#mbOdds').value = po != null ? po : ''; if (st.type === 'ml' && mlBest() && !st.bookTouched) $('#mbBook').value = BOOKS[mlBest().book]; } if (!st.stakeTouched) { const o = +$('#mbOdds').value; $('#mbStake').value = Math.abs(o) >= 100 ? mbDefaultStake(o) : 100; } calc(); };
   const paint = () => {
     $$('#gbType [data-gbtype]').forEach(b => b.classList.toggle('on', b.dataset.gbtype === st.type));
     const sides = st.type === 'total' ? [['o', 'Over'], ['u', 'Under']] : [['a', ab('a')], ['h', ab('h')]];
@@ -6403,6 +6440,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
     if (ed) { m.remove(); mbOpenGameForm(null, ed.dataset.gbedit); return; }
     if (e.target === m || e.target.closest('[data-mbclose]')) { m.remove(); if (onCancel) onCancel(); }
   });
+  $('#mbBook').addEventListener('input', () => { st.bookTouched = true; });
   $('#gbLine').oninput = () => { st.line = +$('#gbLine').value; st.lineAuto = false; };
   $('#mbOdds').oninput = () => { st.oddsTouched = true; if (!st.stakeTouched) { const o = +$('#mbOdds').value; if (Math.abs(o) >= 100) $('#mbStake').value = mbDefaultStake(o); } calc(); };
   $('#mbStake').oninput = () => { st.stakeTouched = true; calc(); };
@@ -6547,12 +6585,12 @@ function fgDkMap(PF, dateIso, hId, aId) {
   const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
   const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
   if (!g || !g.first || !g.first.length) return null;
-  const m = {}; for (const p of g.first) m[normName(p.n)] = p.price; return m;
+  const m = {}; for (const p of g.first) if (p.price != null) m[normName(p.n)] = p.price; return Object.keys(m).length ? m : null;
 }
 // tonight's first goal chances for one game, from the anytime rows (gsTonight)
 function fgGame(S, e, rows, PF, ATT, fit) {
   const c = e.competitions[0], H = String(c.competitors.find(x => x.homeAway === 'home').team.id), Aw = String(c.competitors.find(x => x.homeAway === 'away').team.id);
-  const season = seasonOf(e.date), dkm = fgDkMap(PF, e.date, H, Aw), out = [];
+  const season = seasonOf(e.date), dkm = fgDkMap(PF, e.date, H, Aw), fdm = fdPriceMap(PF, e.date, H, Aw, 'first'), out = [];
   for (const r of rows) {
     const lamB = fin(r.p) && r.p > 0 && r.p < 1 ? -Math.log(1 - r.p) : r.lam, enFrac = r.lam > 0 ? clamp((r.lamEN || 0) * S.c * (r.anchor || 1) / r.lam, 0, .5) : 0;
     const lamNE = lamB * (1 - enFrac), pf = FG.idx ? fgProfile(season, r.pid, r.n, TM(r.tm).abbr, ATT) : null;
@@ -6562,12 +6600,16 @@ function fgGame(S, e, rows, PF, ATT, fit) {
   const tl = t => out.filter(r => r.tm === t).reduce((s, r) => s + r.lamNE, 0), LH = tl(H), LA = tl(Aw), L = LH + LA;
   const pAny = 1 - Math.exp(-L) * .5;
   const imps = dkm ? Object.values(dkm).filter(fin).map(amImplied) : [], over = imps.length >= 20 ? imps.reduce((s, p) => s + p, 0) : null;
+  const impsF = fdm ? Object.values(fdm).filter(fin).map(amImplied) : [], overF = impsF.length >= 20 ? impsF.reduce((s, p) => s + p, 0) : null;
   for (const t of [H, Aw]) {
     const tr = out.filter(r => r.tm === t), sw = tr.reduce((s, r) => s + r.w, 0), pTeam = L > 0 ? (t === H ? LH : LA) / L : .5;
     for (const r of tr) {
       r.pTeam = pTeam * pAny; r.share = sw > 0 ? r.w / sw : 0; r.fp = r.pTeam * r.share;
-      r.fdk = dkm ? dkLookup(dkm, r.n) : null; r.fImp = r.fdk != null ? amImplied(r.fdk) : NaN; r.fFair = r.fdk != null && over ? r.fImp / over : NaN;
-      if (r.fdk != null) { const b = betEV(r.fp, r.fdk); r.fEdge = r.fp - r.fImp; r.fEv = b.ev; r.fRoi = b.roi; } else { r.fEdge = r.fEv = r.fRoi = NaN; }
+      r.fdk = dkm ? dkLookup(dkm, r.n) : null; r.ffd = fdm ? dkLookup(fdm, r.n) : null;
+      r.fFair = r.fdk != null && over ? amImplied(r.fdk) / over : r.ffd != null && overF ? amImplied(r.ffd) / overF : NaN;
+      // edge and expected profit at the better of the two books
+      const bp = bestPrice(r.fdk, r.ffd); r.fBest = bp ? bp.price : null; r.fBook = bp ? bp.book : null; r.fImp = bp ? amImplied(bp.price) : NaN;
+      if (bp) { const b = betEV(r.fp, bp.price); r.fEdge = r.fp - r.fImp; r.fEv = b.ev; r.fRoi = b.roi; } else { r.fEdge = r.fEv = r.fRoi = NaN; }
       // the habits' combined effect on his share, vs. anytime goals alone
       const base = tr.reduce((s, x) => s + x.lamNE, 0); r.habit = base > 0 && r.lamNE > 0 ? r.share / (r.lamNE / base) - 1 : 0;
     }
@@ -6596,7 +6638,7 @@ async function renderFirstGoal() {
     const c = e.competitions[0]; c.competitors.forEach(x => addTeam(x.team));
     if (FG.game && FG.game !== String(e.id)) continue;
     const g = fgGame(S, e, gsTonight(S, e, LF, PF, INJS[e.id], MATE), PF, ATT, fit);
-    if (g.some(r => r.fdk != null)) anyDk = true;
+    if (g.some(r => r.fBest != null)) anyDk = true;
     rows.push(...g.filter(r => !FG.team || FG.team === r.tm));
   }
   rows.forEach((r, i) => r.idx = i); FG.rows = rows;
@@ -6616,8 +6658,9 @@ async function renderFirstGoal() {
     { k: 'pTeam', h: 'Team first', v: r => r.pTeam, f: v => pct1(v) + '%', t: 'Chance his team scores the game\'s first goal.' },
     { k: 'fp', h: 'First goal', v: r => r.fp, f: (v, r) => `<b>${pct1(v)}%</b>${Math.abs(r.habit) >= .03 ? ` <span class="muted" style="font-size:11.5px">(${r.habit > 0 ? '+' : ''}${pct1(r.habit)}% from P1 habits)</span>` : ''}`, t: 'Ice Lab\'s chance he scores the first goal of the game.' },
     { k: 'fair', h: 'Fair odds', v: r => r.fp, f: (v, r) => fairAmerican(r.fp) },
-    { k: 'fdk', h: 'DraftKings', v: r => r.fdk, f: v => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>`, t: 'DraftKings first goal scorer price.' },
-    { k: 'fImp', h: 'DK implied', v: r => r.fImp, f: (v, r) => fin(v) ? `${pct1(v)}%${fin(r.fFair) ? `<div class="muted" style="font-size:11px">${pct1(r.fFair)}% no margin</div>` : ''}` : '–', t: 'The chance DraftKings\' price implies, and underneath with its margin removed. First goal markets carry a big margin.' },
+    { k: 'fdk', h: 'DraftKings', v: r => r.fdk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.fBook === 'dk' && r.ffd != null && r.ffd !== r.fdk ? ' <span class="bestb" title="Better price">★</span>' : ''}`, t: 'DraftKings first goal scorer price. ★ = the better of the two books.' },
+    { k: 'ffd', h: 'FanDuel', v: r => r.ffd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.fBook === 'fd' && r.fdk != null && r.ffd !== r.fdk ? ' <span class="bestb" title="Better price">★</span>' : ''}`, t: 'FanDuel first goal scorer price. ★ = the better of the two books. Edge and expected profit use the better price.' },
+    { k: 'fImp', h: 'Implied (best)', v: r => r.fImp, f: (v, r) => fin(v) ? `${pct1(v)}%${fin(r.fFair) ? `<div class="muted" style="font-size:11px">${pct1(r.fFair)}% no margin</div>` : ''}` : '–', t: 'The chance DraftKings\' price implies, and underneath with its margin removed. First goal markets carry a big margin.' },
     { k: 'fEdge', h: 'Edge', v: r => r.fEdge, f: v => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>` : '–', t: 'Ice Lab\'s chance minus DraftKings\' implied chance.' },
     { k: 'fEv', h: 'Exp. profit', v: r => r.fEv, f: (v, r) => fin(v) ? `${moneyCell(v)} <span class="muted" style="font-size:11.5px">${r.fRoi > 0 ? '+' : ''}${pct1(r.fRoi)}%</span>` : '–', t: 'Expected profit per bet with your bet sizes ($100 on plus odds).' },
     { k: 'bet', h: '', l: 1, v: () => 0, f: (v, r) => `<button class="btn sm mybet" data-fgbet="${r.idx}" title="Log a first goal scorer bet you placed on this player">＋ Bet</button>` }];
@@ -6640,7 +6683,7 @@ async function renderFirstGoal() {
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores the game's first goal: the chance his team scores first (from both teams' expected goals) times his share of his team's early scoring. His share starts from his anytime goal chance, without empty-net goals, then adjusts for how much he plays early in games (first-period minutes, weighted toward the opening minutes, and opening-faceoff shifts) and how much he shoots in the first period compared with later periods. A shootout winner doesn't count as a goal scorer.</p>
     ${noShift ? '<div class="note">Period-by-period ice time isn\'t loaded yet. It comes from the NHL\'s shift charts, which the GitHub job adds to props.json on its next 11 AM or 5 PM run. Until then the chances use anytime goals and the team-first split only.</div>' : ''}
     ${PF && !anyDk ? '<div class="note">No DraftKings first goal scorer prices for these games yet. The job pulls them with the anytime prices (about 11 AM and 5 PM Eastern).</div>' : ''}
-    ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best first goal values</h3><p>Ranked by expected return; long odds, so expect long losing runs</p></div><div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)} · early ice ${f2(r.X)}× · P1 shooting ${f2(r.R)}×</div><div style="margin-top:4px"><b>${pct1(r.fp)}%</b> vs. DK ${fmtML(r.fdk)} (${pct1(r.fImp)}%) · <span style="color:var(--good)">${money(r.fEv)}</span></div></div>`).join('')}</div></div>` : ''}
+    ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best first goal values</h3><p>Ranked by expected return; long odds, so expect long losing runs</p></div><div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)} · early ice ${f2(r.X)}× · P1 shooting ${f2(r.R)}×</div><div style="margin-top:4px"><b>${pct1(r.fp)}%</b> vs. ${BK[r.fBook]} ${fmtML(r.fBest)} (${pct1(r.fImp)}%) · <span style="color:var(--good)">${money(r.fEv)}</span></div></div>`).join('')}</div></div>` : ''}
     <div class="empty" id="fgNoMatch" hidden>No player matching that name in these games.</div>
     ${rows.length ? `<div class="card">${table('fg', cols, rows, { sort: anyDk ? 'fEv' : 'fp', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}
     <p class="muted" style="font-size:12px;margin:10px 0 0">First goal bets hit rarely and sportsbooks build in a large margin, so even good prices lose most nights. For fun and analysis, not betting advice.</p>`;
@@ -6659,7 +6702,7 @@ document.addEventListener('click', async e => {
   const r = (FG.rows || [])[+btn.dataset.fgbet]; if (!r) return;
   const ex = mbLoad().find(b => b.type === 'fg' && b.gid === r.gid && b.pid === r.pid);
   if (ex) { mbOpenForm(ex, ex.id); return; }
-  mbOpenForm({ type: 'fg', gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', p: r.fp, dk: r.fdk });
+  mbOpenForm({ type: 'fg', gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', p: r.fp, dk: r.fdk, fd: r.ffd, best: r.fBest, bookName: BOOKS[r.fBook] });
 });
 // who scored the first goal (shootouts don't count); null if no goal before a shootout
 const fgFirstScorer = g => { const x = (g.shots || []).filter(s => s.t === 0 && s.per >= 1 && s.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0]; return x ? x.pl : null; };
@@ -6704,16 +6747,16 @@ async function loadHealth(evs) {
       add('runL', 'Scheduler: lines runs', failed ? 'bad' : !inWin ? 'ok' : a <= 45 ? 'ok' : a <= 120 ? 'warn' : 'bad', `last run ${runTxt(L)} (every 30 min, 10 AM–12:30 AM)`, failed ? 'The last run failed. Open it in the GitHub Actions tab to see which step broke.' : inWin && a > 45 ? 'Runs should start every 30 minutes. Check the "Ice Lab lines" job at cron-job.org (enabled, last result 204) and that your GitHub token hasn\'t expired.' : ''); }
     if (!P) add('runP', 'Scheduler: odds runs', 'warn', 'no "props" runs found yet', 'Check the "Ice Lab odds" job at cron-job.org.');
     else { const a = ageMin(P.created_at), failed = P.status === 'completed' && P.conclusion !== 'success', late = a > lastRunAgo + 30;
-      add('runP', 'Scheduler: odds runs', failed ? 'bad' : late && a > 24 * 60 ? 'bad' : late ? 'warn' : 'ok', `last run ${runTxt(P)} (11:07 AM and 5:07 PM)`, failed ? 'The last odds run failed. Open it in the GitHub Actions tab to see which step broke.' : late ? 'The 11:07 / 5:07 run didn\'t start. Check the "Ice Lab odds" job at cron-job.org (enabled, last result 204).' : ''); }
+      add('runP', 'Scheduler: odds runs', failed ? 'bad' : late && a > 24 * 60 ? 'bad' : late ? 'warn' : 'ok', `last run ${runTxt(P)} (every 2 hours, 11:07 AM–7:07 PM)`, failed ? 'The last odds run failed. Open it in the GitHub Actions tab to see which step broke.' : late ? 'The scheduled odds run didn\'t start. Check the "Ice Lab odds" job at cron-job.org (enabled, last result 204).' : ''); }
   }
   // 2) RotoGrinders lines (the job only saves when the lines change, so judge by date, not by last change)
   if (!LF) add('lines', 'Line combinations', 'bad', 'lines.json not found', 'Check the "lines" job in GitHub Actions.');
   else { const n = (LF.games || []).length, isToday = LF.date === new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
     add('lines', 'Line combinations', isToday || !games || etMin < 11 * 60 ? 'ok' : 'warn', `${isToday ? 'today\'s' : 'not today\'s'} lines · ${n} game${n === 1 ? '' : 's'} posted · last changed ${ago(LF.updated)}`, !isToday && games && etMin >= 11 * 60 ? 'RotoGrinders hasn\'t posted today\'s lines yet, or the lines runs aren\'t working (see Scheduler above).' : ''); }
   // 3) DraftKings prices (The Odds API)
-  if (!PF) add('props', 'DraftKings prices', 'bad', 'props.json not found', 'Check the "props" job and the ODDS_API_KEY secret.');
-  else { const a = ageMin(PF.updated), late = a > lastRunAgo + 30; const pg = (PF.games || []).filter(g => (g.players || []).length).length, fg = (PF.games || []).filter(g => (g.first || []).length).length;
-    add('props', 'DraftKings prices', late && a > 24 * 60 ? 'bad' : late ? 'warn' : games && !pg && etMin > 11 * 60 + 30 ? 'warn' : 'ok', `updated ${ago(PF.updated)} · anytime prices for ${pg} game${pg === 1 ? '' : 's'}, first goal for ${fg}`, late ? 'The 11 AM / 5 PM run looks like it was skipped or failed. Check the "Ice Lab odds" job at cron-job.org (last result should be 204), then the "props" job in GitHub Actions.' : games && !pg ? 'DraftKings may not have posted goal scorer props yet; the 5 PM run usually catches them.' : '');
+  if (!PF) add('props', 'Sportsbook prices', 'bad', 'props.json not found', 'Check the "props" job and the ODDS_API_KEY secret.');
+  else { const a = ageMin(PF.updated), late = a > lastRunAgo + 30; const pg = (PF.games || []).filter(g => (g.players || []).some(x => x.price != null)).length, fg = (PF.games || []).filter(g => (g.first || []).some(x => x.price != null)).length, fdg = (PF.games || []).filter(g => (g.players || []).some(x => x.fd != null) || (g.ml && g.ml.fd)).length;
+    add('props', 'Sportsbook prices', late && a > 24 * 60 ? 'bad' : late ? 'warn' : games && !pg && etMin > 11 * 60 + 30 ? 'warn' : 'ok', `updated ${ago(PF.updated)} · DraftKings anytime prices for ${pg} game${pg === 1 ? '' : 's'}, first goal for ${fg} · FanDuel for ${fdg}`, late ? 'The 11 AM / 5 PM run looks like it was skipped or failed. Check the "Ice Lab odds" job at cron-job.org (last result should be 204), then the "props" job in GitHub Actions.' : games && !pg ? 'DraftKings may not have posted goal scorer props yet; the 5 PM run usually catches them.' : '');
     const rem = parseFloat(PF.remaining);
     if (isFinite(rem)) add('credits', 'Odds API credits', rem >= 300 ? 'ok' : rem >= 100 ? 'warn' : 'bad', `${rem.toLocaleString()} left`, rem < 300 ? `Each run uses about 2 credits per game. ${rem < 100 ? 'You\'ll run out within a day or two, so avoid' : 'Avoid'} manual runs, drop first goal prices, or upgrade your Odds API plan.` : ''); }
   // 3) ESPN moneylines (the game model needs them)
