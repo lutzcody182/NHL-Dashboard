@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-15",
- "updated": "2026-10-15T09:00:23.967Z",
+ "updated": "2026-10-15T15:39:21.455Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -127,7 +127,7 @@
     },
     {
      "team": "New Jersey Devils",
-     "goalie": "Jake Allen",
+     "goalie": "Nico Daws",
      "groups": [
       {
        "label": "Line 1",
@@ -382,13 +382,13 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Gage Goncalves",
-         "pos": "W",
+         "n": "Anthony Cirelli",
+         "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Brayden Point",
-         "pos": "C",
+         "n": "Brandon Hagel",
+         "pos": "W",
          "pp": "PP1"
         },
         {
@@ -402,13 +402,8 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Anthony Cirelli",
+         "n": "Brayden Point",
          "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Brandon Hagel",
-         "pos": "W",
          "pp": "PP1"
         },
         {
@@ -445,11 +440,6 @@
          "n": "Conor Geekie",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Jeffrey Viel",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -464,7 +454,7 @@
         {
          "n": "J.J. Moser",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ryan McDonagh",
@@ -499,7 +489,7 @@
    "teams": [
     {
      "team": "Vancouver Canucks",
-     "goalie": "Kevin Lankinen",
+     "goalie": "Leevi Merilainen",
      "groups": [
       {
        "label": "Line 1",
@@ -992,7 +982,7 @@
    "teams": [
     {
      "team": "New York Islanders",
-     "goalie": "Ilya Sorokin",
+     "goalie": "Semyon Varlamov",
      "groups": [
       {
        "label": "Line 1",
@@ -1362,7 +1352,7 @@
     },
     {
      "team": "Detroit Red Wings",
-     "goalie": "John Gibson",
+     "goalie": "Daniil Tarasov",
      "groups": [
       {
        "label": "Line 1",
