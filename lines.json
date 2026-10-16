@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-16",
- "updated": "2026-10-16T09:01:34.336Z",
+ "updated": "2026-10-16T17:00:22.834Z",
  "games": [
   {
    "time": "9:00 PM ET",
@@ -145,7 +145,7 @@
         {
          "n": "Martin Necas",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Artturi Lehkonen",
@@ -180,7 +180,7 @@
         {
          "n": "Jaden Schwartz",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "T.J. Hughes",
