@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-15",
- "updated": "2026-10-15T23:01:29.979Z",
+ "updated": "2026-10-16T00:01:21.260Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -82,7 +82,7 @@
          "pp": ""
         },
         {
-         "n": "Matt Rempe",
+         "n": "Jaroslav Chmelar",
          "pos": "W",
          "pp": ""
         },
@@ -260,7 +260,7 @@
    "teams": [
     {
      "team": "Seattle Kraken",
-     "goalie": "Joey Daccord",
+     "goalie": "Philipp Grubauer",
      "groups": [
       {
        "label": "Line 1",
@@ -412,11 +412,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Conor Geekie",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Jake Guentzel",
          "pos": "W",
          "pp": "PP1"
@@ -448,6 +443,11 @@
        "players": [
         {
          "n": "Dominic James",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Conor Geekie",
          "pos": "C",
          "pp": "PP2"
         },
@@ -610,12 +610,12 @@
          "pp": ""
         },
         {
-         "n": "Luke Schenn",
+         "n": "Zeev Buium",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Guillaume Brisebois",
+         "n": "Victor Mancini",
          "pos": "D",
          "pp": ""
         }
@@ -799,11 +799,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Jiri Kulich",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Konsta Helenius",
          "pos": "W",
          "pp": "PP2"
@@ -811,7 +806,12 @@
         {
          "n": "Ryan McLeod",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
+        },
+        {
+         "n": "Josh Norris",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -819,9 +819,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Josh Norris",
+         "n": "Sam Carrick",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Beck Malenstyn",
@@ -1438,6 +1438,11 @@
          "pp": ""
         },
         {
+         "n": "Carter Mazur",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Sheldon Dries",
          "pos": "W",
          "pp": ""
@@ -1458,7 +1463,7 @@
          "pp": ""
         },
         {
-         "n": "Axel Sandin-Pellikka",
+         "n": "Albert Johansson",
          "pos": "D",
          "pp": ""
         },
@@ -1468,12 +1473,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Albert Johansson",
+         "n": "Anton Johansson",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Andreas Englund",
+         "n": "William Wallinder",
          "pos": "D",
          "pp": ""
         }
@@ -1617,14 +1622,14 @@
          "pp": "PP1"
         },
         {
+         "n": "Alexander Kerfoot",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Ryan O'Reilly",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Jonathan Marchessault",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -1652,13 +1657,13 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Alexander Kerfoot",
-         "pos": "W",
+         "n": "Vitali Pinchuk",
+         "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Vitali Pinchuk",
-         "pos": "C",
+         "n": "Jonathan Marchessault",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -1692,14 +1697,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Nicolas Hague",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Roman Josi",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Jayden Struble",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Nick Perbix",
@@ -1717,7 +1722,7 @@
          "pp": ""
         },
         {
-         "n": "Jayden Struble",
+         "n": "Nicolas Hague",
          "pos": "D",
          "pp": ""
         }
@@ -1881,13 +1886,13 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Maxim Shabanov",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Ryan Hartman",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
-         "n": "Danila Yurov",
-         "pos": "C",
+         "n": "Bobby Brink",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -1901,18 +1906,18 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Ryan Hartman",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Maxim Shabanov",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
-         "n": "Rieger Lorenz",
+         "n": "Yakov Trenin",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Bobby Brink",
-         "pos": "W",
+         "n": "Danila Yurov",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -1921,7 +1926,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Yakov Trenin",
+         "n": "Rieger Lorenz",
          "pos": "W",
          "pp": ""
         },
@@ -1956,11 +1961,6 @@
          "pp": ""
         },
         {
-         "n": "Matt Kiersted",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Daemon Hunt",
          "pos": "D",
          "pp": ""
@@ -1969,6 +1969,11 @@
          "n": "David Spacek",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Matt Kiersted",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -2049,9 +2054,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Vladislav Namestnikov",
+         "n": "Brad Lambert",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Morgan Barron",
