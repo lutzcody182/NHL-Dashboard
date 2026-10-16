@@ -6771,6 +6771,7 @@ async function renderFirstGoal() {
     ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best first goal values</h3><p>Ranked by expected return; long odds, so expect long losing runs</p></div><div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)} · early ice ${f2(r.X)}× · P1 shooting ${f2(r.R)}×</div><div style="margin-top:4px"><b>${pct1(r.fp)}%</b> vs. ${BK[r.fBook]} ${fmtML(r.fBest)} (${pct1(r.fImp)}%) · <span style="color:var(--good)">${money(r.fEv)}</span></div></div>`).join('')}</div></div>` : ''}
     <div class="empty" id="fgNoMatch" hidden>No player matching that name in these games.</div>
     ${rows.length ? `<div class="card">${table('fg', cols, rows, { sort: anyDk ? 'fEv' : 'fp', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}
+    <div id="fgTrack"></div>
     <p class="muted" style="font-size:12px;margin:10px 0 0">First goal bets hit rarely and sportsbooks build in a large margin, so even good prices lose most nights. For fun and analysis, not betting advice.</p>`;
   RERENDER.fg = renderFirstGoal;
   $('#fgDate').onchange = e => { FG.date = e.target.value.replace(/-/g, ''); FG.game = ''; FG.team = ''; renderFirstGoal(); };
@@ -6779,6 +6780,44 @@ async function renderFirstGoal() {
   const applyQ = () => { const q = normName(FG.q); let shown = 0; $$('#fgBody [data-pname]').forEach(el => { const on = !q || el.dataset.pname.includes(q); el.style.display = on ? '' : 'none'; if (on && el.tagName === 'TR') shown++; }); const nm = $('#fgNoMatch'); if (nm) nm.hidden = !(q && !shown); };
   const qi = $('#fgQ'); if (qi) { qi.oninput = () => { FG.q = qi.value; applyQ(); }; applyQ(); }
   fgMarkButtons();
+  fgTrackRender(PK);
+}
+/* ---- first goal scorer profit tracker + pick log (picks.json → first, saved and graded by the GitHub job) ---- */
+const FGT = { strat: 'top1', all: false };
+const FG_STRATS = [
+  ['top1', "Ice Lab's most likely first scorer, each game", ps => { const by = {}; ps.forEach(p => { const b = by[p.gid]; if (!b || p.p > b.p) by[p.gid] = p; }); return Object.values(by); }],
+  ['pos', 'Every positive edge', ps => ps.filter(p => p.edge > 0)],
+  ['val3', '3 best values each day', ps => { const by = {}; ps.forEach(p => (by[p.date] = by[p.date] || []).push(p)); return Object.values(by).flatMap(l => l.filter(p => fin(p.roi)).sort((a, b) => b.roi - a.roi).slice(0, 3)); }],
+  ['val1', 'Best value in each game', ps => { const by = {}; ps.forEach(p => { const b = by[p.gid]; if (fin(p.roi) && (!b || p.roi > b.roi)) by[p.gid] = p; }); return Object.values(by); }]];
+function fgTrackCard(PK) {
+  const ps = ((PK && PK.first) || []).filter(p => pkPx(p) != null && fin(p.p));
+  if (!ps.length) return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 First goal pick log</h3></div><p class="muted" style="margin:0">No first goal picks saved yet. The GitHub job saves every player with a first goal price before each game and grades them the next morning.</p></div>`;
+  const isDone = p => p.res === 'W' || p.res === 'L';
+  const stats = list => { const g = list.filter(isDone); const pr = g.reduce((s, p) => s + pkProfit(p), 0), risk = g.reduce((s, p) => s + pkRisk(pkPx(p)), 0), w = g.filter(p => p.res === 'W').length; return { n: g.length, w, ls: g.length - w, profit: pr, roi: div(pr, risk), exp: g.reduce((s, p) => s + p.p, 0), pend: list.filter(p => p.res == null).length }; };
+  const S = FG_STRATS.map(([k, l, f]) => { const list = f(ps); return { k, l, list, ...stats(list) }; });
+  const tiles = `<div class="tiles" style="margin-bottom:12px">${S.map(s => `<div class="tile"><div class="k">${esc(s.l)}</div><div class="v num" style="color:${s.profit > 0 ? 'var(--good)' : s.profit < 0 ? 'var(--neg)' : 'inherit'}">${s.n ? money(s.profit) : '–'}</div><div class="s">${s.w}-${s.ls}${s.n ? ` · ROI ${fin(s.roi) ? (s.roi > 0 ? '+' : '') + pct1(s.roi) + '%' : '–'} · expected ${f1(s.exp)} hits` : ''}${s.pend ? ` · ${s.pend} pending` : ''}</div></div>`).join('')}</div>`;
+  const run = list => { let c = 0; return list.filter(isDone).sort((a, b) => a.start < b.start ? -1 : 1).map((p, i) => { c += pkProfit(p); return [i + 1, c]; }); };
+  const colors = { top1: 'var(--accent)', pos: '#1baf7a', val3: 'var(--home)', val1: '#9b59b6' };
+  const series = S.map(s => ({ name: s.l, color: colors[s.k], pts: run(s.list) })).filter(s => s.pts.length);
+  const ys = series.flatMap(s => s.pts.map(p => p[1])), nMax = Math.max(0, ...series.map(s => s.pts.length));
+  const chart = nMax >= 2 ? lineChart({ series, x0: 1, x1: Math.max(2, nMax), xTicks: (() => { const st = Math.max(1, Math.ceil(nMax / 7)), o = []; for (let v = 1; v <= nMax - st / 2; v += st) o.push({ v, l: `Bet ${v}` }); return o; })(), y0: Math.min(0, ...ys) * 1.1 - 50, y1: Math.max(0, ...ys) * 1.1 + 50, fx: v => `Bet ${Math.round(v)}`, fy: v => Math.abs(v) >= 1000 ? `${v < 0 ? '−' : ''}$${+(Math.abs(v) / 1000).toFixed(1)}k` : money(v), refY: 0, H: 240 }) + `<div class="legend">${series.map(s => `<span><i class="lg-dot" style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div>` : '<div class="empty">The running profit chart appears after the first graded picks.</div>';
+  const cur = S.find(s => s.k === FGT.strat) || S[0];
+  const logList = [...cur.list].sort((a, b) => a.start > b.start ? -1 : a.start < b.start ? 1 : b.p - a.p), shown = FGT.all ? logList : logList.slice(0, 40);
+  const resCell = p => p.res === 'W' ? '<b style="color:var(--good)">✓ Scored first</b>' : p.res === 'L' ? '<span style="color:var(--neg)">✗ No</span>' : p.res === 'V' ? '<span class="muted">Void (didn\'t play)</span>' : '<span class="muted">Pending</span>';
+  const logRows = shown.map(p => `<tr><td class="l">${parseYmd(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.tm, 16)}${plink(p.pid, p.n)}</div></td><td class="l"><span class="muted">vs.</span> ${esc(TM(p.opp).abbr || '')}</td><td>${pct1(p.p)}%</td><td><b>${fmtML(pkPx(p))}</b>${p.book ? ` <span class="muted" style="font-size:11px">${BK[p.book] || ''}</span>` : ''}</td><td style="color:${p.edge > 0 ? 'var(--good)' : 'var(--neg)'}">${fin(p.edge) ? (p.edge > 0 ? '+' : '') + (p.edge * 100).toFixed(1) : '–'}</td><td class="l">${resCell(p)}</td><td>${isDone(p) ? moneyCell(pkProfit(p)) : '–'}</td></tr>`).join('');
+  const done = ps.filter(isDone).length, pend = ps.filter(p => p.res == null).length;
+  return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 First goal pick log</h3><p>${done} graded · ${pend} pending · updated ${PK.updated ? new Date(PK.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</p></div>
+    <p class="muted" style="margin:-4px 0 10px;font-size:12px">The GitHub job saves every player with a first goal price before each game (the best of DraftKings and FanDuel) and grades them the next morning. Bet sizes follow your rule: $100 on plus odds. Players who don't play are void. "Expected hits" is how many first goals Ice Lab's chances said these picks should produce, so you can see if the model runs hot or cold.</p>
+    ${tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit</h3>${chart}
+    <div class="card-h" style="margin-top:14px"><h3>Pick log</h3><select id="fgtStrat">${S.map(s => `<option value="${s.k}" ${s.k === cur.k ? 'selected' : ''}>${esc(s.l)}</option>`).join('')}</select></div>
+    ${logRows ? `<div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Player</th><th class="l">Opponent</th><th>Ice Lab</th><th>Price</th><th>Edge</th><th class="l">Result</th><th>Profit</th></tr></thead><tbody>${logRows}</tbody></table></div>${logList.length > 40 ? `<button class="btn" id="fgtAll" style="margin-top:8px">${FGT.all ? 'Show fewer' : `Show all ${logList.length}`}</button>` : ''}` : '<p class="muted" style="margin:0">No picks in this group yet.</p>'}
+    <p class="muted" style="font-size:12px;margin:10px 0 0">First goal prices are long, so even a good model loses most nights and one hit at +1200 can flip a week. Give it a few hundred picks before judging.</p></div>`;
+}
+function fgTrackRender(PK) {
+  const box = $('#fgTrack'); if (!box) return;
+  box.innerHTML = fgTrackCard(PK);
+  const ks = $('#fgtStrat'); if (ks) ks.onchange = () => { FGT.strat = ks.value; FGT.all = false; fgTrackRender(PK); };
+  const ka = $('#fgtAll'); if (ka) ka.onclick = () => { FGT.all = !FGT.all; fgTrackRender(PK); };
 }
 async function fgMarkButtons() { await mbInit(); const l = mbLoad().filter(b => b.type === 'fg'); $$('[data-fgbet]').forEach(el => { const r = (FG.rows || [])[+el.dataset.fgbet]; const on = !!r && l.some(b => b.gid === r.gid && b.pid === r.pid); el.classList.toggle('on', on); el.textContent = on ? '✓ Bet' : '＋ Bet'; }); }
 document.addEventListener('click', async e => {
