@@ -34,6 +34,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main   # start from the newest commit, not the one from when the run was queued
 
       - uses: actions/setup-node@v5
         with:
@@ -117,6 +119,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main   # start from the newest commit, not the one from when the run was queued
 
       - uses: actions/setup-node@v5
         with:
@@ -501,6 +505,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main   # start from the newest commit, not the one from when the run was queued
 
       - uses: actions/setup-node@v5
         with:
@@ -586,6 +592,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: main   # start from the newest commit, not the one from when the run was queued
 
       - uses: actions/setup-node@v5
         with:
