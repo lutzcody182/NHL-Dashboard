@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-15",
- "updated": "2026-10-16T00:01:21.260Z",
+ "updated": "2026-10-16T01:01:10.293Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1581,6 +1581,11 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Dmitry Orlov",
+         "pos": "D",
+         "pp": "PP1"
+        },
+        {
          "n": "Michael Kesselring",
          "pos": "D",
          "pp": ""
@@ -1596,9 +1601,9 @@
          "pp": ""
         },
         {
-         "n": "Dmitry Orlov",
+         "n": "Nolan Allan",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Luca Cagnoni",
@@ -1790,9 +1795,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Zach Dean",
-         "pos": "W",
-         "pp": ""
+         "n": "Pius Suter",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Dalibor Dvorsky",
@@ -1810,9 +1815,9 @@
          "pp": ""
         },
         {
-         "n": "Pius Suter",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Zach Dean",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Dylan Peterson",
@@ -2389,7 +2394,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Jason Dickinson",
+         "n": "Josh Samanski",
          "pos": "C",
          "pp": ""
         },
@@ -2429,14 +2434,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Josh Samanski",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Filip Hallander",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Max Jones",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
