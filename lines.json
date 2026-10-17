@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-16",
- "updated": "2026-10-16T19:00:21.771Z",
+ "updated": "2026-10-17T01:00:21.872Z",
  "games": [
   {
    "time": "9:00 PM ET",
@@ -37,7 +37,7 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Egor Chinakhov",
+         "n": "Ville Koivunen",
          "pos": "W",
          "pp": "PP2"
         },
