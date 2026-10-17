@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-17T20:00:17.394Z",
+ "updated": "2026-10-17T21:00:15.585Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -525,26 +525,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Liam Ohgren",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Linus Karlsson",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Arshdeep Bains",
-         "pos": "W",
-         "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
          "n": "Filip Chytil",
          "pos": "C",
          "pp": "PP2"
@@ -562,6 +542,26 @@
        ]
       },
       {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Liam Ohgren",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Drew O'Connor",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Linus Karlsson",
+         "pos": "W",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
        "label": "Line 4",
        "players": [
         {
@@ -575,7 +575,7 @@
          "pp": ""
         },
         {
-         "n": "Drew O'Connor",
+         "n": "Arshdeep Bains",
          "pos": "W",
          "pp": ""
         }
