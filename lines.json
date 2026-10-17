@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-17T14:00:17.839Z",
+ "updated": "2026-10-17T15:00:20.616Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -178,11 +178,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Ivan Miroshnichenko",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Ilya Protas",
          "pos": "C",
          "pp": "PP2"
@@ -200,7 +195,7 @@
         {
          "n": "Ethen Frank",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ryan Leonard",
@@ -1129,12 +1124,32 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Tyson Foerster",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Trevor Zegras",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Owen Tippett",
+         "n": "Christian Dvorak",
+         "pos": "C",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Matvei Michkov",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Porter Martone",
          "pos": "W",
          "pp": "PP2"
         },
@@ -1146,35 +1161,10 @@
        ]
       },
       {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Tyson Foerster",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Denver Barkey",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Christian Dvorak",
-         "pos": "C",
-         "pp": ""
-        }
-       ]
-      },
-      {
        "label": "Line 3",
        "players": [
         {
-         "n": "Matvei Michkov",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Porter Martone",
+         "n": "Denver Barkey",
          "pos": "W",
          "pp": "PP1"
         },
@@ -1182,6 +1172,11 @@
          "n": "Noah Cates",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Michael Bunting",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -1199,9 +1194,9 @@
          "pp": ""
         },
         {
-         "n": "Michael Bunting",
+         "n": "Garrett Wilson",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -1378,9 +1373,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Nate Danielson",
+         "n": "Lucas Raymond",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Dylan Larkin",
@@ -1423,9 +1418,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Lucas Raymond",
+         "n": "Nate Danielson",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Michael Rasmussen",
@@ -1865,7 +1860,7 @@
     },
     {
      "team": "Montreal Canadiens",
-     "goalie": "Jakub Dobes",
+     "goalie": "Jacob Fowler",
      "groups": [
       {
        "label": "Line 1",
@@ -2150,9 +2145,9 @@
          "pp": "PP1"
         },
         {
-         "n": "John Tavares",
+         "n": "Easton Cowan",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2167,10 +2162,10 @@
         {
          "n": "Gavin McKenna",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Easton Cowan",
+         "n": "Bo Groulx",
          "pos": "W",
          "pp": "PP2"
         }
