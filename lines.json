@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-17T18:00:18.536Z",
+ "updated": "2026-10-17T18:26:25.949Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1246,7 +1246,7 @@
    "teams": [
     {
      "team": "San Jose Sharks",
-     "goalie": "Yaroslav Askarov",
+     "goalie": "Alex Nedeljkovic",
      "groups": [
       {
        "label": "Line 1",
@@ -1334,7 +1334,7 @@
         {
          "n": "Dmitry Orlov",
          "pos": "D",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Michael Kesselring",
@@ -1359,7 +1359,7 @@
         {
          "n": "Luca Cagnoni",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       }
@@ -2409,8 +2409,8 @@
          "pp": "PP1"
         },
         {
-         "n": "Cole Sillinger",
-         "pos": "W",
+         "n": "Luca Del Bel Belluz",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -2429,13 +2429,13 @@
          "pp": ""
         },
         {
-         "n": "Dmitri Voronkov",
+         "n": "Ryan Lomberg",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Luca Del Bel Belluz",
-         "pos": "C",
+         "n": "Cole Sillinger",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -2446,7 +2446,7 @@
         {
          "n": "Damon Severson",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Zach Werenski",
@@ -3000,7 +3000,7 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Filip Hallander",
+         "n": "Colton Dach",
          "pos": "C",
          "pp": ""
         },
@@ -3050,7 +3050,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Colton Dach",
+         "n": "Filip Hallander",
          "pos": "C",
          "pp": ""
         }
