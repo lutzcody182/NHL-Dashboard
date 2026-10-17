@@ -1139,7 +1139,7 @@ async function loadLeaders(evs, d) {
     if (!x || !x.pl) return null;
     const p = g.sk[x.pl] || {}, recs = ((PKf && PKf.first) || []).filter(r => r.gid === String(g.id)), rec = recs.find(r => r.pid === x.pl);
     const dkm = !rec ? fgDkMap(PFf, g.date, g.home.id, g.away.id) : null, fdm = !rec ? fdPriceMap(PFf, g.date, g.home.id, g.away.id, 'first') : null;
-    const bp = rec ? (rec.best != null ? { price: rec.best, book: rec.book || 'dk' } : rec.dk != null ? { price: rec.dk, book: 'dk' } : null) : bestPrice(dkm ? dkLookup(dkm, p.n || '') : null, fdm ? dkLookup(fdm, p.n || '') : null), dk = bp ? bp.price : null, book = bp ? bp.book : null;
+    const bp = rec ? (rec.best != null ? { price: rec.best, book: rec.book || 'dk' } : rec.dk != null ? { price: rec.dk, book: 'dk' } : null) : bestPrice(dkm ? dkLookup(dkm, p.n || '', x.pl) : null, fdm ? dkLookup(fdm, p.n || '', x.pl) : null), dk = bp ? bp.price : null, book = bp ? bp.book : null;
     const top = recs.length ? recs.reduce((m, r) => r.p > m.p ? r : m) : null;
     return { g, x, id: x.pl, n: p.n || 'Unknown', book, tm: x.tm, vs: (x.tm === g.home.id ? 'vs ' : '@ ') + (x.tm === g.home.id ? g.away.abbr : g.home.abbr), dk, rec, topHit: top ? top.pid === x.pl : null, topN: top ? top.n : '' };
   }).filter(Boolean).sort((a, b) => a.g.date < b.g.date ? -1 : 1);
@@ -2652,7 +2652,19 @@ async function getLinesFile() {
   try { const r = await fetch('lines.json?t=' + Date.now(), { cache: 'no-store' }); RGL.data = r.ok ? await r.json() : false; } catch (e) { RGL.data = false; }
   RGL.t = Date.now(); return RGL.data;
 }
-const normName = x => (x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+const normName = x => { const t = String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\(\d{4}\)/g, '').split(/[\s\-.]+/).map(w => w.replace(/[^a-z]/g, '')).filter(Boolean); return (t.length > 2 ? [t[0], ...t.slice(1, -1).map(w => w[0]), t[t.length - 1]] : t).join(''); };
+// sportsbook key: the name plus the birth year a book adds to tell two same-named players apart, e.g. "Elias Pettersson (2004)"
+const oddsKey = n => { const m = String(n || '').match(/\((\d{4})\)\s*$/); return normName(n) + (m ? '#' + m[1] : ''); };
+// birth years by ESPN player id, loaded only for teams where a book tags a name with a birth year (see dobPrep)
+const DOBY = {}, DOBT = {};
+async function dobPrep(PF) {
+  if (!PF || !PF.games) return;
+  const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
+  const teamOf = x => Object.keys(TEAMS).find(id => normName(x) === nm(id)) || Object.keys(TEAMS).find(id => mas(id) && normName(x).endsWith(mas(id)));
+  const need = new Set();
+  for (const g of PF.games) if ([...(g.players || []), ...(g.first || [])].some(p => /\(\d{4}\)\s*$/.test(p.n || ''))) [g.home, g.away].forEach(x => { const id = teamOf(x); if (id && !DOBT[id]) need.add(id); });
+  await Promise.all([...need].map(async id => { DOBT[id] = 1; try { const j = await getJSON(`${API}/teams/${id}/roster`); for (const grp of (j.athletes || [])) for (const a of (grp.items || [grp])) if (a.id && a.dateOfBirth) DOBY[String(a.id)] = +String(a.dateOfBirth).slice(0, 4); } catch (e) { DOBT[id] = 0; } }));
+}
 // your own lineups (when you have them before RotoGrinders), saved in this browser by game day and team; kept 3 days
 const LOV = { map: null };
 const lovKey = (dateIso, tid) => new Date(dateIso).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }) + '|' + tid;
@@ -5382,7 +5394,7 @@ function gsTonight(S, e, LF, PF, INJ, MATE) {
       const phv = PHF.idx ? phTalent(r0.n, TM(t).abbr, r0.pos, seasonOf(e.date), 'now') : null;
       const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied, crew, pWin, mate, finPH: phv && fin(phv.sh) ? phv.sh : undefined });
       if (!r) continue;
-      const dk = dkm ? dkLookup(dkm, r0.n) : null, fd = fdm ? dkLookup(fdm, r0.n) : null, ev = dk != null ? betEV(r.p, dk) : null;
+      const dk = dkm ? dkLookup(dkm, r0.n, pid) : null, fd = fdm ? dkLookup(fdm, r0.n, pid) : null, ev = dk != null ? betEV(r.p, dk) : null;
       rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt, crew, INJ && INJ.refs), crew, dk, fd, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
     }
   }
@@ -5436,7 +5448,7 @@ const PRF = { data: null, t: 0 };
 async function getPropsFile() {
   if (PRF.data !== null && Date.now() - PRF.t < 5 * 60e3) return PRF.data;
   try { const r = await fetch('props.json?t=' + Date.now(), { cache: 'no-store' }); PRF.data = r.ok ? await r.json() : false; } catch (e) { PRF.data = false; }
-  PRF.t = Date.now(); return PRF.data;
+  PRF.t = Date.now(); try { await dobPrep(PRF.data); } catch (e) {} return PRF.data;
 }
 // DraftKings price for one player in one game (matched by team names, date and player name)
 // best price between the two books: the one that pays more
@@ -5450,7 +5462,7 @@ function fdPriceMap(PF, dateIso, hId, aId, list = 'players') {
   const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
   const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
   if (!g) return null;
-  const m = {}; for (const p of g[list] || []) if (p.fd != null) m[normName(p.n)] = p.fd;
+  const m = {}; for (const p of g[list] || []) if (p.fd != null) m[oddsKey(p.n)] = p.fd;
   return Object.keys(m).length ? m : null;
 }
 // FanDuel moneyline for one game (from the odds job)
@@ -5467,10 +5479,19 @@ function dkPriceMap(PF, dateIso, hId, aId) {
   const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
   const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
   if (!g) return null;
-  const m = {}; for (const p of g.players) if (p.price != null) m[normName(p.n)] = p.price;
+  const m = {}; for (const p of g.players) if (p.price != null) m[oddsKey(p.n)] = p.price;
   return m;
 }
-const dkLookup = (m, name) => { if (!m) return null; const k = normName(name); if (m[k] != null) return m[k]; const last = normName(String(name).split(' ').slice(-1)[0]); const hits = Object.keys(m).filter(x => x.endsWith(last) && x[0] === k[0]); return hits.length === 1 ? m[hits[0]] : null; };
+// a player's price: exact name first; a birth-year-tagged name only goes to the player born that year; otherwise first initial + last name if exactly one fits
+const dkLookup = (m, name, pid) => {
+  if (!m) return null; const k = normName(name), y = pid ? DOBY[String(pid)] : null;
+  if (y && m[k + '#' + y] != null) return m[k + '#' + y];
+  if (m[k] != null) return m[k];
+  const keys = Object.keys(m), tagged = new Set(keys.filter(x => x.includes('#')).map(x => x.split('#')[0]));
+  const last = normName(String(name).split(/[\s\-]+/).slice(-1)[0]);
+  const cand = keys.filter(x => { const [b, tag] = x.split('#'); return b.endsWith(last) && b[0] === k[0] && (tag ? +tag === y : !tagged.has(b)); });
+  return cand.length === 1 ? m[cand[0]] : null;
+};
 const amImplied = o => o < 0 ? -o / (-o + 100) : 100 / (o + 100);
 // expected profit using your bet sizes: minus odds bet to win $100, plus odds bet $100
 const betEV = (p, o) => { const st = o < 0 ? { risk: -o, win: 100 } : { risk: 100, win: o }; const ev = p * st.win - (1 - p) * st.risk; return { ev, roi: ev / st.risk, risk: st.risk }; };
@@ -6670,7 +6691,7 @@ function fgDkMap(PF, dateIso, hId, aId) {
   const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
   const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
   if (!g || !g.first || !g.first.length) return null;
-  const m = {}; for (const p of g.first) if (p.price != null) m[normName(p.n)] = p.price; return Object.keys(m).length ? m : null;
+  const m = {}; for (const p of g.first) if (p.price != null) m[oddsKey(p.n)] = p.price; return Object.keys(m).length ? m : null;
 }
 // tonight's first goal chances for one game, from the anytime rows (gsTonight)
 function fgGame(S, e, rows, PF, ATT, fit) {
@@ -6690,7 +6711,7 @@ function fgGame(S, e, rows, PF, ATT, fit) {
     const tr = out.filter(r => r.tm === t), sw = tr.reduce((s, r) => s + r.w, 0), pTeam = L > 0 ? (t === H ? LH : LA) / L : .5;
     for (const r of tr) {
       r.pTeam = pTeam * pAny; r.share = sw > 0 ? r.w / sw : 0; r.fp = r.pTeam * r.share;
-      r.fdk = dkm ? dkLookup(dkm, r.n) : null; r.ffd = fdm ? dkLookup(fdm, r.n) : null;
+      r.fdk = dkm ? dkLookup(dkm, r.n, r.pid) : null; r.ffd = fdm ? dkLookup(fdm, r.n, r.pid) : null;
       r.fFair = r.fdk != null && over ? amImplied(r.fdk) / over : r.ffd != null && overF ? amImplied(r.ffd) / overF : NaN;
       // edge and expected profit at the better of the two books
       const bp = bestPrice(r.fdk, r.ffd); r.fBest = bp ? bp.price : null; r.fBook = bp ? bp.book : null; r.fImp = bp ? amImplied(bp.price) : NaN;
