@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-17T22:00:17.720Z",
+ "updated": "2026-10-17T23:00:17.285Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1327,12 +1327,12 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Dmitry Orlov",
+         "n": "Michael Kesselring",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Michael Kesselring",
+         "n": "Darnell Nurse",
          "pos": "D",
          "pp": ""
         },
@@ -1344,17 +1344,17 @@
         {
          "n": "Jacob Trouba",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
+        },
+        {
+         "n": "Dmitry Orlov",
+         "pos": "D",
+         "pp": "PP1"
         },
         {
          "n": "Nolan Allan",
          "pos": "D",
          "pp": ""
-        },
-        {
-         "n": "Luca Cagnoni",
-         "pos": "D",
-         "pp": "PP1"
         }
        ]
       }
@@ -1433,11 +1433,6 @@
          "pp": ""
         },
         {
-         "n": "Axel Sandin-Pellikka",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Sheldon Dries",
          "pos": "C",
          "pp": ""
@@ -1506,7 +1501,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Mikko Rantanen",
+         "n": "Jason Robertson",
          "pos": "W",
          "pp": "PP1"
         }
@@ -1516,13 +1511,13 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Jason Robertson",
-         "pos": "W",
+         "n": "Wyatt Johnston",
+         "pos": "C",
          "pp": "PP1"
         },
         {
-         "n": "Wyatt Johnston",
-         "pos": "C",
+         "n": "Mikko Rantanen",
+         "pos": "W",
          "pp": "PP1"
         },
         {
@@ -1745,14 +1740,14 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Ryan McLeod",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Josh Doan",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Peyton Krebs",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Tage Thompson",
@@ -1785,14 +1780,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Konsta Helenius",
+         "n": "Jiri Kulich",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Ryan McLeod",
-         "pos": "C",
-         "pp": ""
+         "n": "Konsta Helenius",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Josh Norris",
@@ -1805,9 +1800,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Jiri Kulich",
+         "n": "Peyton Krebs",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Beck Malenstyn",
@@ -2359,9 +2354,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Valeri Nichushkin",
+         "n": "Matthew Knies",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Kent Johnson",
@@ -2379,14 +2374,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Sean Monahan",
-         "pos": "C",
+         "n": "Valeri Nichushkin",
+         "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Matthew Knies",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Sean Monahan",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Conor Garland",
@@ -2404,8 +2399,8 @@
          "pp": "PP1"
         },
         {
-         "n": "Luca Del Bel Belluz",
-         "pos": "C",
+         "n": "Cole Sillinger",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -2429,8 +2424,8 @@
          "pp": ""
         },
         {
-         "n": "Cole Sillinger",
-         "pos": "W",
+         "n": "Luca Del Bel Belluz",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -2464,7 +2459,7 @@
          "pp": ""
         },
         {
-         "n": "Carson Soucy",
+         "n": "Emil Andrae",
          "pos": "D",
          "pp": ""
         }
