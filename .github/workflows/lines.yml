@@ -349,7 +349,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame };`);
             return w.__t;
           }
 
@@ -377,12 +377,14 @@ jobs:
 
             const picks = readJSON('picks.json', { picks: [] });
             const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p]));
+            // one-time fix: before Oct 18 2026 the forward Elias Pettersson was given the defenseman Elias Pettersson's prices (same name), so those picks were never real
+            for (const M of [byKey, fByKey]) for (const [k, p] of M) if (p.pid === '4233566' && p.date <= '20261017') M.delete(k);
 
             // 1) today's pre-game picks
             const today = ET(now);
             let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
-            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null);
-            let added = 0, updated = 0, gAdded = 0;
+            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
+            let added = 0, updated = 0, gAdded = 0, dropped = 0;
             T.gsBlendFit(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
             // last season is the goal scorer model's starting point (counted at half weight)
             T.GS.prior = [...T.A.games.values()].filter(g => g && g.final && T.seasonOf(g.date) === T.S.curSeason - 1);
@@ -419,10 +421,12 @@ jobs:
                 if (fgFitV) {
                   try {
                     const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null;
+                    const fKeep = new Set();
                     for (const r of T.fgGame(gs.S, e, allRows, PF, fgATT, fgFitV).filter(x => x.fBest != null)) {
-                      const k = `f|${e.id}|${r.pid}`, rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
+                      const k = `f|${e.id}|${r.pid}`; fKeep.add(k); const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
                       if (fByKey.has(k)) { if (fByKey.get(k).res == null) Object.assign(fByKey.get(k), rec); } else { fByKey.set(k, rec); fAdded++; }
                     }
+                    if (fKeep.size) for (const [k, p] of fByKey) if (p.gid === String(e.id) && p.res == null && !fKeep.has(k)) { fByKey.delete(k); dropped++; } // price gone or no longer matched to him
                   } catch (err) { log(`Game ${e.id}: first goal model error: ${err.message}`); }
                 }
                 if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
@@ -431,9 +435,11 @@ jobs:
                   const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
                   if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
+                // a pending pick whose price disappeared (or no longer matches him, like a same-name mix-up) is removed instead of staying with a wrong price
+                { const keep = new Set(rows.map(r => `${e.id}|${r.pid}`)); for (const [k, p] of byKey) if (p.gid === String(e.id) && p.res == null && !keep.has(k)) { byKey.delete(k); dropped++; } }
               }
             }
-            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new. First goal prices: ${fAdded} new.`);
+            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new. First goal prices: ${fAdded} new. Removed ${dropped} pending picks that lost their price.`);
 
             // 2) grade finished games
             let graded = 0;
@@ -682,7 +688,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame };`);
             return w.__t;
           }
 
@@ -710,12 +716,14 @@ jobs:
 
             const picks = readJSON('picks.json', { picks: [] });
             const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p]));
+            // one-time fix: before Oct 18 2026 the forward Elias Pettersson was given the defenseman Elias Pettersson's prices (same name), so those picks were never real
+            for (const M of [byKey, fByKey]) for (const [k, p] of M) if (p.pid === '4233566' && p.date <= '20261017') M.delete(k);
 
             // 1) today's pre-game picks
             const today = ET(now);
             let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
-            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null);
-            let added = 0, updated = 0, gAdded = 0;
+            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
+            let added = 0, updated = 0, gAdded = 0, dropped = 0;
             T.gsBlendFit(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
             // last season is the goal scorer model's starting point (counted at half weight)
             T.GS.prior = [...T.A.games.values()].filter(g => g && g.final && T.seasonOf(g.date) === T.S.curSeason - 1);
@@ -752,10 +760,12 @@ jobs:
                 if (fgFitV) {
                   try {
                     const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null;
+                    const fKeep = new Set();
                     for (const r of T.fgGame(gs.S, e, allRows, PF, fgATT, fgFitV).filter(x => x.fBest != null)) {
-                      const k = `f|${e.id}|${r.pid}`, rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
+                      const k = `f|${e.id}|${r.pid}`; fKeep.add(k); const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
                       if (fByKey.has(k)) { if (fByKey.get(k).res == null) Object.assign(fByKey.get(k), rec); } else { fByKey.set(k, rec); fAdded++; }
                     }
+                    if (fKeep.size) for (const [k, p] of fByKey) if (p.gid === String(e.id) && p.res == null && !fKeep.has(k)) { fByKey.delete(k); dropped++; } // price gone or no longer matched to him
                   } catch (err) { log(`Game ${e.id}: first goal model error: ${err.message}`); }
                 }
                 if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
@@ -764,9 +774,11 @@ jobs:
                   const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
                   if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
+                // a pending pick whose price disappeared (or no longer matches him, like a same-name mix-up) is removed instead of staying with a wrong price
+                { const keep = new Set(rows.map(r => `${e.id}|${r.pid}`)); for (const [k, p] of byKey) if (p.gid === String(e.id) && p.res == null && !keep.has(k)) { byKey.delete(k); dropped++; } }
               }
             }
-            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new. First goal prices: ${fAdded} new.`);
+            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new. First goal prices: ${fAdded} new. Removed ${dropped} pending picks that lost their price.`);
 
             // 2) grade finished games
             let graded = 0;
