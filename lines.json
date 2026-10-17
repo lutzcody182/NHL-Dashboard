@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-17T21:00:15.585Z",
+ "updated": "2026-10-17T22:00:17.720Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -532,7 +532,7 @@
         {
          "n": "Paul Cotter",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Brock Boeser",
@@ -597,7 +597,7 @@
         {
          "n": "Tom Willander",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jamie Oleksiak",
@@ -839,12 +839,12 @@
          "pp": ""
         },
         {
-         "n": "Ryker Evans",
+         "n": "Cale Fleury",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Brandon Montour",
+         "n": "Ryker Evans",
          "pos": "D",
          "pp": "PP1"
         },
@@ -1088,7 +1088,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Nikolas Matinpalo",
+         "n": "Tyler Kleven",
          "pos": "D",
          "pp": ""
         },
@@ -1098,7 +1098,7 @@
          "pp": ""
         },
         {
-         "n": "Tyler Kleven",
+         "n": "Nikolas Matinpalo",
          "pos": "D",
          "pp": ""
         },
@@ -2572,12 +2572,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Justin Barron",
+         "n": "Colton Parayko",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Colton Parayko",
+         "n": "Theo Lindstein",
          "pos": "D",
          "pp": ""
         },
