@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-17T15:23:29.891Z",
+ "updated": "2026-10-17T16:00:18.557Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1093,7 +1093,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Cameron Crotty",
+         "n": "Nikolas Matinpalo",
          "pos": "D",
          "pp": ""
         },
@@ -1926,14 +1926,14 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Oliver Kapanen",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Kirby Dach",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Owen Beck",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Jake Evans",
@@ -1999,14 +1999,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Kyle Palmieri",
+         "n": "Matias Maccelli",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Matias Maccelli",
+         "n": "Simon Holmstrom",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2039,7 +2039,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Ondrej Palat",
+         "n": "Emil Heineman",
          "pos": "W",
          "pp": ""
         },
@@ -2059,14 +2059,14 @@
          "pp": ""
         },
         {
-         "n": "Emil Heineman",
+         "n": "Kyle Palmieri",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
-         "n": "Simon Holmstrom",
+         "n": "Ondrej Palat",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2243,6 +2243,11 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Alexis Lafreniere",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Gabe Perreault",
          "pos": "W",
          "pp": "PP2"
@@ -2251,11 +2256,6 @@
          "n": "Mika Zibanejad",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Pavel Dorofeyev",
-         "pos": "W",
-         "pp": "PP1"
         }
        ]
       },
@@ -2263,14 +2263,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Alexis Lafreniere",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Tye Kartye",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Pavel Dorofeyev",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "J.T. Miller",
@@ -2305,11 +2305,6 @@
         {
          "n": "Justin Dowling",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Jaroslav Chmelar",
-         "pos": "W",
          "pp": ""
         },
         {
@@ -2429,14 +2424,14 @@
          "pp": ""
         },
         {
-         "n": "Ryan Lomberg",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Dmitri Voronkov",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Luca Del Bel Belluz",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
