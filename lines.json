@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-17T19:00:17.175Z",
+ "updated": "2026-10-17T20:00:17.394Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -255,7 +255,7 @@
    "teams": [
     {
      "team": "Carolina Hurricanes",
-     "goalie": "Brandon Bussi",
+     "goalie": "Pyotr Kochetkov",
      "groups": [
       {
        "label": "Line 1",
@@ -462,9 +462,9 @@
          "pp": ""
         },
         {
-         "n": "Dylan DeMelo",
+         "n": "Neal Pionk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Mario Ferraro",
@@ -472,9 +472,9 @@
          "pp": ""
         },
         {
-         "n": "Neal Pionk",
+         "n": "Dylan DeMelo",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Jack St. Ivany",
@@ -530,14 +530,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Marco Rossi",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Linus Karlsson",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Arshdeep Bains",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -597,7 +597,7 @@
         {
          "n": "Tom Willander",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jamie Oleksiak",
@@ -620,7 +620,7 @@
     },
     {
      "team": "Tampa Bay Lightning",
-     "goalie": "Andrei Vasilevskiy",
+     "goalie": "Dennis Hildeby",
      "groups": [
       {
        "label": "Line 1",
@@ -671,6 +671,11 @@
          "pp": ""
         },
         {
+         "n": "Emil Lilleberg",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Pontus Holmberg",
          "pos": "W",
          "pp": ""
@@ -694,11 +699,6 @@
          "n": "Conor Geekie",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Jeffrey Viel",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -713,7 +713,7 @@
         {
          "n": "J.J. Moser",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Ryan McDonagh",
@@ -722,11 +722,6 @@
         },
         {
          "n": "Erik Cernak",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Max Crozier",
          "pos": "D",
          "pp": ""
         },
