@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-17T16:00:18.557Z",
+ "updated": "2026-10-17T17:00:15.640Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -178,6 +178,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Ivan Miroshnichenko",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Ilya Protas",
          "pos": "C",
          "pp": "PP2"
@@ -192,11 +197,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Ethen Frank",
-         "pos": "W",
-         "pp": "PP2"
-        },
         {
          "n": "Ryan Leonard",
          "pos": "W",
@@ -1503,7 +1503,7 @@
         {
          "n": "Tyler Seguin",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Roope Hintz",
@@ -1526,14 +1526,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Sam Steel",
+         "n": "Wyatt Johnston",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Jamie Benn",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Sam Steel",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -1551,9 +1551,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Colin Blackwell",
+         "n": "Jamie Benn",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1567,6 +1567,11 @@
         },
         {
          "n": "Joel Kiviranta",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Colin Blackwell",
          "pos": "W",
          "pp": ""
         }
@@ -1792,7 +1797,7 @@
         {
          "n": "Ryan McLeod",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Josh Norris",
@@ -1805,9 +1810,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Sam Carrick",
+         "n": "Jiri Kulich",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Beck Malenstyn",
@@ -2481,7 +2486,7 @@
    "teams": [
     {
      "team": "St. Louis Blues",
-     "goalie": "Joel Hofer",
+     "goalie": "Jordan Binnington",
      "groups": [
       {
        "label": "Line 1",
@@ -2514,7 +2519,7 @@
         {
          "n": "Jonatan Berggren",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Connor McMichael",
@@ -2532,13 +2537,13 @@
          "pp": "PP1"
         },
         {
-         "n": "Pius Suter",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Dalibor Dvorsky",
          "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Pavel Buchnevich",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -2547,17 +2552,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ross Johnston",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Zach Dean",
          "pos": "C",
          "pp": ""
         },
         {
-         "n": "Dylan Peterson",
+         "n": "Pius Suter",
          "pos": "W",
          "pp": ""
         }
@@ -2896,11 +2896,6 @@
       {
        "label": "Line 3",
        "players": [
-        {
-         "n": "Jared Wright",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Joel Armia",
          "pos": "W",
