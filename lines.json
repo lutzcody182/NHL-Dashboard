@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-18T00:00:16.018Z",
+ "updated": "2026-10-18T01:00:16.393Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1893,7 +1893,7 @@
         {
          "n": "Chris Kreider",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -1908,7 +1908,7 @@
         {
          "n": "Zachary Bolduc",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Alexandre Texier",
@@ -2401,7 +2401,7 @@
         {
          "n": "Cole Sillinger",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Mathieu Olivier",
@@ -2436,7 +2436,7 @@
         {
          "n": "Damon Severson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Zach Werenski",
@@ -2482,14 +2482,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Dylan Holloway",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Robert Thomas",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Pavel Buchnevich",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Jimmy Snuggerud",
@@ -2527,14 +2527,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Dalibor Dvorsky",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Dylan Holloway",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
-         "n": "Pavel Buchnevich",
+         "n": "Pius Suter",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2547,9 +2547,9 @@
          "pp": ""
         },
         {
-         "n": "Pius Suter",
-         "pos": "W",
-         "pp": ""
+         "n": "Dalibor Dvorsky",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -2736,9 +2736,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Pavel Zacha",
+         "n": "Fraser Minten",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2748,7 +2748,7 @@
         {
          "n": "JJ Peterka",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Marat Khusnutdinov",
@@ -2756,9 +2756,9 @@
          "pp": ""
         },
         {
-         "n": "Fraser Minten",
+         "n": "Matthew Poitras",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2796,7 +2796,7 @@
          "pp": ""
         },
         {
-         "n": "Matthew Poitras",
+         "n": "Sean Kuraly",
          "pos": "C",
          "pp": ""
         }
@@ -2821,14 +2821,14 @@
          "pp": ""
         },
         {
-         "n": "Nikita Zadorov",
+         "n": "Jonathan Aspirot",
          "pos": "D",
          "pp": ""
         },
         {
          "n": "Mason Lohrei",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Frederic Brunet",
@@ -2875,11 +2875,6 @@
          "n": "Trevor Moore",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Erik Haula",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -2895,6 +2890,11 @@
          "n": "Scott Laughton",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Erik Haula",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
