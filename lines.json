@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-18",
- "updated": "2026-10-18T17:00:16.289Z",
+ "updated": "2026-10-18T18:00:16.166Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -18,17 +18,17 @@
        "players": [
         {
          "n": "Matthew Knies",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Kent Johnson",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Adam Fantilli",
-         "pos": "",
+         "pos": "C",
          "pp": "PP1"
         }
        ]
@@ -38,17 +38,17 @@
        "players": [
         {
          "n": "Valeri Nichushkin",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         },
         {
          "n": "Sean Monahan",
-         "pos": "",
+         "pos": "C",
          "pp": "PP2"
         },
         {
          "n": "Conor Garland",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -58,17 +58,17 @@
        "players": [
         {
          "n": "Charlie Coyle",
-         "pos": "",
+         "pos": "C",
          "pp": "PP1"
         },
         {
          "n": "Cole Sillinger",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         },
         {
          "n": "Mathieu Olivier",
-         "pos": "",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -78,17 +78,17 @@
        "players": [
         {
          "n": "Danton Heinen",
-         "pos": "",
+         "pos": "C",
          "pp": ""
         },
         {
          "n": "Ryan Lomberg",
-         "pos": "",
+         "pos": "W",
          "pp": ""
         },
         {
          "n": "Luca Del Bel Belluz",
-         "pos": "",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -98,32 +98,32 @@
        "players": [
         {
          "n": "Damon Severson",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Zach Werenski",
-         "pos": "",
+         "pos": "D",
          "pp": "PP1"
         },
         {
          "n": "Jake Christiansen",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Denton Mateychuk",
-         "pos": "",
+         "pos": "D",
          "pp": "PP2"
         },
         {
          "n": "Erik Gudbranson",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Emil Andrae",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         }
        ]
@@ -139,17 +139,17 @@
        "players": [
         {
          "n": "Matt Boldy",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Kirill Kaprizov",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Joel Eriksson Ek",
-         "pos": "",
+         "pos": "C",
          "pp": "PP1"
         }
        ]
@@ -159,17 +159,17 @@
        "players": [
         {
          "n": "Ryan Hartman",
-         "pos": "",
+         "pos": "C",
          "pp": "PP2"
         },
         {
          "n": "Bobby Brink",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         },
         {
          "n": "Blake Coleman",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -179,17 +179,17 @@
        "players": [
         {
          "n": "Maxim Shabanov",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Yakov Trenin",
-         "pos": "",
+         "pos": "W",
          "pp": ""
         },
         {
          "n": "Danila Yurov",
-         "pos": "",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -199,17 +199,17 @@
        "players": [
         {
          "n": "Rieger Lorenz",
-         "pos": "",
+         "pos": "W",
          "pp": ""
         },
         {
          "n": "Tyler Pitlick",
-         "pos": "",
+         "pos": "W",
          "pp": ""
         },
         {
          "n": "Michael McCarron",
-         "pos": "",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -219,32 +219,32 @@
        "players": [
         {
          "n": "Quinn Hughes",
-         "pos": "",
+         "pos": "D",
          "pp": "PP1"
         },
         {
          "n": "Jonas Brodin",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Zach Bogosian",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Daemon Hunt",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "David Spacek",
-         "pos": "",
+         "pos": "D",
          "pp": "PP2"
         },
         {
          "n": "Matt Kiersted",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         }
        ]
@@ -267,17 +267,17 @@
        "players": [
         {
          "n": "Andrei Svechnikov",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Sebastian Aho",
-         "pos": "",
+         "pos": "C",
          "pp": "PP1"
         },
         {
          "n": "William Carrier",
-         "pos": "",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -287,12 +287,12 @@
        "players": [
         {
          "n": "Logan Stankoven",
-         "pos": "",
+         "pos": "C",
          "pp": "PP2"
         },
         {
          "n": "Jackson Blake",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         }
        ]
@@ -302,17 +302,17 @@
        "players": [
         {
          "n": "Jordan Martinook",
-         "pos": "",
+         "pos": "W",
          "pp": ""
         },
         {
          "n": "Nikolaj Ehlers",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Mark Jankowski",
-         "pos": "",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -322,17 +322,17 @@
        "players": [
         {
          "n": "Eric Robinson",
-         "pos": "",
+         "pos": "W",
          "pp": ""
         },
         {
          "n": "Jesperi Kotkaniemi",
-         "pos": "",
+         "pos": "C",
          "pp": ""
         },
         {
          "n": "Felix Unger Sorum",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -342,32 +342,32 @@
        "players": [
         {
          "n": "Jalen Chatfield",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Jaccob Slavin",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "K'Andre Miller",
-         "pos": "",
+         "pos": "D",
          "pp": "PP2"
         },
         {
          "n": "Sean Walker",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Mike Reilly",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Shayne Gostisbehere",
-         "pos": "",
+         "pos": "D",
          "pp": "PP1"
         }
        ]
@@ -383,17 +383,17 @@
        "players": [
         {
          "n": "Mikael Backlund",
-         "pos": "",
+         "pos": "C",
          "pp": ""
         },
         {
          "n": "Matt Coronato",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Joel Farabee",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         }
        ]
@@ -403,17 +403,17 @@
        "players": [
         {
          "n": "Aydar Suniev",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         },
         {
          "n": "Morgan Frost",
-         "pos": "",
+         "pos": "C",
          "pp": "PP1"
         },
         {
          "n": "Yegor Sharangovich",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -423,17 +423,17 @@
        "players": [
         {
          "n": "Matvei Gridin",
-         "pos": "",
+         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Martin Pospisil",
-         "pos": "",
+         "pos": "C",
          "pp": ""
         },
         {
          "n": "Ryan Strome",
-         "pos": "",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -443,17 +443,17 @@
        "players": [
         {
          "n": "Brennan Othmann",
-         "pos": "",
+         "pos": "C",
          "pp": "PP2"
         },
         {
          "n": "Adam Klapka",
-         "pos": "",
+         "pos": "W",
          "pp": ""
         },
         {
          "n": "Jonathan Castagna",
-         "pos": "",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -463,32 +463,32 @@
        "players": [
         {
          "n": "Kevin Bahl",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Simon Nemec",
-         "pos": "",
+         "pos": "D",
          "pp": "PP2"
         },
         {
          "n": "Zach Whitecloud",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Jacob Middleton",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         },
         {
          "n": "Zayne Parekh",
-         "pos": "",
+         "pos": "D",
          "pp": "PP1"
         },
         {
          "n": "Yan Kuznetsov",
-         "pos": "",
+         "pos": "D",
          "pp": ""
         }
        ]
