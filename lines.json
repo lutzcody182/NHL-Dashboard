@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-17",
- "updated": "2026-10-17T23:00:17.285Z",
+ "updated": "2026-10-18T00:00:16.018Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -708,7 +708,7 @@
         {
          "n": "John Carlson",
          "pos": "D",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "J.J. Moser",
@@ -2678,14 +2678,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Adam Wilsby",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Roman Josi",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Jayden Struble",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Nick Perbix",
@@ -2698,12 +2698,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Adam Wilsby",
+         "n": "Nicolas Hague",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Nicolas Hague",
+         "n": "Jayden Struble",
          "pos": "D",
          "pp": ""
         }
