@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-18",
- "updated": "2026-10-18T14:00:17.202Z",
+ "updated": "2026-10-18T17:00:16.289Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -376,7 +376,7 @@
     },
     {
      "team": "Calgary Flames",
-     "goalie": "Dustin Wolf",
+     "goalie": "Devin Cooley",
      "groups": [
       {
        "label": "Line 1",
@@ -442,7 +442,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Maxim Tsyplakov",
+         "n": "Brennan Othmann",
          "pos": "",
          "pp": "PP2"
         },
