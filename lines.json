@@ -2,243 +2,498 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-18",
- "updated": "2026-10-18T04:00:16.206Z",
+ "updated": "2026-10-18T14:00:17.202Z",
  "games": [
   {
-   "time": "1:00 PM ET",
-   "away": "New Jersey Devils",
-   "home": "Washington Capitals",
-   "teams": [
-    {
-     "team": "New Jersey Devils",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Washington Capitals",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "3:30 PM ET",
-   "away": "Carolina Hurricanes",
-   "home": "Winnipeg Jets",
-   "teams": [
-    {
-     "team": "Carolina Hurricanes",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Winnipeg Jets",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "4:00 PM ET",
-   "away": "Vancouver Canucks",
-   "home": "Tampa Bay Lightning",
-   "teams": [
-    {
-     "team": "Vancouver Canucks",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Tampa Bay Lightning",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
    "time": "6:00 PM ET",
-   "away": "Seattle Kraken",
-   "home": "Florida Panthers",
+   "away": "Columbus Blue Jackets",
+   "home": "Minnesota Wild",
    "teams": [
-    {
-     "team": "Seattle Kraken",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Florida Panthers",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "7:00 PM ET",
-   "away": "Ottawa Senators",
-   "home": "Philadelphia Flyers",
-   "teams": [
-    {
-     "team": "Ottawa Senators",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Philadelphia Flyers",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "7:00 PM ET",
-   "away": "San Jose Sharks",
-   "home": "Detroit Red Wings",
-   "teams": [
-    {
-     "team": "San Jose Sharks",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Detroit Red Wings",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "7:00 PM ET",
-   "away": "Dallas Stars",
-   "home": "Chicago Blackhawks",
-   "teams": [
-    {
-     "team": "Dallas Stars",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Chicago Blackhawks",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "7:00 PM ET",
-   "away": "Buffalo Sabres",
-   "home": "Montreal Canadiens",
-   "teams": [
-    {
-     "team": "Buffalo Sabres",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Montreal Canadiens",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "7:00 PM ET",
-   "away": "New York Islanders",
-   "home": "Toronto Maple Leafs",
-   "teams": [
-    {
-     "team": "New York Islanders",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Toronto Maple Leafs",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "7:00 PM ET",
-   "away": "New York Rangers",
-   "home": "Columbus Blue Jackets",
-   "teams": [
-    {
-     "team": "New York Rangers",
-     "goalie": "",
-     "groups": []
-    },
     {
      "team": "Columbus Blue Jackets",
-     "goalie": "",
-     "groups": []
+     "goalie": "Cam Talbot",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": [
+        {
+         "n": "Matthew Knies",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Kent Johnson",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Adam Fantilli",
+         "pos": "",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Valeri Nichushkin",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Sean Monahan",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Conor Garland",
+         "pos": "",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Charlie Coyle",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Cole Sillinger",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Mathieu Olivier",
+         "pos": "",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Danton Heinen",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Ryan Lomberg",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Luca Del Bel Belluz",
+         "pos": "",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": [
+        {
+         "n": "Damon Severson",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Zach Werenski",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Jake Christiansen",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Denton Mateychuk",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Erik Gudbranson",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Emil Andrae",
+         "pos": "",
+         "pp": ""
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "team": "Minnesota Wild",
+     "goalie": "Jesper Wallstedt",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": [
+        {
+         "n": "Matt Boldy",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Kirill Kaprizov",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Joel Eriksson Ek",
+         "pos": "",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Ryan Hartman",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Bobby Brink",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Blake Coleman",
+         "pos": "",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Maxim Shabanov",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Yakov Trenin",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Danila Yurov",
+         "pos": "",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Rieger Lorenz",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Tyler Pitlick",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Michael McCarron",
+         "pos": "",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": [
+        {
+         "n": "Quinn Hughes",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Jonas Brodin",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Zach Bogosian",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Daemon Hunt",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "David Spacek",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Matt Kiersted",
+         "pos": "",
+         "pp": ""
+        }
+       ]
+      }
+     ]
     }
    ]
   },
   {
    "time": "8:00 PM ET",
-   "away": "St. Louis Blues",
-   "home": "Nashville Predators",
+   "away": "Carolina Hurricanes",
+   "home": "Calgary Flames",
    "teams": [
     {
-     "team": "St. Louis Blues",
-     "goalie": "",
-     "groups": []
+     "team": "Carolina Hurricanes",
+     "goalie": "Brandon Bussi",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": [
+        {
+         "n": "Andrei Svechnikov",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Sebastian Aho",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "William Carrier",
+         "pos": "",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Logan Stankoven",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Jackson Blake",
+         "pos": "",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Jordan Martinook",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Nikolaj Ehlers",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Mark Jankowski",
+         "pos": "",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Eric Robinson",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Jesperi Kotkaniemi",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Felix Unger Sorum",
+         "pos": "",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": [
+        {
+         "n": "Jalen Chatfield",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Jaccob Slavin",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "K'Andre Miller",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Sean Walker",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Mike Reilly",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Shayne Gostisbehere",
+         "pos": "",
+         "pp": "PP1"
+        }
+       ]
+      }
+     ]
     },
     {
-     "team": "Nashville Predators",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "9:00 PM ET",
-   "away": "Boston Bruins",
-   "home": "Los Angeles Kings",
-   "teams": [
-    {
-     "team": "Boston Bruins",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Los Angeles Kings",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "10:00 PM ET",
-   "away": "Edmonton Oilers",
-   "home": "Utah Hockey Club",
-   "teams": [
-    {
-     "team": "Edmonton Oilers",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Utah Hockey Club",
-     "goalie": "",
-     "groups": []
-    }
-   ]
-  },
-  {
-   "time": "10:00 PM ET",
-   "away": "Pittsburgh Penguins",
-   "home": "Vegas Golden Knights",
-   "teams": [
-    {
-     "team": "Pittsburgh Penguins",
-     "goalie": "",
-     "groups": []
-    },
-    {
-     "team": "Vegas Golden Knights",
-     "goalie": "",
-     "groups": []
+     "team": "Calgary Flames",
+     "goalie": "Dustin Wolf",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": [
+        {
+         "n": "Mikael Backlund",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Matt Coronato",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Joel Farabee",
+         "pos": "",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Aydar Suniev",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Morgan Frost",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Yegor Sharangovich",
+         "pos": "",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Matvei Gridin",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Martin Pospisil",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Ryan Strome",
+         "pos": "",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Maxim Tsyplakov",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Adam Klapka",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Jonathan Castagna",
+         "pos": "",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": [
+        {
+         "n": "Kevin Bahl",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Simon Nemec",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
+         "n": "Zach Whitecloud",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Jacob Middleton",
+         "pos": "",
+         "pp": ""
+        },
+        {
+         "n": "Zayne Parekh",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Yan Kuznetsov",
+         "pos": "",
+         "pp": ""
+        }
+       ]
+      }
+     ]
     }
    ]
   }
