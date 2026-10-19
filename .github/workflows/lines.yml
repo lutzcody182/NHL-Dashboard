@@ -126,7 +126,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Fetch DraftKings and FanDuel odds (anytime, first goal, moneyline)
+      - name: Fetch sportsbook odds (DraftKings, FanDuel, Caesars, Fanatics, theScore Bet)
         continue-on-error: true
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
@@ -151,23 +151,26 @@ jobs:
             const games = []; let remaining = null;
             for (const e of soon) {
               try {
-                // DraftKings + FanDuel in one request: credits are charged per market, not per book (up to 10 books)
-                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&regions=us&markets=player_goal_scorer_anytime,player_goal_scorer_first,h2h&bookmakers=draftkings,fanduel&oddsFormat=american`);
+                // all five books in one request: credits are charged per market, not per book (up to 10 books count as one region)
+                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&markets=player_goal_scorer_anytime,player_goal_scorer_first,h2h&bookmakers=draftkings,fanduel,williamhill_us,fanatics,espnbet&oddsFormat=american`);
                 remaining = left ?? remaining;
                 const book = k => (data.bookmakers || []).find(b => b.key === k), mkt = (b, m) => b && (b.markets || []).find(x => x.key === m);
-                const nn = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+                const nn = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); // keeps a "(2004)" birth-year tag, so two same-named players stay apart
                 const outs = (b, m) => { const mm = mkt(b, m); return ((mm && mm.outcomes) || []).filter(o => !/^no$|no goal/i.test(o.name || '') && !/no goal/i.test(o.description || '')).map(o => ({ n: o.description || o.name, price: o.price })).filter(o => o.n && Number.isFinite(o.price)); };
-                // one entry per player: price = DraftKings, fd = FanDuel (either can be missing)
-                const merge = m => { const map = new Map(); for (const o of outs(book('draftkings'), m)) map.set(nn(o.n), { n: o.n, price: o.price }); for (const o of outs(book('fanduel'), m)) { const k = nn(o.n), x = map.get(k) || { n: o.n, price: null }; x.fd = o.price; map.set(k, x); } return [...map.values()]; };
+                // one entry per player: price = DraftKings, fd = FanDuel, cz = Caesars, fn = Fanatics, sc = theScore Bet (any can be missing)
+                const XB = [['williamhill_us', 'cz'], ['fanatics', 'fn'], ['espnbet', 'sc']];
+                const merge = m => { const map = new Map(); for (const o of outs(book('draftkings'), m)) map.set(nn(o.n), { n: o.n, price: o.price });
+                  for (const [bk, f] of [['fanduel', 'fd'], ...XB]) for (const o of outs(book(bk), m)) { const k = nn(o.n), x = map.get(k) || { n: o.n, price: null }; x[f] = o.price; map.set(k, x); }
+                  return [...map.values()]; };
                 const players = merge('player_goal_scorer_anytime'), first = merge('player_goal_scorer_first');
                 const h2h = b => { const mm = mkt(b, 'h2h'); if (!mm) return null; const f = nm => (mm.outcomes.find(o => o.name === nm) || {}).price; const h = f(e.home_team), a = f(e.away_team); return Number.isFinite(h) && Number.isFinite(a) ? { h, a } : null; };
                 const mk = mkt(book('draftkings'), 'player_goal_scorer_anytime') || mkt(book('fanduel'), 'player_goal_scorer_anytime');
-                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players, first, ml: { dk: h2h(book('draftkings')), fd: h2h(book('fanduel')) } });
+                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players, first, ml: { dk: h2h(book('draftkings')), fd: h2h(book('fanduel')), cz: h2h(book('williamhill_us')), fn: h2h(book('fanatics')), sc: h2h(book('espnbet')) } });
                 const c = (l, k) => l.filter(x => x[k] != null).length;
-                console.log(`${e.away_team} @ ${e.home_team}: anytime DK ${c(players, 'price')} / FD ${c(players, 'fd')}, first goal DK ${c(first, 'price')} / FD ${c(first, 'fd')}, moneyline FD ${h2h(book('fanduel')) ? 'yes' : 'no'}`);
+                console.log(`${e.away_team} @ ${e.home_team}: anytime DK ${c(players, 'price')} / FD ${c(players, 'fd')} / CZ ${c(players, 'cz')} / FAN ${c(players, 'fn')} / SCR ${c(players, 'sc')}, first goal DK ${c(first, 'price')} / FD ${c(first, 'fd')} / CZ ${c(first, 'cz')} / FAN ${c(first, 'fn')} / SCR ${c(first, 'sc')}`);
               } catch (err) { console.log(`::warning::${e.away_team} @ ${e.home_team}: ${err.message}`); }
             }
-            const out = { source: 'DraftKings and FanDuel via The Odds API', updated: new Date().toISOString(), remaining, games };
+            const out = { source: 'DraftKings, FanDuel, Caesars, Fanatics and theScore Bet via The Odds API', updated: new Date().toISOString(), remaining, games };
             fs.writeFileSync('props.json', JSON.stringify(out));
             console.log(`Saved ${games.reduce((s, g) => s + g.players.length, 0)} player prices for ${games.length} games.`);
           })().catch(err => { console.log('::error::' + err.message); process.exit(1); });
@@ -416,23 +419,23 @@ jobs:
                 }
               }
               if (gs) {
-                const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.dk != null || r.fd != null);
+                const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.best != null); // priced at any of the five books
                 // first goal scorer: every player with a DraftKings first goal price
                 if (fgFitV) {
                   try {
                     const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null;
                     const fKeep = new Set();
                     for (const r of T.fgGame(gs.S, e, allRows, PF, fgATT, fgFitV).filter(x => x.fBest != null)) {
-                      const k = `f|${e.id}|${r.pid}`; fKeep.add(k); const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
+                      const k = `f|${e.id}|${r.pid}`; fKeep.add(k); const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, ox: r.fox || null, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
                       if (fByKey.has(k)) { if (fByKey.get(k).res == null) Object.assign(fByKey.get(k), rec); } else { fByKey.set(k, rec); fAdded++; }
                     }
                     if (fKeep.size) for (const [k, p] of fByKey) if (p.gid === String(e.id) && p.res == null && !fKeep.has(k)) { fByKey.delete(k); dropped++; } // price gone or no longer matched to him
                   } catch (err) { log(`Game ${e.id}: first goal model error: ${err.message}`); }
                 }
-                if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
+                if (!rows.length) { log(`Game ${e.id}: no sportsbook prices matched yet`); continue; }
                 for (const r of rows) {
                   const k = `${e.id}|${r.pid}`;
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), fairEven: Number.isFinite(r.dkFairEven) ? +r.dkFairEven.toFixed(4) : null, dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), fairEven: Number.isFinite(r.dkFairEven) ? +r.dkFairEven.toFixed(4) : null, dk: r.dk, fd: r.fd != null ? r.fd : null, ox: r.ox || null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
                   if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
                 // a pending pick whose price disappeared (or no longer matches him, like a same-name mix-up) is removed instead of staying with a wrong price
@@ -755,23 +758,23 @@ jobs:
                 }
               }
               if (gs) {
-                const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.dk != null || r.fd != null);
+                const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.best != null); // priced at any of the five books
                 // first goal scorer: every player with a DraftKings first goal price
                 if (fgFitV) {
                   try {
                     const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null;
                     const fKeep = new Set();
                     for (const r of T.fgGame(gs.S, e, allRows, PF, fgATT, fgFitV).filter(x => x.fBest != null)) {
-                      const k = `f|${e.id}|${r.pid}`; fKeep.add(k); const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
+                      const k = `f|${e.id}|${r.pid}`; fKeep.add(k); const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, p: r4(r.fp), pt: r4(r.pTeam), dk: r.fdk, fd: r.ffd, ox: r.fox || null, best: r.fBest, book: r.fBook, imp: r4(r.fImp), fair: r4(r.fFair), edge: r4(r.fEdge), ev: Number.isFinite(r.fEv) ? +r.fEv.toFixed(2) : null, roi: r4(r.fRoi), x: r4(r.X), sh: r4(r.R), saved: now.toISOString() };
                       if (fByKey.has(k)) { if (fByKey.get(k).res == null) Object.assign(fByKey.get(k), rec); } else { fByKey.set(k, rec); fAdded++; }
                     }
                     if (fKeep.size) for (const [k, p] of fByKey) if (p.gid === String(e.id) && p.res == null && !fKeep.has(k)) { fByKey.delete(k); dropped++; } // price gone or no longer matched to him
                   } catch (err) { log(`Game ${e.id}: first goal model error: ${err.message}`); }
                 }
-                if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
+                if (!rows.length) { log(`Game ${e.id}: no sportsbook prices matched yet`); continue; }
                 for (const r of rows) {
                   const k = `${e.id}|${r.pid}`;
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), fairEven: Number.isFinite(r.dkFairEven) ? +r.dkFairEven.toFixed(4) : null, dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), fairEven: Number.isFinite(r.dkFairEven) ? +r.dkFairEven.toFixed(4) : null, dk: r.dk, fd: r.fd != null ? r.fd : null, ox: r.ox || null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
                   if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
                 // a pending pick whose price disappeared (or no longer matches him, like a same-name mix-up) is removed instead of staying with a wrong price
