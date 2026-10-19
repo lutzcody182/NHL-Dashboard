@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-18",
- "updated": "2026-10-18T22:00:16.154Z",
+ "updated": "2026-10-19T00:00:16.608Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -306,14 +306,14 @@
          "pp": ""
         },
         {
+         "n": "Felix Unger Sorum",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Nikolaj Ehlers",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Mark Jankowski",
-         "pos": "C",
-         "pp": "PP2"
         }
        ]
       },
@@ -331,9 +331,9 @@
          "pp": ""
         },
         {
-         "n": "Felix Unger Sorum",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Nicolas Deslauriers",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -358,7 +358,7 @@
         {
          "n": "Sean Walker",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Mike Reilly",
