@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-19",
- "updated": "2026-10-19T17:49:54.973Z",
+ "updated": "2026-10-19T22:00:18.023Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -779,14 +779,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Ville Koivunen",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Evgeni Malkin",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Tommy Novak",
+         "pos": "C",
+         "pp": "PP1"
         }
        ]
       },
@@ -794,14 +794,14 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Ville Koivunen",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Andrei Kuzmenko",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Nick Robertson",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Ben Kindel",
@@ -824,9 +824,9 @@
          "pp": ""
         },
         {
-         "n": "Tommy Novak",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Nick Robertson",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
