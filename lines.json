@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-19",
- "updated": "2026-10-19T16:00:17.455Z",
+ "updated": "2026-10-19T17:49:54.973Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -11,7 +11,7 @@
    "teams": [
     {
      "team": "Anaheim Ducks",
-     "goalie": "Lukas Dostal",
+     "goalie": "",
      "groups": [
       {
        "label": "Line 1",
@@ -107,22 +107,22 @@
          "pp": ""
         },
         {
-         "n": "Pavel Mintyukov",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Drew Helleson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Tristan Luneau",
          "pos": "D",
          "pp": "PP2"
         },
         {
          "n": "Tyson Hinds",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Nick Jensen",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Pavel Mintyukov",
          "pos": "D",
          "pp": ""
         }
@@ -607,7 +607,7 @@
         {
          "n": "Jacob Trouba",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Dmitry Orlov",
@@ -615,9 +615,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Nolan Allan",
+         "n": "Luca Cagnoni",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -653,7 +653,7 @@
         {
          "n": "Nick Paul",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Kirill Marchenko",
@@ -761,7 +761,7 @@
         {
          "n": "Bryan Rust",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Rickard Rakell",
@@ -774,18 +774,18 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Ville Koivunen",
+         "n": "Egor Chinakhov",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Evgeni Malkin",
+         "n": "Ville Koivunen",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
-         "n": "Tommy Novak",
-         "pos": "C",
+         "n": "Evgeni Malkin",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -806,7 +806,7 @@
         {
          "n": "Ben Kindel",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -824,9 +824,9 @@
          "pp": ""
         },
         {
-         "n": "Elmer Soderblom",
-         "pos": "W",
-         "pp": ""
+         "n": "Tommy Novak",
+         "pos": "C",
+         "pp": "PP1"
         }
        ]
       },
@@ -844,6 +844,16 @@
          "pp": ""
         },
         {
+         "n": "Kaedan Korczak",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Samuel Girard",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Spencer Stastney",
          "pos": "D",
          "pp": ""
@@ -852,11 +862,6 @@
          "n": "Kris Letang",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Kaedan Korczak",
-         "pos": "D",
-         "pp": ""
         }
        ]
       }
@@ -864,7 +869,7 @@
     },
     {
      "team": "Utah Hockey Club",
-     "goalie": "Karel Vejmelka",
+     "goalie": "Sebastian Cossa",
      "groups": [
       {
        "label": "Line 1",
