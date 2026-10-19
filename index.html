@@ -5425,7 +5425,7 @@ function gsRefine(rows, dkm, tot, fdm) {
     const ref = r.dk != null ? r.dk : r.fd; // market reference for the blend: DraftKings, or FanDuel when DraftKings has no price
     if (ref != null) {
       const FF = r.dk != null ? F : Ffd;
-      r.dkFair = FF.fair(amImplied(ref)); r.margin = FF.m;
+      r.dkFairEven = FF.fair(amImplied(ref)); r.dkFair = flbFair(amImplied(ref), r.dkFairEven); r.margin = FF.m;
       r.p = sigm(w * logit(clamp(r.pModel, .005, .995)) + (1 - w) * logit(clamp(r.dkFair, .005, .995)));
       // edge and expected profit at the better of the two books
       const b = bestPrice(r.dk, r.fd); r.best = b.price; r.book = b.book; r.bestImp = amImplied(b.price);
@@ -5436,9 +5436,32 @@ function gsRefine(rows, dkm, tot, fdm) {
   }
   return rows;
 }
+/* favorite-longshot bias: sportsbooks put little margin on short prices and a lot on longshots. Learned from graded picks:
+   the real scoring rate at each price, logit(real) = a + b × logit(price's implied chance). Blended with the even margin
+   removal (gsDkFair), trusting the learned curve more as graded picks pile up (400 picks = half and half). */
+const pkRefPx = p => p.dk != null ? p.dk : p.fd; // the price the blend was built on: DraftKings, else FanDuel
+function gsFlbFit(PK) {
+  const ps = ((PK && PK.picks) || []).filter(p => (p.res === 'W' || p.res === 'L') && fin(pkRefPx(p)));
+  GS.flb = null; if (ps.length < 150) return null;
+  const X = ps.map(p => logit(clamp(amImplied(pkRefPx(p)), .005, .995))), Y = ps.map(p => p.res === 'W' ? 1 : 0);
+  let a = 0, b = 1;
+  for (let it = 0; it < 30; it++) { // Newton steps for a two-number logistic fit (tiny ridge for stability)
+    let ga = 0, gb = 0, haa = 1e-6, hab = 0, hbb = 1e-6;
+    for (let i = 0; i < X.length; i++) { const q = sigm(a + b * X[i]), w = q * (1 - q), r = Y[i] - q; ga += r; gb += r * X[i]; haa += w; hab += w * X[i]; hbb += w * X[i] * X[i]; }
+    const det = haa * hbb - hab * hab; if (!(det > 0)) break;
+    const da = (hbb * ga - hab * gb) / det, db = (haa * gb - hab * ga) / det; a += da; b += db; if (Math.abs(da) + Math.abs(db) < 1e-7) break;
+  }
+  if (!fin(a) || !fin(b) || b < .4 || b > 2.5) return null;
+  GS.flb = { a, b, n: ps.length, w: ps.length / (ps.length + 400) };
+  return GS.flb;
+}
+const flbCal = imp => GS.flb ? sigm(GS.flb.a + GS.flb.b * logit(clamp(imp, .005, .995))) : NaN;
+// a price's no-margin chance: the learned curve blended with the even margin removal
+const flbFair = (imp, even) => GS.flb && fin(imp) ? GS.flb.w * flbCal(imp) + (1 - GS.flb.w) * even : even;
 // learn how much to trust the model vs. DraftKings from graded picks (log loss), pulled toward 40% until there's lots of data
 function gsBlendFit(PK) {
-  const ps = ((PK && PK.picks) || []).filter(p => (p.res === 'W' || p.res === 'L') && fin(p.pRaw) && fin(p.fair));
+  gsFlbFit(PK);
+  const ps = ((PK && PK.picks) || []).filter(p => (p.res === 'W' || p.res === 'L') && fin(p.pRaw) && fin(p.fair)).map(p => ({ ...p, fair: flbFair(fin(pkRefPx(p)) ? amImplied(pkRefPx(p)) : NaN, fin(p.fairEven) ? p.fairEven : p.fair) }));
   GS.blendN = ps.length;
   if (ps.length < 150) { GS.blendW = .4; GS.blendFit = null; return GS.blendW; }
   let best = .4, bl = Infinity;
@@ -5656,6 +5679,9 @@ function pickTrackerCard(PK) {
   // calibration
   const cb = [[0, .1], [.1, .15], [.15, .2], [.2, .25], [.25, .3], [.3, .4], [.4, 1.01]].map(([lo, hi]) => { const g = done.filter(p => p.p >= lo && p.p < hi); return { lo, hi, n: g.length, p: div(g.reduce((s, x) => s + x.p, 0), g.length), imp: div(g.reduce((s, x) => s + x.imp, 0), g.length), hit: div(g.filter(x => x.res === 'W').length, g.length) }; }).filter(b => b.n);
   const cbT = cb.length ? `<div class="twrap"><table><thead><tr><th class="l">Ice Lab chance</th><th>Players</th><th>Avg Ice Lab</th><th>Avg DK implied</th><th>Actually scored</th></tr></thead><tbody>${cb.map(b => `<tr><td class="l">${Math.round(b.lo * 100)}–${b.hi > 1 ? 100 : Math.round(b.hi * 100)}%</td><td>${b.n}</td><td>${pct1(b.p)}%</td><td>${pct1(b.imp)}%</td><td><b>${pct1(b.hit)}%</b></td></tr>`).join('')}</tbody></table></div>` : '';
+  // favorite-longshot bias: how often each price range really scores vs. what the price says, and the learned correction
+  const fbB = [[-1e4, 150, 'Shorter than +150'], [150, 250, '+150 to +250'], [250, 400, '+250 to +400'], [400, 700, '+400 to +700'], [700, 1e5, '+700 and longer']].map(([lo, hi, l]) => { const g = done.filter(p => fin(pkRefPx(p)) && pkRefPx(p) >= lo && pkRefPx(p) < hi); const n = g.length, av = f => { const v = g.map(f).filter(fin); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : NaN; }; return n ? { l, n, hit: av(p => p.res === 'W' ? 1 : 0), imp: av(p => amImplied(pkRefPx(p))), even: av(p => fin(p.fairEven) ? p.fairEven : fin(p.fair) ? p.fair : NaN), lrn: av(p => flbFair(amImplied(pkRefPx(p)), fin(p.fairEven) ? p.fairEven : p.fair)) } : null; }).filter(Boolean);
+  const flbT = fbB.length ? `<div style="margin-top:14px"><h3 class="cmp-sec" style="margin-top:0">Sportsbook margin by price (favorite-longshot bias)</h3><div class="twrap"><table><thead><tr><th class="l">Price</th><th>Picks</th><th>Actually scored</th><th>Price implies</th><th>Even margin removed</th><th>Ice Lab's market chance</th></tr></thead><tbody>${fbB.map(b => `<tr><td class="l">${b.l}</td><td>${b.n}</td><td><b>${pct1(b.hit)}%</b></td><td>${pct1(b.imp)}%</td><td class="muted">${pct1(b.even)}%</td><td><b>${pct1(b.lrn)}%</b></td></tr>`).join('')}</tbody></table></div><p class="muted" style="font-size:12px;margin:6px 0 0">Sportsbooks put little margin on short prices and a lot on longshots. Taking the same share off every price (the "even" column) makes favorites look too unlikely and longshots too likely. Ice Lab learns the real rate at each price from these graded picks${GS.flb ? ` (${GS.flb.n.toLocaleString()} so far, trusted ${Math.round(GS.flb.w * 100)}%)` : ' once 150 are graded'} and uses it before blending with the model, so the right column should sit close to "Actually scored".</p></div>` : '';
   // pick log for the chosen strategy
   const cur = S.find(s => s.k === PKF.strat) || S[0];
   const logList = [...cur.list].sort((a, b) => a.start > b.start ? -1 : a.start < b.start ? 1 : b.roi - a.roi), shown = PKF.all ? logList : logList.slice(0, 40);
@@ -5667,6 +5693,7 @@ function pickTrackerCard(PK) {
     <p class="muted" style="margin:-4px 0 10px;font-size:12px">Picks are saved by the GitHub job before each game (around 11 AM and 5 PM Eastern, using the latest pre-game price) and graded the next morning. Bet sizes follow your rule: $100 on plus odds, bet to win $100 on minus odds. Players who don't play are void, as at DraftKings.</p>
     ${tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit</h3>${chart}
     <div style="margin-top:14px"><div><h3 class="cmp-sec" style="margin-top:0">Results by edge size</h3>${ebT}<p class="muted" style="font-size:12px;margin:6px 0 0">If the model finds real value, bigger edges should score more often than DraftKings expects and make more money.</p></div></div>
+    ${flbT}
     ${logT}
     <p class="muted" style="font-size:12px;margin:10px 0 0">Goal scorer bets swing a lot: most lose and a few plus-money hits carry the results. Give it a few hundred bets before judging.</p></div>`;
 }
