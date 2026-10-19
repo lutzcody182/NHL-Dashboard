@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-19",
- "updated": "2026-10-19T22:00:18.023Z",
+ "updated": "2026-10-19T23:00:17.168Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -11,7 +11,7 @@
    "teams": [
     {
      "team": "Anaheim Ducks",
-     "goalie": "",
+     "goalie": "Ville Husso",
      "groups": [
       {
        "label": "Line 1",
@@ -382,9 +382,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Tyson Foerster",
+         "n": "Noel Acciari",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Trevor Zegras",
@@ -412,7 +412,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Sean Couturier",
+         "n": "Noah Cates",
          "pos": "C",
          "pp": ""
         }
@@ -422,19 +422,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Denver Barkey",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Noah Cates",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Michael Bunting",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Sean Couturier",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -442,19 +437,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Noel Acciari",
+         "n": "Denver Barkey",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Alex Bump",
          "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Garrett Wilson",
-         "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       },
@@ -485,11 +475,6 @@
          "n": "David Jiricek",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Simon Benoit",
-         "pos": "D",
-         "pp": ""
         }
        ]
       }
