@@ -1138,8 +1138,8 @@ async function loadLeaders(evs, d) {
     const x = (g.shots || []).filter(q => q.t === 0 && q.per >= 1 && q.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0];
     if (!x || !x.pl) return null;
     const p = g.sk[x.pl] || {}, recs = ((PKf && PKf.first) || []).filter(r => r.gid === String(g.id)), rec = recs.find(r => r.pid === x.pl);
-    const dkm = !rec ? fgDkMap(PFf, g.date, g.home.id, g.away.id) : null, fdm = !rec ? fdPriceMap(PFf, g.date, g.home.id, g.away.id, 'first') : null;
-    const bp = rec ? (rec.best != null ? { price: rec.best, book: rec.book || 'dk' } : rec.dk != null ? { price: rec.dk, book: 'dk' } : null) : bestPrice(dkm ? dkLookup(dkm, p.n || '', x.pl) : null, fdm ? dkLookup(fdm, p.n || '', x.pl) : null), dk = bp ? bp.price : null, book = bp ? bp.book : null;
+    const dkm = !rec ? fgDkMap(PFf, g.date, g.home.id, g.away.id) : null, fdm = !rec ? fdPriceMap(PFf, g.date, g.home.id, g.away.id, 'first') : null, xm = !rec ? xPriceMap(PFf, g.date, g.home.id, g.away.id, 'first') : null;
+    const bp = rec ? (rec.best != null ? { price: rec.best, book: rec.book || 'dk' } : rec.dk != null ? { price: rec.dk, book: 'dk' } : null) : bestPrice(dkm ? dkLookup(dkm, p.n || '', x.pl) : null, fdm ? dkLookup(fdm, p.n || '', x.pl) : null, xm ? dkLookup(xm, p.n || '', x.pl) : null), dk = bp ? bp.price : null, book = bp ? bp.book : null;
     const top = recs.length ? recs.reduce((m, r) => r.p > m.p ? r : m) : null;
     return { g, x, id: x.pl, n: p.n || 'Unknown', book, tm: x.tm, vs: (x.tm === g.home.id ? 'vs ' : '@ ') + (x.tm === g.home.id ? g.away.abbr : g.home.abbr), dk, rec, topHit: top ? top.pid === x.pl : null, topN: top ? top.n : '' };
   }).filter(Boolean).sort((a, b) => a.g.date < b.g.date ? -1 : 1);
@@ -4754,17 +4754,19 @@ async function renderGameModelCard() {
 }
 // preview card for an upcoming game
 // fair moneyline + value check for both sides of a game, from a model win chance (home) and the posted moneylines
+const sx = (o, s) => o && o.x ? Object.fromEntries(Object.entries(o.x).map(([k, v]) => [k, v ? v[s] : null])) : null; // one side of the other books' moneylines
 function gmValueTable(pH, ml, aAbbr, hAbbr, label, fdml) {
-  const side = (p, dkP, fdP, abbr) => {
-    const b = bestPrice(dkP, fdP), price = b ? b.price : null;
+  const side = (p, dkP, fdP, abbr, xo) => {
+    const b = bestPrice(dkP, fdP, xo), price = b ? b.price : null;
     const o = { abbr, p, fair: fairAmerican(p), price, book: b ? b.book : null, dkP, fdP };
     if (price != null && isFinite(price)) { o.be = amImplied(price); o.edge = p - o.be; const ev = betEV(p, price); o.ev = ev.ev; o.roi = ev.roi; o.verdict = o.edge >= .03 ? 'bet' : o.edge > 0 ? 'lean' : 'pass'; }
     return o;
   };
-  const A_ = side(1 - pH, ml ? ml.a : null, fdml ? fdml.a : null, aAbbr), H_ = side(pH, ml ? ml.h : null, fdml ? fdml.h : null, hAbbr);
+  const A_ = side(1 - pH, ml ? ml.a : null, fdml ? fdml.a : null, aAbbr, sx(fdml, 'a')), H_ = side(pH, ml ? ml.h : null, fdml ? fdml.h : null, hAbbr, sx(fdml, 'h'));
+  A_.tip = bookTip(A_.dkP, A_.fdP, sx(fdml, 'a')); H_.tip = bookTip(H_.dkP, H_.fdP, sx(fdml, 'h'));
   const best = [A_, H_].filter(x => x.verdict === 'bet' || x.verdict === 'lean').sort((a, b) => b.edge - a.edge)[0];
   const vCell = x => x.verdict === 'bet' ? '<b style="color:var(--good)">✓ Value bet</b>' : x.verdict === 'lean' ? '<span style="color:var(--good)">Lean (small edge)</span>' : x.price != null ? '<span class="muted">Pass</span>' : '<span class="muted">No line yet</span>';
-  const row = x => `<tr><td class="l"><b>${esc(x.abbr)}</b></td><td>${pct1(x.p)}%</td><td><b>${x.fair}</b></td><td>${x.price != null ? `${fmtML(x.price)} <span class="muted" style="font-size:11px">${BK[x.book]}</span>${x.dkP != null && x.fdP != null && x.dkP !== x.fdP ? `<div class="muted" style="font-size:11px">${x.book === 'dk' ? 'FD' : 'DK'} ${fmtML(x.book === 'dk' ? x.fdP : x.dkP)}</div>` : ''}` : '–'}</td><td>${fin(x.be) ? pct1(x.be) + '%' : '–'}</td><td style="color:${fin(x.edge) ? (x.edge > 0 ? 'var(--good)' : 'var(--neg)') : 'inherit'}">${fin(x.edge) ? `${x.edge > 0 ? '+' : ''}${(x.edge * 100).toFixed(1)} pts` : '–'}</td><td>${fin(x.ev) ? moneyCell(x.ev) : '–'}</td><td class="l">${vCell(x)}</td></tr>`;
+  const row = x => `<tr><td class="l"><b>${esc(x.abbr)}</b></td><td>${pct1(x.p)}%</td><td><b>${x.fair}</b></td><td${x.tip ? ` data-tip="${esc(x.tip)}"` : ''}>${x.price != null ? `${fmtML(x.price)} <span class="muted" style="font-size:11px">${BK[x.book]}</span>${x.tip ? `<div class="muted" style="font-size:11px">best of ${(x.tip.match(/class='row'/g) || []).length} books</div>` : ''}` : '–'}</td><td>${fin(x.be) ? pct1(x.be) + '%' : '–'}</td><td style="color:${fin(x.edge) ? (x.edge > 0 ? 'var(--good)' : 'var(--neg)') : 'inherit'}">${fin(x.edge) ? `${x.edge > 0 ? '+' : ''}${(x.edge * 100).toFixed(1)} pts` : '–'}</td><td>${fin(x.ev) ? moneyCell(x.ev) : '–'}</td><td class="l">${vCell(x)}</td></tr>`;
   const summary = !ml && !fdml ? 'No betting line posted yet, so only the fair odds are shown.' : best ? `<b>${best.verdict === 'bet' ? 'Value' : 'Small lean'} on ${esc(best.abbr)}</b> at ${fmtML(best.price)} (${BOOKS[best.book]}): ${label} gives them ${pct1(best.p)}%, the price needs ${pct1(best.be)}% to break even (${best.edge > 0 ? '+' : ''}${(best.edge * 100).toFixed(1)} pts). Fair price is ${best.fair}, so anything better than that is a value bet by the model.` : `<b>No bet.</b> Neither price beats ${label}'s fair odds: the sportsbook's margin eats any difference.`;
   return `<p style="margin:8px 0;font-size:13.5px">${summary}</p><div class="twrap"><table><thead><tr><th class="l">Team</th><th data-gloss="The model's chance this team wins (including overtime and shootout).">Win chance</th><th data-gloss="The American odds that exactly match the model's win chance, with no sportsbook margin. If you can get a better price than this, the model sees value.">Fair line</th><th data-gloss="The posted moneyline from ESPN's sportsbook.">Market</th><th data-gloss="The win chance this price needs just to break even, including the sportsbook margin.">Break-even</th><th data-gloss="Model win chance minus break-even chance. 3+ points = value bet; 0–3 = small lean; negative = pass.">Edge</th><th data-gloss="Expected profit per bet using your sizes ($100 on plus odds; bet to win $100 on minus odds), if the model's chance is right.">Exp. profit</th><th class="l">Verdict</th></tr></thead><tbody>${row(A_)}${row(H_)}</tbody></table></div>`;
 }
@@ -5368,7 +5370,7 @@ function gsMateMap(S, LF, games) {
 function gsTonight(S, e, LF, PF, INJ, MATE) {
   const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away');
   const H = String(h.team.id), Aw = String(a.team.id); addTeam(h.team); addTeam(a.team);
-  const gLike = { date: e.date, home: { id: H }, away: { id: Aw } }, probs = probableGoalies(e), dkm = PF ? dkPriceMap(PF, e.date, H, Aw) : null, fdm = PF ? fdPriceMap(PF, e.date, H, Aw) : null;
+  const gLike = { date: e.date, home: { id: H }, away: { id: Aw } }, probs = probableGoalies(e), dkm = PF ? dkPriceMap(PF, e.date, H, Aw) : null, fdm = PF ? fdPriceMap(PF, e.date, H, Aw) : null, xm = PF ? xPriceMap(PF, e.date, H, Aw) : null;
   const o = c.odds && c.odds[0], tot = o ? parseFloat(o.overUnder) : NaN, mlH = o && o.homeTeamOdds ? +o.homeTeamOdds.moneyLine : NaN, mlA = o && o.awayTeamOdds ? +o.awayTeamOdds.moneyLine : NaN;
   // referee crew: busier crews mean more power-play time (how much of a crew's rate carries over is learned)
   const crew = S.ref ? S.ref.crew(INJ && INJ.refs) : 1;
@@ -5397,8 +5399,8 @@ function gsTonight(S, e, LF, PF, INJ, MATE) {
       const phv = PHF.idx ? phTalent(r0.n, TM(t).abbr, r0.pos, seasonOf(e.date), 'now') : null;
       const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied, crew, pWin, mate, finPH: phv && fin(phv.sh) ? phv.sh : undefined });
       if (!r) continue;
-      const dk = dkm ? dkLookup(dkm, r0.n, pid) : null, fd = fdm ? dkLookup(fdm, r0.n, pid) : null, ev = dk != null ? betEV(r.p, dk) : null;
-      rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt, crew, INJ && INJ.refs), crew, dk, fd, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
+      const dk = dkm ? dkLookup(dkm, r0.n, pid) : null, fd = fdm ? dkLookup(fdm, r0.n, pid) : null, ox = xm ? dkLookup(xm, r0.n, pid) : null, ev = dk != null ? betEV(r.p, dk) : null;
+      rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt, crew, INJ && INJ.refs), crew, dk, fd, ox, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
     }
   }
   return gsRefine(rows, dkm, tot, fdm);
@@ -5422,13 +5424,13 @@ function gsRefine(rows, dkm, tot, fdm) {
   const F = gsDkFair(dkm, tot), Ffd = gsDkFair(fdm, tot), w = GS.blendW;
   for (const r of rows) {
     r.pModel = 1 - Math.exp(-r.lam);
-    const ref = r.dk != null ? r.dk : r.fd; // market reference for the blend: DraftKings, or FanDuel when DraftKings has no price
+    const xb = bestPrice(null, null, r.ox), ref = r.dk != null ? r.dk : r.fd != null ? r.fd : xb ? xb.price : null; // market reference for the blend: DraftKings, else FanDuel, else the best other book
     if (ref != null) {
-      const FF = r.dk != null ? F : Ffd;
+      const FF = r.dk != null ? F : r.fd != null ? Ffd : gsDkFair(null, tot);
       r.dkFairEven = FF.fair(amImplied(ref)); r.dkFair = flbFair(amImplied(ref), r.dkFairEven); r.margin = FF.m;
       r.p = sigm(w * logit(clamp(r.pModel, .005, .995)) + (1 - w) * logit(clamp(r.dkFair, .005, .995)));
-      // edge and expected profit at the better of the two books
-      const b = bestPrice(r.dk, r.fd); r.best = b.price; r.book = b.book; r.bestImp = amImplied(b.price);
+      // edge and expected profit at the best of the five books
+      const b = bestPrice(r.dk, r.fd, r.ox); r.best = b.price; r.book = b.book; r.bestImp = amImplied(b.price);
       r.edgeP = r.p - r.bestImp; const ev = betEV(r.p, r.best); r.ev = ev.ev; r.roi = ev.roi;
     } else r.p = r.pModel;
     r.lowN = r.gp < 5; r.big = fin(r.edgeP) && r.edgeP >= .08;
@@ -5477,10 +5479,11 @@ async function getPropsFile() {
   PRF.t = Date.now(); try { await dobPrep(PRF.data); } catch (e) {} return PRF.data;
 }
 // DraftKings price for one player in one game (matched by team names, date and player name)
-// best price between the two books: the one that pays more
-const BOOKS = { dk: 'DraftKings', fd: 'FanDuel' }, BK = { dk: 'DK', fd: 'FD' };
+// best price across the books: the one that pays the most
+const BOOKS = { dk: 'DraftKings', fd: 'FanDuel', cz: 'Caesars', fn: 'Fanatics', sc: 'theScore Bet' }, BK = { dk: 'DK', fd: 'FD', cz: 'CZR', fn: 'FAN', sc: 'SCR' };
+const XBK = ['cz', 'fn', 'sc']; // the other books, stored per player as {cz, fn, sc}
 const amDec = o => o > 0 ? 1 + o / 100 : 1 + 100 / -o;
-function bestPrice(dk, fd) { const c = [['dk', dk], ['fd', fd]].filter(([, v]) => v != null && isFinite(v)); if (!c.length) return null; c.sort((a, b) => amDec(b[1]) - amDec(a[1])); return { price: +c[0][1], book: c[0][0] }; }
+function bestPrice(dk, fd, ox) { const c = [['dk', dk], ['fd', fd], ...XBK.map(k => [k, ox ? ox[k] : null])].filter(([, v]) => v != null && isFinite(v)); if (!c.length) return null; c.sort((a, b) => amDec(b[1]) - amDec(a[1])); return { price: +c[0][1], book: c[0][0] }; }
 // FanDuel anytime (or first goal) prices for one game, by player
 function fdPriceMap(PF, dateIso, hId, aId, list = 'players') {
   if (!PF || !PF.games) return null;
@@ -5491,13 +5494,28 @@ function fdPriceMap(PF, dateIso, hId, aId, list = 'players') {
   const m = {}; for (const p of g[list] || []) if (p.fd != null) m[oddsKey(p.n)] = p.fd;
   return Object.keys(m).length ? m : null;
 }
-// FanDuel moneyline for one game (from the odds job)
+// Caesars / Fanatics / theScore Bet prices for one game, by player: { cz, fn, sc }
+function xPriceMap(PF, dateIso, hId, aId, list = 'players') {
+  if (!PF || !PF.games) return null;
+  const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
+  const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
+  const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
+  if (!g) return null;
+  const m = {}; for (const p of g[list] || []) { const o = {}; let any = false; for (const k of XBK) if (p[k] != null) { o[k] = p[k]; any = true; } if (any) m[oddsKey(p.n)] = o; }
+  return Object.keys(m).length ? m : null;
+}
+// every book's price for one player as a hover list, best first
+const bookTip = (dk, fd, ox) => { const l = [['dk', dk], ['fd', fd], ...XBK.map(k => [k, ox ? ox[k] : null])].filter(([, v]) => v != null && isFinite(v)).sort((a, b) => amDec(b[1]) - amDec(a[1])); return l.length ? `<b>Every sportsbook</b>${l.map(([k, v], i) => `<div class='row'><span>${BOOKS[k]}</span><b>${fmtML(v)}${i === 0 ? ' ★' : ''}</b></div>`).join('')}` : ''; };
+// FanDuel moneyline for one game (from the odds job), with the other books under .x = { cz: {h, a}, fn, sc }
 function fdMoneyline(PF, dateIso, hId, aId) {
   if (!PF || !PF.games) return null;
   const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
   const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
   const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
-  return g && g.ml && g.ml.fd ? g.ml.fd : null;
+  if (!g || !g.ml) return null;
+  const x = {}; for (const k of XBK) if (g.ml[k]) x[k] = g.ml[k];
+  if (!g.ml.fd && !Object.keys(x).length) return null;
+  return { h: g.ml.fd ? g.ml.fd.h : null, a: g.ml.fd ? g.ml.fd.a : null, x };
 }
 function dkPriceMap(PF, dateIso, hId, aId) {
   if (!PF || !PF.games) return null;
@@ -5581,8 +5599,9 @@ async function renderScorers() {
     { k: 'p', h: 'Chance to score', v: r => r.p, f: (v, r) => `<b data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${pct1(v)}%</b>${r.lowN ? ' <span class="injb" data-tip="Fewer than 5 games of data, so his numbers are shaky. Left out of Biggest edges.">small sample</span>' : ''}`, dir: 1, t: 'Estimated chance he scores at least one goal tonight (any situation). When DraftKings has a price, this blends Ice Lab\'s model with DraftKings\' chance (margin removed); hover for both.' },
     { k: 'pModel', h: 'Model alone', v: r => r.pModel, f: v => `<span class="muted">${pct1(v)}%</span>`, t: 'Ice Lab\'s model before blending with DraftKings, after making the team\'s players add up to its expected goals tonight.' },
     { k: 'fair', h: 'Fair odds', v: r => r.p, f: (v, r) => fairAmerican(r.p), t: 'The American odds that exactly match this chance, with no bookmaker margin. A sportsbook price longer than this means the model sees value.' },
-    { k: 'dk', h: 'DraftKings', v: r => r.dk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.book === 'dk' && r.fd != null && r.fd !== r.dk ? ' <span class="bestb" title="Better price">★</span>' : ''}`, t: 'DraftKings anytime goal scorer price. ★ = the better of the two books.' },
-    { k: 'fd', h: 'FanDuel', v: r => r.fd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.book === 'fd' && r.dk != null && r.fd !== r.dk ? ' <span class="bestb" title="Better price">★</span>' : ''}`, t: 'FanDuel anytime goal scorer price. ★ = the better of the two books. Edge and expected profit use the better price.' },
+    { k: 'dk', h: 'DraftKings', v: r => r.dk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.book === 'dk' && [r.fd, ...XBK.map(k => r.ox && r.ox[k])].some(x => x != null && x !== r.dk) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'DraftKings anytime goal scorer price. ★ = the best price of all five books.' },
+    { k: 'fd', h: 'FanDuel', v: r => r.fd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.book === 'fd' && [r.dk, ...XBK.map(k => r.ox && r.ox[k])].some(x => x != null && x !== r.fd) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'FanDuel anytime goal scorer price. ★ = the best price of all five books. Edge and expected profit use the best price.' },
+    { k: 'ox', h: 'Other books', v: r => { const b = bestPrice(null, null, r.ox); return b ? b.price : null; }, f: (v, r) => { const b = bestPrice(null, null, r.ox); return !b ? '<span class="muted">–</span>' : `<span data-tip="${esc(bookTip(r.dk, r.fd, r.ox))}"><b>${fmtML(b.price)}</b> <span class="muted" style="font-size:11px">${BK[b.book]}</span>${XBK.includes(r.book) ? ' <span class="bestb" title="Best price">★</span>' : ''}</span>`; }, t: 'The best anytime goal scorer price at Caesars, Fanatics or theScore Bet (hover for each book). ★ = the best price of all five books.' },
     { k: 'bestImp', h: 'Implied (best)', v: r => r.bestImp, f: v => fin(v) ? pct1(v) + '%' : '–', t: 'The chance the better of the two prices implies. It includes the sportsbook\'s built-in margin, so it runs a little high.' },
     { k: 'edgeP', h: 'Edge vs. sportsbook', v: r => r.edgeP, f: (v, r) => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>${r.big ? ' <span data-tip="Unusually big edge. These are usually news the model doesn\'t know yet (a scratch, a line change, an injury). Double-check before betting.">⚠️</span>' : ''}` : '–', dir: 1, t: 'Ice Lab\'s chance minus DraftKings\' implied chance. Positive = Ice Lab thinks he\'s more likely to score than the price says.' },
     { k: 'ev', h: 'Exp. profit', v: r => r.ev, f: (v, r) => fin(v) ? `${moneyCell(v)} <span class="muted" style="font-size:11.5px">${r.roi > 0 ? '+' : ''}${pct1(r.roi)}%</span>` : '–', dir: 1, t: 'Expected profit per bet using your bet sizes ($100 on plus odds; bet to win $100 on minus odds), if Ice Lab\'s chance is right. The % is return on the amount risked.' },
@@ -5592,7 +5611,7 @@ async function renderScorers() {
     { k: 'why', h: 'Where it comes from', l: 1, v: r => r.why.short, f: (v, r) => `<span class="muted" style="font-size:12.5px" data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${esc(v)}</span>` }];
   rows.forEach((r, i) => r.idx = i); GS.rows = rows;
   const teamsTonight = [...new Set(rows.map(r => r.tm))];
-  const withDk = rows.filter(r => r.dk != null || r.fd != null);
+  const withDk = rows.filter(r => r.best != null);
   const best = [...withDk].filter(r => r.ev > 0 && !r.lowN).sort((a, b) => b.roi - a.roi).slice(0, 8);
   const dkAge = PF && PF.updated ? `DraftKings prices updated ${new Date(PF.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : '';
   const dkCard = !PF ? `<div class="note">DraftKings odds aren't set up yet (no props.json found). Once the GitHub job runs with your API key, prices and edges show up here.</div>`
@@ -6000,7 +6019,7 @@ function gmEventPick(e, inj, LF, PF = PRF.data) {
   const GH = gmPickGoalie(M.S, H, pg, LF, e.date, skip(H)), GA = gmPickGoalie(M.S, Aw, pg, LF, e.date, skip(Aw)), gH = GH.id, gA = GA.id;
   const r = gmPredict(H, Aw, e.date, gH, gA, ml, inj, LF); if (!r) return null;
   // best price for each side: ESPN's line (DraftKings) or FanDuel, whichever pays more
-  const fd = PF ? fdMoneyline(PF, e.date, H, Aw) : null, bH = bestPrice(ml && ml.h, fd && fd.h), bA = bestPrice(ml && ml.a, fd && fd.a);
+  const fd = PF ? fdMoneyline(PF, e.date, H, Aw) : null, bH = bestPrice(ml && ml.h, fd && fd.h, sx(fd, 'h')), bA = bestPrice(ml && ml.a, fd && fd.a, sx(fd, 'a'));
   const side = bH && bA ? [['h', r.p, bH], ['a', 1 - r.p, bA]].map(([s, q, b]) => ({ s, q, price: b.price, book: b.book, edge: q - amImplied(b.price) })).sort((x, y) => y.edge - x.edge)[0] : null;
   const gn = (id, t) => pg[t] ? pg[t].n : (t === H ? GH : GA).n || ((M.S.Gn || {})[id] || '');
   return { H, Aw, ha: h.team.abbreviation, aa: a.team.abbreviation, ml, r, gHn: gn(gH, H), gAn: gn(gA, Aw), gHs: GH.st, gAs: GA.st, fd, bH, bA, side, verdict: side ? (side.edge >= .03 ? 'bet' : side.edge > 0 ? 'lean' : 'pass') : null };
@@ -6545,7 +6564,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">${ex ? '' : '<button class="btn" id="gbClear" style="margin-right:auto" title="Remove the Bet mark from this game">Not betting after all</button>'}<button class="btn" data-mbclose>Cancel</button><button class="btn primary" id="mbSaveBtn">${ex ? 'Save changes' : 'Confirm bet'}</button></div></div>`;
   document.body.appendChild(m);
   if (ex) { $('#mbOdds').value = ex.odds; $('#mbStake').value = ex.stake; }
-  const mlBest = () => bestPrice(G.ml ? G.ml[st.side] : null, G.fdml ? G.fdml[st.side] : null);
+  const mlBest = () => bestPrice(G.ml ? G.ml[st.side] : null, G.fdml ? G.fdml[st.side] : null, sx(G.fdml, st.side));
   const postedOdds = () => st.type === 'ml' ? (mlBest() ? mlBest().price : null) : st.type === 'total' ? (G.tot ? G.tot[st.side] : null) : (G.pl ? G.pl[st.side] : null);
   const defLine = () => st.type === 'total' ? (G.tot ? G.tot.line : 6.5) : st.type === 'pl' ? (st.side === fav ? -1.5 : 1.5) : null;
   const calc = () => {
@@ -6726,7 +6745,7 @@ function fgDkMap(PF, dateIso, hId, aId) {
 // tonight's first goal chances for one game, from the anytime rows (gsTonight)
 function fgGame(S, e, rows, PF, ATT, fit) {
   const c = e.competitions[0], H = String(c.competitors.find(x => x.homeAway === 'home').team.id), Aw = String(c.competitors.find(x => x.homeAway === 'away').team.id);
-  const season = seasonOf(e.date), dkm = fgDkMap(PF, e.date, H, Aw), fdm = fdPriceMap(PF, e.date, H, Aw, 'first'), out = [];
+  const season = seasonOf(e.date), dkm = fgDkMap(PF, e.date, H, Aw), fdm = fdPriceMap(PF, e.date, H, Aw, 'first'), xm = xPriceMap(PF, e.date, H, Aw, 'first'), out = [];
   for (const r of rows) {
     const lamB = fin(r.p) && r.p > 0 && r.p < 1 ? -Math.log(1 - r.p) : r.lam, enFrac = r.lam > 0 ? clamp((r.lamEN || 0) * S.c * (r.anchor || 1) / r.lam, 0, .5) : 0;
     const lamNE = lamB * (1 - enFrac), pf = FG.idx ? fgProfile(season, r.pid, r.n, TM(r.tm).abbr, ATT) : null;
@@ -6741,10 +6760,10 @@ function fgGame(S, e, rows, PF, ATT, fit) {
     const tr = out.filter(r => r.tm === t), sw = tr.reduce((s, r) => s + r.w, 0), pTeam = L > 0 ? (t === H ? LH : LA) / L : .5;
     for (const r of tr) {
       r.pTeam = pTeam * pAny; r.share = sw > 0 ? r.w / sw : 0; r.fp = r.pTeam * r.share;
-      r.fdk = dkm ? dkLookup(dkm, r.n, r.pid) : null; r.ffd = fdm ? dkLookup(fdm, r.n, r.pid) : null;
+      r.fdk = dkm ? dkLookup(dkm, r.n, r.pid) : null; r.ffd = fdm ? dkLookup(fdm, r.n, r.pid) : null; r.fox = xm ? dkLookup(xm, r.n, r.pid) : null;
       r.fFair = r.fdk != null && over ? amImplied(r.fdk) / over : r.ffd != null && overF ? amImplied(r.ffd) / overF : NaN;
-      // edge and expected profit at the better of the two books
-      const bp = bestPrice(r.fdk, r.ffd); r.fBest = bp ? bp.price : null; r.fBook = bp ? bp.book : null; r.fImp = bp ? amImplied(bp.price) : NaN;
+      // edge and expected profit at the best of the five books
+      const bp = bestPrice(r.fdk, r.ffd, r.fox); r.fBest = bp ? bp.price : null; r.fBook = bp ? bp.book : null; r.fImp = bp ? amImplied(bp.price) : NaN;
       if (bp) { const b = betEV(r.fp, bp.price); r.fEdge = r.fp - r.fImp; r.fEv = b.ev; r.fRoi = b.roi; } else { r.fEdge = r.fEv = r.fRoi = NaN; }
       // the habits' combined effect on his share, vs. anytime goals alone
       const base = tr.reduce((s, x) => s + x.lamNE, 0); r.habit = base > 0 && r.lamNE > 0 ? r.share / (r.lamNE / base) - 1 : 0;
@@ -6794,8 +6813,9 @@ async function renderFirstGoal() {
     { k: 'pTeam', h: 'Team first', v: r => r.pTeam, f: v => pct1(v) + '%', t: 'Chance his team scores the game\'s first goal.' },
     { k: 'fp', h: 'First goal', v: r => r.fp, f: (v, r) => `<b>${pct1(v)}%</b>${Math.abs(r.habit) >= .03 ? ` <span class="muted" style="font-size:11.5px">(${r.habit > 0 ? '+' : ''}${pct1(r.habit)}% from P1 habits)</span>` : ''}`, t: 'Ice Lab\'s chance he scores the first goal of the game.' },
     { k: 'fair', h: 'Fair odds', v: r => r.fp, f: (v, r) => fairAmerican(r.fp) },
-    { k: 'fdk', h: 'DraftKings', v: r => r.fdk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.fBook === 'dk' && r.ffd != null && r.ffd !== r.fdk ? ' <span class="bestb" title="Better price">★</span>' : ''}`, t: 'DraftKings first goal scorer price. ★ = the better of the two books.' },
-    { k: 'ffd', h: 'FanDuel', v: r => r.ffd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.fBook === 'fd' && r.fdk != null && r.ffd !== r.fdk ? ' <span class="bestb" title="Better price">★</span>' : ''}`, t: 'FanDuel first goal scorer price. ★ = the better of the two books. Edge and expected profit use the better price.' },
+    { k: 'fdk', h: 'DraftKings', v: r => r.fdk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.fBook === 'dk' && [r.ffd, ...XBK.map(k => r.fox && r.fox[k])].some(x => x != null && x !== r.fdk) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'DraftKings first goal scorer price. ★ = the best price of all five books.' },
+    { k: 'ffd', h: 'FanDuel', v: r => r.ffd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.fBook === 'fd' && [r.fdk, ...XBK.map(k => r.fox && r.fox[k])].some(x => x != null && x !== r.ffd) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'FanDuel first goal scorer price. ★ = the best price of all five books. Edge and expected profit use the best price.' },
+    { k: 'fox', h: 'Other books', v: r => { const b = bestPrice(null, null, r.fox); return b ? b.price : null; }, f: (v, r) => { const b = bestPrice(null, null, r.fox); return !b ? '<span class="muted">–</span>' : `<span data-tip="${esc(bookTip(r.fdk, r.ffd, r.fox))}"><b>${fmtML(b.price)}</b> <span class="muted" style="font-size:11px">${BK[b.book]}</span>${XBK.includes(r.fBook) ? ' <span class="bestb" title="Best price">★</span>' : ''}</span>`; }, t: 'The best first goal scorer price at Caesars, Fanatics or theScore Bet (hover for each book). ★ = the best price of all five books.' },
     { k: 'fImp', h: 'Implied (best)', v: r => r.fImp, f: (v, r) => fin(v) ? `${pct1(v)}%${fin(r.fFair) ? `<div class="muted" style="font-size:11px">${pct1(r.fFair)}% no margin</div>` : ''}` : '–', t: 'The chance DraftKings\' price implies, and underneath with its margin removed. First goal markets carry a big margin.' },
     { k: 'fEdge', h: 'Edge vs. sportsbook', v: r => r.fEdge, f: v => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>` : '–', t: 'Ice Lab\'s chance minus DraftKings\' implied chance.' },
     { k: 'fEv', h: 'Exp. profit', v: r => r.fEv, f: (v, r) => fin(v) ? `${moneyCell(v)} <span class="muted" style="font-size:11.5px">${r.fRoi > 0 ? '+' : ''}${pct1(r.fRoi)}%</span>` : '–', t: 'Expected profit per bet with your bet sizes ($100 on plus odds).' },
@@ -6858,7 +6878,7 @@ function fgTrackCard(PK) {
   const logRows = shown.map(p => `<tr><td class="l">${parseYmd(p.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l"><div class="tcell">${logoImg(p.tm, 16)}${plink(p.pid, p.n)}</div></td><td class="l"><span class="muted">vs.</span> ${esc(TM(p.opp).abbr || '')}</td><td>${pct1(p.p)}%</td><td><b>${fmtML(pkPx(p))}</b>${p.book ? ` <span class="muted" style="font-size:11px">${BK[p.book] || ''}</span>` : ''}</td><td style="color:${p.edge > 0 ? 'var(--good)' : 'var(--neg)'}">${fin(p.edge) ? (p.edge > 0 ? '+' : '') + (p.edge * 100).toFixed(1) : '–'}</td><td class="l">${resCell(p)}</td><td>${isDone(p) ? moneyCell(pkProfit(p)) : '–'}</td></tr>`).join('');
   const done = ps.filter(isDone).length, pend = ps.filter(p => p.res == null).length;
   return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 First goal pick log</h3><p>${done} graded · ${pend} pending · updated ${PK.updated ? new Date(PK.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</p></div>
-    <p class="muted" style="margin:-4px 0 10px;font-size:12px">The GitHub job saves every player with a first goal price before each game (the best of DraftKings and FanDuel) and grades them the next morning. Bet sizes follow your rule: $100 on plus odds. Players who don't play are void. "Expected hits" is how many first goals Ice Lab's chances said these picks should produce, so you can see if the model runs hot or cold.</p>
+    <p class="muted" style="margin:-4px 0 10px;font-size:12px">The GitHub job saves every player with a first goal price before each game (the best price across DraftKings, FanDuel, Caesars, Fanatics and theScore Bet) and grades them the next morning. Bet sizes follow your rule: $100 on plus odds. Players who don't play are void. "Expected hits" is how many first goals Ice Lab's chances said these picks should produce, so you can see if the model runs hot or cold.</p>
     ${tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit</h3>${chart}
     <div class="card-h" style="margin-top:14px"><h3>Pick log</h3><select id="fgtStrat">${S.map(s => `<option value="${s.k}" ${s.k === cur.k ? 'selected' : ''}>${esc(s.l)}</option>`).join('')}</select></div>
     ${logRows ? `<div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Player</th><th class="l">Opponent</th><th>Ice Lab</th><th>Price</th><th>Edge</th><th class="l">Result</th><th>Profit</th></tr></thead><tbody>${logRows}</tbody></table></div>${logList.length > 40 ? `<button class="btn" id="fgtAll" style="margin-top:8px">${FGT.all ? 'Show fewer' : `Show all ${logList.length}`}</button>` : ''}` : '<p class="muted" style="margin:0">No picks in this group yet.</p>'}
@@ -6930,8 +6950,8 @@ async function loadHealth(evs) {
     add('lines', 'Line combinations', isToday || !games || etMin < 11 * 60 ? 'ok' : 'warn', `${isToday ? 'today\'s' : 'not today\'s'} lines · ${n} game${n === 1 ? '' : 's'} posted · last changed ${ago(LF.updated)}`, !isToday && games && etMin >= 11 * 60 ? 'RotoGrinders hasn\'t posted today\'s lines yet, or the lines runs aren\'t working (see Scheduler above).' : ''); }
   // 3) DraftKings prices (The Odds API)
   if (!PF) add('props', 'Sportsbook prices', 'bad', 'props.json not found', 'Check the "props" job and the ODDS_API_KEY secret.');
-  else { const a = ageMin(PF.updated), late = a > lastRunAgo + 30; const pg = (PF.games || []).filter(g => (g.players || []).some(x => x.price != null)).length, fg = (PF.games || []).filter(g => (g.first || []).some(x => x.price != null)).length, fdg = (PF.games || []).filter(g => (g.players || []).some(x => x.fd != null) || (g.ml && g.ml.fd)).length;
-    add('props', 'Sportsbook prices', late && a > 24 * 60 ? 'bad' : late ? 'warn' : games && !pg && etMin > 11 * 60 + 30 ? 'warn' : 'ok', `updated ${ago(PF.updated)} · DraftKings anytime prices for ${pg} game${pg === 1 ? '' : 's'}, first goal for ${fg} · FanDuel for ${fdg}`, late ? 'The 11 AM / 5 PM run looks like it was skipped or failed. Check the "Ice Lab odds" job at cron-job.org (last result should be 204), then the "props" job in GitHub Actions.' : games && !pg ? 'DraftKings may not have posted goal scorer props yet; the 5 PM run usually catches them.' : '');
+  else { const a = ageMin(PF.updated), late = a > lastRunAgo + 30; const pg = (PF.games || []).filter(g => (g.players || []).some(x => x.price != null)).length, fg = (PF.games || []).filter(g => (g.first || []).some(x => x.price != null)).length, fdg = (PF.games || []).filter(g => (g.players || []).some(x => x.fd != null) || (g.ml && g.ml.fd)).length; const bkg = k => (PF.games || []).filter(g => (g.players || []).some(x => x[k] != null) || (g.ml && g.ml[k])).length;
+    add('props', 'Sportsbook prices', late && a > 24 * 60 ? 'bad' : late ? 'warn' : games && !pg && etMin > 11 * 60 + 30 ? 'warn' : 'ok', `updated ${ago(PF.updated)} · DraftKings anytime prices for ${pg} game${pg === 1 ? '' : 's'}, first goal for ${fg} · FanDuel for ${fdg} · Caesars ${bkg('cz')} · Fanatics ${bkg('fn')} · theScore ${bkg('sc')}`, late ? 'The 11 AM / 5 PM run looks like it was skipped or failed. Check the "Ice Lab odds" job at cron-job.org (last result should be 204), then the "props" job in GitHub Actions.' : games && !pg ? 'DraftKings may not have posted goal scorer props yet; the 5 PM run usually catches them.' : '');
     const rem = parseFloat(PF.remaining);
     if (isFinite(rem)) add('credits', 'Odds API credits', rem >= 300 ? 'ok' : rem >= 100 ? 'warn' : 'bad', `${rem.toLocaleString()} left`, rem < 300 ? `Each run uses about 2 credits per game. ${rem < 100 ? 'You\'ll run out within a day or two, so avoid' : 'Avoid'} manual runs, drop first goal prices, or upgrade your Odds API plan.` : ''); }
   // 3) ESPN moneylines (the game model needs them)
