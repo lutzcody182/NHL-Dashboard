@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-19",
- "updated": "2026-10-19T15:00:19.556Z",
+ "updated": "2026-10-19T16:00:17.455Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -432,7 +432,7 @@
          "pp": ""
         },
         {
-         "n": "Owen Tippett",
+         "n": "Michael Bunting",
          "pos": "W",
          "pp": "PP2"
         }
@@ -447,9 +447,9 @@
          "pp": ""
         },
         {
-         "n": "Michael Bunting",
+         "n": "Alex Bump",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Garrett Wilson",
@@ -679,11 +679,6 @@
          "n": "Gavin McKenna",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Bo Groulx",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
