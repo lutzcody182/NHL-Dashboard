@@ -432,7 +432,7 @@ jobs:
                 if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
                 for (const r of rows) {
                   const k = `${e.id}|${r.pid}`;
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), fairEven: Number.isFinite(r.dkFairEven) ? +r.dkFairEven.toFixed(4) : null, dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
                   if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
                 // a pending pick whose price disappeared (or no longer matches him, like a same-name mix-up) is removed instead of staying with a wrong price
@@ -771,7 +771,7 @@ jobs:
                 if (!rows.length) { log(`Game ${e.id}: no DraftKings prices matched yet`); continue; }
                 for (const r of rows) {
                   const k = `${e.id}|${r.pid}`;
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', glSt: r.gl ? r.gl.st || '' : '', role: r.role || '', gp: r.gp, crew: +(r.crew || 1).toFixed(3), p: +r.p.toFixed(4), pRaw: +r.pModel.toFixed(4), fair: +r.dkFair.toFixed(4), fairEven: Number.isFinite(r.dkFairEven) ? +r.dkFairEven.toFixed(4) : null, dk: r.dk, fd: r.fd != null ? r.fd : null, best: r.best, book: r.book, imp: Number.isFinite(r.dkImp) ? +r.dkImp.toFixed(4) : null, edge: +r.edgeP.toFixed(4), ev: +r.ev.toFixed(2), roi: +r.roi.toFixed(4), res: null, saved: now.toISOString() };
                   if (byKey.has(k)) { if (byKey.get(k).res == null) { Object.assign(byKey.get(k), rec); updated++; } } else { byKey.set(k, rec); added++; }
                 }
                 // a pending pick whose price disappeared (or no longer matches him, like a same-name mix-up) is removed instead of staying with a wrong price
