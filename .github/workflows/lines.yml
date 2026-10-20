@@ -322,6 +322,154 @@ jobs:
           EOF
           node "$RUNNER_TEMP/shifts.js"
 
+      - name: Line combinations from NHL shift charts and play-by-play
+        continue-on-error: true
+        run: |
+          cat > "$RUNNER_TEMP/combos.js" <<'EOF'
+          // Line combinations: how each forward line (trio) and defense pair actually does at 5-on-5 when it's on the ice together.
+          // Matches the NHL's shift charts (who was on the ice each second) with its play-by-play (every shot attempt and goal).
+          // Per-game results are saved in the GitHub cache, so each game is downloaded once; season totals go into props.json → combos.
+          const fs = require('fs');
+          const log = (...a) => console.log(...a);
+          const toS = t => { if (!t) return 0; const [m, s] = String(t).split(':').map(Number); return (m || 0) * 60 + (s || 0); };
+          const etDay = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+          const addDay = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+          async function pool(items, n, fn) { let i = 0; await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) { const k = i++; await fn(items[k]); } })); }
+          const FWD = new Set(['C', 'L', 'R']);
+          // simple shot quality (chance an unblocked attempt becomes a goal): distance, angle, shot type, rebound. Scaled to real goals later.
+          function xgOf(dist, ang, type, reb) {
+            let z = -0.6 - 0.065 * dist - 0.01 * ang;
+            if (/tip|deflect/i.test(type || '')) z += 0.3; else if (/wrap/i.test(type || '')) z -= 0.5; else if (/backhand/i.test(type || '')) z -= 0.15;
+            if (reb) z += 0.8;
+            return 1 / (1 + Math.exp(-z));
+          }
+          // one game → { tri, pr, pl } stats at 5-on-5. Each stat row: [toi sec, CF, CA, SF, SA, GF, GA, xGF, xGA]
+          function gameCombos(shiftRows, pbp) {
+            const pos = {}, team = {}, name = {};
+            for (const r of pbp.rosterSpots || []) { pos[r.playerId] = r.positionCode; team[r.playerId] = r.teamId; name[r.playerId] = `${(r.firstName && r.firstName.default) || ''} ${(r.lastName && r.lastName.default) || ''}`.trim(); }
+            const H = pbp.homeTeam.id, A = pbp.awayTeam.id, ab = { [H]: pbp.homeTeam.abbrev, [A]: pbp.awayTeam.abbrev };
+            const shifts = []; let maxT = 0;
+            for (const r of shiftRows || []) {
+              if (r.typeCode !== 517 || !r.playerId || !(r.period >= 1 && r.period <= 4)) continue; // regulation + regular-season overtime (no shootout)
+              const off = (r.period - 1) * 1200, a = off + toS(r.startTime), b = off + toS(r.endTime);
+              if (!(b > a)) continue;
+              const tm = team[r.playerId] || null, p = pos[r.playerId]; if (!tm || !p) continue;
+              shifts.push({ id: r.playerId, tm, p, a, b }); if (b > maxT) maxT = b;
+            }
+            if (shifts.length < 200) return null; // shift charts incomplete
+            const z = () => [0, 0, 0, 0, 0, 0, 0, 0, 0];
+            const out = { tri: {}, pr: {}, pl: {}, names: {}, tm: ab };
+            const row = (o, k) => o[k] || (o[k] = z());
+            // who is on the ice: each second for ice time (start ≤ s < end), at an event's moment for shots (start < t ≤ end)
+            const sec = Array.from({ length: maxT + 1 }, () => []);
+            for (const s of shifts) for (let t = s.a; t < s.b && t <= maxT; t++) sec[t].push(s);
+            const split = list => { const by = { [H]: { f: [], d: [], g: 0 }, [A]: { f: [], d: [], g: 0 } }; for (const s of list) { const x = by[s.tm]; if (!x) continue; if (s.p === 'G') x.g++; else if (s.p === 'D') x.d.push(s.id); else if (FWD.has(s.p)) x.f.push(s.id); } return by; };
+            const hasG = { [H]: shifts.some(s => s.tm === H && s.p === 'G'), [A]: shifts.some(s => s.tm === A && s.p === 'G') }; // some shift charts leave goalies out
+            const is5v5 = by => [H, A].every(t => by[t].f.length + by[t].d.length === 5 && (!hasG[t] || by[t].g === 1));
+            const kTri = l => l.length === 3 ? [...l].sort((x, y) => x - y).join('-') : null, kPr = l => l.length === 2 ? [...l].sort((x, y) => x - y).join('-') : null;
+            for (let t = 0; t <= maxT; t++) {
+              const by = split(sec[t]); if (!is5v5(by)) continue;
+              for (const tm of [H, A]) {
+                const x = by[tm], kt = kTri(x.f), kp = kPr(x.d);
+                if (kt) row(out.tri, tm + '|' + kt)[0]++;
+                if (kp) row(out.pr, tm + '|' + kp)[0]++;
+                for (const id of [...x.f, ...x.d]) row(out.pl, tm + '|' + id)[0]++;
+              }
+            }
+            // shots: 5-on-5 situation code 1551 (one goalie and five skaters each side)
+            let lastUnblocked = null;
+            for (const p of pbp.plays || []) {
+              const k = p.typeDescKey; if (!/^(shot-on-goal|missed-shot|blocked-shot|goal)$/.test(k)) continue;
+              const per = p.periodDescriptor && p.periodDescriptor.number; if (!(per >= 1 && per <= 4)) continue;
+              const t = (per - 1) * 1200 + toS(p.timeInPeriod), d = p.details || {};
+              const shooter = d.shootingPlayerId || d.scoringPlayerId, tm = team[shooter] || d.eventOwnerTeamId; if (tm !== H && tm !== A) continue;
+              const blocked = k === 'blocked-shot';
+              let xg = 0;
+              if (!blocked) {
+                const homeShoots = tm === H, netX = (p.homeTeamDefendingSide === 'right') === homeShoots ? -89 : 89;
+                const dx = Math.abs(netX - (d.xCoord || 0)), dy = Math.abs(d.yCoord || 0), dist = Math.hypot(dx, dy), ang = dx > 0 ? Math.atan(dy / dx) * 180 / Math.PI : 90;
+                const reb = lastUnblocked && lastUnblocked.tm === tm && t - lastUnblocked.t <= 3;
+                xg = xgOf(dist, ang, d.shotType, reb); lastUnblocked = { tm, t };
+              }
+              if (p.situationCode !== '1551') continue;
+              const on = split(shifts.filter(s => s.a < t && t <= s.b)); if (!is5v5(on)) continue;
+              const opp = tm === H ? A : H, sog = k === 'shot-on-goal' || k === 'goal', goal = k === 'goal';
+              const add = (r, f) => { const o = f ? 0 : 1; r[1 + o]++; if (sog) r[3 + o]++; if (goal) r[5 + o]++; r[7 + o] += xg; };
+              for (const [side, f] of [[tm, true], [opp, false]]) {
+                const x = on[side], kt = kTri(x.f), kp = kPr(x.d);
+                if (kt && out.tri[side + '|' + kt]) add(out.tri[side + '|' + kt], f);
+                if (kp && out.pr[side + '|' + kp]) add(out.pr[side + '|' + kp], f);
+                for (const id of [...x.f, ...x.d]) if (out.pl[side + '|' + id]) add(out.pl[side + '|' + id], f);
+              }
+            }
+            for (const o of [out.tri, out.pr, out.pl]) for (const r of Object.values(o)) { r[7] = +r[7].toFixed(4); r[8] = +r[8].toFixed(4); }
+            for (const s of shifts) out.names[s.id] = [name[s.id] || '', s.p];
+            return out;
+          }
+          async function run({ fetchImpl = fetch, now = new Date(), budgetMs = 10 * 60e3 } = {}) {
+            const t0 = Date.now(), y = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1, code = `${y}${y + 1}`, today = etDay(now);
+            let C = { s: code, days: {}, games: {} }; try { C = JSON.parse(fs.readFileSync('.cache/combos.json', 'utf8')); } catch (e) {}
+            if (C.s !== code) C = { s: code, days: {}, games: {} }; // new season: start over
+            const getJ = async url => { const r = await fetchImpl(url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
+            let fetched = 0, failed = 0, stopped = false;
+            const days = []; for (let d = `${y}-09-25`; d <= today; d = addDay(d, 1)) if (!C.days[d]) days.push(d);
+            await pool(days, 4, async d => {
+              if (Date.now() - t0 > budgetMs) { stopped = true; return; }
+              let sc; try { sc = await getJ(`https://api-web.nhle.com/v1/score/${d}`); } catch (e) { failed++; return; }
+              const gs = (sc.games || []).filter(g => g.gameType === 2 || g.gameType === 3);
+              let allDone = d < today;
+              for (const g of gs) {
+                if (!/^(OFF|FINAL)$/.test(g.gameState || '')) { allDone = false; continue; }
+                if (C.games[g.id]) continue;
+                if (Date.now() - t0 > budgetMs) { stopped = true; allDone = false; break; }
+                try {
+                  const [sh, pbp] = await Promise.all([getJ(`https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId=${g.id}`), getJ(`https://api-web.nhle.com/v1/gamecenter/${g.id}/play-by-play`)]);
+                  const r = gameCombos(sh.data, pbp);
+                  if (!r) { allDone = false; continue; } // shift charts not posted yet
+                  C.games[g.id] = { d, ...r }; fetched++;
+                } catch (e) { failed++; allDone = false; }
+              }
+              if (allDone) C.days[d] = 1;
+            });
+            fs.mkdirSync('.cache', { recursive: true }); fs.writeFileSync('.cache/combos.json', JSON.stringify(C));
+            // season totals; xG scaled so it adds up to the real 5-on-5 goals
+            const T = { tri: {}, pr: {}, pl: {} }, nm = {}, last = {};
+            let G = 0, X = 0;
+            for (const [gid, g] of Object.entries(C.games)) {
+              for (const [id, v] of Object.entries(g.names || {})) nm[id] = v;
+              for (const kind of ['tri', 'pr', 'pl']) for (const [k, r] of Object.entries(g[kind] || {})) {
+                const t = T[kind][k] || (T[kind][k] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+                for (let i = 0; i < 9; i++) t[i] += r[i]; t[9]++;
+                if (kind === 'pl') { G += r[5]; X += r[7]; const id = k.split('|')[1]; if (!last[id] || g.d >= last[id].d) last[id] = { d: g.d, tm: k.split('|')[0] }; }
+              }
+            }
+            const scale = X > 0 ? G / X : 1, abbrOf = {};
+            for (const g of Object.values(C.games)) for (const [id, a] of Object.entries(g.tm || {})) abbrOf[id] = a;
+            const fmt = (ids, t) => [...ids.map(id => (nm[id] || [''])[0]), Math.round(t[0]), ...t.slice(1, 7), +(t[7] * scale).toFixed(2), +(t[8] * scale).toFixed(2), t[9]];
+            const teams = {};
+            for (const kind of ['tri', 'pr']) for (const [k, t] of Object.entries(T[kind])) {
+              if (t[0] < 120) continue; // under 2 minutes together all season: noise
+              const [tm, ids] = k.split('|'), a = abbrOf[tm] || tm, o = teams[a] || (teams[a] = { f: [], d: [], pl: {} });
+              (kind === 'tri' ? o.f : o.d).push(fmt(ids.split('-'), t));
+            }
+            for (const [k, t] of Object.entries(T.pl)) {
+              const [tm, id] = k.split('|'), a = abbrOf[tm] || tm, o = teams[a] || (teams[a] = { f: [], d: [], pl: {} }), n = nm[id] || ['', ''];
+              if (last[id] && last[id].tm !== tm) continue; // traded: keep his current team only
+              o.pl[n[0]] = [n[1], Math.round(t[0]), ...t.slice(1, 7), +(t[7] * scale).toFixed(2), +(t[8] * scale).toFixed(2), t[9]];
+            }
+            for (const o of Object.values(teams)) { o.f.sort((x, y) => y[3] - x[3]); o.d.sort((x, y) => y[2] - x[2]); o.f = o.f.slice(0, 20); o.d = o.d.slice(0, 12); }
+            let P = {}; try { P = JSON.parse(fs.readFileSync('props.json', 'utf8')); } catch (e) {}
+            P.combos = { source: 'NHL shift charts + play-by-play, 5-on-5', season: code, updated: now.toISOString(), games: Object.keys(C.games).length, xgScale: +scale.toFixed(3),
+              cols: ['toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], plCols: ['pos', 'toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], teams };
+            fs.writeFileSync('props.json', JSON.stringify(P));
+            log(`Line combinations: ${fetched} new games (${Object.keys(C.games).length} this season), ${failed} failed requests${stopped ? ', stopped early to stay within time (continues next run)' : ''}. xG scale ${scale.toFixed(2)}.`);
+            return P.combos;
+          }
+          module.exports = { run, gameCombos, xgOf };
+          if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::warning::' + (e.stack || e.message)); process.exit(0); });
+          EOF
+          node "$RUNNER_TEMP/combos.js"
+
       - name: Install page runner
         run: npm install --prefix "$RUNNER_TEMP/tk" jsdom@24 --no-audit --no-fund --silent
 
