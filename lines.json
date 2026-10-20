@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-20",
- "updated": "2026-10-20T20:00:19.577Z",
+ "updated": "2026-10-20T21:00:17.583Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -37,18 +37,18 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Alexander Wennberg",
-         "pos": "C",
+         "n": "Ivar Stenberg",
+         "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Mason Marchment",
+         "n": "Kiefer Sherwood",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Tyler Toffoli",
-         "pos": "W",
+         "n": "Michael Misa",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -57,18 +57,18 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Ivar Stenberg",
+         "n": "Mason Marchment",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Kiefer Sherwood",
+         "n": "Collin Graf",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Michael Misa",
-         "pos": "C",
+         "n": "Tyler Toffoli",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -82,7 +82,7 @@
          "pp": ""
         },
         {
-         "n": "Collin Graf",
+         "n": "Ty Dellandrea",
          "pos": "W",
          "pp": ""
         },
@@ -122,9 +122,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Luca Cagnoni",
+         "n": "Nolan Allan",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
