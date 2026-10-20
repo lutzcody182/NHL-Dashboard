@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-20",
- "updated": "2026-10-20T19:00:19.684Z",
+ "updated": "2026-10-20T20:00:19.577Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2276,6 +2276,11 @@
          "n": "Jackson Blake",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Nikolaj Ehlers",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -2288,25 +2293,20 @@
          "pp": ""
         },
         {
+         "n": "Eric Robinson",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Felix Unger Sorum",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Nikolaj Ehlers",
-         "pos": "W",
-         "pp": "PP1"
         }
        ]
       },
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Eric Robinson",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Jesperi Kotkaniemi",
          "pos": "C",
@@ -2343,14 +2343,14 @@
          "pp": ""
         },
         {
-         "n": "Mike Reilly",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Shayne Gostisbehere",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Juuso Valimaki",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
