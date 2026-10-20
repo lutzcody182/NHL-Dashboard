@@ -4442,11 +4442,17 @@ const GM_FEATS = [
   ['pht5', 'Post Hockey team 5v5 play', 'phteams', 'per 0.5 of 5v5 expected goal differential per 60 (Post Hockey xG), home minus road'],
   ['phst', 'Post Hockey team special teams', 'phteams', 'per 2 goals per 60 of power-play xGF minus penalty-kill xGA (Post Hockey xG), home minus road'],
   ['hlay', 'Home team: long layoff (4+ days off)', 'rest', 'when the home team hasn\'t played in 4+ days (rust)'],
-  ['alay', 'Road team: long layoff (4+ days off)', 'rest', 'when the road team hasn\'t played in 4+ days (rust)']];
+  ['alay', 'Road team: long layoff (4+ days off)', 'rest', 'when the road team hasn\'t played in 4+ days (rust)'],
+  ['luv', 'Tonight\'s lineup vs. usual (both ratings)', 'lineup', 'Ice Lab and Post Hockey ratings averaged: how much stronger the home lineup is than its usual one, minus the same for the visitor']];
 // two ways to model rest; training keeps whichever predicts held-out games better:
 //   v1 = per-day rest difference + back-to-back flags · v2 = back-to-back flags + long-layoff flags (no per-day term)
 const GM_REST_OFF = { v1: ['hlay', 'alay'], v2: ['rest'] };
 const gmRestMask = (m, v) => m.map((x, i) => x && !GM_REST_OFF[v].includes(GM_FEATS[i][0]));
+// two ways to model "tonight's lineup vs. usual": v1 = Ice Lab and Post Hockey versions as separate factors · v2 = one combined factor
+const GM_LU_OFF = { v1: ['luv'], v2: ['lineup', 'phline'] };
+const gmLuMask = (m, v) => m.map((x, i) => x && !GM_LU_OFF[v].includes(GM_FEATS[i][0]));
+// the combined factor, from a finished feature row: average of the two when Post Hockey ratings exist, else Ice Lab's alone
+const gmLuv = x => { const iL = GM_FEATS.findIndex(f => f[0] === 'lineup'), iP = GM_FEATS.findIndex(f => f[0] === 'phline'), iT = GM_FEATS.findIndex(f => f[0] === 'phteam'); const ph = x[iT] !== 0 || x[iP] !== 0; return ph ? (x[iL] + x[iP]) / 2 : x[iL]; };
 // long layoff: 4+ days off since the last game (not counting a season opener)
 function gmLayoff(S, hId, aId, dateIso) { const lay = t => t.last && (new Date(dateIso) - new Date(t.last)) / 864e5 >= 4.5 ? 1 : 0; return [lay(gmTeam(S, hId)), lay(gmTeam(S, aId))]; }
 const GM_GROUPS = [['rest', 'Rest & back-to-backs'], ['travel', 'Time zones / travel'], ['goalie', 'Starting goalie'], ['special', 'Special teams'], ['discipline', 'Discipline'], ['form', 'Recent form'], ['homecook', 'Home cooking'], ['gmatch', 'Shooters vs. goalie matchup'], ['ot', 'Overtime & shootout'], ['gload', 'Goalie workload'], ['sched', 'Schedule stretches'], ['move', 'Line movement'], ['style', 'Rush vs. cycle style matchup'], ['lineup', 'Lineup strength (player ratings)'], ['posthockey', 'Post Hockey player ratings'], ['phteams', 'Post Hockey team stats']];
@@ -4627,7 +4633,7 @@ function gmNewSeason(S) {
   for (const t of Object.values(S.T)) {
     t.off = S.mu + .5 * (t.off - S.mu); t.def = S.mu + .5 * (t.def - S.mu); t.n = Math.min(t.n, 10);
     for (const k of ['sxf', 'sxa', 'hxf', 'hxa', 'rxf', 'rxa', 'ppg', 'ppga', 'pen', 'gp', 'ppo', 'ppoA', 'otg', 'otw', 'rF', 'cF', 'rA', 'cA', 'sg']) if (t[k] != null) t[k] *= .5;
-    t.rec = []; t.last = null;
+    t.rec = []; t.last = null; t.lus = []; // "usual lineup" starts over each season, so offseason moves don't count as "unusual" every night
   }
   for (const q of Object.values(S.Gk)) { q.xga *= .5; q.ga *= .5; q.toi *= .5; }
   for (const r of Object.values(S.R || {})) { r.gp *= .5; r.pen *= .5; }
@@ -4675,6 +4681,7 @@ function gmBuild(games, opt = {}, sadj = null, noGS = false) {
     f.x.push(...(noGS ? [0, 0] : gmPHFeat(S, g.home.id, g.away.id, gmLineup(g, g.home.id), gmLineup(g, g.away.id), seasonOf(g.date), 'prior')));
     f.x.push(...(noGS ? [0, 0] : gmPHTeamFeat(g.home.id, g.away.id, g.date)));
     f.x.push(...gmLayoff(S, g.home.id, g.away.id, g.date));
+    f.x.push(gmLuv(f.x));
     if (f.ready) rows.push({ x: f.x, y: g.home.score > g.away.score ? 1 : 0, mk: devig(g.ml), id: g.id, date: g.date });
     gmUpdate(S, g); if (GSs) gsState([g], GSs);
     if (!noGS) { S.nm = S.nm || {}; S.pos = S.pos || {}; for (const [id, p] of Object.entries(g.sk || {})) { S.nm[id] = p.n; S.pos[id] = p.pos; } }
@@ -4713,7 +4720,10 @@ function gmTrain(games) {
   const restCmp = {};
   for (const v of ['v1', 'v2']) { let ll = 0, n = 0; for (const c of [.55, .7, .85]) { const a = Math.floor(train.length * c), b = Math.min(train.length, a + Math.floor(train.length * .15)); if (b - a < 30) continue; const W = gmFit(train.slice(0, a), gmRestMask(gmMask(allGroups), v)), sc = gmScore(train.slice(a, b), r => gmProb(W, r.x)); ll += sc.ll * (b - a); n += b - a; } restCmp[v] = n ? ll / n : Infinity; }
   const restV = restCmp.v2 <= restCmp.v1 + .0002 ? 'v2' : 'v1'; // ties go to the simpler back-to-back version
-  const vm = m => gmRestMask(m, restV);
+  const luCmp = {};
+  for (const v of ['v1', 'v2']) { let ll = 0, n = 0; for (const c of [.55, .7, .85]) { const a = Math.floor(train.length * c), b = Math.min(train.length, a + Math.floor(train.length * .15)); if (b - a < 30) continue; const W = gmFit(train.slice(0, a), gmLuMask(gmRestMask(gmMask(allGroups), restV), v)), sc = gmScore(train.slice(a, b), r => gmProb(W, r.x)); ll += sc.ll * (b - a); n += b - a; } luCmp[v] = n ? ll / n : Infinity; }
+  const luV = luCmp.v2 <= luCmp.v1 + .0002 ? 'v2' : 'v1'; // ties go to the single combined factor
+  const vm = m => gmLuMask(gmRestMask(m, restV), luV);
   // old model = ratings + home ice only
   const Wbase = gmFit(train, gmMask([])), Wall = gmFit(train, vm(gmMask(allGroups)));
   const sBase = gmScore(test, r => gmProb(Wbase, r.x)), sAll = gmScore(test, r => gmProb(Wall, r.x));
@@ -4723,7 +4733,7 @@ function gmTrain(games) {
   const half = Math.floor(test.length / 2), tA = test.slice(0, half), tB = test.slice(half), ablA = {}, ablB = {};
   for (const grp of allGroups) { const W = gmFit(train, vm(gmMask(allGroups.filter(x => x !== grp)))), pf = r => gmProb(W, r.x), pa = r => gmProb(Wall, r.x); abl[grp] = gmScore(test, pf).ll - sAll.ll; ablA[grp] = gmScore(tA, pf).ll - gmScore(tA, pa).ll; ablB[grp] = gmScore(tB, pf).ll - gmScore(tB, pa).ll; }
   // factors with an obvious direction must also point the right way (e.g. a better style fit can't hurt), so a lucky test split can't sneak in nonsense
-  const GM_SIGN = { gmatch: ['gmatch', 1], ot: ['ot', 1], style: ['style', 1], goalie: ['goalie', 1], move: ['move', 1], lineup: ['lineup', 1], posthockey: ['phteam', 1], phteams: ['pht5', 1] };
+  const GM_SIGN = { gmatch: ['gmatch', 1], ot: ['ot', 1], style: ['style', 1], goalie: ['goalie', 1], move: ['move', 1], lineup: ['lineup', 1], luv: ['luv', 1], posthockey: ['phteam', 1], phteams: ['pht5', 1] };
   const signOK = grp => { const s = GM_SIGN[grp]; if (!s) return true; const i = GM_FEATS.findIndex(f => f[0] === s[0]); return !(Wall[i] * s[1] < 0); };
   // EVERY factor stays in. How hard weak factors get shrunk toward zero (lambda) is chosen by rolling validation inside the
   // training games; factors that point the wrong way (e.g. a better goalie "hurting") are switched off.
@@ -4754,7 +4764,7 @@ function gmTrain(games) {
   // final weights: kept inputs, refit on every game
   const W = fitSigned(rows, lam), Wfull = W;
   const seasons = new Set(games.map(g => { const d = new Date(g.date); return d.getMonth() >= 7 ? d.getFullYear() + 1 : d.getFullYear(); }));
-  return { W, Wfull, Wb, keep, abl: ablR, restV, restCmp, lam, cv, ridge: true, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, GS, PR: PR ? { O: PR.O, D: PR.D, sh: PR.sh, mu: PR.mu } : null, tune: { best, dflt, grid, sadj }, t: Date.now() };
+  return { W, Wfull, Wb, keep, abl: ablR, restV, restCmp, luV, luCmp, lam, cv, ridge: true, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, GS, PR: PR ? { O: PR.O, D: PR.D, sh: PR.sh, mu: PR.mu } : null, tune: { best, dflt, grid, sadj }, t: Date.now() };
 }
 // predict an upcoming game, with a factor-by-factor breakdown
 function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
@@ -4770,10 +4780,11 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   if (M.PR && M.GS) { const gl = { date: dateIso, home: { id: hId }, away: { id: aId } }, lu = t => { const r = gsRoster(M.GS, LF || null, gl, t); return r.src === 'RotoGrinders lines' ? r.ids : r.ids.filter(id => !(inj && inj.st[id] && inj.st[id].out)); }; luH = lu(hId); luA = lu(aId); }
   const dH = M.PR ? gmLineupDelta(M.S, M.PR, hId, luH) : 0, dA = M.PR ? gmLineupDelta(M.S, M.PR, aId, luA) : 0;
   f.x.push((dH - dA) / .1);
-  const phf = luH && luA ? gmPHFeat(M.S, hId, aId, luH, luA, seasonOf(dateIso), 'now', M.GS) : [0, 0];
+  const phf = luH && luA ? gmPHFeat(M.S, hId, aId, luH, luA, seasonOf(dateIso), M.luV ? 'prior' : 'now', M.GS) : [0, 0]; // training only sees last season's ratings, so tonight uses them too
   f.x.push(...phf);
   const pht = gmPHTeamFeat(hId, aId, dateIso); f.x.push(...pht);
   f.x.push(...gmLayoff(M.S, hId, aId, dateIso));
+  f.x.push(gmLuv(f.x));
   const lineupOn = M.W.length >= GM_FEATS.length && (M.keep.includes('lineup') || M.keep.includes('posthockey'));
   const refs = (inj && inj.refs) || [], crew = gmCrew(M.S, refs), rg = gmRefGoals(M.S, hId, aId, crew);
   const p0 = gmProb(W, f.x);
@@ -4790,7 +4801,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
   return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
-async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
+async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.luV && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
 async function gmCollect(onProg) {
   const seasons = [S.curSeason - 2, S.curSeason - 1, S.curSeason], today = todayStr(), ids = [];
   for (const y of seasons) {
@@ -4857,6 +4868,7 @@ async function renderGameModelCard() {
     <h3 class="cmp-sec">What it takes into account</h3>
     <p class="muted" style="font-size:12px;margin:-4px 0 8px">${M.ridge ? `Every factor is in the model. It learns how much each one matters from ${M.nTrain.toLocaleString()} games and shrinks factors with weak evidence toward zero (shrinkage strength picked by testing on held-out games: ${M.lam}). Factors that point the wrong way, like a better goalie "hurting", are switched off. ` : ''}Effect = change in win chance for one unit of each factor, starting from an even game. "Test impact" = how much worse predictions got with that group removed (×1,000 log loss); positive means it helps. Player-level inputs: starting goalie, shooters vs. goalie, injuries, lineup strength (Ice Lab and Post Hockey player ratings), and the team ratings themselves, which are built from every player's shots.</p>
     ${M.restV ? `<p style="margin:0 0 8px;font-size:12.5px"><b>Rest:</b> ${M.restV === 'v2' ? 'using back-to-backs + long layoffs (no per-day rest term)' : 'using the per-day rest difference + back-to-backs'}, because it predicted held-out training games better (log loss ×1,000: per-day ${fin(M.restCmp.v1) ? (M.restCmp.v1 * 1000).toFixed(1) : '–'} vs. back-to-back ${fin(M.restCmp.v2) ? (M.restCmp.v2 * 1000).toFixed(1) : '–'}; lower is better, ties go to back-to-back).</p>` : ''}
+    ${M.luV ? `<p style="margin:0 0 8px;font-size:12.5px"><b>Lineup vs. usual:</b> ${M.luV === 'v2' ? 'one combined factor (Ice Lab and Post Hockey ratings averaged)' : 'Ice Lab and Post Hockey versions as separate factors'}, because it predicted held-out training games better (log loss ×1,000: separate ${fin(M.luCmp.v1) ? (M.luCmp.v1 * 1000).toFixed(1) : '–'} vs. combined ${fin(M.luCmp.v2) ? (M.luCmp.v2 * 1000).toFixed(1) : '–'}). The usual lineup starts fresh each season, and tonight's Post Hockey factors use last season's ratings, the same as the games it learned from.</p>` : ''}
     <div class="twrap"><table><thead><tr><th class="l">Factor</th><th class="l">Unit</th><th>Effect</th><th data-gloss="Increase in test log loss (×1,000) when this group of factors is removed. Positive = the factor makes predictions better.">Test impact</th><th>Status</th></tr></thead><tbody>${inputs}</tbody></table></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">${grpRows}. Every factor is built only from what was known before each game (walk-forward), and ratings carry over from last season pulled halfway back toward average. Starting goalies use whoever started; for upcoming games the confirmed or probable starter is used when ESPN lists one.</p></div>`;
   $('#gmRe').onclick = () => { gmRun(true); renderGameModelCard(); };
