@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-20",
- "updated": "2026-10-20T21:00:17.583Z",
+ "updated": "2026-10-20T23:00:16.346Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -266,30 +266,25 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Alex Killorn",
+         "n": "Cutter Gauthier",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Nikita Klepov",
-         "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Leo Carlsson",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Nikita Nesterenko",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
       {
        "label": "Line 2",
        "players": [
-        {
-         "n": "Frank Vatrano",
-         "pos": "W",
-         "pp": "PP2"
-        },
         {
          "n": "Mikael Granlund",
          "pos": "C",
@@ -299,6 +294,11 @@
          "n": "Beckett Sennecke",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Jeff Malott",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -306,14 +306,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Cutter Gauthier",
+         "n": "Alex Killorn",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
-         "n": "A.J. Greer",
+         "n": "Sam Colangelo",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Roger McQueen",
@@ -326,18 +326,18 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Jeff Malott",
+         "n": "Frank Vatrano",
          "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Judd Caulfield",
-         "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Tim Washe",
          "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "A.J. Greer",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -351,7 +351,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Noah Warren",
+         "n": "Drew Helleson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Pavel Mintyukov",
          "pos": "D",
          "pp": ""
         },
@@ -361,17 +366,12 @@
          "pp": "PP2"
         },
         {
+         "n": "Noah Warren",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Tyson Hinds",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Nick Jensen",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Pavel Mintyukov",
          "pos": "D",
          "pp": ""
         }
@@ -726,12 +726,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Timothy Liljegren",
+         "n": "Martin Fehervary",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Martin Fehervary",
+         "n": "Vincent Desharnais",
          "pos": "D",
          "pp": ""
         },
@@ -741,7 +741,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Vincent Desharnais",
+         "n": "Timothy Liljegren",
          "pos": "D",
          "pp": ""
         }
@@ -769,9 +769,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Martin Necas",
+         "n": "Jaden Schwartz",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Artturi Lehkonen",
@@ -784,6 +784,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Martin Necas",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Gabriel Landeskog",
          "pos": "W",
          "pp": "PP2"
@@ -792,6 +797,21 @@
          "n": "Nazem Kadri",
          "pos": "W",
          "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "T.J. Hughes",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Parker Kelly",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Brock Nelson",
@@ -801,30 +821,10 @@
        ]
       },
       {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Jaden Schwartz",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "T.J. Hughes",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Fedor Svechkov",
-         "pos": "C",
-         "pp": ""
-        }
-       ]
-      },
-      {
        "label": "Line 4",
        "players": [
         {
-         "n": "Parker Kelly",
+         "n": "Fedor Svechkov",
          "pos": "C",
          "pp": ""
         },
@@ -1465,7 +1465,7 @@
         {
          "n": "Philip Broberg",
          "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Colton Parayko",
@@ -1475,7 +1475,7 @@
         {
          "n": "Adam Jiricek",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Cam Fowler",
