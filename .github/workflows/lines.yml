@@ -274,7 +274,19 @@ jobs:
             const t0 = Date.now(), y = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1, today = etDay(now);
             let C = { days: {}, games: {} }; try { C = JSON.parse(fs.readFileSync('.cache/shifts.json', 'utf8')); } catch (e) {}
             C.days = C.days || {}; C.games = C.games || {};
-            const getJ = async url => { const r = await fetchImpl(url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
+            // the NHL's servers rate-limit bursts: retry a failed request after a pause (longer each time, or what the server asks for)
+            const errs = [];
+            const getJ = async url => {
+              for (let t = 0; ; t++) {
+                let r = null, err = null;
+                try { r = await fetchImpl(url); } catch (e) { err = e.message; }
+                if (r && r.ok) return r.json();
+                const st = r ? r.status : 0, retry = !r || st === 429 || st >= 500;
+                if (!retry || t >= 4) { const m = err || 'HTTP ' + st; if (errs.length < 5) errs.push(`${m} (${url.replace(/^https:\/\/[^/]+/, '').slice(0, 60)})`); throw new Error(m); }
+                const ra = r && r.headers && r.headers.get ? parseFloat(r.headers.get('retry-after')) : NaN;
+                await new Promise(res => setTimeout(res, Number.isFinite(ra) ? Math.min(30, ra) * 1000 : 1500 * 2 ** t));
+              }
+            };
             let fetched = 0, failed = 0, stopped = false;
             for (const k of [0, 1, 2]) {
               const code = `${y - k}${y - k + 1}`, end = k ? `${y - k + 1}-06-30` : today;
@@ -314,6 +326,7 @@ jobs:
             P.shifts = { source: 'NHL shift charts', updated: now.toISOString(), K, I, cols: ['n', 'tm', 'gp', 'p1', 'p2', 'p3', 'ot', 'early', 'starts'], seasons };
             fs.writeFileSync('props.json', JSON.stringify(P));
             log(`Shift charts: ${fetched} new games (${Object.keys(C.games).length} saved), ${failed} failed requests${stopped ? ', stopped early to stay within time (continues next run)' : ''}.`);
+            if (errs.length) log('  first errors: ' + errs.join(' · '));
             for (const [s, S] of Object.entries(seasons)) log(`  ${s}: ${Object.keys(S).length} players`);
             return P.shifts;
           }
@@ -410,10 +423,22 @@ jobs:
             const t0 = Date.now(), y = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1, code = `${y}${y + 1}`, today = etDay(now);
             let C = { s: code, days: {}, games: {} }; try { C = JSON.parse(fs.readFileSync('.cache/combos.json', 'utf8')); } catch (e) {}
             if (C.s !== code) C = { s: code, days: {}, games: {} }; // new season: start over
-            const getJ = async url => { const r = await fetchImpl(url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); };
+            // the NHL's servers rate-limit bursts: retry a failed request after a pause (longer each time, or what the server asks for)
+            const errs = [];
+            const getJ = async url => {
+              for (let t = 0; ; t++) {
+                let r = null, err = null;
+                try { r = await fetchImpl(url); } catch (e) { err = e.message; }
+                if (r && r.ok) return r.json();
+                const st = r ? r.status : 0, retry = !r || st === 429 || st >= 500;
+                if (!retry || t >= 4) { const m = err || 'HTTP ' + st; if (errs.length < 5) errs.push(`${m} (${url.replace(/^https:\/\/[^/]+/, '').slice(0, 60)})`); throw new Error(m); }
+                const ra = r && r.headers && r.headers.get ? parseFloat(r.headers.get('retry-after')) : NaN;
+                await new Promise(res => setTimeout(res, Number.isFinite(ra) ? Math.min(30, ra) * 1000 : 1500 * 2 ** t));
+              }
+            };
             let fetched = 0, failed = 0, stopped = false;
             const days = []; for (let d = `${y}-09-25`; d <= today; d = addDay(d, 1)) if (!C.days[d]) days.push(d);
-            await pool(days, 4, async d => {
+            await pool(days, 2, async d => {
               if (Date.now() - t0 > budgetMs) { stopped = true; return; }
               let sc; try { sc = await getJ(`https://api-web.nhle.com/v1/score/${d}`); } catch (e) { failed++; return; }
               const gs = (sc.games || []).filter(g => g.gameType === 2 || g.gameType === 3);
@@ -463,6 +488,7 @@ jobs:
               cols: ['toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], plCols: ['pos', 'toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], teams };
             fs.writeFileSync('props.json', JSON.stringify(P));
             log(`Line combinations: ${fetched} new games (${Object.keys(C.games).length} this season), ${failed} failed requests${stopped ? ', stopped early to stay within time (continues next run)' : ''}. xG scale ${scale.toFixed(2)}.`);
+            if (errs.length) log('  first errors: ' + errs.join(' · '));
             return P.combos;
           }
           module.exports = { run, gameCombos, xgOf };
