@@ -4440,7 +4440,15 @@ const GM_FEATS = [
   ['phteam', 'Post Hockey talent: lineup vs. lineup', 'posthockey', 'per 1 goal per game of Post Hockey Net Rating the home lineup has over the visitor\'s'],
   ['phline', 'Post Hockey talent: lineup vs. usual', 'posthockey', 'per 0.25 goals per game the home lineup is stronger than its usual one (by Post Hockey ratings), minus the same for the visitor'],
   ['pht5', 'Post Hockey team 5v5 play', 'phteams', 'per 0.5 of 5v5 expected goal differential per 60 (Post Hockey xG), home minus road'],
-  ['phst', 'Post Hockey team special teams', 'phteams', 'per 2 goals per 60 of power-play xGF minus penalty-kill xGA (Post Hockey xG), home minus road']];
+  ['phst', 'Post Hockey team special teams', 'phteams', 'per 2 goals per 60 of power-play xGF minus penalty-kill xGA (Post Hockey xG), home minus road'],
+  ['hlay', 'Home team: long layoff (4+ days off)', 'rest', 'when the home team hasn\'t played in 4+ days (rust)'],
+  ['alay', 'Road team: long layoff (4+ days off)', 'rest', 'when the road team hasn\'t played in 4+ days (rust)']];
+// two ways to model rest; training keeps whichever predicts held-out games better:
+//   v1 = per-day rest difference + back-to-back flags · v2 = back-to-back flags + long-layoff flags (no per-day term)
+const GM_REST_OFF = { v1: ['hlay', 'alay'], v2: ['rest'] };
+const gmRestMask = (m, v) => m.map((x, i) => x && !GM_REST_OFF[v].includes(GM_FEATS[i][0]));
+// long layoff: 4+ days off since the last game (not counting a season opener)
+function gmLayoff(S, hId, aId, dateIso) { const lay = t => t.last && (new Date(dateIso) - new Date(t.last)) / 864e5 >= 4.5 ? 1 : 0; return [lay(gmTeam(S, hId)), lay(gmTeam(S, aId))]; }
 const GM_GROUPS = [['rest', 'Rest & back-to-backs'], ['travel', 'Time zones / travel'], ['goalie', 'Starting goalie'], ['special', 'Special teams'], ['discipline', 'Discipline'], ['form', 'Recent form'], ['homecook', 'Home cooking'], ['gmatch', 'Shooters vs. goalie matchup'], ['ot', 'Overtime & shootout'], ['gload', 'Goalie workload'], ['sched', 'Schedule stretches'], ['move', 'Line movement'], ['style', 'Rush vs. cycle style matchup'], ['lineup', 'Lineup strength (player ratings)'], ['posthockey', 'Post Hockey player ratings'], ['phteams', 'Post Hockey team stats']];
 const GM = { model: null, loading: false, prog: '' };
 const logit = p => Math.log(p / (1 - p));
@@ -4666,6 +4674,7 @@ function gmBuild(games, opt = {}, sadj = null, noGS = false) {
     if (!noGS) { S.nm = S.nm || {}; S.pos = S.pos || {}; for (const [id, p] of Object.entries(g.sk || {})) { S.nm[id] = p.n; S.pos[id] = p.pos; } } // lineups are known before puck drop
     f.x.push(...(noGS ? [0, 0] : gmPHFeat(S, g.home.id, g.away.id, gmLineup(g, g.home.id), gmLineup(g, g.away.id), seasonOf(g.date), 'prior')));
     f.x.push(...(noGS ? [0, 0] : gmPHTeamFeat(g.home.id, g.away.id, g.date)));
+    f.x.push(...gmLayoff(S, g.home.id, g.away.id, g.date));
     if (f.ready) rows.push({ x: f.x, y: g.home.score > g.away.score ? 1 : 0, mk: devig(g.ml), id: g.id, date: g.date });
     gmUpdate(S, g); if (GSs) gsState([g], GSs);
     if (!noGS) { S.nm = S.nm || {}; S.pos = S.pos || {}; for (const [id, p] of Object.entries(g.sk || {})) { S.nm[id] = p.n; S.pos[id] = p.pos; } }
@@ -4700,21 +4709,26 @@ function gmTrain(games) {
   if (rows.length < 150) return { error: `Only ${rows.length} usable games. Needs at least 150.` };
   const cut = Math.floor(rows.length * .7), train = rows.slice(0, cut), test = rows.slice(cut);
   const allGroups = GM_GROUPS.map(g => g[0]);
+  // rest: per-day difference (v1) or back-to-backs + long layoffs (v2)? Judged on rolling chunks of the training games only
+  const restCmp = {};
+  for (const v of ['v1', 'v2']) { let ll = 0, n = 0; for (const c of [.55, .7, .85]) { const a = Math.floor(train.length * c), b = Math.min(train.length, a + Math.floor(train.length * .15)); if (b - a < 30) continue; const W = gmFit(train.slice(0, a), gmRestMask(gmMask(allGroups), v)), sc = gmScore(train.slice(a, b), r => gmProb(W, r.x)); ll += sc.ll * (b - a); n += b - a; } restCmp[v] = n ? ll / n : Infinity; }
+  const restV = restCmp.v2 <= restCmp.v1 + .0002 ? 'v2' : 'v1'; // ties go to the simpler back-to-back version
+  const vm = m => gmRestMask(m, restV);
   // old model = ratings + home ice only
-  const Wbase = gmFit(train, gmMask([])), Wall = gmFit(train, gmMask(allGroups));
+  const Wbase = gmFit(train, gmMask([])), Wall = gmFit(train, vm(gmMask(allGroups)));
   const sBase = gmScore(test, r => gmProb(Wbase, r.x)), sAll = gmScore(test, r => gmProb(Wall, r.x));
   // ablation: drop one group at a time from the full model
   const abl = {};
   // ...and it has to help in both the older and newer half of the test games, not just overall (guards against luck)
   const half = Math.floor(test.length / 2), tA = test.slice(0, half), tB = test.slice(half), ablA = {}, ablB = {};
-  for (const grp of allGroups) { const W = gmFit(train, gmMask(allGroups.filter(x => x !== grp))), pf = r => gmProb(W, r.x), pa = r => gmProb(Wall, r.x); abl[grp] = gmScore(test, pf).ll - sAll.ll; ablA[grp] = gmScore(tA, pf).ll - gmScore(tA, pa).ll; ablB[grp] = gmScore(tB, pf).ll - gmScore(tB, pa).ll; }
+  for (const grp of allGroups) { const W = gmFit(train, vm(gmMask(allGroups.filter(x => x !== grp)))), pf = r => gmProb(W, r.x), pa = r => gmProb(Wall, r.x); abl[grp] = gmScore(test, pf).ll - sAll.ll; ablA[grp] = gmScore(tA, pf).ll - gmScore(tA, pa).ll; ablB[grp] = gmScore(tB, pf).ll - gmScore(tB, pa).ll; }
   // factors with an obvious direction must also point the right way (e.g. a better style fit can't hurt), so a lucky test split can't sneak in nonsense
   const GM_SIGN = { gmatch: ['gmatch', 1], ot: ['ot', 1], style: ['style', 1], goalie: ['goalie', 1], move: ['move', 1], lineup: ['lineup', 1], posthockey: ['phteam', 1], phteams: ['pht5', 1] };
   const signOK = grp => { const s = GM_SIGN[grp]; if (!s) return true; const i = GM_FEATS.findIndex(f => f[0] === s[0]); return !(Wall[i] * s[1] < 0); };
   // EVERY factor stays in. How hard weak factors get shrunk toward zero (lambda) is chosen by rolling validation inside the
   // training games; factors that point the wrong way (e.g. a better goalie "hurting") are switched off.
   const lams = [3, 8, 20, 50, 120], cuts = [.55, .7, .85];
-  const fullMask = gmMask(allGroups), signMask = W => fullMask.map((m, i) => { if (!m) return false; const s = Object.values(GM_SIGN).find(x => GM_FEATS.findIndex(f => f[0] === x[0]) === i); return !(s && W[i] * s[1] < 0); });
+  const fullMask = vm(gmMask(allGroups)), signMask = W => fullMask.map((m, i) => { if (!m) return false; const s = Object.values(GM_SIGN).find(x => GM_FEATS.findIndex(f => f[0] === x[0]) === i); return !(s && W[i] * s[1] < 0); });
   const fitSigned = (rs, lam) => { const W0 = gmFit(rs, fullMask, lam); return gmFit(rs, signMask(W0), lam); };
   const cv = lams.map(lam => { let ll = 0, n = 0; for (const c of cuts) { const a = Math.floor(train.length * c), b = Math.min(train.length, a + Math.floor(train.length * .15)); if (b - a < 30) continue; const W = fitSigned(train.slice(0, a), lam), s = gmScore(train.slice(a, b), r => gmProb(W, r.x)); ll += s.ll * (b - a); n += b - a; } return { lam, ll: n ? ll / n : Infinity }; });
   const lam = cv.slice().sort((x, y) => x.ll - y.ll)[0].lam;
@@ -4740,7 +4754,7 @@ function gmTrain(games) {
   // final weights: kept inputs, refit on every game
   const W = fitSigned(rows, lam), Wfull = W;
   const seasons = new Set(games.map(g => { const d = new Date(g.date); return d.getMonth() >= 7 ? d.getFullYear() + 1 : d.getFullYear(); }));
-  return { W, Wfull, Wb, keep, abl: ablR, lam, cv, ridge: true, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, GS, PR: PR ? { O: PR.O, D: PR.D, sh: PR.sh, mu: PR.mu } : null, tune: { best, dflt, grid, sadj }, t: Date.now() };
+  return { W, Wfull, Wb, keep, abl: ablR, restV, restCmp, lam, cv, ridge: true, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, GS, PR: PR ? { O: PR.O, D: PR.D, sh: PR.sh, mu: PR.mu } : null, tune: { best, dflt, grid, sadj }, t: Date.now() };
 }
 // predict an upcoming game, with a factor-by-factor breakdown
 function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
@@ -4759,6 +4773,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   const phf = luH && luA ? gmPHFeat(M.S, hId, aId, luH, luA, seasonOf(dateIso), 'now', M.GS) : [0, 0];
   f.x.push(...phf);
   const pht = gmPHTeamFeat(hId, aId, dateIso); f.x.push(...pht);
+  f.x.push(...gmLayoff(M.S, hId, aId, dateIso));
   const lineupOn = M.W.length >= GM_FEATS.length && (M.keep.includes('lineup') || M.keep.includes('posthockey'));
   const refs = (inj && inj.refs) || [], crew = gmCrew(M.S, refs), rg = gmRefGoals(M.S, hId, aId, crew);
   const p0 = gmProb(W, f.x);
@@ -4775,7 +4790,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
   return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
-async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W) GM.model = m; } catch (e) {} return GM.model; }
+async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
 async function gmCollect(onProg) {
   const seasons = [S.curSeason - 2, S.curSeason - 1, S.curSeason], today = todayStr(), ids = [];
   for (const y of seasons) {
@@ -4841,6 +4856,7 @@ async function renderGameModelCard() {
     <p class="muted" style="font-size:12px;margin:0 0 10px">Score adjustment: leading teams sit back and trailing teams push, so shots are weighted to count as if the game were tied (trailing by 1: ×${f2(M.tune.sadj[1])}, leading by 1: ×${f2(M.tune.sadj[3])}).</p>` : ''}
     <h3 class="cmp-sec">What it takes into account</h3>
     <p class="muted" style="font-size:12px;margin:-4px 0 8px">${M.ridge ? `Every factor is in the model. It learns how much each one matters from ${M.nTrain.toLocaleString()} games and shrinks factors with weak evidence toward zero (shrinkage strength picked by testing on held-out games: ${M.lam}). Factors that point the wrong way, like a better goalie "hurting", are switched off. ` : ''}Effect = change in win chance for one unit of each factor, starting from an even game. "Test impact" = how much worse predictions got with that group removed (×1,000 log loss); positive means it helps. Player-level inputs: starting goalie, shooters vs. goalie, injuries, lineup strength (Ice Lab and Post Hockey player ratings), and the team ratings themselves, which are built from every player's shots.</p>
+    ${M.restV ? `<p style="margin:0 0 8px;font-size:12.5px"><b>Rest:</b> ${M.restV === 'v2' ? 'using back-to-backs + long layoffs (no per-day rest term)' : 'using the per-day rest difference + back-to-backs'}, because it predicted held-out training games better (log loss ×1,000: per-day ${fin(M.restCmp.v1) ? (M.restCmp.v1 * 1000).toFixed(1) : '–'} vs. back-to-back ${fin(M.restCmp.v2) ? (M.restCmp.v2 * 1000).toFixed(1) : '–'}; lower is better, ties go to back-to-back).</p>` : ''}
     <div class="twrap"><table><thead><tr><th class="l">Factor</th><th class="l">Unit</th><th>Effect</th><th data-gloss="Increase in test log loss (×1,000) when this group of factors is removed. Positive = the factor makes predictions better.">Test impact</th><th>Status</th></tr></thead><tbody>${inputs}</tbody></table></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">${grpRows}. Every factor is built only from what was known before each game (walk-forward), and ratings carry over from last season pulled halfway back toward average. Starting goalies use whoever started; for upcoming games the confirmed or probable starter is used when ESPN lists one.</p></div>`;
   $('#gmRe').onclick = () => { gmRun(true); renderGameModelCard(); };
