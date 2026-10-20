@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-20",
- "updated": "2026-10-20T16:00:20.133Z",
+ "updated": "2026-10-20T17:00:21.317Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -517,7 +517,7 @@
         {
          "n": "Alex Laferriere",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Adrian Kempe",
@@ -542,7 +542,12 @@
         {
          "n": "Trevor Moore",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
+        },
+        {
+         "n": "Mats Zuccarello",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -1025,7 +1030,7 @@
         {
          "n": "Nick Paul",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Kirill Marchenko",
@@ -1103,14 +1108,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Nick Blankenburg",
+         "n": "Marshall Rifai",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Oliver Ekman-Larsson",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -1400,7 +1405,7 @@
         {
          "n": "Jonatan Berggren",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Connor McMichael",
@@ -1420,7 +1425,7 @@
         {
          "n": "Dalibor Dvorsky",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Pavel Buchnevich",
@@ -1707,9 +1712,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Kyle Capobianco",
+         "n": "Thomas Harley",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Nils Lundkvist",
@@ -1717,9 +1722,9 @@
          "pp": ""
         },
         {
-         "n": "Thomas Harley",
+         "n": "Lian Bichsel",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Tyler Myers",
@@ -1727,7 +1732,7 @@
          "pp": ""
         },
         {
-         "n": "Lian Bichsel",
+         "n": "Kyle Capobianco",
          "pos": "D",
          "pp": ""
         }
