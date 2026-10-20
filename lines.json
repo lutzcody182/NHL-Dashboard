@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-20",
- "updated": "2026-10-20T17:00:21.317Z",
+ "updated": "2026-10-20T18:00:19.319Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1516,7 +1516,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Fraser Minten",
+         "n": "Pavel Zacha",
          "pos": "C",
          "pp": "PP1"
         }
@@ -1536,7 +1536,7 @@
          "pp": ""
         },
         {
-         "n": "Matthew Poitras",
+         "n": "Fraser Minten",
          "pos": "C",
          "pp": "PP2"
         }
@@ -1576,7 +1576,7 @@
          "pp": ""
         },
         {
-         "n": "Sean Kuraly",
+         "n": "Matthew Poitras",
          "pos": "C",
          "pp": ""
         }
@@ -1601,7 +1601,7 @@
          "pp": ""
         },
         {
-         "n": "Jonathan Aspirot",
+         "n": "Nikita Zadorov",
          "pos": "D",
          "pp": ""
         },
@@ -2114,7 +2114,7 @@
     },
     {
      "team": "Seattle Kraken",
-     "goalie": "Joey Daccord",
+     "goalie": "Philipp Grubauer",
      "groups": [
       {
        "label": "Line 1",
