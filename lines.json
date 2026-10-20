@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-19",
- "updated": "2026-10-20T00:00:18.469Z",
+ "updated": "2026-10-20T01:00:18.532Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -947,12 +947,12 @@
         {
          "n": "MacKenzie Weegar",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
-         "n": "John Marino",
+         "n": "Nick DeSimone",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Nate Schmidt",
