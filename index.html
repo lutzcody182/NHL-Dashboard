@@ -299,7 +299,7 @@ svg{display:block;max-width:100%}
 .down2{color:var(--neg);font-weight:700}
 @media (max-width:640px){.lm-head,.lm-row{grid-template-columns:52px 1fr 52px 56px 0 44px}.lm-head span:nth-child(5),.lm-row>*:nth-child(5){display:none}}
 .lrow{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px dashed var(--border)}
-.lrow:last-child{border-bottom:0}
+.lrow:last-child{border-bottom:0}.cmbc{flex-basis:100%;font-size:11.5px;color:var(--text-2);margin-top:1px}.cmbc.new{color:var(--text-2);font-style:italic}
 .llbl{flex:none;width:26px;height:22px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);font-size:11px;font-weight:800;display:grid;place-items:center;color:var(--text-2)}
 .lplayers{display:flex;flex-wrap:wrap;gap:4px 10px;min-width:0;font-size:13px}
 .lchip{white-space:nowrap}
@@ -497,6 +497,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
       <button data-tab="clutch" data-g="teams">Clutch</button>
       <button data-tab="sos" data-g="teams">Schedule Strength</button>
       <button data-tab="travel" data-g="teams">Travel</button>
+      <button data-tab="combos" data-g="teams">Line Combos</button>
       <button data-tab="skaters" data-g="players">Skaters</button>
       <button data-tab="goalies" data-g="players">Goalies</button>
       <button data-tab="rookies" data-g="players">Rookies</button>
@@ -550,6 +551,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
   <section class="tab" id="tab-clutch"><div class="abar"></div><div id="clBody"></div></section>
   <section class="tab" id="tab-sos"><div class="abar"></div><div id="sosBody"></div></section>
   <section class="tab" id="tab-travel"><div class="abar"></div><div id="trBody"></div></section>
+  <section class="tab" id="tab-combos"><div id="cmbBody"></div></section>
   <section class="tab" id="tab-streaks"><div class="abar"></div><div id="skrBody"></div></section>
   <section class="tab" id="tab-quads"><div class="abar"></div><div id="qdBody"></div></section>
   <section class="tab" id="tab-profiles"><div class="abar"></div><div id="sprBody"></div></section>
@@ -2687,23 +2689,114 @@ function linesFor(data, g, teamId, raw) {
   const all = data.games.flatMap(x => x.teams || []);
   return all.find(t => normName(t.team) === full) || all.find(t => mascot && normName(t.team).endsWith(mascot)) || null;
 }
-function linesHTML(rg, ids, updated) {
+function linesHTML(rg, ids, updated, abbr) {
   const who = p => { const id = ids[normName(p.n)]; return `<span class="lchip">${id ? plink(id, p.n) : esc(p.n)} <span class="muted">${esc(p.pos)}</span>${p.pp ? ` <span class="pp">${esc(p.pp)}</span>` : ''}</span>`; };
   let fw = '', dm = '', other = '';
   for (const gr of rg.groups) {
     const lm = gr.label.match(/line\s*(\d)/i);
-    if (lm) fw += `<div class="lrow"><span class="llbl">L${lm[1]}</span><div class="lplayers">${gr.players.map(who).join('')}</div></div>`;
-    else if (/def/i.test(gr.label)) { for (let i = 0; i < gr.players.length; i += 2) dm += `<div class="lrow"><span class="llbl">D${i / 2 + 1}</span><div class="lplayers">${gr.players.slice(i, i + 2).map(who).join('')}</div></div>`; }
+    if (lm) fw += `<div class="lrow"><span class="llbl">L${lm[1]}</span><div class="lplayers">${gr.players.map(who).join('')}${abbr ? cmbChip(abbr, gr.players.map(p => p.n)) : ''}</div></div>`;
+    else if (/def/i.test(gr.label)) { for (let i = 0; i < gr.players.length; i += 2) { const pr = gr.players.slice(i, i + 2); dm += `<div class="lrow"><span class="llbl">D${i / 2 + 1}</span><div class="lplayers">${pr.map(who).join('')}${abbr && pr.length === 2 ? cmbChip(abbr, pr.map(p => p.n)) : ''}</div></div>`; } }
     else if (gr.players.length) other += `<div class="lrow"><span class="llbl" style="width:auto;padding:0 6px">${esc(gr.label)}</span><div class="lplayers">${gr.players.map(who).join('')}</div></div>`;
   }
   return `<h4 class="lu-h">Forward lines <span>${rg.manual ? 'Your lineup' : `RotoGrinders · ${esc(updated)}`}</span></h4>${fw || '<p class="muted" style="margin:0;font-size:12px">Not posted yet.</p>'}<h4 class="lu-h">Defense pairs</h4>${dm || '<p class="muted" style="margin:0;font-size:12px">Not posted yet.</p>'}${other}`;
+}
+
+/* ============================== LINE COMBINATIONS (props.json → combos, from NHL shift charts + play-by-play, 5-on-5) ============================== */
+const CMB = { idx: null, src: null };
+function cmbIdx() {
+  const C = PRF.data && PRF.data.combos; if (!C || !C.teams) return null;
+  if (CMB.src === C) return CMB.idx;
+  const st = r => ({ toi: r[0], cf: r[1], ca: r[2], sf: r[3], sa: r[4], gf: r[5], ga: r[6], xgf: r[7], xga: r[8], gp: r[9] });
+  const idx = { season: C.season, updated: C.updated, games: C.games, teams: {}, lg: null };
+  let lgX = 0, lgT = 0;
+  for (const [tm, o] of Object.entries(C.teams)) {
+    const T = { f: [], d: [], pl: {} };
+    for (const r of o.f || []) { const names = r.slice(0, 3); T.f.push({ names, key: names.map(normName).sort().join('|'), ...st(r.slice(3)) }); }
+    for (const r of o.d || []) { const names = r.slice(0, 2); T.d.push({ names, key: names.map(normName).sort().join('|'), ...st(r.slice(2)) }); }
+    for (const [n, r] of Object.entries(o.pl || {})) { T.pl[normName(n)] = { n, pos: r[0], ...st(r.slice(1)) }; if (r[0] !== 'D') { lgX += r[8]; lgT += r[1]; } }
+    idx.teams[tm] = T;
+  }
+  idx.lgXgf60 = lgT > 0 ? lgX / lgT * 3600 : NaN; // forwards' on-ice xG for per 60, league-wide
+  CMB.src = C; CMB.idx = idx; return idx;
+}
+const cmbTeam = espnAbbr => { const I = cmbIdx(); if (!I) return null; return I.teams[PH_TM[espnAbbr] || espnAbbr] || I.teams[espnAbbr] || null; };
+// one line or pair's season stats together (names in any order), or null
+function cmbFind(espnAbbr, names) {
+  const T = cmbTeam(espnAbbr); if (!T || !names || (names.length !== 3 && names.length !== 2)) return null;
+  const key = names.map(normName).sort().join('|');
+  return (names.length === 3 ? T.f : T.d).find(x => x.key === key) || null;
+}
+const cmbPl = (espnAbbr, n) => { const T = cmbTeam(espnAbbr); return T ? T.pl[normName(n)] || null : null; };
+const xgPct = x => x && x.xgf + x.xga > 0 ? x.xgf / (x.xgf + x.xga) : NaN;
+const cfPct = x => x && x.cf + x.ca > 0 ? x.cf / (x.cf + x.ca) : NaN;
+const minsTxt = sec => sec >= 3600 ? `${(sec / 3600).toFixed(1)} hrs` : `${Math.round(sec / 60)} min`;
+// together vs. apart: each member's xG share when he's on the ice without this exact group
+function cmbApart(espnAbbr, c) {
+  return c.names.map(n => { const p = cmbPl(espnAbbr, n); if (!p) return null; const a = { xgf: p.xgf - c.xgf, xga: p.xga - c.xga, toi: p.toi - c.toi }; return { n, pct: a.toi >= 600 ? xgPct(a) : NaN, toi: a.toi }; }).filter(Boolean);
+}
+// small summary chip for a posted line or pair
+function cmbChip(espnAbbr, names) {
+  if (!cmbIdx()) return '';
+  const c = cmbFind(espnAbbr, names);
+  if (!c) return `<div class="cmbc new">🆕 Haven't played together at 5-on-5 this season</div>`;
+  const xp = xgPct(c), few = c.toi < 1200, ap = cmbApart(espnAbbr, c).filter(x => fin(x.pct)), apAvg = ap.length ? ap.reduce((s, x) => s + x.pct, 0) / ap.length : NaN;
+  const col = !fin(xp) || few ? 'inherit' : xp >= .55 ? 'var(--good)' : xp <= .45 ? 'var(--neg)' : 'inherit';
+  const tip = `<b>${c.names.map(esc).join(' · ')}</b><div class='row'><span>Together at 5-on-5</span><b>${minsTxt(c.toi)} · ${c.gp} games</b></div><div class='row'><span>Goals for–against</span><b>${c.gf}–${c.ga}</b></div><div class='row'><span>Shot attempts share</span><b>${pct1(cfPct(c))}%</b></div><div class='row'><span>Expected goals share</span><b>${pct1(xp)}%</b></div><div class='row'><span>xG for per 60</span><b>${f2(per60(c.xgf, c.toi))}</b></div>${fin(apAvg) ? `<div class='row'><span>Same players apart</span><b>${pct1(apAvg)}% xG share</b></div>` : ''}${few ? '<div class=\'muted\' style=\'margin-top:4px\'>Under 20 minutes together, so treat these as a small sample.</div>' : ''}`;
+  return `<div class="cmbc" data-tip="${esc(tip)}">Together: <b>${minsTxt(c.toi)}</b> · goals <b>${c.gf}–${c.ga}</b> · xG share <b style="color:${col}">${pct1(xp)}%</b>${fin(apAvg) && !few ? ` <span class="muted">(${pct1(apAvg)}% apart)</span>` : ''}${few ? ' <span class="muted">· small sample</span>' : ''}</div>`;
+}
+// goal scorer model: how much better (or worse) a player's line creates chances together than he does on average, shrunk toward no effect
+function cmbScoreAdj(espnAbbr, n, mateNames) {
+  if (!cmbIdx() || !mateNames || (mateNames.length !== 2 && mateNames.length !== 1)) return null;
+  const c = cmbFind(espnAbbr, [n, ...mateNames]), p = cmbPl(espnAbbr, n); if (!c || !p || !(p.toi > 1800) || !(c.toi > 0)) return null;
+  const mine = per60(p.xgf, p.toi), line = per60(c.xgf, c.toi); if (!(mine > 0) || !fin(line)) return null;
+  const w = c.toi / (c.toi + 9000); // 150 minutes together = half trust
+  return { f: clamp(1 + w * .6 * (line / mine - 1), .9, 1.1), toi: c.toi, line, mine, w };
+}
+
+/* ---- Line Combos tab: every team's forward lines and defense pairs, with their 5-on-5 results together ---- */
+const CMBT = { tm: (() => { try { return localStorage.getItem('icelab-cmbteam') || ''; } catch (e) { return ''; } })(), small: false };
+async function renderCombos() {
+  const body = $('#cmbBody'); body.innerHTML = `<div class="empty"><div class="spinner"></div>Loading line combinations…</div>`;
+  await getPropsFile(); if (activeTab() !== 'combos') return;
+  const I = cmbIdx();
+  if (!I) { body.innerHTML = `<div class="empty">Line combinations aren't loaded yet. The GitHub job builds them from the NHL's shift charts on its next odds run (about 11 AM, 1, 3, 5 and 7 PM Eastern).</div>`; return; }
+  const espnOf = nhl => Object.values(TEAMS).find(t => (PH_TM[t.abbr] || t.abbr) === nhl) || null;
+  const codes = Object.keys(I.teams).sort((a, b) => ((espnOf(a) || {}).name || a).localeCompare((espnOf(b) || {}).name || b));
+  if (!CMBT.tm || !I.teams[CMBT.tm]) CMBT.tm = codes[0];
+  const T = I.teams[CMBT.tm], et = espnOf(CMBT.tm), abbr = et ? et.abbr : CMBT.tm, minT = CMBT.small ? 120 : 600;
+  const prep = list => list.filter(c => c.toi >= minT).map(c => { const ap = cmbApart(abbr, c).filter(x => fin(x.pct)), apart = ap.length ? ap.reduce((s, x) => s + x.pct, 0) / ap.length : NaN; return { ...c, xp: xgPct(c), cp: cfPct(c), xf60: per60(c.xgf, c.toi), xa60: per60(c.xga, c.toi), apart, chem: fin(apart) ? xgPct(c) - apart : NaN, few: c.toi < 1200 }; });
+  const sgnPct = v => fin(v) ? `<b style="color:${v > .02 ? 'var(--good)' : v < -.02 ? 'var(--neg)' : 'inherit'}">${v > 0 ? '+' : v < 0 ? '−' : ''}${(Math.abs(v) * 100).toFixed(1)}</b>` : '–';
+  const cols = kind => [
+    { k: 'names', h: kind === 'f' ? 'Forward line' : 'Defense pair', l: 1, v: r => r.names.join(' '), f: (v, r) => `${r.names.map(esc).join(' · ')}${r.few ? ' <span class="muted" style="font-size:11px">small sample</span>' : ''}` },
+    { k: 'gp', h: 'GP', v: r => r.gp, f: f0, t: 'Games this group has played together at 5-on-5.' },
+    { k: 'toi', h: 'Time together', v: r => r.toi, f: v => minsTxt(v), t: '5-on-5 ice time together this season.' },
+    { k: 'g', h: 'Goals', v: r => r.gf - r.ga, f: (v, r) => `${r.gf}–${r.ga}`, t: 'Goals for and against while this group is on the ice at 5-on-5.' },
+    { k: 'cp', h: 'Shot share', v: r => r.cp, f: v => fin(v) ? pct1(v) + '%' : '–', dir: 1, t: 'Share of all shot attempts (both teams) taken by their team while they are on the ice. Above 50% = they have the puck more.' },
+    { k: 'xp', h: 'xG share', v: r => r.xp, f: v => fin(v) ? `<b>${pct1(v)}%</b>` : '–', dir: 1, t: 'Share of expected goals (shot quality) for their team while they are on the ice. The best single measure of how a line is really doing; above 50% is good.' },
+    { k: 'xf60', h: 'xG for /60', v: r => r.xf60, f: f2, dir: 1, t: 'Expected goals their team creates per 60 minutes with this group on the ice.' },
+    { k: 'xa60', h: 'xG against /60', v: r => r.xa60, f: f2, dir: -1, t: 'Expected goals they allow per 60 minutes. Lower is better.' },
+    { k: 'apart', h: 'Apart', v: r => r.apart, f: v => fin(v) ? pct1(v) + '%' : '–', t: 'The same players\' average xG share when they are on the ice without this exact group (at least 10 minutes).' },
+    { k: 'chem', h: 'Chemistry', v: r => r.chem, f: sgnPct, t: 'xG share together minus xG share apart, in points. Positive = these players are better together than without each other.' }];
+  const fR = prep(T.f), dR = prep(T.d);
+  const best = [...fR, ...dR].filter(r => !r.few && fin(r.chem)).sort((a, b) => b.chem - a.chem);
+  const card = (title, kind, rows) => `<div class="card" style="margin-top:14px"><div class="card-h"><h3>${title}</h3><p>${rows.length} with ${CMBT.small ? '2+' : '10+'} minutes together</p></div>${rows.length ? table('cmb' + kind, cols(kind), rows, { sort: 'toi' }) : '<p class="muted" style="margin:0">None yet.</p>'}</div>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Line combinations</h2>
+      <div class="ctl"><label>Team</label><select id="cmbTeam">${codes.map(c => { const t = espnOf(c); return `<option value="${c}" ${c === CMBT.tm ? 'selected' : ''}>${esc(t ? `${t.name} (${t.abbr})` : c)}</option>`; }).join('')}</select></div>
+      <div class="ctl"><label class="chk"><input type="checkbox" id="cmbSmall" ${CMBT.small ? 'checked' : ''}> Include short stints</label></div></div>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">How each forward line and defense pair does at 5-on-5 when they're on the ice together, from the NHL's shift charts matched with every shot and goal. ${I.games.toLocaleString()} games this season · updated ${new Date(I.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.</p>
+    ${best.length ? `<div class="tiles">${[['🔥 Best chemistry', best[0].chem > 0 ? best[0] : null], ['🧊 Worst chemistry', best.length > 1 && best[best.length - 1].chem < 0 ? best[best.length - 1] : null]].filter(([, r]) => r).map(([k, r]) => `<div class="tile"><div class="k">${k}</div><div class="v" style="font-size:15px">${r.names.map(esc).join(' · ')}</div><div class="s">${pct1(r.xp)}% xG share together vs. ${pct1(r.apart)}% apart · ${minsTxt(r.toi)}</div></div>`).join('')}</div>` : ''}
+    ${card(`${logoImg(et ? et.id : '', 20)} Forward lines`, 'f', fR)}${card('Defense pairs', 'd', dR)}
+    <p class="muted" style="font-size:12px;margin:10px 0 0">Small samples swing a lot: a line needs a few hours together before its numbers mean much. The goal scorer model uses a line's results together only in proportion to its minutes (150 minutes = half weight) and moves a player's chance at most 10% for it. Expected goals here come from a simple shot-quality model (distance, angle, shot type, rebounds) scaled to real goals.</p>`;
+  RERENDER.cmbf = RERENDER.cmbd = renderCombos;
+  $('#cmbTeam').onchange = e => { CMBT.tm = e.target.value; try { localStorage.setItem('icelab-cmbteam', CMBT.tm); } catch (err) {} renderCombos(); };
+  $('#cmbSmall').onchange = e => { CMBT.small = e.target.checked; renderCombos(); };
 }
 async function renderLineups(s, g) {
   const box = () => $('#luBody'), gid = g.id, H = g.home.id, W = g.away.id;
   let ev = null;
   try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); ev = (sb.events || []).find(e => String(e.id) === gid) || null; } catch (e) {}
   const probs = probableGoalies(ev);
-  const LF = await getLinesFile();
+  const LF = await getLinesFile(); await getPropsFile();
   const lfTime = LF && LF.updated ? 'updated ' + new Date(LF.updated).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
   const inj = {}; (s.injuries || []).forEach(t => (t.injuries || []).forEach(i => { if (i.athlete) inj[String(i.athlete.id)] = i.status || 'Injured'; }));
   const l5 = s.lastFiveGames || [];
@@ -2729,7 +2822,7 @@ async function renderLineups(s, g) {
     const ids = {}; if (gm) Object.entries(gm.sk).forEach(([id, p]) => { ids[normName(p.n)] = id; });
     if (A.loadedKey && A.filtered.length) Object.values(aggregate().P).forEach(p => { if (p.tm === t && !ids[normName(p.n)]) ids[normName(p.n)] = p.id; });
     if (rg) {
-      sk = linesHTML(rg, ids, lfTime); note = '';
+      sk = linesHTML(rg, ids, lfTime, TM(t).abbr); note = '';
       const pl = []; let di = 0;
       for (const gr of rg.groups) { const lm2 = gr.label.match(/line\s*(\d)/i); if (lm2) gr.players.forEach(p => pl.push({ id: ids[normName(p.n)] || null, pos: 'F', min: SLOT_F[Math.min(3, +lm2[1] - 1)] || 11 })); else if (/def/i.test(gr.label)) gr.players.forEach(p => { pl.push({ id: ids[normName(p.n)] || null, pos: 'D', min: SLOT_D[Math.min(2, Math.floor(di / 2))] || 17 }); di++; }); }
       LUX[t] = { src: 'rg', players: pl, goalie: pg };
@@ -5353,6 +5446,7 @@ function gsPlayVal(S, id) {
 }
 // linemate boost: tonight's linemates vs. the average linemates in the same slot (L1, D1, ...) across tonight's posted lines.
 // Fixed strength (25% of the gap, capped at ±12%) until enough saved lines exist to learn it.
+const GSCHEM = {}; // line chemistry used for each player tonight (for the explanation)
 function gsMateMap(S, LF, games) {
   const all = []; // [teamId, roleMap] for every team with posted lines
   for (const e of games) { const c = e.competitions[0]; for (const x of c.competitors) { const t = String(x.team.id), rm = gsRoleMap(S, linesFor(LF, { date: e.date }, t), t); if (rm) all.push(rm); } }
@@ -5364,7 +5458,14 @@ function gsMateMap(S, LF, games) {
     : (rm, id) => { const v = (rm[id].mates || []).map(m => gsPlayVal(S, m)).filter(fin); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : NaN; };
   for (const rm of all) for (const id of Object.keys(rm)) { const q = mq(rm, id); if (fin(q)) (bySlot[rm[id].line] = bySlot[rm[id].line] || []).push(q); }
   const avg = Object.fromEntries(Object.entries(bySlot).map(([k, v]) => [k, v.reduce((a, b) => a + b, 0) / v.length]));
-  return (rm, id) => { if (!rm || !rm[id]) return 1; const q = mq(rm, id), a = avg[rm[id].line]; if (!fin(q) || !fin(a)) return 1; if (usePH) return clamp(1 + (q - a) / 1.5, .88, 1.12); return S.pr ? clamp(1 + (q - a) / (S.pr.mu || 2.5), .88, 1.12) : a > 0 ? clamp(1 + .25 * (q / a - 1), .88, 1.12) : 1; };
+  const talent = (rm, id) => { const q = mq(rm, id), a = avg[rm[id].line]; if (!fin(q) || !fin(a)) return 1; if (usePH) return clamp(1 + (q - a) / 1.5, .88, 1.12); return S.pr ? clamp(1 + (q - a) / (S.pr.mu || 2.5), .88, 1.12) : a > 0 ? clamp(1 + .25 * (q / a - 1), .88, 1.12) : 1; };
+  // plus line chemistry: how this exact line has created chances together at 5-on-5 vs. his usual (real results, shrunk by minutes together)
+  return (rm, id) => {
+    if (!rm || !rm[id]) return 1; const tf = talent(rm, id), P = S.P[id];
+    let ch = null; if (P && /^L/.test(rm[id].line || '')) { const mates = (rm[id].mates || []).map(m => S.P[m] && S.P[m].n).filter(Boolean); ch = cmbScoreAdj(TM(P.tm).abbr, P.n, mates); }
+    GSCHEM[id] = ch;
+    return clamp(tf * (ch ? ch.f : 1), .85, 1.18);
+  };
 }
 // predictions for every skater in one scoreboard event (used by the tab, the game preview and the GitHub job)
 function gsTonight(S, e, LF, PF, INJ, MATE) {
@@ -5398,7 +5499,7 @@ function gsTonight(S, e, LF, PF, INJ, MATE) {
       const mate = (MATE || gsMateMap(S, LF, [e]))(role, pid);
       const phv = PHF.idx ? phTalent(r0.n, TM(t).abbr, r0.pos, seasonOf(e.date), 'now') : null;
       const r = gsLambda(S, pid, opp, gl && gl.id, { evSec, ppSec: ppSec != null ? ppSec : undefined, implied, crew, pWin, mate, finPH: phv && fin(phv.sh) ? phv.sh : undefined });
-      if (!r) continue;
+      if (!r) continue; r.chem = GSCHEM[pid] || null;
       const dk = dkm ? dkLookup(dkm, r0.n, pid) : null, fd = fdm ? dkLookup(fdm, r0.n, pid) : null, ox = xm ? dkLookup(xm, r0.n, pid) : null, ev = dk != null ? betEV(r.p, dk) : null;
       rows.push({ pid, n: r0.n, pos: r0.pos, gp: r0.gp, inj: ij ? ij.st : '', tm: t, opp, gid: String(e.id), start: e.date, gl, src: ro.src, role: roleTxt, implied, envSrc, ...r, why: gsWhy(r, gl && gl.n, implied, envSrc, roleTxt, crew, INJ && INJ.refs), crew, dk, fd, ox, dkImp: dk != null ? amImplied(dk) : NaN, edgeP: dk != null ? r.p - amImplied(dk) : NaN, ev: ev ? ev.ev : NaN, roi: ev ? ev.roi : NaN });
     }
@@ -5565,7 +5666,7 @@ function gsWhy(r, goalieName, implied, envSrc, roleTxt, crew, refs) {
   const fx = r.eff.filter(x => Math.abs(x.pct) >= .005).sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
   const zl = r.zones.map(z => `<div class='row'><span>${ZN[z.z]}</span><b>${pct1(z.lam / tot)}% of his even-strength chance</b></div>`).join('');
   const fl = fx.map(x => `<div class='row'><span>${esc(x.l)}</span><b style='color:${x.pct > 0 ? 'var(--good)' : 'var(--neg)'}'>${pctS(x.pct)}</b></div>`).join('');
-  const html = `<div style='margin:4px 0'>Mostly from the <b>${ZN[top.z]}</b>. Projected ${mmss(r.evSec)} at even strength${r.ppSec > 1 ? ` + ${mmss(r.ppSec)} on the power play` : ''}${roleTxt ? ` (${esc(roleTxt)})` : ''}. ${r.ppShare > .02 ? `${pct1(r.ppShare)}% of his chance is on the power play.` : ''}</div>${zl}${fl ? `<div style='margin-top:6px;font-weight:700'>Tonight's adjustments</div>${fl}` : ''}<div style='margin-top:4px'>${fin(implied) ? `Team projected for ${f2(implied)} goals (${esc(envSrc)}) vs. ${f2(r.teamAvg)} usual. ` : ''}${goalieName ? `Vs. ${esc(goalieName)}. ` : ''}Finishing ×${f2(r.fin)}.</div>${r.mate && Math.abs(r.mate - 1) >= .01 ? `<div style='margin-top:4px'>Linemates: ${r.mate > 1 ? 'stronger' : 'weaker'} than a typical ${esc(roleTxt.split(' ')[0] || 'line')} tonight (${r.mate > 1 ? '+' : '−'}${pct1(Math.abs(r.mate - 1))}% even-strength chances).</div>` : ''}${r.lamEN > .003 ? `<div style='margin-top:4px'>Empty-net chances add about ${pct1(r.lamEN)} pts to his expected goals.</div>` : ''}${crew && Math.abs(crew - 1) >= .01 && r.ppSec > 1 ? `<div style='margin-top:4px'>Referees ${esc((refs || []).join(' & '))}: ${crew > 1 ? 'busier' : 'quieter'} crew, power-play time ${crew > 1 ? '+' : '−'}${pct1(Math.abs(crew - 1))}%.</div>` : ''}`;
+  const html = `<div style='margin:4px 0'>Mostly from the <b>${ZN[top.z]}</b>. Projected ${mmss(r.evSec)} at even strength${r.ppSec > 1 ? ` + ${mmss(r.ppSec)} on the power play` : ''}${roleTxt ? ` (${esc(roleTxt)})` : ''}. ${r.ppShare > .02 ? `${pct1(r.ppShare)}% of his chance is on the power play.` : ''}</div>${zl}${fl ? `<div style='margin-top:6px;font-weight:700'>Tonight's adjustments</div>${fl}` : ''}<div style='margin-top:4px'>${fin(implied) ? `Team projected for ${f2(implied)} goals (${esc(envSrc)}) vs. ${f2(r.teamAvg)} usual. ` : ''}${goalieName ? `Vs. ${esc(goalieName)}. ` : ''}Finishing ×${f2(r.fin)}.</div>${r.mate && Math.abs(r.mate - 1) >= .01 ? `<div style='margin-top:4px'>Linemates: ${r.mate > 1 ? 'a boost' : 'a drag'} tonight (${pct1(Math.abs(r.mate - 1))}% ${r.mate > 1 ? 'more' : 'fewer'} even-strength chances)${r.chem ? `, including line chemistry: this line has made ${f2(r.chem.line)} expected goals per 60 together vs. ${f2(r.chem.mine)} with him on the ice overall (${minsTxt(r.chem.toi)} together)` : ''}.</div>` : ''}${r.lamEN > .003 ? `<div style='margin-top:4px'>Empty-net chances add about ${pct1(r.lamEN)} pts to his expected goals.</div>` : ''}${crew && Math.abs(crew - 1) >= .01 && r.ppSec > 1 ? `<div style='margin-top:4px'>Referees ${esc((refs || []).join(' & '))}: ${crew > 1 ? 'busier' : 'quieter'} crew, power-play time ${crew > 1 ? '+' : '−'}${pct1(Math.abs(crew - 1))}%.</div>` : ''}`;
   const big = fx[0];
   const short = big ? `${big.l.replace('Opponent ', 'opp. ').toLowerCase()} ${pctS(big.pct)}` : `${ZN[top.z]}`;
   return { html, short: `${ZN[top.z]}${big ? ' · ' + short : ''}` };
@@ -5637,7 +5738,7 @@ async function renderScorers() {
       <div class="ctl"><label>Player</label><input id="gsQ" type="search" placeholder="Search a name" value="${esc(GS.q)}" autocomplete="off"></div></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores tonight. It starts from where he shoots, how dangerous those shots are, his finishing and tonight's projected minutes and power-play role, then adjusts for his team's scoring environment (betting total and moneyline), the opponent's shot volume and quality allowed by zone, how often they take penalties and how good their penalty kill is, and the goalie's results by zone, by shot type and on rebounds and rush chances. How much each adjustment counts is learned from the loaded games and rebuilds every time new games load. Hover a chance for the breakdown. Lineups come from RotoGrinders when posted (otherwise each team's last game), and players ESPN lists as out or on injured reserve are left off; goalies are the confirmed or probable starter when ESPN lists one. Uses the analytics range above; <b>Full season</b> gives the best samples.</p>
     <p class="muted" id="gsPriorMsg" style="margin:-6px 0 12px;font-size:12.5px">${GS.prior ? `✓ Using last season (${GS.prior.length.toLocaleString()} games) as the starting point, counted at half weight, so a hot or cold first week can't fool the model.` : GS.priorLoading ? esc(GS.priorMsg || 'Checking for last season\'s games…') : /^need:/.test(GS.priorMsg) ? `Last season isn't loaded, so early-season numbers rest on few games. <button class="btn sm" id="gsPriorGo">Load last season</button> (one-time download of about ${GS.priorMsg.split(':')[1]} games; saved after; training the game model in Model Lab also loads it).` : /^err:/.test(GS.priorMsg) ? `Couldn't load last season (${esc(GS.priorMsg.slice(4))}).` : ''}</p>
-    ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols, rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${trustCard(PK, 'gs')}${overfitCard(PK, 'gs')}${pickTrackerCard(PK)}${accuracyCard(PK, 'gs')}${btCard}
+    ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols.filter(c => c.k !== 'ox' || rows.some(r => r.ox)), rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${trustCard(PK, 'gs')}${overfitCard(PK, 'gs')}${pickTrackerCard(PK)}${accuracyCard(PK, 'gs')}${btCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For fun and analysis, not betting advice.</p>`;
   RERENDER.gs = renderScorers;
   const pg = $('#gsPriorGo'); if (pg) pg.onclick = () => { GS.priorMsg = ''; gsLoadPrior(true); renderScorers(); };
@@ -6841,7 +6942,7 @@ async function renderFirstGoal() {
     ${PF && !anyDk ? '<div class="note">No DraftKings first goal scorer prices for these games yet. The job pulls them with the anytime prices (about 11 AM and 5 PM Eastern).</div>' : ''}
     ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best first goal values</h3><p>Ranked by expected return; long odds, so expect long losing runs</p></div><div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)} · early ice ${f2(r.X)}× · P1 shooting ${f2(r.R)}×</div><div style="margin-top:4px"><b>${pct1(r.fp)}%</b> vs. ${BK[r.fBook]} ${fmtML(r.fBest)} (${pct1(r.fImp)}%) · <span style="color:var(--good)">${money(r.fEv)}</span></div></div>`).join('')}</div></div>` : ''}
     <div class="empty" id="fgNoMatch" hidden>No player matching that name in these games.</div>
-    ${rows.length ? `<div class="card">${table('fg', cols, rows, { sort: anyDk ? 'fEv' : 'fp', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}
+    ${rows.length ? `<div class="card">${table('fg', cols.filter(c => c.k !== 'fox' || rows.some(r => r.fox)), rows, { sort: anyDk ? 'fEv' : 'fp', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}
     <div id="fgTrack"></div>
     <p class="muted" style="font-size:12px;margin:10px 0 0">First goal bets hit rarely and sportsbooks build in a large margin, so even good prices lose most nights. For fun and analysis, not betting advice.</p>`;
   RERENDER.fg = renderFirstGoal;
@@ -6998,6 +7099,7 @@ async function loadHealth(evs) {
   }
   const sh = PF && PF.shifts;
   add('shifts', 'Period ice time (NHL shifts)', !sh ? 'warn' : ageMin(sh.updated) <= 26 * 60 ? 'ok' : 'warn', sh ? `updated ${ago(sh.updated)} · ${Object.keys(sh.seasons || {}).length} seasons` : 'not loaded yet', !sh ? 'Comes from the props job; used by the First Goal page.' : ageMin(sh.updated) > 26 * 60 ? 'Not refreshed in over a day. Check the "Period ice time" step in the props job.' : '');
+  { const cb = PF && PF.combos; add('combos', 'Line combinations', !cb ? 'warn' : ageMin(cb.updated) <= 26 * 60 ? 'ok' : 'warn', cb ? `updated ${ago(cb.updated)} · ${cb.games} games this season` : 'not loaded yet', !cb ? 'Built by the "Line combinations" step in the props job; used by the Line Combos tab, the lineup cards and the goal scorer model.' : ageMin(cb.updated) > 26 * 60 ? 'Not refreshed in over a day. Check the "Line combinations" step in the props job.' : ''); }
   add('ph', 'Post Hockey ratings', !PH ? 'warn' : ageMin(PH.updated) <= 26 * 60 ? 'ok' : 'warn', PH ? `updated ${ago(PH.updated)}` : 'not loaded', PH && ageMin(PH.updated) > 26 * 60 ? 'Not refreshed in over a day. Check the "Post Hockey" step in the props job.' : '');
   const bad = C.filter(c => c.st === 'bad'), warn = C.filter(c => c.st === 'warn');
   const ico = st => st === 'ok' ? '✅' : st === 'warn' ? '⚠️' : '⛔';
@@ -7286,6 +7388,7 @@ function setTab(t) {
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
   if (t === 'mybets') renderMyBets();
+  if (t === 'combos') renderCombos();
   if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers', 'firstgoal'].includes(t)) {
     // every tab opens on the full current season
     if (A.range !== 'season' || (S.curSeason && A.season !== S.curSeason)) { A.range = 'season'; if (S.curSeason) A.season = S.curSeason; A.note = ''; }
