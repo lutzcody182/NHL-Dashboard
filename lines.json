@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-20",
- "updated": "2026-10-20T12:55:14.160Z",
+ "updated": "2026-10-20T16:00:20.133Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -243,7 +243,7 @@
          "pp": ""
         },
         {
-         "n": "David Reinbacher",
+         "n": "Adam Engstrom",
          "pos": "D",
          "pp": ""
         }
@@ -935,7 +935,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Amadeus Lombardi",
+         "n": "Connor Brown",
          "pos": "W",
          "pp": ""
         },
@@ -1154,7 +1154,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Conor Garland",
+         "n": "Dmitri Voronkov",
          "pos": "W",
          "pp": "PP2"
         }
@@ -1171,7 +1171,7 @@
         {
          "n": "Cole Sillinger",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Mathieu Olivier",
@@ -1184,11 +1184,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Danton Heinen",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Ryan Lomberg",
          "pos": "W",
          "pp": ""
@@ -1197,6 +1192,11 @@
          "n": "Luca Del Bel Belluz",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Conor Garland",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -1229,7 +1229,7 @@
          "pp": ""
         },
         {
-         "n": "Carson Soucy",
+         "n": "Emil Andrae",
          "pos": "D",
          "pp": ""
         }
@@ -1634,7 +1634,7 @@
         {
          "n": "Sam Steel",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1702,14 +1702,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Esa Lindell",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Miro Heiskanen",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Kyle Capobianco",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Nils Lundkvist",
