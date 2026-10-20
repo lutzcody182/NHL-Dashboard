@@ -4788,7 +4788,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   const lineupOn = M.W.length >= GM_FEATS.length && (M.keep.includes('lineup') || M.keep.includes('posthockey'));
   const refs = (inj && inj.refs) || [], crew = gmCrew(M.S, refs), rg = gmRefGoals(M.S, hId, aId, crew);
   const p0 = gmProb(W, f.x);
-  const parts = GM_FEATS.map(([k, l], i) => { if (!W[i] || i < 2 || !f.x[i]) return null; const x0 = [...f.x]; x0[i] = 0; return { k, l, d: p0 - gmProb(W, x0) }; }).filter(Boolean);
+  const parts = GM_FEATS.map(([k, l], i) => { if (!W[i] || i < 2 || !f.x[i]) return null; const x0 = [...f.x]; x0[i] = 0; return { k, l, i, x: f.x[i], w: W[i], d: p0 - gmProb(W, x0) }; }).filter(Boolean);
   // injuries: lower each team's scoring by the share of its recent xG that is out tonight
   const iH0 = gmInjury(M.S, hId, inj), iA0 = gmInjury(M.S, aId, inj), iH = lineupOn ? { ...iH0, cut: 0 } : iH0, iA = lineupOn ? { ...iA0, cut: 0 } : iA0;
   let p = p0;
@@ -4799,7 +4799,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   parts.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
   const mk = devig(ml);
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
-  return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
+  return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, ctx: { hId, aId, dateIso, gH, gA, ml, dH, dA, phf, pht, mH, mA }, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
 async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.luV && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
 async function gmCollect(onProg) {
@@ -4891,6 +4891,46 @@ function gmValueTable(pH, ml, aAbbr, hAbbr, label, fdml) {
   const summary = !ml && !fdml ? 'No betting line posted yet, so only the fair odds are shown.' : best ? `<b>${best.verdict === 'bet' ? 'Value' : 'Small lean'} on ${esc(best.abbr)}</b> at ${fmtML(best.price)} (${BOOKS[best.book]}): ${label} gives them ${pct1(best.p)}%, the price needs ${pct1(best.be)}% to break even (${best.edge > 0 ? '+' : ''}${(best.edge * 100).toFixed(1)} pts). Fair price is ${best.fair}, so anything better than that is a value bet by the model.` : `<b>No bet.</b> Neither price beats ${label}'s fair odds: the sportsbook's margin eats any difference.`;
   return `<p style="margin:8px 0;font-size:13.5px">${summary}</p><div class="twrap"><table><thead><tr><th class="l">Team</th><th data-gloss="The model's chance this team wins (including overtime and shootout).">Win chance</th><th data-gloss="The American odds that exactly match the model's win chance, with no sportsbook margin. If you can get a better price than this, the model sees value.">Fair line</th><th data-gloss="The posted moneyline from ESPN's sportsbook.">Market</th><th data-gloss="The win chance this price needs just to break even, including the sportsbook margin.">Break-even</th><th data-gloss="Model win chance minus break-even chance. 3+ points = value bet; 0–3 = small lean; negative = pass.">Edge</th><th data-gloss="Expected profit per bet using your sizes ($100 on plus odds; bet to win $100 on minus odds), if the model's chance is right.">Exp. profit</th><th class="l">Verdict</th></tr></thead><tbody>${row(A_)}${row(H_)}</tbody></table></div>`;
 }
+
+// hover for one "Why" reason: what goes into it (each team's numbers), the factor's value, what one unit is worth, and the adjustment
+function gmWhyTip(x, r, g) {
+  const M = GM.model, S = M && M.S, c = r.ctx || {}; if (!S) return '';
+  const H = g.home.id, A = g.away.id, hA = esc(g.home.abbr), aA = esc(g.away.abbr), th = gmTeam(S, H), ta = gmTeam(S, A);
+  const row = (k, v) => `<div class='row'><span>${k}</span><b>${v}</b></div>`;
+  const days = t => t.last ? Math.round((new Date(c.dateIso || g.date) - new Date(t.last)) / 864e5) : null;
+  const dTxt = n => n == null ? 'first game of the season' : n <= 1 ? 'played yesterday (back-to-back)' : `${n - 1} day${n - 1 === 1 ? '' : 's'} off`;
+  const gname = id => esc((S.Gn || {})[id] || (S.Gk[id] && S.Gk[id].n) || 'unknown');
+  const gq = id => { const q = id && S.Gk[id]; return q ? (q.xga - q.ga) / (q.toi / 3600 + 15) : 0; };
+  const share = (f, a) => f + a > 0 ? f / (f + a) : .5;
+  const ar = arenaOf(H), tzH = ar ? ar[2] : null, tzJ = t => tzH != null && t.tz != null ? Math.abs(tzH - t.tz) : 0;
+  const day = d => Math.floor(new Date(d) / 864e5), today = day(c.dateIso || g.date), n7 = id => id ? (((S.GkS || {})[id] || []).map(day).filter(q => today - q >= 1 && today - q <= 7).length) : 0;
+  const sch = t => (t.sch || []).filter(q => day(q.d) < today), trip = t => { let n = 0; for (const q of [...sch(t)].reverse()) { if (q.h) break; n++; } return n; };
+  const inp = [];
+  switch (x.k) {
+    case 'rest': case 'hb2b': case 'ab2b': case 'hlay': case 'alay': inp.push(row(hA, dTxt(days(th))), row(aA, dTxt(days(ta)))); break;
+    case 'atz': case 'htz': inp.push(row(`${aA} time zones crossed`, tzJ(ta)), row(`${hA} time zones crossed`, tzJ(th))); break;
+    case 'goalie': inp.push(row(`${hA}: ${gname(c.gH)}`, `${sgn2(gq(c.gH))} saved above expected /60`), row(`${aA}: ${gname(c.gA)}`, `${sgn2(gq(c.gA))} saved above expected /60`)); break;
+    case 'st': for (const [t, ab] of [[th, hA], [ta, aA]]) inp.push(row(`${ab} net power-play goals /game`, sgn2(((t.ppg || 0) - (t.ppga || 0)) / ((t.gp || 0) + 10)))); break;
+    case 'pen': for (const [t, ab] of [[th, hA], [ta, aA]]) inp.push(row(`${ab} penalties /game`, f2(t.gp ? (t.pen + 35) / (t.gp + 10) : 3.5))); break;
+    case 'form': for (const [t, ab] of [[th, hA], [ta, aA]]) { const f = (t.rec || []).reduce((s, q) => s + q[0], 0), a = (t.rec || []).reduce((s, q) => s + q[1], 0); inp.push(row(`${ab} last ${(t.rec || []).length} xG share`, `${pct1(share(f, a))}% (season ${pct1(share(t.sxf + 5, t.sxa + 5))}%)`)); } break;
+    case 'hcook': case 'acook': for (const [t, ab] of [[th, hA], [ta, aA]]) inp.push(row(`${ab} xG share home / road`, `${pct1(share(t.hxf + 15, t.hxa + 15))}% / ${pct1(share(t.rxf + 15, t.rxa + 15))}%`)); break;
+    case 'gmatch': inp.push(row(`${hA} shooters vs. ${gname(c.gA)}`, `${sgn1((c.mH || 0) * 100)}%`), row(`${aA} shooters vs. ${gname(c.gH)}`, `${sgn1((c.mA || 0) * 100)}%`)); break;
+    case 'ot': for (const [t, ab] of [[th, hA], [ta, aA]]) inp.push(row(`${ab} OT/shootout record`, `${t.otw || 0}-${(t.otg || 0) - (t.otw || 0)}`)); break;
+    case 'gload': case 'gb2b': inp.push(row(`${gname(c.gH)} starts, last 7 days`, n7(c.gH)), row(`${gname(c.gA)} starts, last 7 days`, n7(c.gA))); break;
+    case 'h34': case 'a34': case 'trip': case 'homec': inp.push(row(`${aA} straight road games`, trip(ta)), row(`${hA} straight road games before tonight`, trip(th))); break;
+    case 'alt': inp.push(row('Visitors in Denver', 'yes')); break;
+    case 'move': { const pm = devig(c.ml), po = devig(c.ml && c.ml.open); inp.push(row(`${hA} market chance at open`, fin(po) ? pct1(po) + '%' : '–'), row(`${hA} market chance now`, fin(pm) ? pct1(pm) + '%' : '–')); break; }
+    case 'lineup': case 'luv': case 'phline': inp.push(row(`${hA} lineup vs. its usual (Ice Lab)`, `${sgn2(c.dH || 0)} goals /60`), row(`${aA} lineup vs. its usual (Ice Lab)`, `${sgn2(c.dA || 0)} goals /60`)); if (c.phf && c.phf[1]) inp.push(row('Post Hockey: home vs. usual minus road vs. usual', `${sgn2(c.phf[1] * .25)} goals /game`)); break;
+    case 'phteam': inp.push(row(`${hA} lineup minus ${aA} lineup (Post Hockey Net Rating)`, `${sgn2(c.phf ? c.phf[0] : 0)} goals /game`)); break;
+    case 'pht5': inp.push(row(`5v5 xG differential /60, ${hA} minus ${aA}`, sgn2(c.pht ? c.pht[0] * .5 : 0))); break;
+    case 'phst': inp.push(row(`PP xGF minus PK xGA /60, ${hA} minus ${aA}`, sgn2(c.pht ? c.pht[1] * 2 : 0))); break;
+    case 'inj': for (const [w, ab] of [[r.inj.h, hA], [r.inj.a, aA]]) if (w.who.length) inp.push(row(`${ab} missing`, `${w.who.slice(0, 3).map(q => esc(q.n)).join(', ')} (${pct1(w.who.reduce((s, q) => s + q.share, 0))}% of its xG)`)); break;
+    case 'ref': inp.push(row('Crew', esc((r.ref.names || []).join(' & ') || '–')), row('Penalties vs. an average crew', `${pct1(Math.abs(r.ref.crew - 1))}% ${r.ref.crew >= 1 ? 'more' : 'fewer'}`)); break;
+  }
+  const feat = GM_FEATS.find(f => f[0] === x.k), toward = x.d >= 0 ? hA : aA;
+  const unit = fin(x.w) && fin(r.p0) ? Math.abs(sigm(logit(clamp(r.p0, .01, .99)) + Math.abs(x.w)) - r.p0) * 100 : NaN;
+  return `<b>${esc(x.l)}</b>${inp.length ? `<div style='margin-top:4px'>${inp.join('')}</div>` : ''}<div style='margin-top:6px;border-top:1px solid var(--border);padding-top:4px'>${fin(x.x) ? row('Size tonight', `${Math.abs(x.x) === 1 && feat && !/^per /.test(feat[3]) ? 'Yes' : `${f2(Math.abs(x.x))} unit${Math.abs(x.x) === 1 ? '' : 's'}`}${feat ? ` <span class='muted'>(${esc(feat[3])})</span>` : ''}`) : ''}${fin(unit) ? row('One unit is worth', `about ${unit.toFixed(1)}% win chance`) : ''}${row('Adjustment', `${Math.abs(x.d * 100).toFixed(1)}% toward ${toward}`)}</div>`;
+}
 async function renderGameModelPreview(s, g) {
   const box = () => $('#gmBody'); if (!box()) return;
   await gmLoadSaved();
@@ -4909,7 +4949,7 @@ async function renderGameModelPreview(s, g) {
   const meter = (l, p) => fin(p) ? `<div class="pred-row"><span>${l}</span><div class="meter"><i style="width:${(1 - p) * 100}%;background:var(--away)"></i><i style="width:${p * 100}%;background:var(--home)"></i></div><span class="num">${f0((1 - p) * 100)}% – ${f0(p * 100)}%</span></div>` : '';
   // "Why": the biggest reasons, grouped by the team each one helps, with how many points of win chance it adds (no + / − signs)
   const top6 = r.parts.slice(0, 6), maxD = Math.max(.01, ...top6.map(x => Math.abs(x.d)));
-  const whyGrp = (t, abbr, side, list) => list.length ? `<div class="whyg"><div class="whyh">${logoImg(t, 16)}<b>Helping ${esc(abbr)}</b></div><ul class="gmwhy">${list.map(x => `<li><span>${esc(x.l)}</span><span class="whyv"><i style="width:${Math.round(Math.abs(x.d) / maxD * 46) + 4}px;background:var(--${side})"></i><b>${Math.abs(x.d * 100).toFixed(1)}%</b></span></li>`).join('')}</ul></div>` : '';
+  const whyGrp = (t, abbr, side, list) => list.length ? `<div class="whyg"><div class="whyh">${logoImg(t, 16)}<b>Helping ${esc(abbr)}</b></div><ul class="gmwhy">${list.map(x => `<li data-tip="${esc(gmWhyTip(x, r, g))}"><span>${esc(x.l)}</span><span class="whyv"><i style="width:${Math.round(Math.abs(x.d) / maxD * 46) + 4}px;background:var(--${side})"></i><b>${Math.abs(x.d * 100).toFixed(1)}%</b></span></li>`).join('')}</ul></div>` : '';
   const parts = top6.length ? whyGrp(g.away.id, g.away.abbr, 'away', top6.filter(x => x.d < 0)) + whyGrp(g.home.id, g.home.abbr, 'home', top6.filter(x => x.d >= 0)) + `<p class="muted" style="font-size:11.5px;margin:6px 0 0">Each number is how much that reason adds to the team's chance to win. 5.0% means it would take an even 50/50 game to about 55/45.</p>` : '';
   const gName = (id, t) => { const G = t === g.home.id ? GH : GA; return pg[t] ? `${esc(pg[t].n)} ${gBadge(pg[t].st)}` : G.src === 'rg' ? `${esc(G.n)} <span class="muted">(projected by RotoGrinders; not announced yet${G.id ? '' : ', no games yet so treated as an average goalie'})</span>` : id ? `${esc((M.S.Gn || {})[id] || 'Usual starter')} <span class="muted">(not announced yet: assumes his usual starter)</span>` : '<span class="muted">unknown</span>'; };
   box().innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><p>Weighs every factor by how much it has actually mattered</p></div>
