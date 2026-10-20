@@ -2704,7 +2704,7 @@ function linesHTML(rg, ids, updated, abbr) {
 /* ============================== LINE COMBINATIONS (props.json → combos, from NHL shift charts + play-by-play, 5-on-5) ============================== */
 const CMB = { idx: null, src: null };
 function cmbIdx() {
-  const C = PRF.data && PRF.data.combos; if (!C || !C.teams) return null;
+  const C = PRF.data && PRF.data.combos; if (!C || !C.teams || !(C.games > 0)) return null; // no games loaded yet: show nothing rather than "never played together"
   if (CMB.src === C) return CMB.idx;
   const st = r => ({ toi: r[0], cf: r[1], ca: r[2], sf: r[3], sa: r[4], gf: r[5], ga: r[6], xgf: r[7], xga: r[8], gp: r[9] });
   const idx = { season: C.season, updated: C.updated, games: C.games, teams: {}, lg: null };
