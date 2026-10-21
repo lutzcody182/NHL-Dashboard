@@ -2704,35 +2704,46 @@ function linesHTML(rg, ids, updated, abbr) {
 /* ============================== LINE COMBINATIONS (props.json → combos, from NHL shift charts + play-by-play, 5-on-5) ============================== */
 const CMB = { idx: null, src: null };
 function cmbIdx() {
-  const C = PRF.data && PRF.data.combos; if (!C || !C.teams || !(C.games > 0)) return null; // no games loaded yet: show nothing rather than "never played together"
+  const C = PRF.data && PRF.data.combos; if (!C || !C.teams || !(C.games > 0) || C.v !== 2) return null; // no games loaded yet (or the old format): show nothing rather than "never played together"
   if (CMB.src === C) return CMB.idx;
   const st = r => ({ toi: r[0], cf: r[1], ca: r[2], sf: r[3], sa: r[4], gf: r[5], ga: r[6], xgf: r[7], xga: r[8], gp: r[9] });
   const idx = { season: C.season, updated: C.updated, games: C.games, teams: {}, lg: null };
   let lgX = 0, lgT = 0;
   for (const [tm, o] of Object.entries(C.teams)) {
     const T = { f: [], d: [], pl: {} };
-    for (const r of o.f || []) { const names = r.slice(0, 3); T.f.push({ names, key: names.map(normName).sort().join('|'), ...st(r.slice(3)) }); }
-    for (const r of o.d || []) { const names = r.slice(0, 2); T.d.push({ names, key: names.map(normName).sort().join('|'), ...st(r.slice(2)) }); }
-    for (const [n, r] of Object.entries(o.pl || {})) { T.pl[normName(n)] = { n, pos: r[0], ...st(r.slice(1)) }; if (r[0] !== 'D') { lgX += r[8]; lgT += r[1]; } }
+    for (const [id, r] of Object.entries(o.pl || {})) { T.pl[id] = { id, n: r[0], pos: r[1], grp: r[1] === 'D' ? 'D' : 'F', ...st(r.slice(2)) }; if (r[1] !== 'D') { lgX += r[9]; lgT += r[2]; } }
+    const nameOf = id => (T.pl[id] || {}).n || '?';
+    for (const r of o.f || []) { const ids = r.slice(0, 3); T.f.push({ ids, names: ids.map(nameOf), key: [...ids].sort().join('|'), ...st(r.slice(3)) }); }
+    for (const r of o.d || []) { const ids = r.slice(0, 2); T.d.push({ ids, names: ids.map(nameOf), key: [...ids].sort().join('|'), ...st(r.slice(2)) }); }
+    // a name (RotoGrinders or ESPN spelling) → this team's NHL player id, among forwards or defensemen only, so two players
+    // with the same name (Vancouver's Elias Pettersson, F, and Elias-Nils Pettersson, D) never get mixed up
+    T.res = (name, grp) => {
+      const k = normName(name), pool = Object.values(T.pl).filter(p => p.grp === grp);
+      const ex = pool.filter(p => normName(p.n) === k); if (ex.length === 1) return ex[0].id;
+      const w = String(name || '').normalize('NFD').replace(/[̀-ͯ]/g, '').split(/[\s-]+/).filter(Boolean), last = normName(w[w.length - 1] || ''), fi = k[0];
+      const lf = pool.filter(p => { const q = normName(p.n); return q.endsWith(last) && q[0] === fi; }); return lf.length === 1 ? lf[0].id : null;
+    };
     idx.teams[tm] = T;
   }
   idx.lgXgf60 = lgT > 0 ? lgX / lgT * 3600 : NaN; // forwards' on-ice xG for per 60, league-wide
   CMB.src = C; CMB.idx = idx; return idx;
 }
 const cmbTeam = espnAbbr => { const I = cmbIdx(); if (!I) return null; return I.teams[PH_TM[espnAbbr] || espnAbbr] || I.teams[espnAbbr] || null; };
-// one line or pair's season stats together (names in any order), or null
+// one line (3 forwards) or pair (2 defensemen)'s season stats together (names in any order), or null
 function cmbFind(espnAbbr, names) {
   const T = cmbTeam(espnAbbr); if (!T || !names || (names.length !== 3 && names.length !== 2)) return null;
-  const key = names.map(normName).sort().join('|');
-  return (names.length === 3 ? T.f : T.d).find(x => x.key === key) || null;
+  const grp = names.length === 3 ? 'F' : 'D', ids = names.map(n => T.res(n, grp)); if (ids.some(x => !x)) return null;
+  const key = [...ids].sort().join('|');
+  return (grp === 'F' ? T.f : T.d).find(x => x.key === key) || null;
 }
-const cmbPl = (espnAbbr, n) => { const T = cmbTeam(espnAbbr); return T ? T.pl[normName(n)] || null : null; };
+const cmbPl = (espnAbbr, n, grp = 'F') => { const T = cmbTeam(espnAbbr); if (!T) return null; const id = T.res(n, grp); return id ? T.pl[id] : null; };
+const cmbPlId = (espnAbbr, id) => { const T = cmbTeam(espnAbbr); return T ? T.pl[id] || null : null; };
 const xgPct = x => x && x.xgf + x.xga > 0 ? x.xgf / (x.xgf + x.xga) : NaN;
 const cfPct = x => x && x.cf + x.ca > 0 ? x.cf / (x.cf + x.ca) : NaN;
 const minsTxt = sec => sec >= 3600 ? `${(sec / 3600).toFixed(1)} hrs` : `${Math.round(sec / 60)} min`;
 // together vs. apart: each member's xG share when he's on the ice without this exact group
 function cmbApart(espnAbbr, c) {
-  return c.names.map(n => { const p = cmbPl(espnAbbr, n); if (!p) return null; const a = { xgf: p.xgf - c.xgf, xga: p.xga - c.xga, toi: p.toi - c.toi }; return { n, pct: a.toi >= 600 ? xgPct(a) : NaN, toi: a.toi }; }).filter(Boolean);
+  return c.ids.map(id => { const p = cmbPlId(espnAbbr, id); if (!p) return null; const n = p.n; const a = { xgf: p.xgf - c.xgf, xga: p.xga - c.xga, toi: p.toi - c.toi }; return { n, pct: a.toi >= 600 ? xgPct(a) : NaN, toi: a.toi }; }).filter(Boolean);
 }
 // small summary chip for a posted line or pair
 function cmbChip(espnAbbr, names) {
@@ -2746,7 +2757,7 @@ function cmbChip(espnAbbr, names) {
 }
 // goal scorer model: how much better (or worse) a player's line creates chances together than he does on average, shrunk toward no effect
 function cmbScoreAdj(espnAbbr, n, mateNames) {
-  if (!cmbIdx() || !mateNames || (mateNames.length !== 2 && mateNames.length !== 1)) return null;
+  if (!cmbIdx() || !mateNames || mateNames.length !== 2) return null;
   const c = cmbFind(espnAbbr, [n, ...mateNames]), p = cmbPl(espnAbbr, n); if (!c || !p || !(p.toi > 1800) || !(c.toi > 0)) return null;
   const mine = per60(p.xgf, p.toi), line = per60(c.xgf, c.toi); if (!(mine > 0) || !fin(line)) return null;
   const w = c.toi / (c.toi + 9000); // 150 minutes together = half trust
@@ -5593,9 +5604,9 @@ function gsRefine(rows, dkm, tot, fdm) {
   const F = gsDkFair(dkm, tot), Ffd = gsDkFair(fdm, tot), w = GS.blendW;
   for (const r of rows) {
     r.pModel = 1 - Math.exp(-r.lam);
-    const xb = bestPrice(null, null, r.ox), ref = r.dk != null ? r.dk : r.fd != null ? r.fd : xb ? xb.price : null; // market reference for the blend: DraftKings, else FanDuel, else the best other book
+    const odd = pxOdd(r.dk, r.fd, r.ox), xb = bestPrice(null, null, r.ox), useDk = r.dk != null && !odd.has('dk'), useFd = r.fd != null && !odd.has('fd'), ref = useDk ? r.dk : useFd ? r.fd : xb ? xb.price : null; r.odd = odd; // market reference for the blend: DraftKings, else FanDuel, else the best other book
     if (ref != null) {
-      const FF = r.dk != null ? F : r.fd != null ? Ffd : gsDkFair(null, tot);
+      const FF = useDk ? F : useFd ? Ffd : gsDkFair(null, tot);
       r.dkFairEven = FF.fair(amImplied(ref)); r.dkFair = flbFair(amImplied(ref), r.dkFairEven); r.margin = FF.m;
       r.p = sigm(w * logit(clamp(r.pModel, .005, .995)) + (1 - w) * logit(clamp(r.dkFair, .005, .995)));
       // edge and expected profit at the best of the five books
@@ -5652,7 +5663,18 @@ async function getPropsFile() {
 const BOOKS = { dk: 'DraftKings', fd: 'FanDuel', cz: 'Caesars', fn: 'Fanatics', sc: 'theScore Bet' }, BK = { dk: 'DK', fd: 'FD', cz: 'CZR', fn: 'FAN', sc: 'SCR' };
 const XBK = ['cz', 'fn', 'sc']; // the other books, stored per player as {cz, fn, sc}
 const amDec = o => o > 0 ? 1 + o / 100 : 1 + 100 / -o;
-function bestPrice(dk, fd, ox) { const c = [['dk', dk], ['fd', fd], ...XBK.map(k => [k, ox ? ox[k] : null])].filter(([, v]) => v != null && isFinite(v)); if (!c.length) return null; c.sort((a, b) => amDec(b[1]) - amDec(a[1])); return { price: +c[0][1], book: c[0][0] }; }
+// a book whose price is way off the others for the same player is almost always a name mix-up (like FanDuel listing the
+// defenseman Elias Pettersson under the forward's name), so it's left out of the best price
+function pxOdd(dk, fd, ox) {
+  const c = [['dk', dk], ['fd', fd], ...XBK.map(k => [k, ox ? ox[k] : null])].filter(([, v]) => v != null && isFinite(v)).map(([k, v]) => [k, amImplied(+v)]);
+  const out = new Set(); if (c.length < 2) return out;
+  if (c.length === 2) { const [a, b] = c[0][1] >= c[1][1] ? [c[0], c[1]] : [c[1], c[0]]; if (a[1] / b[1] > 2.5) out.add(b[0]); return out; } // two books: drop the much longer one
+  const v = c.map(x => x[1]).sort((x, y) => x - y), med = v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+  for (const [k, q] of c) if (q / med < .45 || q / med > 2.2) out.add(k);
+  return out;
+}
+const ODD_TAG = ' <span class="injb" data-tip="Way off the other books&#39; prices for this player, so it&#39;s probably a different player with the same name. Left out of the best price and edge.">⚠ ignored</span>';
+function bestPrice(dk, fd, ox) { const odd = pxOdd(dk, fd, ox); const c = [['dk', dk], ['fd', fd], ...XBK.map(k => [k, ox ? ox[k] : null])].filter(([k, v]) => v != null && isFinite(v) && !odd.has(k)); if (!c.length) return null; c.sort((a, b) => amDec(b[1]) - amDec(a[1])); return { price: +c[0][1], book: c[0][0] }; }
 // FanDuel anytime (or first goal) prices for one game, by player
 function fdPriceMap(PF, dateIso, hId, aId, list = 'players') {
   if (!PF || !PF.games) return null;
@@ -5768,8 +5790,8 @@ async function renderScorers() {
     { k: 'p', h: 'Chance to score', v: r => r.p, f: (v, r) => `<b data-tip="${esc(`<b>${esc(r.n)}</b>${r.why.html}`)}">${pct1(v)}%</b>${r.lowN ? ' <span class="injb" data-tip="Fewer than 5 games of data, so his numbers are shaky. Left out of Biggest edges.">small sample</span>' : ''}`, dir: 1, t: 'Estimated chance he scores at least one goal tonight (any situation). When DraftKings has a price, this blends Ice Lab\'s model with DraftKings\' chance (margin removed); hover for both.' },
     { k: 'pModel', h: 'Model alone', v: r => r.pModel, f: v => `<span class="muted">${pct1(v)}%</span>`, t: 'Ice Lab\'s model before blending with DraftKings, after making the team\'s players add up to its expected goals tonight.' },
     { k: 'fair', h: 'Fair odds', v: r => r.p, f: (v, r) => fairAmerican(r.p), t: 'The American odds that exactly match this chance, with no bookmaker margin. A sportsbook price longer than this means the model sees value.' },
-    { k: 'dk', h: 'DraftKings', v: r => r.dk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.book === 'dk' && [r.fd, ...XBK.map(k => r.ox && r.ox[k])].some(x => x != null && x !== r.dk) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'DraftKings anytime goal scorer price. ★ = the best price of all five books.' },
-    { k: 'fd', h: 'FanDuel', v: r => r.fd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.book === 'fd' && [r.dk, ...XBK.map(k => r.ox && r.ox[k])].some(x => x != null && x !== r.fd) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'FanDuel anytime goal scorer price. ★ = the best price of all five books. Edge and expected profit use the best price.' },
+    { k: 'dk', h: 'DraftKings', v: r => r.dk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.odd && r.odd.has('dk') ? ODD_TAG : ''}${r.book === 'dk' && [r.fd, ...XBK.map(k => r.ox && r.ox[k])].some(x => x != null && x !== r.dk) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'DraftKings anytime goal scorer price. ★ = the best price of all five books.' },
+    { k: 'fd', h: 'FanDuel', v: r => r.fd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.odd && r.odd.has('fd') ? ODD_TAG : ''}${r.book === 'fd' && [r.dk, ...XBK.map(k => r.ox && r.ox[k])].some(x => x != null && x !== r.fd) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'FanDuel anytime goal scorer price. ★ = the best price of all five books. Edge and expected profit use the best price.' },
     { k: 'ox', h: 'Other books', v: r => { const b = bestPrice(null, null, r.ox); return b ? b.price : null; }, f: (v, r) => { const b = bestPrice(null, null, r.ox); return !b ? '<span class="muted">–</span>' : `<span data-tip="${esc(bookTip(r.dk, r.fd, r.ox))}"><b>${fmtML(b.price)}</b> <span class="muted" style="font-size:11px">${BK[b.book]}</span>${XBK.includes(r.book) ? ' <span class="bestb" title="Best price">★</span>' : ''}</span>`; }, t: 'The best anytime goal scorer price at Caesars, Fanatics or theScore Bet (hover for each book). ★ = the best price of all five books.' },
     { k: 'bestImp', h: 'Implied (best)', v: r => r.bestImp, f: v => fin(v) ? pct1(v) + '%' : '–', t: 'The chance the better of the two prices implies. It includes the sportsbook\'s built-in margin, so it runs a little high.' },
     { k: 'edgeP', h: 'Edge vs. sportsbook', v: r => r.edgeP, f: (v, r) => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>${r.big ? ' <span data-tip="Unusually big edge. These are usually news the model doesn\'t know yet (a scratch, a line change, an injury). Double-check before betting.">⚠️</span>' : ''}` : '–', dir: 1, t: 'Ice Lab\'s chance minus DraftKings\' implied chance. Positive = Ice Lab thinks he\'s more likely to score than the price says.' },
@@ -6982,8 +7004,8 @@ async function renderFirstGoal() {
     { k: 'pTeam', h: 'Team first', v: r => r.pTeam, f: v => pct1(v) + '%', t: 'Chance his team scores the game\'s first goal.' },
     { k: 'fp', h: 'First goal', v: r => r.fp, f: (v, r) => `<b>${pct1(v)}%</b>${Math.abs(r.habit) >= .03 ? ` <span class="muted" style="font-size:11.5px">(${r.habit > 0 ? '+' : ''}${pct1(r.habit)}% from P1 habits)</span>` : ''}`, t: 'Ice Lab\'s chance he scores the first goal of the game.' },
     { k: 'fair', h: 'Fair odds', v: r => r.fp, f: (v, r) => fairAmerican(r.fp) },
-    { k: 'fdk', h: 'DraftKings', v: r => r.fdk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.fBook === 'dk' && [r.ffd, ...XBK.map(k => r.fox && r.fox[k])].some(x => x != null && x !== r.fdk) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'DraftKings first goal scorer price. ★ = the best price of all five books.' },
-    { k: 'ffd', h: 'FanDuel', v: r => r.ffd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${r.fBook === 'fd' && [r.fdk, ...XBK.map(k => r.fox && r.fox[k])].some(x => x != null && x !== r.ffd) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'FanDuel first goal scorer price. ★ = the best price of all five books. Edge and expected profit use the best price.' },
+    { k: 'fdk', h: 'DraftKings', v: r => r.fdk, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${pxOdd(r.fdk, r.ffd, r.fox).has('dk') ? ODD_TAG : ''}${r.fBook === 'dk' && [r.ffd, ...XBK.map(k => r.fox && r.fox[k])].some(x => x != null && x !== r.fdk) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'DraftKings first goal scorer price. ★ = the best price of all five books.' },
+    { k: 'ffd', h: 'FanDuel', v: r => r.ffd, f: (v, r) => v == null ? '<span class="muted">–</span>' : `<b>${fmtML(v)}</b>${pxOdd(r.fdk, r.ffd, r.fox).has('fd') ? ODD_TAG : ''}${r.fBook === 'fd' && [r.fdk, ...XBK.map(k => r.fox && r.fox[k])].some(x => x != null && x !== r.ffd) ? ' <span class="bestb" title="Best price">★</span>' : ''}`, t: 'FanDuel first goal scorer price. ★ = the best price of all five books. Edge and expected profit use the best price.' },
     { k: 'fox', h: 'Other books', v: r => { const b = bestPrice(null, null, r.fox); return b ? b.price : null; }, f: (v, r) => { const b = bestPrice(null, null, r.fox); return !b ? '<span class="muted">–</span>' : `<span data-tip="${esc(bookTip(r.fdk, r.ffd, r.fox))}"><b>${fmtML(b.price)}</b> <span class="muted" style="font-size:11px">${BK[b.book]}</span>${XBK.includes(r.fBook) ? ' <span class="bestb" title="Best price">★</span>' : ''}</span>`; }, t: 'The best first goal scorer price at Caesars, Fanatics or theScore Bet (hover for each book). ★ = the best price of all five books.' },
     { k: 'fImp', h: 'Implied (best)', v: r => r.fImp, f: (v, r) => fin(v) ? `${pct1(v)}%${fin(r.fFair) ? `<div class="muted" style="font-size:11px">${pct1(r.fFair)}% no margin</div>` : ''}` : '–', t: 'The chance DraftKings\' price implies, and underneath with its margin removed. First goal markets carry a big margin.' },
     { k: 'fEdge', h: 'Edge vs. sportsbook', v: r => r.fEdge, f: v => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>` : '–', t: 'Ice Lab\'s chance minus DraftKings\' implied chance.' },
