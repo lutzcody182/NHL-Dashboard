@@ -7106,37 +7106,40 @@ const fgFirstScorer = g => { const x = (g.shots || []).filter(s => s.t === 0 && 
 const SOG = { st: null, key: '', date: '', game: '', team: '', q: '', rows: null };
 const SOGB = { w: .4, n: 0, fit: null }; // model vs. market blend, learned from graded picks
 const GSMATES = {}; // tonight's linemates' names per player (from gsMateMap), for the line shot-share factor
-function sogState() {
-  const games = [...(GS.prior || []), ...A.filtered].filter(g => g && g.final && g.sk).sort((a, b) => new Date(a.date) - new Date(b.date));
-  const key = games.length + '|' + (games.length ? games[games.length - 1].id : '');
-  if (SOG.st && SOG.key === key) return SOG.st;
-  const cur = games.length ? seasonOf(games[games.length - 1].date) : null;
+// options, each checked on real games (3 rolling test windows, ~3,000 player-games): split = opponent shots allowed to
+// forwards vs. defensemen (catches shot-blocking teams) · rec = the last two weeks count more · lvl = automatic level
+// correction. own = each player's own on-net rate for his attempts: tested and it didn't help, so it's off.
+const SOG_OPT = { own: 0, split: 1, rec: 1, lvl: 1 };
+function sogBuild(games, opt = SOG_OPT) {
+  const cur = games.length ? seasonOf(games[games.length - 1].date) : null, lastDay = games.length ? new Date(games[games.length - 1].date) : new Date();
   const P = {}, T = {}, AR = {}, last = {}, perGame = [];
-  const L = { ev: { F: [0, 0], D: [0, 0] }, pp: { F: [0, 0], D: [0, 0] }, att: 0, sog: 0, tg: 0, tsog: 0 };
-  const tm = id => T[id] || (T[id] = { f: 0, a: 0, gp: 0 });
+  const L = { ev: { F: [0, 0], D: [0, 0] }, pp: { F: [0, 0], D: [0, 0] }, att: 0, sog: 0, tg: 0, tsog: 0, pos: { F: 0, D: 0 } };
+  const tm = id => T[id] || (T[id] = { f: 0, a: 0, aF: 0, aD: 0, gp: 0 });
   for (const g of games) {
-    const w = seasonOf(g.date) === cur ? 1 : .5;
+    const days = (lastDay - new Date(g.date)) / 864e5, curS = seasonOf(g.date) === cur;
+    const w = (curS ? 1 : .5) * (opt.rec && curS ? 1 + 1.5 * Math.pow(.5, days / 14) : 1); // the last two weeks count up to 2.5×
     const ppS = {}, att = {};
     for (const s of g.shots || []) { if (!s.pl || (g.so && s.per >= 5)) continue; if (s.str !== 1) att[s.pl] = (att[s.pl] || 0) + 1; // even-strength attempts (on net, missed or blocked)
       if ((s.t === 0 || s.t === 1) && s.str === 1) ppS[s.pl] = (ppS[s.pl] || 0) + 1; }
-    const tf = {};
-    for (const p of Object.values(g.sk)) if (p.toi > 0) tf[p.tm] = (tf[p.tm] || 0) + (p.sog || 0);
+    const tf = {}, tpos = {};
+    for (const p of Object.values(g.sk)) if (p.toi > 0) { tf[p.tm] = (tf[p.tm] || 0) + (p.sog || 0); const k = p.tm + (p.pos === 'D' ? 'D' : 'F'); tpos[k] = (tpos[k] || 0) + (p.sog || 0); }
     if ((tf[g.home.id] || 0) + (tf[g.away.id] || 0) < 20) continue; // box score missing shots: skip the game
     for (const [id, p] of Object.entries(g.sk)) {
       if (!(p.toi > 0)) continue;
       const r = P[id] || (P[id] = { id, n: p.n, tm: p.tm, pos: p.pos === 'D' ? 'D' : 'F', gp: 0, evS: 0, evT: 0, ppS: 0, ppT: 0, att: 0, toi: 0, sog: 0, list: [] });
       r.n = p.n; r.tm = p.tm; const sog = p.sog || 0, pps = Math.min(sog, ppS[id] || 0), pp = p.pp || 0, ev = Math.max(0, p.toi - pp);
       r.gp += w; r.evS += (sog - pps) * w; r.evT += ev * w; r.ppS += pps * w; r.ppT += pp * w; r.att += (att[id] || 0) * w; r.toi += p.toi * w; r.sog += sog * w;
-      if (seasonOf(g.date) === cur || r.list.length < 40) { r.list.push(sog); if (r.list.length > 82) r.list.shift(); }
+      if (curS || r.list.length < 40) { r.list.push(sog); if (r.list.length > 82) r.list.shift(); }
       L.ev[r.pos][0] += (sog - pps) * w; L.ev[r.pos][1] += ev * w; L.pp[r.pos][0] += pps * w; L.pp[r.pos][1] += pp * w; L.att += (att[id] || 0) * w; L.sog += (sog - pps) * w;
     }
     const H = g.home.id, A_ = g.away.id, fh = tf[H] || 0, fa = tf[A_] || 0;
     tm(H).f += fh * w; tm(H).a += fa * w; tm(H).gp += w; tm(A_).f += fa * w; tm(A_).a += fh * w; tm(A_).gp += w;
-    L.tg += 2 * w; L.tsog += (fh + fa) * w;
+    tm(H).aF += (tpos[A_ + 'F'] || 0) * w; tm(H).aD += (tpos[A_ + 'D'] || 0) * w; tm(A_).aF += (tpos[H + 'F'] || 0) * w; tm(A_).aD += (tpos[H + 'D'] || 0) * w;
+    L.tg += 2 * w; L.tsog += (fh + fa) * w; L.pos.F += ((tpos[H + 'F'] || 0) + (tpos[A_ + 'F'] || 0)) * w; L.pos.D += ((tpos[H + 'D'] || 0) + (tpos[A_ + 'D'] || 0)) * w;
     perGame.push({ H, A: A_, tot: fh + fa, w });
     last[H] = g.date; last[A_] = g.date;
   }
-  const lgTeam = L.tg ? L.tsog / L.tg : 30;
+  const lgTeam = L.tg ? L.tsog / L.tg : 30, lgF = L.tg ? L.pos.F / L.tg : 22, lgD = L.tg ? L.pos.D / L.tg : 8;
   // arena scorekeeping: shots recorded there vs. what those two teams usually get and allow, shrunk with 15 games of "normal"
   const exp = (t, o) => { const a = T[t], b = T[o]; const fr = a && a.gp ? (a.f + lgTeam * 10) / (a.gp + 10) : lgTeam, ar = b && b.gp ? (b.a + lgTeam * 10) / (b.gp + 10) : lgTeam; return fr * ar / lgTeam; };
   for (const x of perGame) { const a = AR[x.H] || (AR[x.H] = { act: 0, exp: 0, n: 0 }); a.act += x.tot * x.w; a.exp += (exp(x.H, x.A) + exp(x.A, x.H)) * x.w; a.n += x.w; }
@@ -7145,8 +7148,26 @@ function sogState() {
   let num = 0, den = 0;
   for (const r of Object.values(P)) { if (r.list.length < 15) continue; const m = r.list.reduce((s, x) => s + x, 0) / r.list.length, v = r.list.reduce((s, x) => s + (x - m) ** 2, 0) / (r.list.length - 1); num += m * m; den += v - m; }
   const k = den > 0 ? clamp(num / den, 3, 60) : 12;
-  const st = { P, T, AR, L, lgTeam, k, last, cur, sogPerAtt: L.att ? L.sog / L.att : .55, n: games.length };
-  SOG.st = st; SOG.key = key; return st;
+  return { P, T, AR, L, lgTeam, lgF, lgD, k, last, cur, sogPerAtt: L.att ? L.sog / L.att : .55, n: games.length, lvl: 1, opt };
+}
+function sogState() {
+  const games = [...(GS.prior || []), ...A.filtered].filter(g => g && g.final && g.sk).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const key = games.length + '|' + (games.length ? games[games.length - 1].id : '') + '|' + JSON.stringify(SOG_OPT);
+  if (SOG.st && SOG.key === key) return SOG.st;
+  const St = sogBuild(games);
+  // level correction: rebuild without the newest 20% of this season's games, predict those with the real ice time, and scale by how far off it ran
+  if (SOG_OPT.lvl) { const cur = games.filter(g => seasonOf(g.date) === St.cur); if (cur.length >= 40) { const hold = cur.slice(-Math.max(20, Math.floor(cur.length * .2))), h0 = new Date(hold[0].date); const Sb = sogBuild(games.filter(g => new Date(g.date) < h0)); const L = sogLevel(Sb, hold); St.lvl = L.lvl; St.lvlN = L.n; St.lvlRaw = L.raw; } }
+  SOG.st = St; SOG.key = key; return St;
+}
+// how far the model ran from real shots on unseen games (real ice time), shrunk toward no correction with 2,000 shots of "on target"
+function sogLevel(St, hold) {
+  let pred = 0, act = 0, n = 0;
+  for (const g of hold) for (const [id, p] of Object.entries(g.sk)) {
+    if (!(p.toi > 0) || !St.P[id] || St.P[id].gp < 5) continue; const opp = p.tm === g.home.id ? g.away.id : g.home.id;
+    const m = sogMu(St, { pid: id, n: p.n, tm: p.tm, opp, evSec: Math.max(0, p.toi - (p.pp || 0)), ppSec: p.pp || 0 }, { home: g.home.id, pH: NaN, total: NaN, date: g.date }); if (!m) continue;
+    pred += m.mu; act += p.sog || 0; n++;
+  }
+  return { n, raw: pred > 0 ? act / pred : 1, lvl: pred > 0 ? clamp((act + 2000) / (pred + 2000), .9, 1.1) : 1 };
 }
 // negative binomial: chance of exactly 0..n shots with mean mu and size k
 function nbPmf(mu, k, nMax = 15) { const out = [Math.pow(k / (k + mu), k)]; for (let n = 0; n < nMax; n++) out.push(out[n] * (n + k) / (n + 1) * mu / (k + mu)); return out; }
@@ -7154,14 +7175,16 @@ const nbOver = (mu, k, line) => { const pm = nbPmf(mu, k, Math.ceil(line) + 2); 
 // one player's expected shots tonight, with the reasons
 function sogMu(St, r, ctx) {
   const p = St.P[r.pid]; if (!p) return null;
-  const pos = p.pos, L = St.L, lgEv = L.ev[pos][1] ? L.ev[pos][0] / L.ev[pos][1] : .0015, lgPP = L.pp[pos][1] ? L.pp[pos][0] / L.pp[pos][1] : .004;
+  const opt = St.opt || SOG_OPT, pos = p.pos, L = St.L, lgEv = L.ev[pos][1] ? L.ev[pos][0] / L.ev[pos][1] : .0015, lgPP = L.pp[pos][1] ? L.pp[pos][0] / L.pp[pos][1] : .004;
   const evOwn = (p.evS + lgEv * 3600) / (p.evT + 3600); // shrunk with one hour at the position's average
-  const attRate = (p.att * St.sogPerAtt + lgEv * 3600) / (p.evT + 3600); // his even-strength attempts × the league's on-net rate: steadier than shots alone
+  const onNet = opt.own ? (p.evS + 100 * St.sogPerAtt) / (p.att + 100) : St.sogPerAtt; // his own share of attempts that reach the net (100 attempts of league average)
+  const attRate = (p.att * onNet + lgEv * 3600) / (p.evT + 3600); // his even-strength attempts × that rate: steadier than shots alone
   const evRate = .7 * evOwn + .3 * attRate;
   const ppRate = (p.ppS + lgPP * 1200) / (p.ppT + 1200);
   const evSec = fin(r.evSec) ? r.evSec : (p.gp ? p.evT / p.gp : 900), ppSec = fin(r.ppSec) ? r.ppSec : (p.gp ? p.ppT / p.gp : 0);
   const base = evRate * evSec + ppRate * ppSec;
-  const o = St.T[r.opp], oppF = o && o.gp ? clamp((o.a + St.lgTeam * 10) / (o.gp + 10) / St.lgTeam, .82, 1.2) : 1;
+  const o = St.T[r.opp];
+  const oppF = !o || !o.gp ? 1 : opt.split && fin(o.aF) && St.lgF > 0 && St.lgD > 0 ? (pos === 'D' ? clamp((o.aD + St.lgD * 10) / (o.gp + 10) / St.lgD, .75, 1.3) : clamp((o.aF + St.lgF * 10) / (o.gp + 10) / St.lgF, .8, 1.22)) : clamp((o.a + St.lgTeam * 10) / (o.gp + 10) / St.lgTeam, .82, 1.2);
   const arF = (St.AR[ctx.home] || {}).f || 1;
   const q = r.tm === ctx.home ? ctx.pH : fin(ctx.pH) ? 1 - ctx.pH : NaN, scriptF = fin(q) ? clamp(1 + .16 * (.5 - q), .95, 1.05) : 1;
   const paceF = fin(ctx.total) && ctx.total > 3 ? clamp(Math.pow(ctx.total / 6.2, .3), .95, 1.05) : 1;
@@ -7169,9 +7192,12 @@ function sogMu(St, r, ctx) {
   let lineF = 1, lineTxt = '';
   const mates = GSMATES[r.pid];
   if (mates && mates.length === 2 && cmbIdx()) { const c = cmbFind(TM(r.tm).abbr, [r.n, ...mates]), me = cmbPl(TM(r.tm).abbr, r.n); if (c && me && me.toi > 1800 && c.toi > 0) { const cl = c.cf / c.toi, cm = me.cf / me.toi; if (cm > 0) { const w = c.toi / (c.toi + 9000); lineF = clamp(1 + w * .5 * (cl / cm - 1), .94, 1.06); lineTxt = `${minsTxt(c.toi)} together`; } } }
-  const mu = clamp(base * oppF * arF * scriptF * paceF * b2bF * lineF, .05, 9);
-  return { mu, base, evRate, ppRate, evSec, ppSec, oppF, arF, scriptF, paceF, b2bF, lineF, lineTxt, gp: p.gp };
+  const lvlF = St.lvl || 1;
+  const mu = clamp(base * oppF * arF * scriptF * paceF * b2bF * lineF * lvlF, .05, 9);
+  const ppUsual = p.gp ? p.ppT / p.gp : 0;
+  return { mu, base, evRate, ppRate, evSec, ppSec, ppUsual, onNet, oppF, arF, scriptF, paceF, b2bF, lineF, lvlF, lineTxt, gp: p.gp };
 }
+
 // shots on goal prices for one game: name → { dk: [line, over, under], fd: [...], cz, fn, sc }
 function sogPriceMap(PF, dateIso, hId, aId) {
   if (!PF || !PF.games) return null;
@@ -7221,7 +7247,7 @@ function sogBlendFit(PK) {
   for (let w = 0; w <= 1.0001; w += .05) { let L = 0; for (const p of ps) { const q = clamp(sigm(w * logit(clamp(p.pRaw, .005, .995)) + (1 - w) * logit(clamp(p.fair, .02, .98))), 1e-4, 1 - 1e-4); L -= p.res === 'W' ? Math.log(q) : Math.log(1 - q); } if (L < bl) { bl = L; best = w; } }
   SOGB.fit = best; SOGB.w = (ps.length * best + 300 * .4) / (ps.length + 300); return SOGB.w;
 }
-const sogWhy = (r, k) => `<b>${esc(r.n)}</b><div class='row'><span>Even strength</span><b>${f2(r.evRate * 3600)} shots/60 × ${mmss(r.evSec)}</b></div>${r.ppSec > 1 ? `<div class='row'><span>Power play</span><b>${f2(r.ppRate * 3600)} shots/60 × ${mmss(r.ppSec)}</b></div>` : ''}<div class='row'><span>Before matchup</span><b>${f2(r.base)} shots</b></div>${[['Opponent shots allowed', r.oppF], ['Arena scorekeeping', r.arF], ['Game script (trailing teams shoot more)', r.scriptF], ['Game total (pace)', r.paceF], ['Back-to-back', r.b2bF], [`Line shot share${r.lineTxt ? ' (' + r.lineTxt + ')' : ''}`, r.lineF]].filter(([, f]) => fin(f) && Math.abs(f - 1) >= .005).map(([l, f]) => `<div class='row'><span>${l}</span><b>${f > 1 ? '+' : '−'}${pct1(Math.abs(f - 1))}%</b></div>`).join('')}<div class='row'><span><b>Expected tonight</b></span><b>${f2(r.mu)} shots</b></div>${r.line != null ? `<div style='margin-top:4px;border-top:1px solid var(--border);padding-top:4px'><div class='row'><span>Model alone: over ${r.line}</span><b>${fairAmerican(r.pModelO)} (${pct1(r.pModelO)}%)</b></div>${fin(r.mk.fair) ? `<div class='row'><span>Books, no margin (${BOOKS[r.mk.ref]})</span><b>${fairAmerican(r.mk.fair)} (${pct1(r.mk.fair)}%)</b></div>` : ''}<div class='row'><span>Blended (${Math.round(SOGB.w * 100)}% model)</span><b>${fairAmerican(r.pO)} (${pct1(r.pO)}%)</b></div></div>` : ''}<div class='muted' style='margin-top:4px'>Range uses a negative binomial with spread ${f1(k)} (learned from real games).</div>`;
+const sogWhy = (r, k) => `<b>${esc(r.n)}</b><div class='row'><span>Even strength</span><b>${f2(r.evRate * 3600)} shots/60 × ${mmss(r.evSec)}</b></div>${r.ppSec > 1 ? `<div class='row'><span>Power play</span><b>${f2(r.ppRate * 3600)} shots/60 × ${mmss(r.ppSec)}</b></div>` : ''}<div class='row'><span>Before matchup</span><b>${f2(r.base)} shots</b></div>${r.ppSec > 1 && r.ppUsual > 1 && Math.abs(r.ppSec / r.ppUsual - 1) >= .05 ? `<div class='row'><span>Power-play time vs. his usual ${mmss(r.ppUsual)} (opponent penalties, referees, PP unit)</span><b>${r.ppSec > r.ppUsual ? '+' : '−'}${pct1(Math.abs(r.ppSec / r.ppUsual - 1))}%</b></div>` : ''}${[[`Opponent shots allowed to ${r.pos === 'D' ? 'defensemen' : 'forwards'}`, r.oppF], ['Arena scorekeeping', r.arF], ['Game script (trailing teams shoot more)', r.scriptF], ['Game total (pace)', r.paceF], ['Back-to-back', r.b2bF], [`Line shot share${r.lineTxt ? ' (' + r.lineTxt + ')' : ''}`, r.lineF], ['Level correction (how far recent predictions ran from real shots)', r.lvlF]].filter(([, f]) => fin(f) && Math.abs(f - 1) >= .005).map(([l, f]) => `<div class='row'><span>${l}</span><b>${f > 1 ? '+' : '−'}${pct1(Math.abs(f - 1))}%</b></div>`).join('')}<div class='row'><span><b>Expected tonight</b></span><b>${f2(r.mu)} shots</b></div>${r.line != null ? `<div style='margin-top:4px;border-top:1px solid var(--border);padding-top:4px'><div class='row'><span>Model alone: over ${r.line}</span><b>${fairAmerican(r.pModelO)} (${pct1(r.pModelO)}%)</b></div>${fin(r.mk.fair) ? `<div class='row'><span>Books, no margin (${BOOKS[r.mk.ref]})</span><b>${fairAmerican(r.mk.fair)} (${pct1(r.mk.fair)}%)</b></div>` : ''}<div class='row'><span>Blended (${Math.round(SOGB.w * 100)}% model)</span><b>${fairAmerican(r.pO)} (${pct1(r.pO)}%)</b></div></div>` : ''}<div class='muted' style='margin-top:4px'>Range uses a negative binomial with spread ${f1(k)} (learned from real games).</div>`;
 async function renderSog() {
   const body = $('#sogBody');
   if (!GS.prior && !GS.priorLoading && !/^need|^err/.test(GS.priorMsg)) gsLoadPrior(false);
