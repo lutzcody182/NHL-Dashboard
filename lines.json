@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-20",
- "updated": "2026-10-21T02:00:18.228Z",
+ "updated": "2026-10-21T02:56:49.128Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1030,7 +1030,7 @@
         {
          "n": "Nick Paul",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Kirill Marchenko",
@@ -2089,12 +2089,12 @@
          "pp": ""
         },
         {
-         "n": "Justin Faulk",
+         "n": "Albert Johansson",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Andreas Englund",
+         "n": "Justin Faulk",
          "pos": "D",
          "pp": ""
         },
@@ -2104,7 +2104,7 @@
          "pp": ""
         },
         {
-         "n": "Albert Johansson",
+         "n": "Andreas Englund",
          "pos": "D",
          "pp": ""
         }
@@ -2552,14 +2552,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Dominic James",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Conor Geekie",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Jeffrey Viel",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -2587,7 +2587,7 @@
          "pp": ""
         },
         {
-         "n": "Max Crozier",
+         "n": "Emil Lilleberg",
          "pos": "D",
          "pp": ""
         },
