@@ -470,7 +470,8 @@ jobs:
             }
             const scale = X > 0 ? G / X : 1, abbrOf = {};
             for (const g of Object.values(C.games)) for (const [id, a] of Object.entries(g.tm || {})) abbrOf[id] = a;
-            const fmt = (ids, t) => [...ids.map(id => (nm[id] || [''])[0]), Math.round(t[0]), ...t.slice(1, 7), +(t[7] * scale).toFixed(2), +(t[8] * scale).toFixed(2), t[9]];
+            // players by NHL id (two teammates can share a name, like Vancouver's two Elias Petterssons)
+            const fmt = (ids, t) => [...ids.map(String), Math.round(t[0]), ...t.slice(1, 7), +(t[7] * scale).toFixed(2), +(t[8] * scale).toFixed(2), t[9]];
             const teams = {};
             for (const kind of ['tri', 'pr']) for (const [k, t] of Object.entries(T[kind])) {
               if (t[0] < 120) continue; // under 2 minutes together all season: noise
@@ -480,12 +481,12 @@ jobs:
             for (const [k, t] of Object.entries(T.pl)) {
               const [tm, id] = k.split('|'), a = abbrOf[tm] || tm, o = teams[a] || (teams[a] = { f: [], d: [], pl: {} }), n = nm[id] || ['', ''];
               if (last[id] && last[id].tm !== tm) continue; // traded: keep his current team only
-              o.pl[n[0]] = [n[1], Math.round(t[0]), ...t.slice(1, 7), +(t[7] * scale).toFixed(2), +(t[8] * scale).toFixed(2), t[9]];
+              o.pl[id] = [n[0], n[1], Math.round(t[0]), ...t.slice(1, 7), +(t[7] * scale).toFixed(2), +(t[8] * scale).toFixed(2), t[9]];
             }
             for (const o of Object.values(teams)) { o.f.sort((x, y) => y[3] - x[3]); o.d.sort((x, y) => y[2] - x[2]); o.f = o.f.slice(0, 20); o.d = o.d.slice(0, 12); }
             let P = {}; try { P = JSON.parse(fs.readFileSync('props.json', 'utf8')); } catch (e) {}
-            P.combos = { source: 'NHL shift charts + play-by-play, 5-on-5', season: code, updated: now.toISOString(), games: Object.keys(C.games).length, xgScale: +scale.toFixed(3),
-              cols: ['toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], plCols: ['pos', 'toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], teams };
+            P.combos = { v: 2, source: 'NHL shift charts + play-by-play, 5-on-5', season: code, updated: now.toISOString(), games: Object.keys(C.games).length, xgScale: +scale.toFixed(3),
+              cols: ['toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], plCols: ['n', 'pos', 'toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], teams };
             fs.writeFileSync('props.json', JSON.stringify(P));
             log(`Line combinations: ${fetched} new games (${Object.keys(C.games).length} this season), ${failed} failed requests${stopped ? ', stopped early to stay within time (continues next run)' : ''}. xG scale ${scale.toFixed(2)}.`);
             if (errs.length) log('  first errors: ' + errs.join(' · '));
