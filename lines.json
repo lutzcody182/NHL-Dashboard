@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-20",
- "updated": "2026-10-20T23:00:16.346Z",
+ "updated": "2026-10-21T02:00:18.228Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2051,6 +2051,11 @@
         {
          "n": "Michael Rasmussen",
          "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Carter Mazur",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -2058,11 +2063,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Nate Danielson",
-         "pos": "W",
-         "pp": "PP2"
-        },
         {
          "n": "Keegan Kolesar",
          "pos": "W",
@@ -2089,12 +2089,12 @@
          "pp": ""
         },
         {
-         "n": "William Wallinder",
+         "n": "Justin Faulk",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Justin Faulk",
+         "n": "Andreas Englund",
          "pos": "D",
          "pp": ""
         },
@@ -2212,12 +2212,12 @@
         {
          "n": "Ryker Evans",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Ty Nelson",
+         "n": "Brandon Montour",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ville Ottavainen",
