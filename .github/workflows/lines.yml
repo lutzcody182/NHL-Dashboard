@@ -126,7 +126,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Fetch sportsbook odds (DraftKings, FanDuel, Caesars, Fanatics, theScore Bet)
+      - name: Fetch sportsbook odds (DraftKings, FanDuel, Caesars, Fanatics, theScore Bet; goals, moneyline, shots on goal)
         continue-on-error: true
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
@@ -152,7 +152,7 @@ jobs:
             for (const e of soon) {
               try {
                 // all five books in one request: credits are charged per market, not per book (up to 10 books count as one region)
-                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&markets=player_goal_scorer_anytime,player_goal_scorer_first,h2h&bookmakers=draftkings,fanduel,williamhill_us,fanatics,espnbet&oddsFormat=american`);
+                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&markets=player_goal_scorer_anytime,player_goal_scorer_first,h2h,player_shots_on_goal&bookmakers=draftkings,fanduel,williamhill_us,fanatics,espnbet&oddsFormat=american`);
                 remaining = left ?? remaining;
                 const book = k => (data.bookmakers || []).find(b => b.key === k), mkt = (b, m) => b && (b.markets || []).find(x => x.key === m);
                 const nn = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); // keeps a "(2004)" birth-year tag, so two same-named players stay apart
@@ -163,11 +163,23 @@ jobs:
                   for (const [bk, f] of [['fanduel', 'fd'], ...XB]) for (const o of outs(book(bk), m)) { const k = nn(o.n), x = map.get(k) || { n: o.n, price: null }; x[f] = o.price; map.set(k, x); }
                   return [...map.values()]; };
                 const players = merge('player_goal_scorer_anytime'), first = merge('player_goal_scorer_first');
+                // shots on goal: per player, per book: [line, over price, under price] (each book's main line)
+                const sogMap = new Map(), imp = v => v < 0 ? -v / (-v + 100) : 100 / (v + 100);
+                for (const [bk, f] of [['draftkings', 'dk'], ['fanduel', 'fd'], ...XB]) {
+                  const mm = mkt(book(bk), 'player_shots_on_goal'); if (!mm) continue;
+                  const by = {}; for (const o of mm.outcomes || []) { const n = o.description; if (!n || !Number.isFinite(o.price) || !Number.isFinite(o.point)) continue; const side = /^over$/i.test(o.name) ? 'o' : /^under$/i.test(o.name) ? 'u' : null; if (!side) continue; const b = by[nn(n)] || (by[nn(n)] = { n, lines: {} }); const L = b.lines[o.point] || (b.lines[o.point] = {}); L[side] = o.price; }
+                  for (const [k, b] of Object.entries(by)) {
+                    // the main line: the one with both sides whose prices are closest to even
+                    const best = Object.entries(b.lines).filter(([, L]) => L.o != null && L.u != null).sort((x, y) => Math.abs(imp(x[1].o) - imp(x[1].u)) - Math.abs(imp(y[1].o) - imp(y[1].u)))[0]; if (!best) continue;
+                    const x = sogMap.get(k) || { n: b.n }; x[f] = [+best[0], best[1].o, best[1].u]; sogMap.set(k, x);
+                  }
+                }
+                const sog = [...sogMap.values()];
                 const h2h = b => { const mm = mkt(b, 'h2h'); if (!mm) return null; const f = nm => (mm.outcomes.find(o => o.name === nm) || {}).price; const h = f(e.home_team), a = f(e.away_team); return Number.isFinite(h) && Number.isFinite(a) ? { h, a } : null; };
                 const mk = mkt(book('draftkings'), 'player_goal_scorer_anytime') || mkt(book('fanduel'), 'player_goal_scorer_anytime');
-                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players, first, ml: { dk: h2h(book('draftkings')), fd: h2h(book('fanduel')), cz: h2h(book('williamhill_us')), fn: h2h(book('fanatics')), sc: h2h(book('espnbet')) } });
+                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players, first, sog, ml: { dk: h2h(book('draftkings')), fd: h2h(book('fanduel')), cz: h2h(book('williamhill_us')), fn: h2h(book('fanatics')), sc: h2h(book('espnbet')) } });
                 const c = (l, k) => l.filter(x => x[k] != null).length;
-                console.log(`${e.away_team} @ ${e.home_team}: anytime DK ${c(players, 'price')} / FD ${c(players, 'fd')} / CZ ${c(players, 'cz')} / FAN ${c(players, 'fn')} / SCR ${c(players, 'sc')}, first goal DK ${c(first, 'price')} / FD ${c(first, 'fd')} / CZ ${c(first, 'cz')} / FAN ${c(first, 'fn')} / SCR ${c(first, 'sc')}`);
+                console.log(`${e.away_team} @ ${e.home_team}: anytime DK ${c(players, 'price')} / FD ${c(players, 'fd')} / CZ ${c(players, 'cz')} / FAN ${c(players, 'fn')} / SCR ${c(players, 'sc')}, first goal DK ${c(first, 'price')} / FD ${c(first, 'fd')} / CZ ${c(first, 'cz')} / FAN ${c(first, 'fn')} / SCR ${c(first, 'sc')}, shots on goal DK ${c(sog, 'dk')} / FD ${c(sog, 'fd')} / CZ ${c(sog, 'cz')} / FAN ${c(sog, 'fn')} / SCR ${c(sog, 'sc')}`);
               } catch (err) { console.log(`::warning::${e.away_team} @ ${e.home_team}: ${err.message}`); }
             }
             const out = { source: 'DraftKings, FanDuel, Caesars, Fanatics and theScore Bet via The Odds API', updated: new Date().toISOString(), remaining, games };
@@ -527,7 +539,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB };`);
             return w.__t;
           }
 
@@ -554,7 +566,7 @@ jobs:
             fs.writeFileSync('.cache/games.json', JSON.stringify([...T.A.games.values()].filter(g => g && g.final)));
 
             const picks = readJSON('picks.json', { picks: [] });
-            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p]));
+            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p])), sByKey = new Map((picks.sog || []).map(p => [p.k, p]));
             // one-time fix: before Oct 18 2026 the forward Elias Pettersson was given the defenseman Elias Pettersson's prices (same name), so those picks were never real
             for (const M of [byKey, fByKey]) for (const [k, p] of M) if (p.pid === '4233566' && p.date <= '20261017') M.delete(k);
 
@@ -562,8 +574,8 @@ jobs:
             const today = ET(now);
             let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
             const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
-            let added = 0, updated = 0, gAdded = 0, dropped = 0;
-            T.gsBlendFit(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
+            let added = 0, updated = 0, gAdded = 0, dropped = 0, sAdded = 0;
+            T.gsBlendFit(picks); T.sogBlendFit(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
             // last season is the goal scorer model's starting point (counted at half weight)
             T.GS.prior = [...T.A.games.values()].filter(g => g && g.final && T.seasonOf(g.date) === T.S.curSeason - 1);
             const gs = T.A.filtered.length || T.GS.prior.length ? T.gsGetState() : null;
@@ -595,6 +607,19 @@ jobs:
               }
               if (gs) {
                 const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.best != null); // priced at any of the five books
+                // shots on goal: the over and the under for every player with a line
+                try {
+                  const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null, sKeep = new Set();
+                  for (const r of T.sogTonight(T.sogState(), e, allRows, PF).filter(x => x.line != null)) {
+                    for (const s of ['o', 'u']) {
+                      if (r[s + 'Best'] == null) continue;
+                      const x = s === 'o' ? r.mk.ov : r.mk.un, k = `s|${e.id}|${r.pid}|${s}`; sKeep.add(k);
+                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
+                      if (sByKey.has(k)) { if (sByKey.get(k).res == null) Object.assign(sByKey.get(k), rec); } else { sByKey.set(k, rec); sAdded++; }
+                    }
+                  }
+                  if (sKeep.size) for (const [k, p] of sByKey) if (p.gid === String(e.id) && p.res == null && !sKeep.has(k)) { sByKey.delete(k); dropped++; }
+                } catch (err) { log(`Game ${e.id}: shots on goal model error: ${err.message}`); }
                 // first goal scorer: every player with a DraftKings first goal price
                 if (fgFitV) {
                   try {
@@ -617,7 +642,7 @@ jobs:
                 { const keep = new Set(rows.map(r => `${e.id}|${r.pid}`)); for (const [k, p] of byKey) if (p.gid === String(e.id) && p.res == null && !keep.has(k)) { byKey.delete(k); dropped++; } }
               }
             }
-            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new. First goal prices: ${fAdded} new. Removed ${dropped} pending picks that lost their price.`);
+            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new. First goal prices: ${fAdded} new. Shots on goal: ${sAdded} new. Removed ${dropped} pending picks that lost their price.`);
 
             // 2) grade finished games
             let graded = 0;
@@ -657,13 +682,25 @@ jobs:
                 fGraded++;
               }
             }
-            log(`Graded ${graded} goal scorer picks, ${gGraded} game picks and ${fGraded} first goal prices.`);
+            // grade shots on goal picks from the official box score (a player who didn't play is void; landing exactly on the line is a push)
+            let sGraded = 0; const sOpen = [...sByKey.values()].filter(p => p.res == null && new Date(p.start) < new Date(now - 4 * 3600e3));
+            for (const gid of [...new Set(sOpen.map(p => p.gid))]) {
+              let g = null; try { g = await T.getGame(gid); } catch (e) { log(`Game ${gid}: ${e.message}`); }
+              if (!g || !g.final) continue;
+              for (const p of sOpen.filter(x => x.gid === gid)) {
+                const s = g.sk[p.pid];
+                if (!s || !(s.toi > 0)) { p.res = 'V'; p.shots = 0; } else { p.shots = s.sog || 0; p.res = p.shots === p.line ? 'PU' : (p.shots > p.line) === (p.side === 'o') ? 'W' : 'L'; }
+                { const px = p.best; p.profit = p.res === 'W' ? (px < 0 ? 100 : px) : p.res === 'L' ? -(px < 0 ? -px : 100) : 0; }
+                sGraded++;
+              }
+            }
+            log(`Graded ${graded} goal scorer picks, ${gGraded} game picks, ${fGraded} first goal prices and ${sGraded} shots on goal picks.`);
             // today's model test scores, for the accuracy-over-time charts (one snapshot per day)
             const hist = (picks.hist || []).filter(h => h.date !== today), snap = { date: today };
             if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
-            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
+            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
           }
@@ -866,7 +903,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB };`);
             return w.__t;
           }
 
@@ -893,7 +930,7 @@ jobs:
             fs.writeFileSync('.cache/games.json', JSON.stringify([...T.A.games.values()].filter(g => g && g.final)));
 
             const picks = readJSON('picks.json', { picks: [] });
-            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p]));
+            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p])), sByKey = new Map((picks.sog || []).map(p => [p.k, p]));
             // one-time fix: before Oct 18 2026 the forward Elias Pettersson was given the defenseman Elias Pettersson's prices (same name), so those picks were never real
             for (const M of [byKey, fByKey]) for (const [k, p] of M) if (p.pid === '4233566' && p.date <= '20261017') M.delete(k);
 
@@ -901,8 +938,8 @@ jobs:
             const today = ET(now);
             let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
             const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
-            let added = 0, updated = 0, gAdded = 0, dropped = 0;
-            T.gsBlendFit(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
+            let added = 0, updated = 0, gAdded = 0, dropped = 0, sAdded = 0;
+            T.gsBlendFit(picks); T.sogBlendFit(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
             // last season is the goal scorer model's starting point (counted at half weight)
             T.GS.prior = [...T.A.games.values()].filter(g => g && g.final && T.seasonOf(g.date) === T.S.curSeason - 1);
             const gs = T.A.filtered.length || T.GS.prior.length ? T.gsGetState() : null;
@@ -934,6 +971,19 @@ jobs:
               }
               if (gs) {
                 const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.best != null); // priced at any of the five books
+                // shots on goal: the over and the under for every player with a line
+                try {
+                  const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null, sKeep = new Set();
+                  for (const r of T.sogTonight(T.sogState(), e, allRows, PF).filter(x => x.line != null)) {
+                    for (const s of ['o', 'u']) {
+                      if (r[s + 'Best'] == null) continue;
+                      const x = s === 'o' ? r.mk.ov : r.mk.un, k = `s|${e.id}|${r.pid}|${s}`; sKeep.add(k);
+                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
+                      if (sByKey.has(k)) { if (sByKey.get(k).res == null) Object.assign(sByKey.get(k), rec); } else { sByKey.set(k, rec); sAdded++; }
+                    }
+                  }
+                  if (sKeep.size) for (const [k, p] of sByKey) if (p.gid === String(e.id) && p.res == null && !sKeep.has(k)) { sByKey.delete(k); dropped++; }
+                } catch (err) { log(`Game ${e.id}: shots on goal model error: ${err.message}`); }
                 // first goal scorer: every player with a DraftKings first goal price
                 if (fgFitV) {
                   try {
@@ -956,7 +1006,7 @@ jobs:
                 { const keep = new Set(rows.map(r => `${e.id}|${r.pid}`)); for (const [k, p] of byKey) if (p.gid === String(e.id) && p.res == null && !keep.has(k)) { byKey.delete(k); dropped++; } }
               }
             }
-            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new. First goal prices: ${fAdded} new. Removed ${dropped} pending picks that lost their price.`);
+            log(`Goal scorer picks saved: ${added} new, ${updated} refreshed. Game picks: ${gAdded} new. First goal prices: ${fAdded} new. Shots on goal: ${sAdded} new. Removed ${dropped} pending picks that lost their price.`);
 
             // 2) grade finished games
             let graded = 0;
@@ -996,13 +1046,25 @@ jobs:
                 fGraded++;
               }
             }
-            log(`Graded ${graded} goal scorer picks, ${gGraded} game picks and ${fGraded} first goal prices.`);
+            // grade shots on goal picks from the official box score (a player who didn't play is void; landing exactly on the line is a push)
+            let sGraded = 0; const sOpen = [...sByKey.values()].filter(p => p.res == null && new Date(p.start) < new Date(now - 4 * 3600e3));
+            for (const gid of [...new Set(sOpen.map(p => p.gid))]) {
+              let g = null; try { g = await T.getGame(gid); } catch (e) { log(`Game ${gid}: ${e.message}`); }
+              if (!g || !g.final) continue;
+              for (const p of sOpen.filter(x => x.gid === gid)) {
+                const s = g.sk[p.pid];
+                if (!s || !(s.toi > 0)) { p.res = 'V'; p.shots = 0; } else { p.shots = s.sog || 0; p.res = p.shots === p.line ? 'PU' : (p.shots > p.line) === (p.side === 'o') ? 'W' : 'L'; }
+                { const px = p.best; p.profit = p.res === 'W' ? (px < 0 ? 100 : px) : p.res === 'L' ? -(px < 0 ? -px : 100) : 0; }
+                sGraded++;
+              }
+            }
+            log(`Graded ${graded} goal scorer picks, ${gGraded} game picks, ${fGraded} first goal prices and ${sGraded} shots on goal picks.`);
             // today's model test scores, for the accuracy-over-time charts (one snapshot per day)
             const hist = (picks.hist || []).filter(h => h.date !== today), snap = { date: today };
             if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
-            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
+            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
           }
