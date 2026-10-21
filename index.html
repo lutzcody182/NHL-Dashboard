@@ -2666,7 +2666,7 @@ async function dobPrep(PF) {
   const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
   const teamOf = x => Object.keys(TEAMS).find(id => normName(x) === nm(id)) || Object.keys(TEAMS).find(id => mas(id) && normName(x).endsWith(mas(id)));
   const need = new Set();
-  for (const g of PF.games) if ([...(g.players || []), ...(g.first || [])].some(p => /\(\d{4}\)\s*$/.test(p.n || ''))) [g.home, g.away].forEach(x => { const id = teamOf(x); if (id && !DOBT[id]) need.add(id); });
+  for (const g of PF.games) if ([...(g.players || []), ...(g.first || []), ...(g.sog || [])].some(p => /\(\d{4}\)\s*$/.test(p.n || ''))) [g.home, g.away].forEach(x => { const id = teamOf(x); if (id && !DOBT[id]) need.add(id); });
   await Promise.all([...need].map(async id => { DOBT[id] = 1; try { const j = await getJSON(`${API}/teams/${id}/roster`); for (const grp of (j.athletes || [])) for (const a of (grp.items || [grp])) if (a.id && a.dateOfBirth) DOBY[String(a.id)] = +String(a.dateOfBirth).slice(0, 4); } catch (e) { DOBT[id] = 0; } }));
 }
 // your own lineups (when you have them before RotoGrinders), saved in this browser by game day and team; kept 3 days
@@ -5483,6 +5483,7 @@ function gsGetState() {
   const allG = [...prior.filter(g => !ids.has(g.id)), ...A.filtered];
   const { S, bt } = gsBuild(allG);
   S.priorN = prior.length; S.pr = prBuild(allG);
+  for (const p of Object.values(S.P)) NAMES_KNOWN.add(normName(p.n));
   GS.cache = { key, S, bt };
   return GS.cache;
 }
@@ -5751,13 +5752,15 @@ function dkPriceMap(PF, dateIso, hId, aId) {
   return m;
 }
 // a player's price: exact name first; a birth-year-tagged name only goes to the player born that year; otherwise first initial + last name if exactly one fits
+const NAMES_KNOWN = new Set(); // every skater name the models know (normalized), filled when the goal scorer state is built
 const dkLookup = (m, name, pid) => {
   if (!m) return null; const k = normName(name), y = pid ? DOBY[String(pid)] : null;
   if (y && m[k + '#' + y] != null) return m[k + '#' + y];
   if (m[k] != null) return m[k];
   const keys = Object.keys(m), tagged = new Set(keys.filter(x => x.includes('#')).map(x => x.split('#')[0]));
   const last = normName(String(name).split(/[\s\-]+/).slice(-1)[0]);
-  const cand = keys.filter(x => { const [b, tag] = x.split('#'); return b.endsWith(last) && b[0] === k[0] && (tag ? +tag === y : !tagged.has(b)); });
+  // a book's name that exactly matches a different real player (like "Elias Pettersson" when he is "Elias N. Pettersson") is that other player's, never a loose match
+  const cand = keys.filter(x => { const [b, tag] = x.split('#'); return b.endsWith(last) && b[0] === k[0] && (tag ? +tag === y : !tagged.has(b) && !(b !== k && NAMES_KNOWN.has(b))); });
   return cand.length === 1 ? m[cand[0]] : null;
 };
 const amImplied = o => o < 0 ? -o / (-o + 100) : 100 / (o + 100);
