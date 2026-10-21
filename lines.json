@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-21",
- "updated": "2026-10-21T18:00:18.869Z",
+ "updated": "2026-10-21T21:00:39.390Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -389,7 +389,7 @@
         {
          "n": "Jiri Kulich",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Josh Doan",
