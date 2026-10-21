@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-21",
- "updated": "2026-10-21T12:35:10.120Z",
+ "updated": "2026-10-21T17:00:19.156Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -138,14 +138,14 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Fabian Zetterlund",
+         "pos": "",
+         "pp": "PP2"
+        },
+        {
          "n": "Tim Stutzle",
          "pos": "",
          "pp": "PP1"
-        },
-        {
-         "n": "Warren Foegele",
-         "pos": "",
-         "pp": ""
         },
         {
          "n": "Claude Giroux",
@@ -168,9 +168,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Andre Burakovsky",
+         "n": "Warren Foegele",
          "pos": "",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -178,9 +178,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Nick Cousins",
+         "n": "Ridly Greig",
          "pos": "",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Michael Amadio",
@@ -198,19 +198,19 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ridly Greig",
+         "n": "Stephen Halliday",
+         "pos": "",
+         "pp": "PP1"
+        },
+        {
+         "n": "Nick Cousins",
          "pos": "",
          "pp": ""
         },
         {
-         "n": "Fabian Zetterlund",
+         "n": "Hayden Hodgson",
          "pos": "",
-         "pp": "PP2"
-        },
-        {
-         "n": "Stephen Halliday",
-         "pos": "",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       },
