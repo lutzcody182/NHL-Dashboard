@@ -4900,9 +4900,9 @@ function gmValueTable(pH, ml, aAbbr, hAbbr, label, fdml) {
   A_.tip = bookTip(A_.dkP, A_.fdP, sx(fdml, 'a')); H_.tip = bookTip(H_.dkP, H_.fdP, sx(fdml, 'h'));
   const best = [A_, H_].filter(x => x.verdict === 'bet' || x.verdict === 'lean').sort((a, b) => b.edge - a.edge)[0];
   const vCell = x => x.verdict === 'bet' ? '<b style="color:var(--good)">✓ Value bet</b>' : x.verdict === 'lean' ? '<span style="color:var(--good)">Lean (small edge)</span>' : x.price != null ? '<span class="muted">Pass</span>' : '<span class="muted">No line yet</span>';
-  const row = x => `<tr><td class="l"><b>${esc(x.abbr)}</b></td><td>${pct1(x.p)}%</td><td><b>${x.fair}</b></td><td${x.tip ? ` data-tip="${esc(x.tip)}"` : ''}>${x.price != null ? `${fmtML(x.price)} <span class="muted" style="font-size:11px">${BK[x.book]}</span>${x.tip ? `<div class="muted" style="font-size:11px">best of ${(x.tip.match(/class='row'/g) || []).length} books</div>` : ''}` : '–'}</td><td>${fin(x.be) ? pct1(x.be) + '%' : '–'}</td><td style="color:${fin(x.edge) ? (x.edge > 0 ? 'var(--good)' : 'var(--neg)') : 'inherit'}">${fin(x.edge) ? `${x.edge > 0 ? '+' : ''}${(x.edge * 100).toFixed(1)} pts` : '–'}</td><td>${fin(x.ev) ? moneyCell(x.ev) : '–'}</td><td class="l">${vCell(x)}</td></tr>`;
+  const row = x => `<tr><td class="l"><b>${esc(x.abbr)}</b></td><td>${pct1(x.p)}%</td><td><b>${x.fair}</b></td><td${x.tip ? ` data-tip="${esc(x.tip)}"` : ''}>${x.price != null ? `${fmtML(x.price)} <span class="muted" style="font-size:11px">${BK[x.book]}</span>${x.tip ? `<div class="muted" style="font-size:11px">best of ${(x.tip.match(/class='row'/g) || []).length} books</div>` : ''}` : '–'}</td><td>${fin(x.be) ? pct1(x.be) + '%' : '–'}</td><td style="color:${fin(x.edge) ? (x.edge > 0 ? 'var(--good)' : 'var(--neg)') : 'inherit'}">${fin(x.edge) ? `${x.edge > 0 ? '+' : ''}${(x.edge * 100).toFixed(1)} pts` : '–'}</td><td>${fin(x.ev) ? moneyCell(x.ev) : '–'}</td><td>${x.price != null ? unitsCell('ml', x.p, x.price) : '–'}</td><td class="l">${vCell(x)}</td></tr>`;
   const summary = !ml && !fdml ? 'No betting line posted yet, so only the fair odds are shown.' : best ? `<b>${best.verdict === 'bet' ? 'Value' : 'Small lean'} on ${esc(best.abbr)}</b> at ${fmtML(best.price)} (${BOOKS[best.book]}): ${label} gives them ${pct1(best.p)}%, the price needs ${pct1(best.be)}% to break even (${best.edge > 0 ? '+' : ''}${(best.edge * 100).toFixed(1)} pts). Fair price is ${best.fair}, so anything better than that is a value bet by the model.` : `<b>No bet.</b> Neither price beats ${label}'s fair odds: the sportsbook's margin eats any difference.`;
-  return `<p style="margin:8px 0;font-size:13.5px">${summary}</p><div class="twrap"><table><thead><tr><th class="l">Team</th><th data-gloss="The model's chance this team wins (including overtime and shootout).">Win chance</th><th data-gloss="The American odds that exactly match the model's win chance, with no sportsbook margin. If you can get a better price than this, the model sees value.">Fair line</th><th data-gloss="The posted moneyline from ESPN's sportsbook.">Market</th><th data-gloss="The win chance this price needs just to break even, including the sportsbook margin.">Break-even</th><th data-gloss="Model win chance minus break-even chance. 3+ points = value bet; 0–3 = small lean; negative = pass.">Edge</th><th data-gloss="Expected profit per bet using your sizes ($100 on plus odds; bet to win $100 on minus odds), if the model's chance is right.">Exp. profit</th><th class="l">Verdict</th></tr></thead><tbody>${row(A_)}${row(H_)}</tbody></table></div>`;
+  return `<p style="margin:8px 0;font-size:13.5px">${summary}</p><div class="twrap"><table><thead><tr><th class="l">Team</th><th data-gloss="The model's chance this team wins (including overtime and shootout).">Win chance</th><th data-gloss="The American odds that exactly match the model's win chance, with no sportsbook margin. If you can get a better price than this, the model sees value.">Fair line</th><th data-gloss="The posted moneyline from ESPN's sportsbook.">Market</th><th data-gloss="The win chance this price needs just to break even, including the sportsbook margin.">Break-even</th><th data-gloss="Model win chance minus break-even chance. 3+ points = value bet; 0–3 = small lean; negative = pass.">Edge</th><th data-gloss="Expected profit per bet using your sizes ($100 on plus odds; bet to win $100 on minus odds), if the model's chance is right.">Exp. profit</th><th data-gloss="Recommended bet size: quarter Kelly once the game model has proven itself, eighth Kelly until then. 1 unit = 1% of a 100-unit bankroll.">Units</th><th class="l">Verdict</th></tr></thead><tbody>${row(A_)}${row(H_)}</tbody></table></div>`;
 }
 
 // hover for one "Why" reason: what goes into it (each team's numbers), the factor's value, what one unit is worth, and the adjustment
@@ -5675,6 +5675,37 @@ function pxOdd(dk, fd, ox) {
   for (const [k, q] of c) if (q / med < .45 || q / med > 2.2) out.add(k);
   return out;
 }
+
+/* ============================== RECOMMENDED BET SIZE (units) ==============================
+   Kelly criterion: the share of a bankroll that grows it fastest for a given edge and price. Full Kelly is far too aggressive
+   for a model, so Ice Lab uses a fraction of it: quarter Kelly in markets whose pick log has proven itself (300+ graded
+   positive-edge picks with a profit), eighth Kelly everywhere else. 1 unit = 1% of a 100-unit bankroll. Sizes are rounded
+   to half units, 0.5 minimum and 2 maximum; shaky spots (players with few games) get half. */
+const UNITS = { proof: {} };
+const UNIT_MKT = { goal: 'Goal scorer', fg: 'First goal scorer', sog: 'Shots on goal', ml: 'Moneyline (game model)' };
+function unitsProof(PK) {
+  const roi = (list, px, won) => { let pr = 0, risk = 0, n = 0; for (const p of list) { const o = px(p); if (o == null || !isFinite(o)) continue; const rk = o < 0 ? -o : 100; risk += rk; n++; pr += won(p) ? (o < 0 ? 100 : o) : -rk; } return { n, roi: risk ? pr / risk : NaN }; };
+  const done = l => (l || []).filter(p => (p.res === 'W' || p.res === 'L') && fin(p.edge) && p.edge > 0);
+  const P = {
+    goal: roi(done(PK && PK.picks), p => p.best != null ? p.best : p.dk, p => p.res === 'W'),
+    fg: roi(done(PK && PK.first), p => p.best != null ? p.best : p.dk, p => p.res === 'W'),
+    sog: roi(done(PK && PK.sog), p => p.best, p => p.res === 'W'),
+    ml: roi(((PK && PK.games) || []).filter(p => p.hw != null && fin(p.edge) && p.edge > 0), p => p.side === 'h' ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA), p => (p.side === 'h') === p.hw) };
+  for (const v of Object.values(P)) v.proven = v.n >= 300 && v.roi > 0;
+  UNITS.proof = P; return P;
+}
+// units for one bet: chance p at American price `price` in market m; null when there's no edge worth a bet
+function unitsFor(m, p, price, opt = {}) {
+  if (!fin(p) || price == null || !isFinite(price)) return null;
+  const b = amDec(+price) - 1, kelly = (b * p - (1 - p)) / b; if (!(kelly > 0)) return null;
+  const pr = UNITS.proof[m] || { n: 0, roi: NaN, proven: false }, frac = pr.proven ? .25 : .125;
+  let raw = frac * kelly * 100; if (opt.shaky) raw *= .5;
+  if (raw < .25) return null;
+  const u = Math.min(2, Math.max(.5, Math.round(raw * 2) / 2));
+  return { u, raw, kelly, frac, proven: pr.proven, n: pr.n, roi: pr.roi, shaky: !!opt.shaky };
+}
+const unitsTip = (m, x) => `<b>${x.u} unit${x.u === 1 ? '' : 's'}</b><div class='row'><span>Sizing</span><b>${x.proven ? 'Quarter' : 'Eighth'} Kelly</b></div><div class='row'><span>${UNIT_MKT[m]} track record</span><b>${x.n.toLocaleString()} graded edges${fin(x.roi) ? `, ROI ${x.roi > 0 ? '+' : ''}${pct1(x.roi)}%` : ''}</b></div><div class='row'><span>Full Kelly would be</span><b>${(x.kelly * 100).toFixed(1)}% of bankroll</b></div>${x.shaky ? "<div class='row'><span>Few games of data</span><b>halved</b></div>" : ''}<div class='muted' style='margin-top:4px'>${x.proven ? 'This market&#39;s pick log is profitable over 300+ edges, so it gets quarter Kelly.' : 'Not proven yet (needs 300+ graded edges with a profit), so it gets the more cautious eighth Kelly.'} 1 unit = 1% of a 100-unit bankroll; capped at 2 units.</div>`;
+const unitsCell = (m, p, price, opt) => { const x = unitsFor(m, p, price, opt); return x ? `<b data-tip="${esc(unitsTip(m, x))}" style="color:var(--good)">${x.u}u</b>${opt && opt.side ? ` <span class="muted" style="font-size:11px">${opt.side}</span>` : ''}` : '<span class="muted">–</span>'; };
 const ODD_TAG = ' <span class="injb" data-tip="Way off the other books&#39; prices for this player, so it&#39;s probably a different player with the same name. Left out of the best price and edge.">⚠ ignored</span>';
 function bestPrice(dk, fd, ox) { const odd = pxOdd(dk, fd, ox); const c = [['dk', dk], ['fd', fd], ...XBK.map(k => [k, ox ? ox[k] : null])].filter(([k, v]) => v != null && isFinite(v) && !odd.has(k)); if (!c.length) return null; c.sort((a, b) => amDec(b[1]) - amDec(a[1])); return { price: +c[0][1], book: c[0][0] }; }
 // FanDuel anytime (or first goal) prices for one game, by player
@@ -5797,6 +5828,7 @@ async function renderScorers() {
     { k: 'ox', h: 'Other books', v: r => { const b = bestPrice(null, null, r.ox); return b ? b.price : null; }, f: (v, r) => { const b = bestPrice(null, null, r.ox); return !b ? '<span class="muted">–</span>' : `<span data-tip="${esc(bookTip(r.dk, r.fd, r.ox))}"><b>${fmtML(b.price)}</b> <span class="muted" style="font-size:11px">${BK[b.book]}</span>${XBK.includes(r.book) ? ' <span class="bestb" title="Best price">★</span>' : ''}</span>`; }, t: 'The best anytime goal scorer price at Caesars, Fanatics or theScore Bet (hover for each book). ★ = the best price of all five books.' },
     { k: 'bestImp', h: 'Implied (best)', v: r => r.bestImp, f: v => fin(v) ? pct1(v) + '%' : '–', t: 'The chance the better of the two prices implies. It includes the sportsbook\'s built-in margin, so it runs a little high.' },
     { k: 'edgeP', h: 'Edge vs. sportsbook', v: r => r.edgeP, f: (v, r) => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>${r.big ? ' <span data-tip="Unusually big edge. These are usually news the model doesn\'t know yet (a scratch, a line change, an injury). Double-check before betting.">⚠️</span>' : ''}` : '–', dir: 1, t: 'Ice Lab\'s chance minus DraftKings\' implied chance. Positive = Ice Lab thinks he\'s more likely to score than the price says.' },
+    { k: 'units', h: 'Units', v: r => { const x = unitsFor('goal', r.p, r.best, { shaky: r.lowN }); return x ? x.u : 0; }, f: (v, r) => unitsCell('goal', r.p, r.best, { shaky: r.lowN }), t: 'Recommended bet size: quarter Kelly once a market has proven itself, eighth Kelly until then (hover for details). 1 unit = 1% of a 100-unit bankroll.' },
     { k: 'ev', h: 'Exp. profit', v: r => r.ev, f: (v, r) => fin(v) ? `${moneyCell(v)} <span class="muted" style="font-size:11.5px">${r.roi > 0 ? '+' : ''}${pct1(r.roi)}%</span>` : '–', dir: 1, t: 'Expected profit per bet using your bet sizes ($100 on plus odds; bet to win $100 on minus odds), if Ice Lab\'s chance is right. The % is return on the amount risked.' },
     { k: 'shots', h: 'Proj. attempts', v: r => r.shots, f: f1, t: 'Projected unblocked shot attempts tonight.' },
     { k: 'edge', h: 'Tonight vs. his usual', v: r => r.edge, f: v => `<span style="color:${v > .03 ? 'var(--good)' : v < -.03 ? 'var(--neg)' : 'inherit'}">${v >= 0 ? '+' : ''}${pct1(v)}%</span>`, dir: 1, t: 'How tonight raises or lowers his expected goals compared with his usual night: tonight\'s minutes and role, power-play chances, team scoring environment, opponent defense, goalie, shot types, rebounds and rush. Hover his chance for the breakdown.' },
@@ -5862,7 +5894,7 @@ const PKF = { data: null, t: 0, strat: 'pos', all: false };
 async function getPicksFile() {
   if (PKF.data !== null && Date.now() - PKF.t < 5 * 60e3) return PKF.data;
   try { const r = await fetch('picks.json?t=' + Date.now(), { cache: 'no-store' }); PKF.data = r.ok ? await r.json() : false; } catch (e) { PKF.data = false; }
-  PKF.t = Date.now(); return PKF.data;
+  PKF.t = Date.now(); try { unitsProof(PKF.data); } catch (e) {} return PKF.data;
 }
 const pkRisk = o => o < 0 ? -o : 100, pkWin = o => o < 0 ? 100 : o;
 const pkPx = p => p.best != null ? p.best : p.dk;
@@ -7011,6 +7043,7 @@ async function renderFirstGoal() {
     { k: 'fox', h: 'Other books', v: r => { const b = bestPrice(null, null, r.fox); return b ? b.price : null; }, f: (v, r) => { const b = bestPrice(null, null, r.fox); return !b ? '<span class="muted">–</span>' : `<span data-tip="${esc(bookTip(r.fdk, r.ffd, r.fox))}"><b>${fmtML(b.price)}</b> <span class="muted" style="font-size:11px">${BK[b.book]}</span>${XBK.includes(r.fBook) ? ' <span class="bestb" title="Best price">★</span>' : ''}</span>`; }, t: 'The best first goal scorer price at Caesars, Fanatics or theScore Bet (hover for each book). ★ = the best price of all five books.' },
     { k: 'fImp', h: 'Implied (best)', v: r => r.fImp, f: (v, r) => fin(v) ? `${pct1(v)}%${fin(r.fFair) ? `<div class="muted" style="font-size:11px">${pct1(r.fFair)}% no margin</div>` : ''}` : '–', t: 'The chance DraftKings\' price implies, and underneath with its margin removed. First goal markets carry a big margin.' },
     { k: 'fEdge', h: 'Edge vs. sportsbook', v: r => r.fEdge, f: v => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>` : '–', t: 'Ice Lab\'s chance minus DraftKings\' implied chance.' },
+    { k: 'units', h: 'Units', v: r => { const x = unitsFor('fg', r.fp, r.fBest, { shaky: r.lowN }); return x ? x.u : 0; }, f: (v, r) => unitsCell('fg', r.fp, r.fBest, { shaky: r.lowN }), t: 'Recommended bet size (hover for details). Long first goal prices get small sizes automatically.' },
     { k: 'fEv', h: 'Exp. profit', v: r => r.fEv, f: (v, r) => fin(v) ? `${moneyCell(v)} <span class="muted" style="font-size:11.5px">${r.fRoi > 0 ? '+' : ''}${pct1(r.fRoi)}%</span>` : '–', t: 'Expected profit per bet with your bet sizes ($100 on plus odds).' },
     { k: 'bet', h: '', l: 1, v: () => 0, f: (v, r) => `<button class="btn sm mybet" data-fgbet="${r.idx}" title="Log a first goal scorer bet you placed on this player">＋ Bet</button>` }];
   const best = rows.filter(r => fin(r.fEv) && r.fEv > 0 && !r.lowN).sort((a, b) => b.fRoi - a.fRoi).slice(0, 6);
@@ -7285,6 +7318,7 @@ async function renderSog() {
     { k: 'pU', h: 'Under fair odds', v: r => r.pU, f: v => fin(v) ? `<b>${fairAmerican(v)}</b><div class="muted" style="font-size:11px">${pct1(v)}%</div>` : '–', t: 'Ice Lab\'s fair price for the under, with no sportsbook margin (its chance underneath).' },
     { k: 'uBest', h: 'Under price', v: r => r.uBest, f: sideCell('u'), t: 'Best under price across your five books (hover for each).' },
     { k: 'uEdge', h: 'Under edge', v: r => r.uEdge, f: edgeCell, t: 'Under chance minus the under price\'s implied chance.' },
+    { k: 'units', h: 'Units', v: r => { const s = r.side, x = s ? unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) : null; return x ? x.u : 0; }, f: (v, r) => r.side ? unitsCell('sog', r.side === 'o' ? r.pO : r.pU, r[r.side + 'Best'], { shaky: r.lowN, side: r.side === 'o' ? 'Over' : 'Under' }) : '<span class="muted">–</span>', t: 'Recommended bet size on the better side (hover for details).' },
     { k: 'bet', h: '', l: 1, v: () => 0, f: (v, r) => r.line == null ? '' : `<button class="btn sm mybet" data-sogbet="${r.idx}" data-side="o">＋ Over</button> <button class="btn sm mybet" data-sogbet="${r.idx}" data-side="u">＋ Under</button>` }];
   const best = priced.flatMap(r => ['o', 'u'].filter(s => fin(r[s + 'Ev']) && r[s + 'Ev'] > 0 && !r.lowN).map(s => ({ r, s, roi: r[s + 'Roi'], edge: r[s + 'Edge'] }))).sort((a, b) => b.roi - a.roi).slice(0, 8);
   body.innerHTML = `<div class="bar"><h2 class="grow">Shots on goal</h2>
