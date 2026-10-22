@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-22",
- "updated": "2026-10-22T14:00:21.986Z",
+ "updated": "2026-10-22T16:00:21.547Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -132,7 +132,7 @@
     },
     {
      "team": "New Jersey Devils",
-     "goalie": "Jake Allen",
+     "goalie": "Nico Daws",
      "groups": [
       {
        "label": "Line 1",
@@ -630,7 +630,7 @@
     },
     {
      "team": "Boston Bruins",
-     "goalie": "Jeremy Swayman",
+     "goalie": "Michael DiPietro",
      "groups": [
       {
        "label": "Line 1",
@@ -885,34 +885,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Egor Chinakhov",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Sidney Crosby",
          "pos": "C",
          "pp": "PP1"
         },
         {
-         "n": "Bryan Rust",
+         "n": "Rickard Rakell",
          "pos": "W",
          "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Ville Koivunen",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Evgeni Malkin",
-         "pos": "W",
-         "pp": "PP2"
         },
         {
          "n": "Tommy Novak",
@@ -922,11 +902,31 @@
        ]
       },
       {
-       "label": "Line 3",
+       "label": "Line 2",
        "players": [
         {
          "n": "Hendrix Lapierre",
          "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Ville Koivunen",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Evgeni Malkin",
+         "pos": "W",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Egor Chinakhov",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -935,9 +935,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Rickard Rakell",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Blake Lizotte",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -950,8 +950,8 @@
          "pp": ""
         },
         {
-         "n": "Blake Lizotte",
-         "pos": "C",
+         "n": "Elmer Soderblom",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -1141,7 +1141,7 @@
         {
          "n": "Jack Roslovic",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Auston Matthews",
@@ -1156,7 +1156,7 @@
         {
          "n": "Nick Paul",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Kirill Marchenko",
@@ -1377,7 +1377,7 @@
     },
     {
      "team": "New York Islanders",
-     "goalie": "Ilya Sorokin",
+     "goalie": "Semyon Varlamov",
      "groups": [
       {
        "label": "Line 1",
