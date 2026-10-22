@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-22",
- "updated": "2026-10-22T19:00:28.380Z",
+ "updated": "2026-10-22T21:00:19.664Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -814,7 +814,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Sandis Vilmanis",
+         "n": "Cole Reinhardt",
          "pos": "W",
          "pp": ""
         }
@@ -864,12 +864,12 @@
          "pp": ""
         },
         {
-         "n": "Dmitry Kulikov",
+         "n": "Uvis Balinskis",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Radko Gudas",
+         "n": "Dmitry Kulikov",
          "pos": "D",
          "pp": ""
         }
@@ -2567,17 +2567,17 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Nate Danielson",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Keegan Kolesar",
          "pos": "W",
          "pp": ""
         },
         {
          "n": "J.T. Compher",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Sheldon Dries",
          "pos": "C",
          "pp": ""
         }
