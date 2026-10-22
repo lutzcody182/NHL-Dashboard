@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-22",
- "updated": "2026-10-22T16:00:21.547Z",
+ "updated": "2026-10-22T16:33:06.841Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -11,7 +11,7 @@
    "teams": [
     {
      "team": "Anaheim Ducks",
-     "goalie": "Lukas Dostal",
+     "goalie": "Ville Husso",
      "groups": [
       {
        "label": "Line 1",
@@ -2190,6 +2190,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Isaac Howard",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Trent Frederic",
          "pos": "C",
          "pp": "PP2"
@@ -2198,11 +2203,6 @@
          "n": "Colton Dach",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Filip Hallander",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
