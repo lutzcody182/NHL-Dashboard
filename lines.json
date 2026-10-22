@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-22",
- "updated": "2026-10-22T18:00:18.284Z",
+ "updated": "2026-10-22T19:00:28.380Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -22,14 +22,14 @@
          "pp": "PP1"
         },
         {
+         "n": "Alex Killorn",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Leo Carlsson",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Nikita Nesterenko",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -47,7 +47,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Jeff Malott",
+         "n": "Nikita Nesterenko",
          "pos": "W",
          "pp": ""
         }
@@ -57,14 +57,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Alex Killorn",
+         "n": "Frank Vatrano",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Sam Colangelo",
+         "n": "Jeff Malott",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Roger McQueen",
@@ -77,7 +77,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Frank Vatrano",
+         "n": "Sam Colangelo",
          "pos": "W",
          "pp": "PP2"
         },
@@ -107,12 +107,12 @@
          "pp": ""
         },
         {
-         "n": "Pavel Mintyukov",
+         "n": "Nick Jensen",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Tristan Luneau",
+         "n": "Pavel Mintyukov",
          "pos": "D",
          "pp": "PP2"
         },
@@ -1505,7 +1505,7 @@
    "teams": [
     {
      "team": "Vegas Golden Knights",
-     "goalie": "Carter Hart",
+     "goalie": "Adin Hill",
      "groups": [
       {
        "label": "Line 1",
@@ -2343,6 +2343,16 @@
          "pp": "PP1"
         },
         {
+         "n": "Jared Spurgeon",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
+         "n": "Olli Maatta",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Jonas Brodin",
          "pos": "D",
          "pp": ""
@@ -2354,16 +2364,6 @@
         },
         {
          "n": "Daemon Hunt",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "David Spacek",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Matt Kiersted",
          "pos": "D",
          "pp": ""
         }
@@ -2379,11 +2379,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Mikael Backlund",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Matt Coronato",
          "pos": "W",
          "pp": "PP1"
@@ -2392,6 +2387,11 @@
          "n": "Joel Farabee",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Ben Jones",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
