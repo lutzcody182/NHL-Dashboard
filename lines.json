@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-22",
- "updated": "2026-10-22T16:33:06.841Z",
+ "updated": "2026-10-22T18:00:18.284Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -758,7 +758,7 @@
    "teams": [
     {
      "team": "Florida Panthers",
-     "goalie": "",
+     "goalie": "Cooper Black",
      "groups": [
       {
        "label": "Line 1",
@@ -2373,7 +2373,7 @@
     },
     {
      "team": "Calgary Flames",
-     "goalie": "Dustin Wolf",
+     "goalie": "Devin Cooley",
      "groups": [
       {
        "label": "Line 1",
