@@ -1205,6 +1205,7 @@ async function loadScores(silent) {
   try { sb = await getJSON(`${API}/scoreboard?dates=${d}`); }
   catch (e) { body.innerHTML = `<div class="empty">Couldn't reach ESPN (${esc(e.message)}). Try again in a moment.</div>`; return; }
   if (d !== S.date) return;
+  await getLinesFile(); // starting goalies come from RotoGrinders' lines file
   const evs = sb.events || []; evs.forEach(x => SBEV[String(x.id)] = x); loadHealth(evs);
   if (!evs.length) { body.innerHTML = `<div class="empty">No NHL games on this date.</div>`; clearInterval(S.timer); return; }
   let anyLive = false;
@@ -1275,11 +1276,11 @@ async function gcDecRender(g) {
 }
 // "Starting goalies" picker: choose the starter yourself when ESPN is wrong or hasn't updated
 function govPicker(g, ev) {
-  const espn = probableGoaliesESPN(ev), m = govLoad();
+  const m = govLoad();
   const side = (t, abbr) => {
-    const cur = m[ev.id + '|' + t], e = espn[t], list = teamGoalies(t);
+    const cur = m[ev.id + '|' + t], rg = RGL.data ? linesFor(RGL.data, { date: ev.date }, t, true) : null, espn = probableGoaliesESPN(ev)[t], e = rg && rg.goalie ? { id: espn && normName(espn.n) === normName(rg.goalie) ? espn.id : goalieIdByName(rg.goalie, t), n: rg.goalie, st: espn && normName(espn.n) === normName(rg.goalie) && /confirm/i.test(espn.st || '') ? 'Confirmed' : 'projected' } : null, list = teamGoalies(t);
     if (e && e.n && !list.some(x => normName(x.n) === normName(e.n))) list.unshift({ id: e.id, n: e.n });
-    const opts = [`<option value="">Automatic${e ? ` (ESPN: ${esc(e.n)}, ${esc(/confirm/i.test(e.st || '') ? 'confirmed' : (e.st || 'probable').toLowerCase())})` : ' (not announced)'}</option>`, ...list.map(x => `<option value="${esc(x.id || '')}|${esc(x.n)}" ${cur && normName(cur.n) === normName(x.n) ? 'selected' : ''}>${esc(x.n)}${x.gp ? ` · ${x.gp} GP` : ''}</option>`)];
+    const opts = [`<option value="">Automatic${e ? ` (RotoGrinders: ${esc(e.n)}, ${/confirm/i.test(e.st || '') ? 'confirmed' : 'projected'})` : ' (not posted yet: usual starter)'}</option>`, ...list.map(x => `<option value="${esc(x.id || '')}|${esc(x.n)}" ${cur && normName(cur.n) === normName(x.n) ? 'selected' : ''}>${esc(x.n)}${x.gp ? ` · ${x.gp} GP` : ''}</option>`)];
     return `<label class="govl"><span>${logoImg(t, 16)}${esc(abbr)}</span><select data-gov="${esc(ev.id)}|${esc(t)}">${opts.join('')}</select>${cur ? '<span class="badge ok">✓ Set by you</span>' : ''}</label>`;
   };
   return `<div class="card" style="padding:10px 14px;margin-top:8px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px"><b style="font-size:13px">🥅 Starting goalies</b>${side(g.away.id, g.away.abbr)}${side(g.home.id, g.home.abbr)}</div>
@@ -1295,7 +1296,7 @@ document.addEventListener('change', e => {
 });
 // pre-game: when the starting goalies, referees or injury list change (e.g. a goalie gets confirmed), re-run every prediction on the card
 async function gcPreRefresh(id, first) {
-  let s = null, ev = null;
+  let s = null, ev = null; await getLinesFile();
   try { s = await getJSON(`${API}/summary?event=${id}`); const sb = await getJSON(`${API}/scoreboard?dates=${localDay(GC.g.date)}`); ev = (sb.events || []).find(e => String(e.id) === String(id)) || null; } catch (e) { return; }
   if (GC.id !== id || !s) return;
   if (ev && ev.competitions[0].status.type.state !== 'pre') { openGame(id, true); return; } // puck dropped
@@ -2634,10 +2635,28 @@ function teamGoalies(tid) {
   }
   return Object.values(seen).sort((a, b) => b.last.localeCompare(a.last)).slice(0, 6);
 }
+// starting goalies come from ONE place: RotoGrinders (the same page as the lines). Your own pick always wins. ESPN is never used
+// for who starts; it's only read to mark RotoGrinders' goalie "Confirmed" when ESPN has confirmed that same goalie.
+const GID = { map: null, n: -1 };
+function goalieIdByName(name, tid) {
+  const games = [...(GS.prior || []), ...A.games.values()].filter(g => g && g.gk);
+  if (!GID.map || GID.n !== games.length) { const m = {}; for (const g of games) for (const [id, q] of Object.entries(g.gk)) { const k = normName(q.n); if (!m[k] || g.date > m[k].d) m[k] = { id, tm: q.tm, d: g.date }; } GID.map = m; GID.n = games.length; }
+  const k = normName(name), hit = GID.map[k]; if (hit) return hit.id;
+  const last = normName(String(name).split(/\s+/).slice(-1)[0]), c = Object.entries(GID.map).filter(([n, v]) => n.endsWith(last) && n[0] === k[0] && (!tid || v.tm === tid));
+  return c.length === 1 ? c[0][1].id : null;
+}
+const setLinesData = LF => { RGL.data = LF || false; RGL.t = Date.now(); }; // the GitHub job hands its lines.json in directly
 function probableGoalies(ev) {
-  const out = probableGoaliesESPN(ev); if (!ev) return out;
-  const m = govLoad();
-  for (const c of ev.competitions[0].competitors) { const t = String(c.team.id), o = m[ev.id + '|' + t]; if (o) out[t] = { id: o.id, n: o.n, st: 'Confirmed (set by you)', manual: true }; }
+  const out = {}; if (!ev) return out;
+  const espn = probableGoaliesESPN(ev), LF = RGL.data || null, m = govLoad();
+  for (const c of ev.competitions[0].competitors) {
+    const t = String(c.team.id), rg = LF ? linesFor(LF, { date: ev.date }, t, true) : null;
+    if (rg && rg.goalie) {
+      const e = espn[t], same = e && normName(e.n) === normName(rg.goalie);
+      out[t] = { id: same ? e.id : goalieIdByName(rg.goalie, t), n: rg.goalie, st: same && /confirm/i.test(e.st || '') ? 'Confirmed' : 'Projected by RotoGrinders', src: 'rg' };
+    }
+    const o = m[ev.id + '|' + t]; if (o) out[t] = { id: o.id, n: o.n, st: 'Confirmed (set by you)', manual: true };
+  }
   return out;
 }
 function probableGoaliesESPN(ev) {
@@ -2649,7 +2668,7 @@ function probableGoaliesESPN(ev) {
   }
   return out;
 }
-const gBadge = st => /set by you/i.test(st || '') ? `<span class="badge ok">✓ Set by you</span>` : /confirm/i.test(st) ? `<span class="badge ok">✓ Confirmed</span>` : `<span class="badge maybe">◔ ${esc(st || 'Probable')}</span>`;
+const gBadge = st => /set by you/i.test(st || '') ? `<span class="badge ok">✓ Set by you</span>` : /confirm/i.test(st) ? `<span class="badge ok">✓ Confirmed</span>` : `<span class="badge maybe">◔ ${esc(/rotogrinders/i.test(st || '') ? 'Projected' : st || 'Projected')}</span>`;
 const RGL = { data: null, t: 0 };
 async function getLinesFile() {
   if (RGL.data !== null && Date.now() - RGL.t < 5 * 60e3) return RGL.data;
@@ -2917,7 +2936,7 @@ function luOpenEditor(t) {
   };
 }
 // goalie line on the Today cards: ✓ when confirmed (by ESPN or by you), else (probable)
-const glTxt = g => g && g.n ? `G: ${esc(String(g.n).split(' ').slice(-1)[0])} ${/confirm/i.test(g.st || '') ? (g.manual ? '✓ <span class="muted" style="font-size:11px">(set by you)</span>' : '✓') : '(probable)'}` : '';
+const glTxt = g => g && g.n ? `G: ${esc(String(g.n).split(' ').slice(-1)[0])} ${/confirm/i.test(g.st || '') ? (g.manual ? '✓ <span class="muted" style="font-size:11px">(set by you)</span>' : '✓') : '(projected)'}` : '';
 function readyRefresh() { if (GC.gkRender) GC.gkRender(); document.querySelectorAll('[data-gl]').forEach(el => { const [gid, tid] = el.dataset.gl.split('|'), ev = SBEV[gid]; if (ev) el.innerHTML = glTxt(probableGoalies(ev)[tid]); }); const evs = Object.values(SBEV).filter(e => localDay(e.date) === S.date); if (evs.length && $('[data-gw]')) readyMark(evs, S.date); }
 function luRefresh() { readyRefresh(); if (!GC.g || !GC.raw) return; renderLineups(GC.raw, GC.g); renderGameModelPreview(GC.raw, GC.g); renderScorerPreview(GC.g); gcDecRender(GC.g); }
 document.addEventListener('click', e => {
@@ -2946,6 +2965,7 @@ function poissonSim(lh, la, N = 20000) {
   return { h: hw / N, a: 1 - hw / N, sh: sh / N, sa: sa / N };
 }
 async function renderMatchup(s, g) {
+  await getLinesFile(); if (g.state === 'pre' && !SBEV[String(g.id)]) { try { const sb = await getJSON(`${API}/scoreboard?dates=${localDay(g.date)}`); (sb.events || []).forEach(x => SBEV[String(x.id)] = x); } catch (e) {} } // starting goalies (RotoGrinders) need the game's scoreboard entry
   const box = () => $('#mupBody'); const gid = g.id;
   const H = g.home.id, W = g.away.id;
   let groups = []; try { groups = await getStandings(S.curSeason); } catch (e) {}
@@ -3025,14 +3045,18 @@ async function renderMatchup(s, g) {
   const gCol = t => {
     const mine = govLoad()[g.id + '|' + t];
     if (mine) return `<div class="gk-row"><img class="hs" src="${headshot(mine.id)}" alt="" onerror="this.style.visibility='hidden'"><div>${plink(mine.id, mine.n)} ${gBadge('Confirmed (set by you)')}</div></div>`;
-    const ath = gName(t).athletes || [];
+    if (g.state === 'pre') { // before the game: RotoGrinders' starter (the one source used everywhere)
+      const pg = probableGoalies(SBEV[String(g.id)])[t];
+      if (pg) return `<div class="gk-row"><img class="hs" src="${pg.id ? headshot(pg.id) : ''}" alt="" onerror="this.style.visibility='hidden'"><div>${plink(pg.id, pg.n)}<div style="font-size:12px">${gBadge(pg.st)}</div></div></div>`;
+    }
+    const ath = g.state === 'pre' ? [] : gName(t).athletes || [];
     if (ath.length) return ath.map(x => { const a = x.athlete || x; return `<div class="gk-row"><img class="hs" src="${headshot(a.id)}" alt="" onerror="this.style.visibility='hidden'"><div>${plink(a.id, a.displayName || a.fullName || 'Goalie')}<div style="font-size:12px">${gBadge((x.status && x.status.name) || 'Probable')}</div></div></div>`; }).join('');
     const fb = GC.gkFallback && (t === H ? GC.gkFallback.h : GC.gkFallback.a);
     if (fb && fb.length) return fb.map(x => `<div class="gk-row"><img class="hs" src="${headshot(x.id)}" alt="" onerror="this.style.visibility='hidden'"><div>${plink(x.id, x.n)}<div class="muted" style="font-size:12px">${x.gp} GP · ${f3(div(x.sv, x.sa))} SV% · ${sgn1(x.xga - x.gan)} GSAx</div></div></div>`).join('');
     return '<p class="muted" style="margin:0">Not announced yet.</p>';
   };
-  const anyProb = (gs.homeTeam && (gs.homeTeam.athletes || []).length) || (gs.awayTeam && (gs.awayTeam.athletes || []).length);
-  const gkInner = () => { const any = anyProb || [W, H].some(t => govLoad()[g.id + '|' + t]); return `<div class="card-h"><h3>Goalie matchup</h3><p>${any ? 'Starters from ESPN, or the goalie you set' : 'Starters not announced · showing each team\'s top goalies in the loaded range'}</p></div><div class="grid g2"><div>${gCol(W)}</div><div>${gCol(H)}</div></div>`; };
+  const anyProb = g.state === 'pre' ? [W, H].some(t => probableGoalies(SBEV[String(g.id)])[t]) : (gs.homeTeam && (gs.homeTeam.athletes || []).length) || (gs.awayTeam && (gs.awayTeam.athletes || []).length);
+  const gkInner = () => { const any = anyProb || [W, H].some(t => govLoad()[g.id + '|' + t]); return `<div class="card-h"><h3>Goalie matchup</h3><p>${any ? (g.state === 'pre' ? 'Starters from RotoGrinders, or the goalie you set' : 'Goalies who played') : 'Starters not posted yet · showing each team\'s top goalies in the loaded range'}</p></div><div class="grid g2"><div>${gCol(W)}</div><div>${gCol(H)}</div></div>`; };
   GC.gkRender = () => { const el = $('#gkCard'); if (el && String(GC.id) === String(g.id)) el.innerHTML = gkInner(); };
   const goalies = `<div class="card" id="gkCard">${gkInner()}</div>`;
   // --- injuries
@@ -4945,6 +4969,7 @@ function gmWhyTip(x, r, g) {
   return `<b>${esc(x.l)}</b>${inp.length ? `<div style='margin-top:4px'>${inp.join('')}</div>` : ''}<div style='margin-top:6px;border-top:1px solid var(--border);padding-top:4px'>${fin(x.x) ? row('Size tonight', `${Math.abs(x.x) === 1 && feat && !/^per /.test(feat[3]) ? 'Yes' : `${f2(Math.abs(x.x))} unit${Math.abs(x.x) === 1 ? '' : 's'}`}${feat ? ` <span class='muted'>(${esc(feat[3])})</span>` : ''}`) : ''}${fin(unit) ? row('One unit is worth', `about ${unit.toFixed(1)}% win chance`) : ''}${row('Adjustment', `${Math.abs(x.d * 100).toFixed(1)}% toward ${toward}`)}</div>`;
 }
 async function renderGameModelPreview(s, g) {
+  await getLinesFile(); // starting goalies come from RotoGrinders' lines file
   const box = () => $('#gmBody'); if (!box()) return;
   await gmLoadSaved();
   if (!GM.model) { box().innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3></div><p class="muted" style="margin:0">Train the game model in <b>League → Model Lab</b> to see its prediction here, with a breakdown of every factor.</p></div>`; return; }
@@ -7468,21 +7493,19 @@ async function loadHealth(evs) {
     const last = n => normName(String(n || '').split(' ').slice(-1)[0]), ab = id => TM(id).abbr || '';
     let both = 0; const soonUnconf = [], clash = [], wrong = [];
     for (const e of pre) {
-      const c = e.competitions[0], pg = probableGoalies(e), pgE = probableGoaliesESPN(e), sides = c.competitors.map(x => ({ id: String(x.team.id), ha: x.homeAway }));
+      const c = e.competitions[0], pg = probableGoalies(e), sides = c.competitors.map(x => ({ id: String(x.team.id), ha: x.homeAway }));
       const conf = sides.filter(x => pg[x.id] && /confirm/i.test(pg[x.id].st || ''));
       if (conf.length === 2) both++;
       const mins = (new Date(e.date) - now) / 60000;
       if (conf.length < 2 && mins <= 60) soonUnconf.push(`${sides.find(x => x.ha === 'away') ? ab(sides.find(x => x.ha === 'away').id) : ''} @ ${sides.find(x => x.ha === 'home') ? ab(sides.find(x => x.ha === 'home').id) : ''} (${Math.max(0, Math.round(mins))} min)`);
       for (const x of sides) {
-        const espn = pgE[x.id], rg = LF ? linesFor(LF, { date: e.date }, x.id, true) : null;
-        if (espn && rg && rg.goalie && last(espn.n) !== last(rg.goalie)) clash.push(`${ab(x.id)}: ESPN ${espn.n.split(' ').slice(-1)[0]}, RotoGrinders ${rg.goalie.split(' ').slice(-1)[0]}`);
+        const espn = pg[x.id];
         const pk = PK && (PK.games || []).find(g => g.gid === String(e.id));
         const saved = pk && (x.ha === 'home' ? pk.gH : pk.gA);
-        if (espn && /confirm/i.test(espn.st || '') && saved && last(saved) !== last(espn.n)) wrong.push(`${ab(x.id)}: pick saved with ${String(saved).split(' ').slice(-1)[0]}, ${espn.n.split(' ').slice(-1)[0]} confirmed`);
+        if (espn && saved && last(saved) !== last(espn.n)) wrong.push(`${ab(x.id)}: pick saved with ${String(saved).split(' ').slice(-1)[0]}, ${espn.n.split(' ').slice(-1)[0]} starting`);
       }
     }
     add('gconf', 'Starting goalies confirmed', soonUnconf.length ? 'warn' : 'ok', `${both} of ${pre.length} upcoming game${pre.length === 1 ? ' has' : 's have'} both starters confirmed${soonUnconf.length ? ` · still unconfirmed close to puck drop: ${soonUnconf.join(', ')}` : ''}`, soonUnconf.length ? 'Teams usually confirm in the morning skate or about an hour before the game. Treat edges in these games with caution until the starter is known.' : '');
-    add('gclash', 'ESPN vs. RotoGrinders goalies', clash.length ? 'warn' : 'ok', clash.length ? clash.join(' · ') : 'both sources agree (or one hasn\'t posted yet)', clash.length ? 'One source is behind. The models use ESPN\'s starter, so check team news before betting these games.' : '');
     add('gpick', 'Picks match the confirmed goalie', wrong.length ? 'bad' : 'ok', wrong.length ? wrong.join(' · ') : 'every saved game pick used the goalie who\'s starting', wrong.length ? 'The saved pick and its edge assume the wrong goalie. The repick job should re-save it on its next run (every 30 minutes); if this stays red after that, open the latest "lines" run in GitHub Actions and check the repick job. The game card itself always uses the latest goalie.' : '');
   }
   const sh = PF && PF.shifts;
