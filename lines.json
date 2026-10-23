@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-22",
- "updated": "2026-10-23T00:00:18.676Z",
+ "updated": "2026-10-23T01:00:19.122Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1523,7 +1523,7 @@
         {
          "n": "William Karlsson",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Brett Howden",
@@ -1578,7 +1578,7 @@
         {
          "n": "Shea Theodore",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Brayden McNabb",
@@ -2270,7 +2270,7 @@
         {
          "n": "Bobby Brink",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Blake Coleman",
@@ -2283,11 +2283,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Maxim Shabanov",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Yakov Trenin",
          "pos": "W",
          "pp": ""
@@ -2296,6 +2291,11 @@
          "n": "Danila Yurov",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Rieger Lorenz",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -2340,7 +2340,7 @@
         {
          "n": "Jonas Brodin",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Zach Bogosian",
