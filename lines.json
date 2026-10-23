@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-22",
- "updated": "2026-10-22T22:49:48.222Z",
+ "updated": "2026-10-23T00:00:18.676Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -62,9 +62,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Jeff Malott",
+         "n": "Nikita Klepov",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Roger McQueen",
@@ -79,7 +79,7 @@
         {
          "n": "Sam Colangelo",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Tim Washe",
@@ -112,7 +112,7 @@
          "pp": ""
         },
         {
-         "n": "Pavel Mintyukov",
+         "n": "Tristan Luneau",
          "pos": "D",
          "pp": "PP2"
         },
@@ -925,11 +925,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Egor Chinakhov",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Andrei Kuzmenko",
          "pos": "W",
          "pp": "PP2"
@@ -957,7 +952,7 @@
         {
          "n": "Nick Robertson",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1234,14 +1229,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Marshall Rifai",
+         "n": "Nick Blankenburg",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Oliver Ekman-Larsson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -1264,7 +1259,7 @@
         {
          "n": "Alex Laferriere",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Adrian Kempe",
@@ -1282,33 +1277,13 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Quinton Byfield",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "Trevor Moore",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Mats Zuccarello",
          "pos": "W",
          "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Joel Armia",
-         "pos": "W",
-         "pp": ""
         },
         {
-         "n": "Scott Laughton",
-         "pos": "C",
+         "n": "Andre Lee",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -1319,17 +1294,32 @@
        ]
       },
       {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Trevor Moore",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Joel Armia",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Scott Laughton",
+         "pos": "C",
+         "pp": ""
+        }
+       ]
+      },
+      {
        "label": "Line 4",
        "players": [
         {
          "n": "Corey Perry",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Andre Lee",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Samuel Helenius",
@@ -1533,11 +1523,6 @@
         {
          "n": "William Karlsson",
          "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Mitch Marner",
-         "pos": "W",
          "pp": "PP1"
         },
         {
@@ -2192,12 +2177,12 @@
         {
          "n": "Isaac Howard",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Trent Frederic",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Colton Dach",
