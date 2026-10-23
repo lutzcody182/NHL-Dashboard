@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-22",
- "updated": "2026-10-23T01:00:19.122Z",
+ "updated": "2026-10-23T02:00:17.205Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -59,7 +59,7 @@
         {
          "n": "Frank Vatrano",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Nikita Klepov",
@@ -79,7 +79,7 @@
         {
          "n": "Sam Colangelo",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Tim Washe",
@@ -562,12 +562,12 @@
         {
          "n": "Nils Hoglander",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ross Colton",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -952,7 +952,7 @@
         {
          "n": "Nick Robertson",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -1136,7 +1136,7 @@
         {
          "n": "Jack Roslovic",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Auston Matthews",
@@ -1151,7 +1151,7 @@
         {
          "n": "Nick Paul",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Kirill Marchenko",
@@ -1231,12 +1231,12 @@
         {
          "n": "Nick Blankenburg",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Oliver Ekman-Larsson",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -1299,12 +1299,12 @@
         {
          "n": "Trevor Moore",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Joel Armia",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Scott Laughton",
@@ -2059,11 +2059,6 @@
          "pp": ""
         },
         {
-         "n": "Felix Unger Sorum",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Nicolas Deslauriers",
          "pos": "W",
          "pp": ""
@@ -2426,12 +2421,12 @@
         {
          "n": "Brennan Othmann",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Adam Klapka",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jonathan Castagna",
@@ -2542,8 +2537,8 @@
          "pp": "PP2"
         },
         {
-         "n": "Carter Mazur",
-         "pos": "W",
+         "n": "J.T. Compher",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -2562,8 +2557,8 @@
          "pp": ""
         },
         {
-         "n": "J.T. Compher",
-         "pos": "C",
+         "n": "Carter Mazur",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -2597,7 +2592,7 @@
          "pp": ""
         },
         {
-         "n": "Andreas Englund",
+         "n": "William Wallinder",
          "pos": "D",
          "pp": ""
         }
@@ -2607,7 +2602,7 @@
     },
     {
      "team": "Vancouver Canucks",
-     "goalie": "Leevi Merilainen",
+     "goalie": "Kevin Lankinen",
      "groups": [
       {
        "label": "Line 1",
@@ -2640,7 +2635,7 @@
         {
          "n": "Paul Cotter",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Brock Boeser",
@@ -2673,17 +2668,17 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Liam Ohgren",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Max Sasson",
          "pos": "C",
          "pp": ""
         },
         {
          "n": "Brendan Gallagher",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Arshdeep Bains",
          "pos": "W",
          "pp": ""
         }
@@ -2856,7 +2851,7 @@
     },
     {
      "team": "Seattle Kraken",
-     "goalie": "Joey Daccord",
+     "goalie": "Philipp Grubauer",
      "groups": [
       {
        "label": "Line 1",
