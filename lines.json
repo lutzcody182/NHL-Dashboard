@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-23",
- "updated": "2026-10-23T12:53:45.475Z",
+ "updated": "2026-10-23T18:00:19.237Z",
  "games": [
   {
    "time": "8:00 PM ET",
@@ -11,7 +11,7 @@
    "teams": [
     {
      "team": "Montreal Canadiens",
-     "goalie": "Jakub Dobes",
+     "goalie": "Jacob Fowler",
      "groups": [
       {
        "label": "Line 1",
@@ -77,13 +77,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Florian Xhekaj",
+         "n": "Kirby Dach",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Kirby Dach",
-         "pos": "W",
+         "n": "Owen Beck",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -107,9 +107,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Kaiden Guhle",
+         "n": "Mike Matheson",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Alexandre Carrier",
@@ -122,9 +122,9 @@
          "pp": ""
         },
         {
-         "n": "Adam Engstrom",
+         "n": "Kaiden Guhle",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
