@@ -4505,6 +4505,7 @@ const GM_FEATS = [
 // two ways to model rest; training keeps whichever predicts held-out games better:
 //   v1 = per-day rest difference + back-to-back flags · v2 = back-to-back flags + long-layoff flags (no per-day term)
 const GM_REST_OFF = { v1: ['hlay', 'alay'], v2: ['rest'] };
+const GM_SLIM = ['rest', 'goalie', 'lineup', 'posthockey', 'special', 'form']; // the slim game model's factor groups
 const gmRestMask = (m, v) => m.map((x, i) => x && !GM_REST_OFF[v].includes(GM_FEATS[i][0]));
 // two ways to model "tonight's lineup vs. usual": v1 = Ice Lab and Post Hockey versions as separate factors · v2 = one combined factor
 const GM_LU_OFF = { v1: ['luv'], v2: ['lineup', 'phline'] };
@@ -4740,7 +4741,7 @@ function gmBuild(games, opt = {}, sadj = null, noGS = false) {
     f.x.push(...(noGS ? [0, 0] : gmPHTeamFeat(g.home.id, g.away.id, g.date)));
     f.x.push(...gmLayoff(S, g.home.id, g.away.id, g.date));
     f.x.push(gmLuv(f.x));
-    if (f.ready) rows.push({ x: f.x, y: g.home.score > g.away.score ? 1 : 0, mk: devig(g.ml), id: g.id, date: g.date });
+    if (f.ready) rows.push({ x: f.x, y: g.home.score > g.away.score ? 1 : 0, mk: devig(g.ml), ml: g.ml ? { h: +g.ml.h, a: +g.ml.a } : null, id: g.id, date: g.date });
     gmUpdate(S, g); if (GSs) gsState([g], GSs);
     if (!noGS) { S.nm = S.nm || {}; S.pos = S.pos || {}; for (const [id, p] of Object.entries(g.sk || {})) { S.nm[id] = p.n; S.pos[id] = p.pos; } }
     if (!noGS) { for (const r of prGameRows(g, 1)) prRowsAcc.push({ ...r, w0: r.w, season: seasonOf(g.date) }); prGames.push(g); for (const [t, tid] of [[gmTeam(S, g.home.id), g.home.id], [gmTeam(S, g.away.id), g.away.id]]) { t.lus = t.lus || []; t.lus.push(gmLineup(g, tid)); if (t.lus.length > 10) t.lus.shift(); } }
@@ -4782,30 +4783,35 @@ function gmTrain(games) {
   for (const v of ['v1', 'v2']) { let ll = 0, n = 0; for (const c of [.55, .7, .85]) { const a = Math.floor(train.length * c), b = Math.min(train.length, a + Math.floor(train.length * .15)); if (b - a < 30) continue; const W = gmFit(train.slice(0, a), gmLuMask(gmRestMask(gmMask(allGroups), restV), v)), sc = gmScore(train.slice(a, b), r => gmProb(W, r.x)); ll += sc.ll * (b - a); n += b - a; } luCmp[v] = n ? ll / n : Infinity; }
   const luV = luCmp.v2 <= luCmp.v1 + .0002 ? 'v2' : 'v1'; // ties go to the single combined factor
   const vm = m => gmLuMask(gmRestMask(m, restV), luV);
+  // full model or the slim one (team ratings + rest, starting goalie, lineup ratings, Post Hockey, special teams, form)?
+  // Judged on rolling chunks of the training games only; ties go to the slim one (fewer factors hold up better on new games)
+  const slimCmp = {};
+  for (const v of ['full', 'slim']) { let ll = 0, n = 0; for (const c of [.55, .7, .85]) { const a = Math.floor(train.length * c), b = Math.min(train.length, a + Math.floor(train.length * .15)); if (b - a < 30) continue; const W = gmFit(train.slice(0, a), vm(gmMask(v === 'slim' ? GM_SLIM : allGroups)), 50), sc = gmScore(train.slice(a, b), r => gmProb(W, r.x)); ll += sc.ll * (b - a); n += b - a; } slimCmp[v] = n ? ll / n : Infinity; }
+  const slimV = slimCmp.slim <= slimCmp.full + .0002 ? 'slim' : 'full', useGroups = slimV === 'slim' ? GM_SLIM : allGroups;
   // old model = ratings + home ice only
-  const Wbase = gmFit(train, gmMask([])), Wall = gmFit(train, vm(gmMask(allGroups)));
+  const Wbase = gmFit(train, gmMask([])), Wall = gmFit(train, vm(gmMask(useGroups)));
   const sBase = gmScore(test, r => gmProb(Wbase, r.x)), sAll = gmScore(test, r => gmProb(Wall, r.x));
   // ablation: drop one group at a time from the full model
   const abl = {};
   // ...and it has to help in both the older and newer half of the test games, not just overall (guards against luck)
   const half = Math.floor(test.length / 2), tA = test.slice(0, half), tB = test.slice(half), ablA = {}, ablB = {};
-  for (const grp of allGroups) { const W = gmFit(train, vm(gmMask(allGroups.filter(x => x !== grp)))), pf = r => gmProb(W, r.x), pa = r => gmProb(Wall, r.x); abl[grp] = gmScore(test, pf).ll - sAll.ll; ablA[grp] = gmScore(tA, pf).ll - gmScore(tA, pa).ll; ablB[grp] = gmScore(tB, pf).ll - gmScore(tB, pa).ll; }
+  for (const grp of useGroups) { const W = gmFit(train, vm(gmMask(useGroups.filter(x => x !== grp)))), pf = r => gmProb(W, r.x), pa = r => gmProb(Wall, r.x); abl[grp] = gmScore(test, pf).ll - sAll.ll; ablA[grp] = gmScore(tA, pf).ll - gmScore(tA, pa).ll; ablB[grp] = gmScore(tB, pf).ll - gmScore(tB, pa).ll; }
   // factors with an obvious direction must also point the right way (e.g. a better style fit can't hurt), so a lucky test split can't sneak in nonsense
   const GM_SIGN = { gmatch: ['gmatch', 1], ot: ['ot', 1], style: ['style', 1], goalie: ['goalie', 1], move: ['move', 1], lineup: ['lineup', 1], luv: ['luv', 1], posthockey: ['phteam', 1], phteams: ['pht5', 1] };
   const signOK = grp => { const s = GM_SIGN[grp]; if (!s) return true; const i = GM_FEATS.findIndex(f => f[0] === s[0]); return !(Wall[i] * s[1] < 0); };
   // EVERY factor stays in. How hard weak factors get shrunk toward zero (lambda) is chosen by rolling validation inside the
   // training games; factors that point the wrong way (e.g. a better goalie "hurting") are switched off.
   const lams = [3, 8, 20, 50, 120], cuts = [.55, .7, .85];
-  const fullMask = vm(gmMask(allGroups)), signMask = W => fullMask.map((m, i) => { if (!m) return false; const s = Object.values(GM_SIGN).find(x => GM_FEATS.findIndex(f => f[0] === x[0]) === i); return !(s && W[i] * s[1] < 0); });
+  const fullMask = vm(gmMask(useGroups)), signMask = W => fullMask.map((m, i) => { if (!m) return false; const s = Object.values(GM_SIGN).find(x => GM_FEATS.findIndex(f => f[0] === x[0]) === i); return !(s && W[i] * s[1] < 0); });
   const fitSigned = (rs, lam) => { const W0 = gmFit(rs, fullMask, lam); return gmFit(rs, signMask(W0), lam); };
   const cv = lams.map(lam => { let ll = 0, n = 0; for (const c of cuts) { const a = Math.floor(train.length * c), b = Math.min(train.length, a + Math.floor(train.length * .15)); if (b - a < 30) continue; const W = fitSigned(train.slice(0, a), lam), s = gmScore(train.slice(a, b), r => gmProb(W, r.x)); ll += s.ll * (b - a); n += b - a; } return { lam, ll: n ? ll / n : Infinity }; });
   const lam = cv.slice().sort((x, y) => x.ll - y.ll)[0].lam;
   const Wkeep = fitSigned(train, lam), sKeep = gmScore(test, r => gmProb(Wkeep, r.x));
   // "used" = one unit of it moves a game by at least 0.4 points of win chance (smaller weights still count, they're just minor)
   const effOf = (W, i) => Math.abs((sigm(W[i]) - .5) * 100);
-  const keep = allGroups.filter(grp => GM_FEATS.some(([, , g], i) => g === grp && effOf(Wkeep, i) >= .4));
+  const keep = useGroups.filter(grp => GM_FEATS.some(([, , g], i) => g === grp && effOf(Wkeep, i) >= .4));
   // test impact with the chosen shrinkage: remove one group, refit, and see how much worse the unseen games get
-  const ablR = {}; for (const grp of allGroups) { const m = signMask(Wkeep).map((x, i) => x && GM_FEATS[i][2] !== grp); const Wg = gmFit(train, m, lam); ablR[grp] = gmScore(test, r => gmProb(Wg, r.x)).ll - sKeep.ll; }
+  const ablR = {}; for (const grp of useGroups) { const m = signMask(Wkeep).map((x, i) => x && GM_FEATS[i][2] !== grp); const Wg = gmFit(train, m, lam); ablR[grp] = gmScore(test, r => gmProb(Wg, r.x)).ll - sKeep.ll; }
   // market comparison + blend (games with lines only)
   const mTest = test.filter(r => fin(r.mk)), mTrain = train.filter(r => fin(r.mk));
   let market = null, blend = null, Wb = null;
@@ -4822,7 +4828,11 @@ function gmTrain(games) {
   // final weights: kept inputs, refit on every game
   const W = fitSigned(rows, lam), Wfull = W;
   const seasons = new Set(games.map(g => { const d = new Date(g.date); return d.getMonth() >= 7 ? d.getFullYear() + 1 : d.getFullYear(); }));
-  return { W, Wfull, Wb, keep, abl: ablR, restV, restCmp, luV, luCmp, lam, cv, ridge: true, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, GS, PR: PR ? { O: PR.O, D: PR.D, sh: PR.sh, mu: PR.mu } : null, tune: { best, dflt, grid, sadj }, t: Date.now() };
+  const btRows = test.filter(r => fin(r.mk)), btLL = (rs, f) => rs.reduce((t, r) => { const q = clamp(f(r), 1e-4, 1 - 1e-4); return t - (r.y ? Math.log(q) : Math.log(1 - q)); }, 0) / (rs.length || 1);
+  const btH = Math.floor(btRows.length / 2), pM = r => gmProb(Wkeep, r.x);
+  const btSim = thr => { let n = 0, w = 0, pr = 0, risk = 0; for (const r of btRows) { if (!r.ml) continue; const p = pM(r); for (const [s, q, o] of [['h', p, r.ml.h], ['a', 1 - p, r.ml.a]]) { if (!isFinite(o)) continue; if (q - amImplied(o) < thr) continue; const won = s === 'h' ? r.y === 1 : r.y === 0, rk = o < 0 ? -o : 100; n++; risk += rk; if (won) { w++; pr += o < 0 ? 100 : o; } else pr -= rk; } } return { thr, n, w, roi: risk ? pr / risk : NaN }; };
+  const bt = btRows.length >= 50 ? { n: btRows.length, from: btRows[0].date, to: btRows[btRows.length - 1].date, model: btLL(btRows, pM), market: btLL(btRows, r => r.mk), halves: [btRows.slice(0, btH), btRows.slice(btH)].map(h => ({ n: h.length, model: btLL(h, pM), market: btLL(h, r => r.mk) })), sim: [0, .02, .03, .05].map(btSim) } : null;
+  return { W, Wfull, Wb, keep, abl: ablR, restV, restCmp, luV, luCmp, slimV, slimCmp, bt, lam, cv, ridge: true, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, GS, PR: PR ? { O: PR.O, D: PR.D, sh: PR.sh, mu: PR.mu } : null, tune: { best, dflt, grid, sadj }, t: Date.now() };
 }
 // predict an upcoming game, with a factor-by-factor breakdown
 function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
@@ -4859,7 +4869,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
   return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, ctx: { hId, aId, dateIso, gH, gA, ml, dH, dA, phf, pht, mH, mA }, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
-async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.luV && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
+async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.luV && m.slimV && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
 async function gmCollect(onProg) {
   const seasons = [S.curSeason - 2, S.curSeason - 1, S.curSeason], today = todayStr(), ids = [];
   for (const y of seasons) {
@@ -4887,7 +4897,7 @@ async function gmRun(force) {
 const gmPct = v => fin(v) ? (v * 100).toFixed(1) + '%' : '–';
 async function renderGameModelCard() {
   const box = $('#gmSec'); if (!box) return;
-  await gmLoadSaved();
+  await gmLoadSaved(); await getPicksFile();
   const M = GM.model;
   if (GM.loading) { box.innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><p>Training…</p></div><div class="prog"><div class="lbl" id="gmProg">${esc(GM.prog || 'Starting…')}</div><div class="track"><div class="fill" id="gmFill"></div></div></div><p class="muted" style="font-size:12px;margin:8px 0 0">The first run downloads last season and this season (about 2,700 games), which can take several minutes. You can switch tabs; it keeps going. Later runs only fetch new games.</p></div>`; return; }
   if (!M) {
@@ -4927,9 +4937,29 @@ async function renderGameModelCard() {
     <p class="muted" style="font-size:12px;margin:-4px 0 8px">${M.ridge ? `Every factor is in the model. It learns how much each one matters from ${M.nTrain.toLocaleString()} games and shrinks factors with weak evidence toward zero (shrinkage strength picked by testing on held-out games: ${M.lam}). Factors that point the wrong way, like a better goalie "hurting", are switched off. ` : ''}Effect = change in win chance for one unit of each factor, starting from an even game. "Test impact" = how much worse predictions got with that group removed (×1,000 log loss); positive means it helps. Player-level inputs: starting goalie, shooters vs. goalie, injuries, lineup strength (Ice Lab and Post Hockey player ratings), and the team ratings themselves, which are built from every player's shots.</p>
     ${M.restV ? `<p style="margin:0 0 8px;font-size:12.5px"><b>Rest:</b> ${M.restV === 'v2' ? 'using back-to-backs + long layoffs (no per-day rest term)' : 'using the per-day rest difference + back-to-backs'}, because it predicted held-out training games better (log loss ×1,000: per-day ${fin(M.restCmp.v1) ? (M.restCmp.v1 * 1000).toFixed(1) : '–'} vs. back-to-back ${fin(M.restCmp.v2) ? (M.restCmp.v2 * 1000).toFixed(1) : '–'}; lower is better, ties go to back-to-back).</p>` : ''}
     ${M.luV ? `<p style="margin:0 0 8px;font-size:12.5px"><b>Lineup vs. usual:</b> ${M.luV === 'v2' ? 'one combined factor (Ice Lab and Post Hockey ratings averaged)' : 'Ice Lab and Post Hockey versions as separate factors'}, because it predicted held-out training games better (log loss ×1,000: separate ${fin(M.luCmp.v1) ? (M.luCmp.v1 * 1000).toFixed(1) : '–'} vs. combined ${fin(M.luCmp.v2) ? (M.luCmp.v2 * 1000).toFixed(1) : '–'}). The usual lineup starts fresh each season, and tonight's Post Hockey factors use last season's ratings, the same as the games it learned from.</p>` : ''}
+    ${M.slimV ? `<p style="margin:0 0 8px;font-size:12.5px"><b>Factors:</b> ${M.slimV === 'slim' ? 'the slim model (team ratings + rest, starting goalie, lineup ratings, Post Hockey, special teams, recent form)' : 'the full model (every factor)'}, because it predicted held-out training games better (log loss ×1,000: full ${fin(M.slimCmp.full) ? (M.slimCmp.full * 1000).toFixed(1) : '–'} vs. slim ${fin(M.slimCmp.slim) ? (M.slimCmp.slim * 1000).toFixed(1) : '–'}; ties go to slim).</p>` : ''}
+    ${gmBacktestCard(M)}
     <div class="twrap"><table><thead><tr><th class="l">Factor</th><th class="l">Unit</th><th>Effect</th><th data-gloss="Increase in test log loss (×1,000) when this group of factors is removed. Positive = the factor makes predictions better.">Test impact</th><th>Status</th></tr></thead><tbody>${inputs}</tbody></table></div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">${grpRows}. Every factor is built only from what was known before each game (walk-forward), and ratings carry over from last season pulled halfway back toward average. Starting goalies use whoever started; for upcoming games the confirmed or probable starter is used when ESPN lists one.</p></div>`;
   $('#gmRe').onclick = () => { gmRun(true); renderGameModelCard(); };
+}
+// Model Lab: does the game model beat the closing line on games it never trained on? + saved picks' closing line value
+function gmBacktestCard(M) {
+  const b = M && M.bt; const PK = PKF.data || null;
+  const clv = ((PK && PK.games) || []).filter(p => p.side && p.mlCloseH != null && p.mlCloseA != null).map(p => { const px = p.side === 'h' ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA), cl = p.side === 'h' ? p.mlCloseH : p.mlCloseA; return fin(px) && fin(cl) ? amImplied(cl) - amImplied(px) : null; }).filter(v => v != null);
+  const clvAvg = clv.length ? clv.reduce((a, v) => a + v, 0) / clv.length : NaN, clvBeat = clv.filter(v => v > 0).length;
+  if (!b && !clv.length) return '';
+  const win = (m, k) => fin(m) && fin(k) ? (m < k ? '<b style="color:var(--good)">model</b>' : '<b style="color:var(--neg)">closing line</b>') : '–';
+  const ll = v => fin(v) ? (v * 1000).toFixed(1) : '–';
+  const sim = b ? b.sim.filter(x => x.n).map(x => `<tr><td class="l">${x.thr ? `${(x.thr * 100).toFixed(0)}+ pts` : 'any edge'}</td><td>${x.n}</td><td>${x.w}-${x.n - x.w}</td><td>${fin(x.roi) ? `<b style="color:${x.roi > 0 ? 'var(--good)' : 'var(--neg)'}">${x.roi > 0 ? '+' : ''}${pct1(x.roi)}%</b>` : '–'}</td></tr>`).join('') : '';
+  return `<div style="margin:10px 0 12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px"><h4 class="cmp-sec" style="margin-top:0">Does it beat the closing line?</h4>
+    ${b ? `<p style="margin:0 0 8px;font-size:12.5px">On the ${b.n} held-out games with a closing line (${new Date(b.from).toLocaleDateString([], { month: 'short', year: 'numeric' })} to ${new Date(b.to).toLocaleDateString([], { month: 'short', day: 'numeric' })}), which the model never trained on. Log loss ×1,000, lower is better.</p>
+    <div class="twrap"><table><thead><tr><th class="l">Games</th><th>Model</th><th>Closing line</th><th class="l">Better</th></tr></thead><tbody>
+      <tr><td class="l">All ${b.n}</td><td>${ll(b.model)}</td><td>${ll(b.market)}</td><td class="l">${win(b.model, b.market)}</td></tr>
+      ${b.halves.map((h, i) => `<tr><td class="l">${i ? 'Newer' : 'Older'} half (${h.n})</td><td>${ll(h.model)}</td><td>${ll(h.market)}</td><td class="l">${win(h.model, h.market)}</td></tr>`).join('')}</tbody></table></div>
+    ${sim ? `<p style="margin:10px 0 4px;font-size:12.5px"><b>Betting it at the closing price</b> (your sizes, sportsbook margin included):</p><div class="twrap"><table><thead><tr><th class="l">Bet when edge is</th><th>Bets</th><th>Record</th><th>ROI</th></tr></thead><tbody>${sim}</tbody></table></div>` : ''}` : ''}
+    ${clv.length ? `<p style="margin:10px 0 0;font-size:12.5px"><b>Your saved game picks vs. the close:</b> beat the closing line in ${clvBeat} of ${clv.length} (${pct1(clvBeat / clv.length)}%), by ${clvAvg >= 0 ? '+' : '−'}${Math.abs(clvAvg * 100).toFixed(1)} pts of win chance on average. Beating the close is the quickest honest sign of a real edge, long before wins and losses settle down.</p>` : ''}
+    <p class="muted" style="margin:6px 0 0;font-size:11.5px">A few hundred games still carry a lot of luck (±6–7% ROI), so watch whether this holds as the season goes on. It refreshes every retrain.</p></div>`;
 }
 // preview card for an upcoming game
 // fair moneyline + value check for both sides of a game, from a model win chance (home) and the posted moneylines
