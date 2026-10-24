@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-24",
- "updated": "2026-10-24T13:44:10.718Z",
+ "updated": "2026-10-24T15:00:19.319Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -218,9 +218,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Oliver Bonk",
+         "n": "Rasmus Ristolainen",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Travis Sanheim",
@@ -243,9 +243,9 @@
          "pp": ""
         },
         {
-         "n": "Hunter McDonald",
+         "n": "Oliver Bonk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -630,7 +630,7 @@
     },
     {
      "team": "Pittsburgh Penguins",
-     "goalie": "Arturs Silovs",
+     "goalie": "Sergei Murashov",
      "groups": [
       {
        "label": "Line 1",
@@ -1123,7 +1123,7 @@
     },
     {
      "team": "Columbus Blue Jackets",
-     "goalie": "Jet Greaves",
+     "goalie": "Cam Talbot",
      "groups": [
       {
        "label": "Line 1",
@@ -1189,12 +1189,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Danton Heinen",
+         "n": "Ryan Lomberg",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Ryan Lomberg",
+         "n": "Dmitri Voronkov",
          "pos": "W",
          "pp": ""
         },
@@ -1219,7 +1219,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Carson Soucy",
+         "n": "Jake Christiansen",
          "pos": "D",
          "pp": ""
         },
@@ -1229,12 +1229,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Emil Andrae",
+         "n": "Erik Gudbranson",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Jake Christiansen",
+         "n": "Carson Soucy",
          "pos": "D",
          "pp": ""
         }
@@ -1367,7 +1367,7 @@
     },
     {
      "team": "Ottawa Senators",
-     "goalie": "Samuel Ersson",
+     "goalie": "Jonas Johansson",
      "groups": [
       {
        "label": "Line 1",
@@ -1415,7 +1415,7 @@
         {
          "n": "Ridly Greig",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Michael Amadio",
@@ -1443,9 +1443,9 @@
          "pp": ""
         },
         {
-         "n": "Hayden Hodgson",
+         "n": "Andre Burakovsky",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
