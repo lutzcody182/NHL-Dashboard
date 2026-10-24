@@ -559,7 +559,7 @@ jobs:
             try {
               const all = preload ? [...T.A.games.values()].filter(g => g && g.final) : await T.gmCollect(() => {});
               const M = T.gmTrain(all);
-              if (M.error) log('Game model: ' + M.error); else { T.GM.model = M; gmOK = true; log(`Game model trained on ${M.nRows} games · test accuracy ${(M.sKeep.acc * 100).toFixed(1)}% · rest: ${M.restV === 'v2' ? 'back-to-backs + long layoffs' : 'per-day difference'} · lineup vs. usual: ${M.luV === 'v2' ? 'one combined factor' : 'two separate factors'}`); }
+              if (M.error) log('Game model: ' + M.error); else { T.GM.model = M; gmOK = true; log(`Game model trained on ${M.nRows} games · test accuracy ${(M.sKeep.acc * 100).toFixed(1)}% · rest: ${M.restV === 'v2' ? 'back-to-backs + long layoffs' : 'per-day difference'} · lineup vs. usual: ${M.luV === 'v2' ? 'one combined factor' : 'two separate factors'} · factors: ${M.slimV === 'slim' ? 'slim model' : 'full model'}${M.bt ? ` · vs. closing line on ${M.bt.n} held-out games: model ${(M.bt.model * 1000).toFixed(1)}, close ${(M.bt.market * 1000).toFixed(1)}` : ''}`); }
             } catch (e) { log('Game model error: ' + (e.stack || e.message)); }
             fs.mkdirSync('.cache', { recursive: true });
             fs.writeFileSync('.cache/games.json', JSON.stringify([...T.A.games.values()].filter(g => g && g.final)));
@@ -923,7 +923,7 @@ jobs:
             try {
               const all = preload ? [...T.A.games.values()].filter(g => g && g.final) : await T.gmCollect(() => {});
               const M = T.gmTrain(all);
-              if (M.error) log('Game model: ' + M.error); else { T.GM.model = M; gmOK = true; log(`Game model trained on ${M.nRows} games · test accuracy ${(M.sKeep.acc * 100).toFixed(1)}% · rest: ${M.restV === 'v2' ? 'back-to-backs + long layoffs' : 'per-day difference'} · lineup vs. usual: ${M.luV === 'v2' ? 'one combined factor' : 'two separate factors'}`); }
+              if (M.error) log('Game model: ' + M.error); else { T.GM.model = M; gmOK = true; log(`Game model trained on ${M.nRows} games · test accuracy ${(M.sKeep.acc * 100).toFixed(1)}% · rest: ${M.restV === 'v2' ? 'back-to-backs + long layoffs' : 'per-day difference'} · lineup vs. usual: ${M.luV === 'v2' ? 'one combined factor' : 'two separate factors'} · factors: ${M.slimV === 'slim' ? 'slim model' : 'full model'}${M.bt ? ` · vs. closing line on ${M.bt.n} held-out games: model ${(M.bt.model * 1000).toFixed(1)}, close ${(M.bt.market * 1000).toFixed(1)}` : ''}`); }
             } catch (e) { log('Game model error: ' + (e.stack || e.message)); }
             fs.mkdirSync('.cache', { recursive: true });
             fs.writeFileSync('.cache/games.json', JSON.stringify([...T.A.games.values()].filter(g => g && g.final)));
