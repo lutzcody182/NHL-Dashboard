@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-24",
- "updated": "2026-10-24T17:00:16.629Z",
+ "updated": "2026-10-24T18:00:17.678Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -492,7 +492,7 @@
          "pp": ""
         },
         {
-         "n": "Declan Chisholm",
+         "n": "Brenden Dillon",
          "pos": "D",
          "pp": ""
         }
@@ -2608,9 +2608,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Jared McCann",
+         "n": "Kaapo Kakko",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Matty Beniers",
@@ -2635,18 +2635,13 @@
         {
          "n": "Mackie Samoskevich",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       },
       {
        "label": "Line 3",
        "players": [
-        {
-         "n": "Kaapo Kakko",
-         "pos": "W",
-         "pp": "PP2"
-        },
         {
          "n": "Shane Wright",
          "pos": "W",
@@ -2656,6 +2651,11 @@
          "n": "Berkly Catton",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Ryan Winterton",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -2663,12 +2663,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ben Meyers",
+         "n": "Curtis Douglas",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Ryan Winterton",
+         "n": "Ben Meyers",
          "pos": "W",
          "pp": ""
         },
@@ -2703,7 +2703,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Ville Ottavainen",
+         "n": "Cale Fleury",
          "pos": "D",
          "pp": ""
         },
@@ -2725,7 +2725,7 @@
    "teams": [
     {
      "team": "Detroit Red Wings",
-     "goalie": "Michal Postava",
+     "goalie": "John Gibson",
      "groups": [
       {
        "label": "Line 1",
