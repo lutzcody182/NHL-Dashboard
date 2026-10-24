@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-23",
- "updated": "2026-10-23T18:00:19.237Z",
+ "updated": "2026-10-24T00:00:17.440Z",
  "games": [
   {
    "time": "8:00 PM ET",
@@ -97,9 +97,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Noah Dobson",
+         "n": "Mike Matheson",
          "pos": "D",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Lane Hutson",
@@ -107,9 +107,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Mike Matheson",
+         "n": "Kaiden Guhle",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Alexandre Carrier",
@@ -122,9 +122,9 @@
          "pp": ""
         },
         {
-         "n": "Kaiden Guhle",
+         "n": "Noah Dobson",
          "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       }
