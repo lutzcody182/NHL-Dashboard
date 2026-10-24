@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-24",
- "updated": "2026-10-24T15:34:19.214Z",
+ "updated": "2026-10-24T17:00:16.629Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -22,7 +22,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Alex Killorn",
+         "n": "Judd Caulfield",
          "pos": "W",
          "pp": "PP2"
         },
@@ -47,7 +47,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Nikita Nesterenko",
+         "n": "Jeff Malott",
          "pos": "W",
          "pp": ""
         }
@@ -57,14 +57,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Frank Vatrano",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Nikita Klepov",
+         "n": "Alex Killorn",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Nikita Nesterenko",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Roger McQueen",
@@ -102,21 +102,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Drew Helleson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Nick Jensen",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Tristan Luneau",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Noah Warren",
          "pos": "D",
          "pp": ""
@@ -125,6 +110,21 @@
          "n": "Tyson Hinds",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Drew Helleson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Travis Mitchell",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Tristan Luneau",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
@@ -218,9 +218,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Rasmus Ristolainen",
+         "n": "Oliver Bonk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Travis Sanheim",
@@ -238,14 +238,14 @@
          "pp": ""
         },
         {
-         "n": "Simon Benoit",
+         "n": "Rasmus Ristolainen",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Oliver Bonk",
+         "n": "Hunter McDonald",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -756,7 +756,7 @@
         {
          "n": "Collin Graf",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Will Smith",
@@ -826,7 +826,7 @@
         {
          "n": "Adam Gaudette",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -2359,6 +2359,21 @@
          "pp": "PP1"
         },
         {
+         "n": "Dylan Guenther",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Vincent Trocheck",
+         "pos": "C",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
          "n": "Lawson Crouse",
          "pos": "W",
          "pp": ""
@@ -2367,26 +2382,11 @@
          "n": "Nick Schmaltz",
          "pos": "C",
          "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Dylan Guenther",
-         "pos": "W",
-         "pp": "PP1"
         },
         {
          "n": "Logan Cooley",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Vincent Trocheck",
-         "pos": "C",
-         "pp": "PP2"
         }
        ]
       },
@@ -2846,7 +2846,7 @@
     },
     {
      "team": "Calgary Flames",
-     "goalie": "Dustin Wolf",
+     "goalie": "Devin Cooley",
      "groups": [
       {
        "label": "Line 1",
