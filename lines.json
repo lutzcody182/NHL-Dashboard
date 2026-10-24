@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-24",
- "updated": "2026-10-24T18:00:17.678Z",
+ "updated": "2026-10-24T20:00:16.689Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -260,7 +260,7 @@
    "teams": [
     {
      "team": "Los Angeles Kings",
-     "goalie": "Darcy Kuemper",
+     "goalie": "Anton Forsberg",
      "groups": [
       {
        "label": "Line 1",
@@ -346,6 +346,11 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Drew Doughty",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
          "n": "Erik Gustafsson",
          "pos": "D",
          "pp": "PP2"
@@ -354,11 +359,6 @@
          "n": "Brandt Clarke",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Drew Doughty",
-         "pos": "D",
-         "pp": "PP2"
         },
         {
          "n": "Joel Edmundson",
@@ -432,7 +432,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Connor Brown",
+         "n": "Jesper Boqvist",
          "pos": "W",
          "pp": ""
         },
@@ -447,12 +447,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Amadeus Lombardi",
+         "n": "Connor Brown",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Jesper Boqvist",
+         "n": "Amadeus Lombardi",
          "pos": "W",
          "pp": ""
         },
@@ -2582,9 +2582,9 @@
          "pp": ""
         },
         {
-         "n": "David Spacek",
+         "n": "Matt Kiersted",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jared Spurgeon",
