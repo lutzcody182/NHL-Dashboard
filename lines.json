@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-24",
- "updated": "2026-10-24T22:00:16.726Z",
+ "updated": "2026-10-24T23:00:21.834Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -565,7 +565,7 @@
          "pp": ""
         },
         {
-         "n": "Ross Colton",
+         "n": "Vitali Pinchuk",
          "pos": "W",
          "pp": "PP2"
         }
@@ -575,13 +575,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Reid Schaefer",
-         "pos": "W",
+         "n": "Jack Drury",
+         "pos": "C",
          "pp": ""
         },
         {
-         "n": "Jack Drury",
-         "pos": "C",
+         "n": "Ross Colton",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -1043,14 +1043,14 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Braeden Bowman",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Trevor Connelly",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Raphael Lavoie",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Tomas Hertl",
@@ -1063,12 +1063,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Braeden Bowman",
+         "n": "Marc Gatcomb",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Marc Gatcomb",
+         "n": "Raphael Lavoie",
          "pos": "W",
          "pp": ""
         },
@@ -1750,8 +1750,8 @@
          "pp": "PP2"
         },
         {
-         "n": "Konsta Helenius",
-         "pos": "W",
+         "n": "Josh Norris",
+         "pos": "C",
          "pp": "PP2"
         },
         {
@@ -1785,6 +1785,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Konsta Helenius",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Ryan McLeod",
          "pos": "C",
          "pp": "PP2"
@@ -1792,11 +1797,6 @@
         {
          "n": "Josh Doan",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Josh Norris",
-         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -1845,7 +1845,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Zach Metsa",
+         "n": "Dennis Gilbert",
          "pos": "D",
          "pp": ""
         },
