@@ -1272,7 +1272,11 @@ async function gcDecRender(g) {
   const r = ev ? readyOf(ev, LF) : { gConf: 0, lines: 0, ready: false };
   box.innerHTML = `<div class="card" data-gw="${esc(g.id)}" data-rdy="${r.ready ? 1 : 0}" style="padding:10px 14px"><div class="gdec" data-decbar="${esc(g.id)}" style="padding:0"><span class="rchip${r.ready ? ' ok' : ''}">${r.ready ? `✓ Ready to review: both goalies confirmed and lines posted${r.gMine || r.lMine ? ' (includes your picks)' : ''}` : readyTxt(r)}</span><span class="muted" style="font-size:12px">Your call:</span><button class="dbtn bet" data-dec="bet" data-gid="${esc(g.id)}">Bet</button><button class="dbtn pass" data-dec="pass" data-gid="${esc(g.id)}">Pass</button></div></div>`;
   decPaint(String(g.id));
-  if (ev) box.insertAdjacentHTML('beforeend', govPicker(g, ev));
+  if (ev) {
+    box.insertAdjacentHTML('beforeend', govPicker(g, ev));
+    const need = [g.away.id, g.home.id].filter(t => !(t in GROSTER));
+    if (need.length) Promise.all(need.map(rosterGoalies)).then(() => { if (GC.g && String(GC.g.id) === String(g.id)) gcDecRender(g); }); // fill in each team's full goalie list
+  }
 }
 // "Starting goalies" picker: choose the starter yourself when ESPN is wrong or hasn't updated
 function govPicker(g, ev) {
@@ -2627,13 +2631,25 @@ function govSet(gid, tid, v) {
   try { localStorage.setItem('icelab-goalie-override', JSON.stringify(m)); } catch (e) {}
 }
 // goalies who have played for a team (most recent first), from the loaded games
+// every goalie on the team's current ESPN roster (call-ups and backups who haven't played yet included), cached for the session
+const GROSTER = {};
+async function rosterGoalies(tid) {
+  if (GROSTER[tid]) return GROSTER[tid];
+  try { const j = await getJSON(`${API}/teams/${tid}/roster`); const out = []; for (const grp of (j.athletes || [])) for (const a of (grp.items || [grp])) if (a && a.id && /^G$/i.test((a.position && a.position.abbreviation) || '')) out.push({ id: String(a.id), n: a.displayName || a.fullName || '' }); GROSTER[tid] = out; } catch (e) { GROSTER[tid] = null; }
+  return GROSTER[tid];
+}
 function teamGoalies(tid) {
   const seen = {};
   for (const g of [...A.games.values(), ...(GS.prior || [])]) {
     if (!g || !g.gk) continue;
     for (const [id, p] of Object.entries(g.gk)) { if (p.tm !== tid || !(p.toi > 0)) continue; const o = seen[id] || (seen[id] = { id, n: p.n, gp: 0, last: '' }); o.gp++; if (g.date > o.last) { o.last = g.date; o.n = p.n || o.n; } }
   }
-  return Object.values(seen).sort((a, b) => b.last.localeCompare(a.last)).slice(0, 6);
+  const played = Object.values(seen).sort((a, b) => b.last.localeCompare(a.last));
+  const ro = GROSTER[tid];
+  if (!ro || !ro.length) return played.slice(0, 6); // roster not loaded yet: goalies who've played for them recently
+  // the current roster first (with games played where we have them), then anyone who started for them this past week (e.g. just sent down)
+  const wk = new Date(Date.now() - 7 * 864e5).toISOString();
+  return [...ro.map(r => { const p = played.find(x => x.id === r.id); return { id: r.id, n: r.n, gp: p ? p.gp : 0, last: p ? p.last : '' }; }), ...played.filter(x => !ro.some(r => r.id === x.id) && x.last >= wk)];
 }
 // starting goalies come from ONE place: RotoGrinders (the same page as the lines). Your own pick always wins. ESPN is never used
 // for who starts; it's only read to mark RotoGrinders' goalie "Confirmed" when ESPN has confirmed that same goalie.
