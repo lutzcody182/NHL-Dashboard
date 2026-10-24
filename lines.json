@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-23",
- "updated": "2026-10-24T00:00:17.440Z",
+ "updated": "2026-10-24T01:00:16.504Z",
  "games": [
   {
    "time": "8:00 PM ET",
@@ -326,14 +326,14 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Dominic James",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Conor Geekie",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Jeffrey Viel",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -361,7 +361,7 @@
          "pp": ""
         },
         {
-         "n": "Emil Lilleberg",
+         "n": "Max Crozier",
          "pos": "D",
          "pp": ""
         },
