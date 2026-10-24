@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-24",
- "updated": "2026-10-24T15:00:19.319Z",
+ "updated": "2026-10-24T15:34:19.214Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -630,7 +630,7 @@
     },
     {
      "team": "Pittsburgh Penguins",
-     "goalie": "Sergei Murashov",
+     "goalie": "Arturs Silovs",
      "groups": [
       {
        "label": "Line 1",
@@ -664,11 +664,6 @@
          "n": "Ville Koivunen",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Evgeni Malkin",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -703,7 +698,7 @@
         {
          "n": "Nick Robertson",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
