@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-24",
- "updated": "2026-10-24T20:00:16.689Z",
+ "updated": "2026-10-24T21:00:20.944Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -605,16 +605,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Ilya Lyubushkin",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Brady Skjei",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Nicolas Hague",
          "pos": "D",
          "pp": ""
@@ -623,6 +613,16 @@
          "n": "Jayden Struble",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Nick Perbix",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Brady Skjei",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
@@ -1030,7 +1030,7 @@
         {
          "n": "Alexander Holtz",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Brett Howden",
@@ -1126,17 +1126,17 @@
         {
          "n": "Valeri Nichushkin",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Kent Johnson",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Adam Fantilli",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -1146,12 +1146,12 @@
         {
          "n": "Charlie Coyle",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Matthew Knies",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Mathieu Olivier",
@@ -1166,7 +1166,7 @@
         {
          "n": "Sean Monahan",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Cole Sillinger",
@@ -1176,7 +1176,7 @@
         {
          "n": "Conor Garland",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -1206,7 +1206,7 @@
         {
          "n": "Damon Severson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Zach Werenski",
@@ -1787,7 +1787,7 @@
         {
          "n": "Ryan McLeod",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Josh Doan",
@@ -2170,19 +2170,19 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Isaac Howard",
-         "pos": "W",
+         "n": "Colton Dach",
+         "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Trent Frederic",
+         "n": "Filip Hallander",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Colton Dach",
+         "n": "Max Jones",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2190,14 +2190,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Shakir Mukhamadullin",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Evan Bouchard",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Jake Walman",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Ryan Shea",
@@ -2210,14 +2210,14 @@
          "pp": ""
         },
         {
-         "n": "Shakir Mukhamadullin",
+         "n": "Ty Emberson",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Ty Emberson",
+         "n": "Jake Walman",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
