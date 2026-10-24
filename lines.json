@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-24",
- "updated": "2026-10-24T21:00:20.944Z",
+ "updated": "2026-10-24T22:00:16.726Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -64,12 +64,12 @@
         {
          "n": "Nikita Nesterenko",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Roger McQueen",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -293,7 +293,7 @@
         {
          "n": "Andre Lee",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Erik Haula",
@@ -308,7 +308,7 @@
         {
          "n": "Trevor Moore",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Joel Armia",
@@ -1988,7 +1988,7 @@
    "teams": [
     {
      "team": "Toronto Maple Leafs",
-     "goalie": "Sergei Bobrovsky",
+     "goalie": "Anthony Stolarz",
      "groups": [
       {
        "label": "Line 1",
