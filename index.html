@@ -1284,7 +1284,7 @@ function govPicker(g, ev) {
   const side = (t, abbr) => {
     const cur = m[ev.id + '|' + t], rg = RGL.data ? linesFor(RGL.data, { date: ev.date }, t, true) : null, espn = probableGoaliesESPN(ev)[t], e = rg && rg.goalie ? { id: espn && normName(espn.n) === normName(rg.goalie) ? espn.id : goalieIdByName(rg.goalie, t), n: rg.goalie, st: espn && normName(espn.n) === normName(rg.goalie) && /confirm/i.test(espn.st || '') ? 'Confirmed' : 'projected' } : null, list = teamGoalies(t);
     if (e && e.n && !list.some(x => normName(x.n) === normName(e.n))) list.unshift({ id: e.id, n: e.n });
-    const opts = [`<option value="">Automatic${e ? ` (RotoGrinders: ${esc(e.n)}, ${/confirm/i.test(e.st || '') ? 'confirmed' : 'projected'})` : ' (not posted yet: usual starter)'}</option>`, ...list.map(x => `<option value="${esc(x.id || '')}|${esc(x.n)}" ${cur && normName(cur.n) === normName(x.n) ? 'selected' : ''}>${esc(x.n)}${x.gp ? ` · ${x.gp} GP` : ''}</option>`)];
+    const opts = [`<option value="">Automatic${e ? ` (RotoGrinders: ${esc(e.n)}, ${/confirm/i.test(e.st || '') ? 'confirmed' : 'projected'})` : ' (not posted yet: usual starter)'}</option>`, ...list.map(x => `<option value="${esc(x.id || '')}|${esc(x.n)}" ${cur && normName(cur.n) === normName(x.n) ? 'selected' : ''}>${esc(x.n)}${x.gs != null ? ` · ${x.gs} start${x.gs === 1 ? '' : 's'} this season` : x.gp ? ` · ${x.gp} GP` : ' · no games yet'}</option>`)];
     return `<label class="govl"><span>${logoImg(t, 16)}${esc(abbr)}</span><select data-gov="${esc(ev.id)}|${esc(t)}">${opts.join('')}</select>${cur ? '<span class="badge ok">✓ Set by you</span>' : ''}</label>`;
   };
   return `<div class="card" style="padding:10px 14px;margin-top:8px"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px"><b style="font-size:13px">🥅 Starting goalies</b>${side(g.away.id, g.away.abbr)}${side(g.home.id, g.home.abbr)}</div>
@@ -2635,7 +2635,12 @@ function govSet(gid, tid, v) {
 const GROSTER = {};
 async function rosterGoalies(tid) {
   if (GROSTER[tid]) return GROSTER[tid];
-  try { const j = await getJSON(`${API}/teams/${tid}/roster`); const out = []; for (const grp of (j.athletes || [])) for (const a of (grp.items || [grp])) if (a && a.id && /^G$/i.test((a.position && a.position.abbreviation) || '')) out.push({ id: String(a.id), n: a.displayName || a.fullName || '' }); GROSTER[tid] = out; } catch (e) { GROSTER[tid] = null; }
+  try { const j = await getJSON(`${API}/teams/${tid}/roster`); const out = []; for (const grp of (j.athletes || [])) for (const a of (grp.items || [grp])) if (a && a.id && /^G$/i.test((a.position && a.position.abbreviation) || '')) out.push({ id: String(a.id), n: a.displayName || a.fullName || '' });
+    // this season's games played and starts, straight from ESPN (counting only the games the dashboard has loaded undercounts)
+    await Promise.all(out.map(async x => { try { const st = await getJSON(`${ATH(x.id)}/stats?seasontype=2`), cat = st.categories && st.categories[0], L = (cat && cat.labels) || [], iG = L.indexOf('GP'), iS = L.indexOf('GS');
+      const rows = ((cat && cat.statistics) || []).filter(r => r.season && +r.season.year === +S.curSeason);
+      if (rows.length) { x.gpS = rows.reduce((a, r) => a + (parseInt((r.stats || [])[iG]) || 0), 0); x.gsS = iS >= 0 ? rows.reduce((a, r) => a + (parseInt((r.stats || [])[iS]) || 0), 0) : null; } } catch (e) {} }));
+    GROSTER[tid] = out; } catch (e) { GROSTER[tid] = null; }
   return GROSTER[tid];
 }
 function teamGoalies(tid) {
@@ -2649,7 +2654,7 @@ function teamGoalies(tid) {
   if (!ro || !ro.length) return played.slice(0, 6); // roster not loaded yet: goalies who've played for them recently
   // the current roster first (with games played where we have them), then anyone who started for them this past week (e.g. just sent down)
   const wk = new Date(Date.now() - 7 * 864e5).toISOString();
-  return [...ro.map(r => { const p = played.find(x => x.id === r.id); return { id: r.id, n: r.n, gp: p ? p.gp : 0, last: p ? p.last : '' }; }), ...played.filter(x => !ro.some(r => r.id === x.id) && x.last >= wk)];
+  return [...ro.map(r => { const p = played.find(x => x.id === r.id); return { id: r.id, n: r.n, gp: r.gpS != null ? r.gpS : p ? p.gp : 0, gs: r.gsS, last: p ? p.last : '' }; }).sort((a, b) => (b.gs || b.gp || 0) - (a.gs || a.gp || 0)), ...played.filter(x => !ro.some(r => r.id === x.id) && x.last >= wk)];
 }
 // starting goalies come from ONE place: RotoGrinders (the same page as the lines). Your own pick always wins. ESPN is never used
 // for who starts; it's only read to mark RotoGrinders' goalie "Confirmed" when ESPN has confirmed that same goalie.
