@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-25",
- "updated": "2026-10-25T18:00:16.963Z",
+ "updated": "2026-10-25T22:00:16.140Z",
  "games": [
   {
    "time": "3:00 PM ET",
@@ -447,16 +447,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Radek Faksa",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "David Perron",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Colin Blackwell",
          "pos": "W",
          "pp": ""
@@ -479,7 +469,7 @@
         {
          "n": "Nils Lundkvist",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Lian Bichsel",
@@ -509,7 +499,7 @@
    "teams": [
     {
      "team": "Montreal Canadiens",
-     "goalie": "Jakub Dobes",
+     "goalie": "Jacob Fowler",
      "groups": [
       {
        "label": "Line 1",
@@ -575,12 +565,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Kirby Dach",
+         "n": "Florian Xhekaj",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Owen Beck",
+         "n": "Kirby Dach",
          "pos": "W",
          "pp": ""
         },
