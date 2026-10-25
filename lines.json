@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-24",
- "updated": "2026-10-25T01:00:16.152Z",
+ "updated": "2026-10-25T02:00:15.075Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -2285,7 +2285,7 @@
         {
          "n": "Pontus Holmberg",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ilya Mikheyev",
@@ -2507,10 +2507,25 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Ryan Hartman",
+         "n": "Maxim Shabanov",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Yakov Trenin",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Danila Yurov",
          "pos": "C",
          "pp": "PP2"
-        },
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
         {
          "n": "Bobby Brink",
          "pos": "W",
@@ -2520,25 +2535,10 @@
          "n": "Blake Coleman",
          "pos": "W",
          "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Yakov Trenin",
-         "pos": "W",
-         "pp": ""
         },
         {
-         "n": "Danila Yurov",
+         "n": "Michael McCarron",
          "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "Rieger Lorenz",
-         "pos": "W",
          "pp": ""
         }
        ]
@@ -2552,13 +2552,13 @@
          "pp": ""
         },
         {
-         "n": "Tyler Pitlick",
-         "pos": "W",
-         "pp": ""
+         "n": "Ryan Hartman",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
-         "n": "Michael McCarron",
-         "pos": "C",
+         "n": "Tyler Pitlick",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -2572,12 +2572,17 @@
          "pp": "PP1"
         },
         {
-         "n": "Jonas Brodin",
+         "n": "Jared Spurgeon",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
+         "n": "Olli Maatta",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Olli Maatta",
+         "n": "Jonas Brodin",
          "pos": "D",
          "pp": ""
         },
@@ -2590,11 +2595,6 @@
          "n": "Matt Kiersted",
          "pos": "D",
          "pp": ""
-        },
-        {
-         "n": "Jared Spurgeon",
-         "pos": "D",
-         "pp": "PP2"
         }
        ]
       }
@@ -2802,11 +2802,6 @@
         },
         {
          "n": "Keegan Kolesar",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Carter Mazur",
          "pos": "W",
          "pp": ""
         }
