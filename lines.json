@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-26",
- "updated": "2026-10-26T14:00:20.022Z",
+ "updated": "2026-10-26T17:00:22.706Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -37,12 +37,12 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Mats Zuccarello",
-         "pos": "W",
+         "n": "Quinton Byfield",
+         "pos": "C",
          "pp": "PP1"
         },
         {
-         "n": "Andre Lee",
+         "n": "Trevor Moore",
          "pos": "W",
          "pp": "PP2"
         },
@@ -57,7 +57,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Trevor Moore",
+         "n": "Taylor Ward",
          "pos": "W",
          "pp": ""
         },
@@ -82,7 +82,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Jared Wright",
+         "n": "Andre Lee",
          "pos": "W",
          "pp": ""
         },
@@ -97,19 +97,19 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Drew Doughty",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Erik Gustafsson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Brandt Clarke",
          "pos": "D",
-         "pp": "PP1"
+         "pp": "PP2"
+        },
+        {
+         "n": "Drew Doughty",
+         "pos": "D",
+         "pp": "PP2"
         },
         {
          "n": "Joel Edmundson",
@@ -132,7 +132,7 @@
     },
     {
      "team": "New York Rangers",
-     "goalie": "Dylan Garand",
+     "goalie": "",
      "groups": [
       {
        "label": "Line 1",
@@ -163,14 +163,14 @@
          "pp": ""
         },
         {
-         "n": "Pavel Dorofeyev",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "J.T. Miller",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Oliver Bjorkstrand",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -188,9 +188,9 @@
          "pp": ""
         },
         {
-         "n": "Eeli Tolvanen",
+         "n": "Pavel Dorofeyev",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -203,14 +203,14 @@
          "pp": ""
         },
         {
+         "n": "Eeli Tolvanen",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Taylor Raddysh",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Oliver Bjorkstrand",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -381,11 +381,16 @@
     },
     {
      "team": "Calgary Flames",
-     "goalie": "Dustin Wolf",
+     "goalie": "Devin Cooley",
      "groups": [
       {
        "label": "Line 1",
        "players": [
+        {
+         "n": "Mikael Backlund",
+         "pos": "C",
+         "pp": ""
+        },
         {
          "n": "Matt Coronato",
          "pos": "W",
@@ -395,11 +400,6 @@
          "n": "Joel Farabee",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Ben Jones",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -691,19 +691,19 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Isaac Howard",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Trent Frederic",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Colton Dach",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Filip Hallander",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Max Jones",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -711,14 +711,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Shakir Mukhamadullin",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Evan Bouchard",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Jake Walman",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Ryan Shea",
@@ -731,12 +731,12 @@
          "pp": ""
         },
         {
-         "n": "Shakir Mukhamadullin",
+         "n": "Ty Emberson",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Ty Emberson",
+         "n": "Jake Walman",
          "pos": "D",
          "pp": ""
         }
