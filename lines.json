@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-26",
- "updated": "2026-10-26T18:00:18.120Z",
+ "updated": "2026-10-26T20:00:19.203Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -132,7 +132,7 @@
     },
     {
      "team": "New York Rangers",
-     "goalie": "",
+     "goalie": "James Reimer",
      "groups": [
       {
        "label": "Line 1",
