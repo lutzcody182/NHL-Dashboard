@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-25",
- "updated": "2026-10-25T22:00:16.140Z",
+ "updated": "2026-10-26T00:00:20.986Z",
  "games": [
   {
    "time": "3:00 PM ET",
@@ -875,11 +875,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Matthew Wood",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Ryan O'Reilly",
          "pos": "C",
          "pp": "PP1"
@@ -890,14 +885,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Mavrik Bourque",
+         "n": "Alexander Kerfoot",
          "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Jonathan Marchessault",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Mavrik Bourque",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Filip Forsberg",
@@ -910,8 +905,8 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Alexander Kerfoot",
-         "pos": "C",
+         "n": "Matthew Wood",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -920,9 +915,9 @@
          "pp": ""
         },
         {
-         "n": "Vitali Pinchuk",
+         "n": "Jonathan Marchessault",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -937,7 +932,7 @@
         {
          "n": "Ross Colton",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Adam Edstrom",
