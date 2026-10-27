@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-27",
- "updated": "2026-10-27T18:00:20.034Z",
+ "updated": "2026-10-27T18:56:50.630Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1347,22 +1347,17 @@
          "pp": "PP2"
         },
         {
-         "n": "Alexandre Carrier",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Arber Xhekaj",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Kaiden Guhle",
          "pos": "D",
          "pp": ""
         },
         {
          "n": "Adam Engstrom",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Alexandre Carrier",
          "pos": "D",
          "pp": ""
         }
@@ -1998,7 +1993,7 @@
    "teams": [
     {
      "team": "Ottawa Senators",
-     "goalie": "Samuel Ersson",
+     "goalie": "Jonas Johansson",
      "groups": [
       {
        "label": "Line 1",
@@ -2119,7 +2114,7 @@
     },
     {
      "team": "Vegas Golden Knights",
-     "goalie": "Carter Hart",
+     "goalie": "Adin Hill",
      "groups": [
       {
        "label": "Line 1",
@@ -2215,17 +2210,17 @@
          "pp": ""
         },
         {
+         "n": "Noah Hanifin",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Rasmus Andersson",
          "pos": "D",
          "pp": "PP2"
         },
         {
-         "n": "Dylan Coghlan",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Noah Hanifin",
+         "n": "Ville Heinola",
          "pos": "D",
          "pp": ""
         }
@@ -2491,7 +2486,7 @@
    "teams": [
     {
      "team": "Buffalo Sabres",
-     "goalie": "Ukko-Pekka Luukkonen",
+     "goalie": "Colten Ellis",
      "groups": [
       {
        "label": "Line 1",
@@ -2618,12 +2613,12 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Ivar Stenberg",
+         "n": "Collin Graf",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
-         "n": "Will Smith",
+         "n": "Ivar Stenberg",
          "pos": "W",
          "pp": "PP1"
         },
@@ -2643,9 +2638,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Collin Graf",
+         "n": "Will Smith",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Michael Misa",
@@ -2700,7 +2695,7 @@
         {
          "n": "Jacob Trouba",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Darnell Nurse",
@@ -2723,9 +2718,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Nolan Allan",
+         "n": "Luca Cagnoni",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
