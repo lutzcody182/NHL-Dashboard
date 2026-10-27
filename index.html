@@ -5345,7 +5345,7 @@ function qdFindBox() {
          opponent shot quality allowed by zone, goalie by zone, goalie by shot type, rebounds & rush chances.
    The weights b_k (how much each factor really matters) are learned from the loaded games every time the
    page or the GitHub job rebuilds the model, on games the model didn't use for its stats. */
-const GS = { date: null, game: '', team: '', q: '', cache: null, prior: null, priorLoading: false, priorMsg: '', blendW: .4, blendN: 0, blendFit: null };
+const GS = { date: null, game: '', team: '', q: '', cache: null, prior: null, priorLoading: false, priorMsg: '', blendW: .4, blendN: 0, blendFit: null, blendWUp: .4, blendWDn: .4, blendFitUp: null, blendFitDn: null, blendNUp: 0, blendNDn: 0 };
 const GS_FACT = [['env', 'Team scoring environment'], ['dvol', 'Opponent shot volume allowed'], ['dqual', 'Opponent shot quality allowed'], ['gzone', 'Goalie by zone'], ['gtype', 'Goalie by shot type'], ['rr', 'Rebounds & rush chances']];
 const ZN = ['inner slot', 'slot', 'wide/sharp angle', 'point'];
 const SHOT_T = st => /tip|deflect/i.test(st) ? 3 : /back/i.test(st) ? 2 : /slap/i.test(st) ? 1 : /wrist|snap/i.test(st) ? 0 : 4;
@@ -5680,20 +5680,22 @@ function gsRefine(rows, dkm, tot, fdm) {
     const k = tr.length >= 14 && fin(imp) && sum > 0 ? clamp((imp - .12) / sum, .7, 1.3) : 1;
     tr.forEach(r => { r.anchor = k; r.lam *= k; });
   }
-  const F = gsDkFair(dkm, tot), Ffd = gsDkFair(fdm, tot), w = GS.blendW;
+  const F = gsDkFair(dkm, tot), Ffd = gsDkFair(fdm, tot);
   for (const r of rows) {
     r.pModel = 1 - Math.exp(-r.lam);
     const odd = pxOdd(r.dk, r.fd, r.ox), xb = bestPrice(null, null, r.ox), useDk = r.dk != null && !odd.has('dk'), useFd = r.fd != null && !odd.has('fd'), ref = useDk ? r.dk : useFd ? r.fd : xb ? xb.price : null; r.odd = odd; // market reference for the blend: DraftKings, else FanDuel, else the best other book
     if (ref != null) {
       const FF = useDk ? F : useFd ? Ffd : gsDkFair(null, tot);
       r.dkFairEven = FF.fair(amImplied(ref)); r.dkFair = flbFair(amImplied(ref), r.dkFairEven); r.margin = FF.m;
-      r.p = sigm(w * logit(clamp(r.pModel, .005, .995)) + (1 - w) * logit(clamp(r.dkFair, .005, .995)));
+      // two trust levels, learned from graded picks: one for when the model is above the books, one for when it's below
+      r.bw = r.pModel > r.dkFair ? GS.blendWUp : GS.blendWDn;
+      r.p = sigm(r.bw * logit(clamp(r.pModel, .005, .995)) + (1 - r.bw) * logit(clamp(r.dkFair, .005, .995)));
       // edge and expected profit at the best of the five books
       const b = bestPrice(r.dk, r.fd, r.ox); r.best = b.price; r.book = b.book; r.bestImp = amImplied(b.price);
       r.edgeP = r.p - r.bestImp; const ev = betEV(r.p, r.best); r.ev = ev.ev; r.roi = ev.roi;
     } else r.p = r.pModel;
     r.lowN = r.gp < 5; r.big = fin(r.edgeP) && r.edgeP >= .08;
-    r.why = { ...r.why, html: r.why.html + `<div style='margin-top:6px;border-top:1px solid var(--border);padding-top:4px'>${qRow('Ice Lab model alone', pct1(r.pModel) + '%')}${r.anchor !== 1 ? qRow('Team-total adjustment', (r.anchor > 1 ? '+' : '−') + pct1(Math.abs(r.anchor - 1)) + '%') : ''}${r.dk != null ? qRow('DraftKings, margin removed', pct1(r.dkFair) + '%') + qRow(`Blended (${Math.round(w * 100)}% model)`, '<b>' + pct1(r.p) + '%</b>') : ''}${r.lowN ? `<div style='color:var(--neg)'>Only ${r.gp} game${r.gp === 1 ? '' : 's'} of data: treat with caution</div>` : ''}</div>` };
+    r.why = { ...r.why, html: r.why.html + `<div style='margin-top:6px;border-top:1px solid var(--border);padding-top:4px'>${qRow('Ice Lab model alone', pct1(r.pModel) + '%')}${r.anchor !== 1 ? qRow('Team-total adjustment', (r.anchor > 1 ? '+' : '−') + pct1(Math.abs(r.anchor - 1)) + '%') : ''}${r.dk != null ? qRow('DraftKings, margin removed', pct1(r.dkFair) + '%') + qRow(`Blended (${Math.round(r.bw * 100)}% model, ${r.pModel > r.dkFair ? 'model above' : 'model below'} the books)`, '<b>' + pct1(r.p) + '%</b>') : ''}${r.lowN ? `<div style='color:var(--neg)'>Only ${r.gp} game${r.gp === 1 ? '' : 's'} of data: treat with caution</div>` : ''}</div>` };
   }
   return rows;
 }
@@ -5723,11 +5725,18 @@ const flbFair = (imp, even) => GS.flb && fin(imp) ? GS.flb.w * flbCal(imp) + (1 
 function gsBlendFit(PK) {
   gsFlbFit(PK);
   const ps = ((PK && PK.picks) || []).filter(p => (p.res === 'W' || p.res === 'L') && fin(p.pRaw) && fin(p.fair)).map(p => ({ ...p, fair: flbFair(fin(pkRefPx(p)) ? amImplied(pkRefPx(p)) : NaN, fin(p.fairEven) ? p.fairEven : p.fair) }));
+  const fitW = list => { let best = .4, bl = Infinity; for (let w = 0; w <= 1.0001; w += .05) { let L = 0; for (const p of list) { const q = clamp(sigm(w * logit(clamp(p.pRaw, .005, .995)) + (1 - w) * logit(clamp(p.fair, .005, .995))), 1e-4, 1 - 1e-4); L -= p.res === 'W' ? Math.log(q) : Math.log(1 - q); } if (L < bl) { bl = L; best = w; } } return best; };
+  const shr = (n, w) => (n * w + 400 * .4) / (n + 400); // pulled toward 40% until there's lots of data
   GS.blendN = ps.length;
-  if (ps.length < 150) { GS.blendW = .4; GS.blendFit = null; return GS.blendW; }
-  let best = .4, bl = Infinity;
-  for (let w = 0; w <= 1.0001; w += .05) { let L = 0; for (const p of ps) { const q = clamp(sigm(w * logit(clamp(p.pRaw, .005, .995)) + (1 - w) * logit(clamp(p.fair, .005, .995))), 1e-4, 1 - 1e-4); L -= p.res === 'W' ? Math.log(q) : Math.log(1 - q); } if (L < bl) { bl = L; best = w; } }
-  GS.blendFit = best; GS.blendW = (ps.length * best + 400 * .4) / (ps.length + 400);
+  if (ps.length < 150) { GS.blendW = GS.blendWUp = GS.blendWDn = .4; GS.blendFit = GS.blendFitUp = GS.blendFitDn = null; return GS.blendW; }
+  GS.blendFit = fitW(ps); GS.blendW = shr(ps.length, GS.blendFit);
+  // backtest (Oct 2026): when the model is ABOVE the books it has been right more often than when it's below, so each
+  // direction gets its own trust level (each needs 150+ graded picks of its own, otherwise it uses the single mix)
+  const up = ps.filter(p => p.pRaw > p.fair), dn = ps.filter(p => p.pRaw <= p.fair);
+  GS.blendNUp = up.length; GS.blendNDn = dn.length;
+  GS.blendFitUp = up.length >= 150 ? fitW(up) : null; GS.blendFitDn = dn.length >= 150 ? fitW(dn) : null;
+  GS.blendWUp = GS.blendFitUp != null ? shr(up.length, GS.blendFitUp) : GS.blendW;
+  GS.blendWDn = GS.blendFitDn != null ? shr(dn.length, GS.blendFitDn) : GS.blendW;
   return GS.blendW;
 }
 
@@ -5924,7 +5933,7 @@ async function renderScorers() {
     : !withDk.length ? `<div class="note">${esc(dkAge)}. No DraftKings goal scorer prices matched these games yet. They're usually posted the day of the game; the job updates about 11 AM and 5 PM Eastern.</div>`
     : `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Biggest edges tonight</h3><p>${esc(dkAge)}</p></div>
       ${best.length ? `<div class="edges">${best.map(r => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">vs. ${esc(TM(r.opp).abbr)}${r.gl ? ' · ' + esc(r.gl.n) : ''}</div><div class="eg"><span>${BK[r.book]} <b>${fmtML(r.best)}</b></span><span>Fair <b>${fairAmerican(r.p)}</b></span></div><div class="eg"><span>Ice Lab <b>${pct1(r.p)}%</b></span><span>${BK[r.book]} ${pct1(r.bestImp)}%</span></div><div class="eg"><b style="color:var(--good)">+${(r.edgeP * 100).toFixed(1)} pts</b>${moneyCell(r.ev)}</div><button class="btn sm mybet" data-mybet="${r.idx}" data-key="${esc(r.gid + '|' + r.pid)}">＋ Bet</button></div>`).join('')}</div>` : '<p class="muted" style="margin:0">No positive edges right now: DraftKings\' and FanDuel\'s prices are at or above Ice Lab\'s chances for everyone.</p>'}
-      <p class="muted" style="font-size:12px;margin:8px 0 0">Ranked by expected return on the amount risked, using your bet sizes. Chances blend Ice Lab's model (${Math.round(GS.blendW * 100)}%) with DraftKings' own chance with its margin removed (${Math.round((1 - GS.blendW) * 100)}%)${GS.blendFit != null ? `, a mix learned from ${GS.blendN} graded picks` : `; the mix will be learned from graded picks once there are 150+ (${GS.blendN} so far)`}. That keeps edges realistic: to show an edge, Ice Lab has to disagree with DraftKings by enough to beat its margin. Players with under 5 games are left off this list; ⚠️ marks edges of 8+ points, which usually mean news the model doesn't know about.</p></div>`;
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Ranked by expected return on the amount risked, using your bet sizes. Chances blend Ice Lab's model with DraftKings' own chance with its margin removed: ${Math.round(GS.blendWUp * 100)}% model when the model is above the books, ${Math.round(GS.blendWDn * 100)}% when it's below${GS.blendFit != null ? `, learned from ${GS.blendN} graded picks (the model has been more often right when it's higher than the books)` : `; the mix will be learned from graded picks once there are 150+ (${GS.blendN} so far)`}. That keeps edges realistic: to show an edge, Ice Lab has to disagree with DraftKings by enough to beat its margin. Players with under 5 games are left off this list; ⚠️ marks edges of 8+ points, which usually mean news the model doesn't know about.</p></div>`;
   const btCard = bt ? `<div class="card" style="margin-top:14px"><div class="card-h"><h3>Report card</h3><p>Tested on ${bt.n.toLocaleString()} player-games it never saw (${new Date(bt.from).toLocaleDateString()} – ${new Date(bt.to).toLocaleDateString()})</p></div>
       <div class="tiles" style="margin-bottom:10px"><div class="tile"><div class="k">Predicted scorers</div><div class="v num">${f0(bt.expected)}</div><div class="s">vs. ${bt.actual} who actually scored</div></div>
       <div class="tile"><div class="k">Brier · full model</div><div class="v num">${bt.brier.toFixed(4)}</div><div class="s">lower is better</div></div>
@@ -7221,8 +7230,8 @@ const fgFirstScorer = g => { const x = (g.shots || []).filter(s => s.t === 0 && 
 /* ============================== SHOTS ON GOAL MODEL ==============================
    Each skater's expected shots on goal tonight: his shot rates (even strength and power play, this season + last season at
    half weight, with shot attempts as a steadier second opinion), tonight's projected minutes (from the goal scorer model:
-   posted lines, power-play unit, recent ice time), the opponent's shots allowed, game script (teams that expect to trail
-   shoot more), the game total, back-to-backs, his line's shot share together, and each arena's scorekeeping.
+   posted lines, power-play unit, recent ice time), the opponent's shots allowed, home ice and whether the team is favored
+   (learned from graded picks), the game total, back-to-backs, his line's shot share together, and each arena's scorekeeping.
    Shots are a count, so tonight's range is a negative binomial (a Poisson with extra spread, learned from real games).
    That gives his chance over/under each line, blended with the sportsbooks' no-margin price like the goal scorer model. */
 const SOG = { st: null, key: '', date: '', game: '', team: '', q: '', rows: null };
@@ -7308,16 +7317,16 @@ function sogMu(St, r, ctx) {
   const o = St.T[r.opp];
   const oppF = !o || !o.gp ? 1 : opt.split && fin(o.aF) && St.lgF > 0 && St.lgD > 0 ? (pos === 'D' ? clamp((o.aD + St.lgD * 10) / (o.gp + 10) / St.lgD, .75, 1.3) : clamp((o.aF + St.lgF * 10) / (o.gp + 10) / St.lgF, .8, 1.22)) : clamp((o.a + St.lgTeam * 10) / (o.gp + 10) / St.lgTeam, .82, 1.2);
   const arF = (St.AR[ctx.home] || {}).f || 1;
-  const q = r.tm === ctx.home ? ctx.pH : fin(ctx.pH) ? 1 - ctx.pH : NaN, scriptF = fin(q) ? clamp(1 + .16 * (.5 - q), .95, 1.05) : 1;
+  const q = r.tm === ctx.home ? ctx.pH : fin(ctx.pH) ? 1 - ctx.pH : NaN, haF = sogHaF(r.tm === ctx.home, q);
   const paceF = fin(ctx.total) && ctx.total > 3 ? clamp(Math.pow(ctx.total / 6.2, .3), .95, 1.05) : 1;
   const lastD = St.last[r.tm], b2bF = lastD && Math.round((new Date(ctx.date) - new Date(lastD)) / 864e5) === 1 ? .97 : 1;
   let lineF = 1, lineTxt = '';
   const mates = GSMATES[r.pid];
   if (mates && mates.length === 2 && cmbIdx()) { const c = cmbFind(TM(r.tm).abbr, [r.n, ...mates]), me = cmbPl(TM(r.tm).abbr, r.n); if (c && me && me.toi > 1800 && c.toi > 0) { const cl = c.cf / c.toi, cm = me.cf / me.toi; if (cm > 0) { const w = c.toi / (c.toi + 9000); lineF = clamp(1 + w * .5 * (cl / cm - 1), .94, 1.06); lineTxt = `${minsTxt(c.toi)} together`; } } }
   const lvlF = St.lvl || 1;
-  const mu = clamp(base * oppF * arF * scriptF * paceF * b2bF * lineF * lvlF, .05, 9);
+  const mu = clamp(base * oppF * arF * haF * paceF * b2bF * lineF * lvlF, .05, 9);
   const ppUsual = p.gp ? p.ppT / p.gp : 0;
-  return { mu, base, evRate, ppRate, evSec, ppSec, ppUsual, onNet, oppF, arF, scriptF, paceF, b2bF, lineF, lvlF, lineTxt, gp: p.gp };
+  return { mu, base, evRate, ppRate, evSec, ppSec, ppUsual, onNet, oppF, arF, haF, q, paceF, b2bF, lineF, lvlF, lineTxt, gp: p.gp };
 }
 
 // shots on goal prices for one game: name → { dk: [line, over, under], fd: [...], cz, fn, sc }
@@ -7361,15 +7370,44 @@ function sogTonight(St, e, gsRows, PF) {
   }
   return out;
 }
+/* home ice and favorite/underdog, learned from graded shots on goal picks. Backtest (Oct 2026): the old "game script" rule
+   gave underdogs extra shots, but in real games favorites and home players outshot their expected numbers and away
+   underdogs fell short. Fit: shots = expected (without this factor) × e^(A × ±½ for home/away + B × (win chance − 50%)),
+   a Poisson fit pulled toward no effect; needs 150+ graded player-games. */
+const SOGHA = { A: 0, B: 0, n: 0 };
+const sogHaF = (home, q) => clamp(Math.exp(SOGHA.A * (home ? .5 : -.5) + (fin(q) ? SOGHA.B * (q - .5) : 0)), .9, 1.1);
+function sogHomeFit(PK) {
+  const G = {}; for (const g of (PK && PK.games) || []) G[g.gid] = g;
+  const seen = new Set(), R = [];
+  for (const r of (PK && PK.sog) || []) {
+    if (!(r.res === 'W' || r.res === 'L' || r.res === 'PU') || !fin(r.shots) || !fin(r.mu)) continue;
+    const key = r.gid + '|' + r.pid; if (seen.has(key)) continue;
+    const g = G[r.gid]; if (!g) continue; const home = g.h === r.tm; if (!home && g.a !== r.tm) continue;
+    let q = r.q, f = r.haF;
+    if (!fin(q)) { if (!fin(g.mlH) || !fin(g.mlA)) continue; const ih = amImplied(g.mlH), ia = amImplied(g.mlA); q = home ? ih / (ih + ia) : ia / (ih + ia); }
+    if (!fin(f)) f = clamp(1 + .16 * (.5 - q), .95, 1.05); // picks saved before this fix used the old game script rule
+    seen.add(key); R.push({ base: r.mu / f, x1: home ? .5 : -.5, x2: q - .5, y: r.shots });
+  }
+  SOGHA.n = R.length; if (R.length < 150) { SOGHA.A = SOGHA.B = 0; return SOGHA; }
+  let A = 0, B = 0;
+  for (let it = 0; it < 50; it++) { // Newton steps; the 20s pull both toward zero
+    let ga = -20 * A, gb = -20 * B, haa = 20, hbb = 20, hab = 0;
+    for (const r of R) { const m = r.base * Math.exp(A * r.x1 + B * r.x2), e = r.y - m; ga += e * r.x1; gb += e * r.x2; haa += m * r.x1 * r.x1; hbb += m * r.x2 * r.x2; hab += m * r.x1 * r.x2; }
+    const d = haa * hbb - hab * hab; if (!(d > 0)) break; const da = (hbb * ga - hab * gb) / d, db = (haa * gb - hab * ga) / d; A += da; B += db; if (Math.abs(da) + Math.abs(db) < 1e-8) break;
+  }
+  if (fin(A) && fin(B)) { SOGHA.A = clamp(A, -.25, .25); SOGHA.B = clamp(B, -1, 1); } SOG.st = null; SOG.key = ''; // rebuild with the new factor
+  return SOGHA;
+}
 // learn how much to trust the model vs. the books' no-margin price, from graded "over" records (log loss), pulled toward 40%
 function sogBlendFit(PK) {
+  sogHomeFit(PK);
   const ps = ((PK && PK.sog) || []).filter(p => p.side === 'o' && (p.res === 'W' || p.res === 'L') && fin(p.pRaw) && fin(p.fair));
   SOGB.n = ps.length; if (ps.length < 150) { SOGB.w = .4; SOGB.fit = null; return SOGB.w; }
   let best = .4, bl = Infinity;
   for (let w = 0; w <= 1.0001; w += .05) { let L = 0; for (const p of ps) { const q = clamp(sigm(w * logit(clamp(p.pRaw, .005, .995)) + (1 - w) * logit(clamp(p.fair, .02, .98))), 1e-4, 1 - 1e-4); L -= p.res === 'W' ? Math.log(q) : Math.log(1 - q); } if (L < bl) { bl = L; best = w; } }
   SOGB.fit = best; SOGB.w = (ps.length * best + 300 * .4) / (ps.length + 300); return SOGB.w;
 }
-const sogWhy = (r, k) => `<b>${esc(r.n)}</b><div class='row'><span>Even strength</span><b>${f2(r.evRate * 3600)} shots/60 × ${mmss(r.evSec)}</b></div>${r.ppSec > 1 ? `<div class='row'><span>Power play</span><b>${f2(r.ppRate * 3600)} shots/60 × ${mmss(r.ppSec)}</b></div>` : ''}<div class='row'><span>Before matchup</span><b>${f2(r.base)} shots</b></div>${r.ppSec > 1 && r.ppUsual > 1 && Math.abs(r.ppSec / r.ppUsual - 1) >= .05 ? `<div class='row'><span>Power-play time vs. his usual ${mmss(r.ppUsual)} (opponent penalties, referees, PP unit)</span><b>${r.ppSec > r.ppUsual ? '+' : '−'}${pct1(Math.abs(r.ppSec / r.ppUsual - 1))}%</b></div>` : ''}${[[`Opponent shots allowed to ${r.pos === 'D' ? 'defensemen' : 'forwards'}`, r.oppF], ['Arena scorekeeping', r.arF], ['Game script (trailing teams shoot more)', r.scriptF], ['Game total (pace)', r.paceF], ['Back-to-back', r.b2bF], [`Line shot share${r.lineTxt ? ' (' + r.lineTxt + ')' : ''}`, r.lineF], ['Level correction (how far recent predictions ran from real shots)', r.lvlF]].filter(([, f]) => fin(f) && Math.abs(f - 1) >= .005).map(([l, f]) => `<div class='row'><span>${l}</span><b>${f > 1 ? '+' : '−'}${pct1(Math.abs(f - 1))}%</b></div>`).join('')}<div class='row'><span><b>Expected tonight</b></span><b>${f2(r.mu)} shots</b></div>${r.line != null ? `<div style='margin-top:4px;border-top:1px solid var(--border);padding-top:4px'><div class='row'><span>Model alone: over ${r.line}</span><b>${fairAmerican(r.pModelO)} (${pct1(r.pModelO)}%)</b></div>${fin(r.mk.fair) ? `<div class='row'><span>Books, no margin (${BOOKS[r.mk.ref]})</span><b>${fairAmerican(r.mk.fair)} (${pct1(r.mk.fair)}%)</b></div>` : ''}<div class='row'><span>Blended (${Math.round(SOGB.w * 100)}% model)</span><b>${fairAmerican(r.pO)} (${pct1(r.pO)}%)</b></div></div>` : ''}<div class='muted' style='margin-top:4px'>Range uses a negative binomial with spread ${f1(k)} (learned from real games).</div>`;
+const sogWhy = (r, k) => `<b>${esc(r.n)}</b><div class='row'><span>Even strength</span><b>${f2(r.evRate * 3600)} shots/60 × ${mmss(r.evSec)}</b></div>${r.ppSec > 1 ? `<div class='row'><span>Power play</span><b>${f2(r.ppRate * 3600)} shots/60 × ${mmss(r.ppSec)}</b></div>` : ''}<div class='row'><span>Before matchup</span><b>${f2(r.base)} shots</b></div>${r.ppSec > 1 && r.ppUsual > 1 && Math.abs(r.ppSec / r.ppUsual - 1) >= .05 ? `<div class='row'><span>Power-play time vs. his usual ${mmss(r.ppUsual)} (opponent penalties, referees, PP unit)</span><b>${r.ppSec > r.ppUsual ? '+' : '−'}${pct1(Math.abs(r.ppSec / r.ppUsual - 1))}%</b></div>` : ''}${[[`Opponent shots allowed to ${r.pos === 'D' ? 'defensemen' : 'forwards'}`, r.oppF], ['Arena scorekeeping', r.arF], ['Home ice and favorite/underdog (learned from graded picks)', r.haF], ['Game total (pace)', r.paceF], ['Back-to-back', r.b2bF], [`Line shot share${r.lineTxt ? ' (' + r.lineTxt + ')' : ''}`, r.lineF], ['Level correction (how far recent predictions ran from real shots)', r.lvlF]].filter(([, f]) => fin(f) && Math.abs(f - 1) >= .005).map(([l, f]) => `<div class='row'><span>${l}</span><b>${f > 1 ? '+' : '−'}${pct1(Math.abs(f - 1))}%</b></div>`).join('')}<div class='row'><span><b>Expected tonight</b></span><b>${f2(r.mu)} shots</b></div>${r.line != null ? `<div style='margin-top:4px;border-top:1px solid var(--border);padding-top:4px'><div class='row'><span>Model alone: over ${r.line}</span><b>${fairAmerican(r.pModelO)} (${pct1(r.pModelO)}%)</b></div>${fin(r.mk.fair) ? `<div class='row'><span>Books, no margin (${BOOKS[r.mk.ref]})</span><b>${fairAmerican(r.mk.fair)} (${pct1(r.mk.fair)}%)</b></div>` : ''}<div class='row'><span>Blended (${Math.round(SOGB.w * 100)}% model)</span><b>${fairAmerican(r.pO)} (${pct1(r.pO)}%)</b></div></div>` : ''}<div class='muted' style='margin-top:4px'>Range uses a negative binomial with spread ${f1(k)} (learned from real games).</div>`;
 async function renderSog() {
   const body = $('#sogBody');
   if (!GS.prior && !GS.priorLoading && !/^need|^err/.test(GS.priorMsg)) gsLoadPrior(false);
@@ -7415,7 +7453,7 @@ async function renderSog() {
       <div class="ctl"><label>Game</label><select id="sogGame"><option value="">All games</option>${gameOpts}</select></div>
       <div class="ctl"><label>Team</label><select id="sogTeam"><option value="">All</option>${teamsTonight.map(t => `<option value="${t}" ${t === SOG.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>
       <div class="ctl"><label>Player</label><input id="sogQ" type="search" placeholder="Search a name" value="${esc(SOG.q)}" autocomplete="off"></div></div>
-    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Expected shots on goal for every skater: his shot rates at even strength and on the power play (this season, plus last season at half weight, with shot attempts as a steadier second opinion), tonight's projected minutes, the opponent's shots allowed, game script, the game total, back-to-backs, his line's shot share and the arena's scorekeeping. Tonight's range is a negative binomial, so the over/under chances fit each line. Built from ${St.n.toLocaleString()} games.</p>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Expected shots on goal for every skater: his shot rates at even strength and on the power play (this season, plus last season at half weight, with shot attempts as a steadier second opinion), tonight's projected minutes, the opponent's shots allowed, home ice and whether the team is favored, the game total, back-to-backs, his line's shot share and the arena's scorekeeping. Tonight's range is a negative binomial, so the over/under chances fit each line. Built from ${St.n.toLocaleString()} games.</p>
     ${PF && !priced.length ? '<div class="note">No shots on goal prices for these games yet. The odds job pulls them with the goal scorer prices.</div>' : ''}
     ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best shots on goal values</h3><p>Ranked by expected return at the best price</p></div><div class="edges">${best.map(({ r, s, edge }) => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">${s === 'o' ? 'Over' : 'Under'} ${r.line} · ${f2(r.mu)} expected · vs. ${esc(TM(r.opp).abbr)}</div><div style="margin-top:4px"><b>${fmtML(r[s + 'Best'])}</b> <span class="muted">${BK[r[s + 'Book']]}</span> · <b style="color:var(--good)">+${(edge * 100).toFixed(1)} pts</b></div></div>`).join('')}</div></div>` : ''}
     <div class="empty" id="sogNoMatch" hidden>No player matching that name in these games.</div>
