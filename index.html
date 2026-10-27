@@ -4687,11 +4687,15 @@ function gmUpdate(S, g) {
   }
   S.last = g.date;
 }
-// new season: pull everything halfway back toward average
+// new season: team-level numbers keep only GM_CARRY of last season. Backtest (Oct 2026, same games for every setting):
+// keeping 25% instead of 50% predicted the first 30 days of last season better (log loss −5.0 ±2.2 per 1,000) and was
+// even on this season's first 30 days and days 31-75; dropping last season entirely did worse after the first month.
+// Player, goalie and referee numbers still carry 50% (players take their own history with them to new teams).
+const GM_CARRY = .25;
 function gmNewSeason(S) {
   for (const t of Object.values(S.T)) {
-    t.off = S.mu + .5 * (t.off - S.mu); t.def = S.mu + .5 * (t.def - S.mu); t.n = Math.min(t.n, 10);
-    for (const k of ['sxf', 'sxa', 'hxf', 'hxa', 'rxf', 'rxa', 'ppg', 'ppga', 'pen', 'gp', 'ppo', 'ppoA', 'otg', 'otw', 'rF', 'cF', 'rA', 'cA', 'sg']) if (t[k] != null) t[k] *= .5;
+    t.off = S.mu + GM_CARRY * (t.off - S.mu); t.def = S.mu + GM_CARRY * (t.def - S.mu); t.n = Math.min(t.n, 10);
+    for (const k of ['sxf', 'sxa', 'hxf', 'hxa', 'rxf', 'rxa', 'ppg', 'ppga', 'pen', 'gp', 'ppo', 'ppoA', 'otg', 'otw', 'rF', 'cF', 'rA', 'cA', 'sg']) if (t[k] != null) t[k] *= GM_CARRY;
     t.rec = []; t.last = null; t.lus = []; // "usual lineup" starts over each season, so offseason moves don't count as "unusual" every night
   }
   for (const q of Object.values(S.Gk)) { q.xga *= .5; q.ga *= .5; q.toi *= .5; }
@@ -4832,7 +4836,7 @@ function gmTrain(games) {
   const btH = Math.floor(btRows.length / 2), pM = r => gmProb(Wkeep, r.x);
   const btSim = thr => { let n = 0, w = 0, pr = 0, risk = 0; for (const r of btRows) { if (!r.ml) continue; const p = pM(r); for (const [s, q, o] of [['h', p, r.ml.h], ['a', 1 - p, r.ml.a]]) { if (!isFinite(o)) continue; if (q - amImplied(o) < thr) continue; const won = s === 'h' ? r.y === 1 : r.y === 0, rk = o < 0 ? -o : 100; n++; risk += rk; if (won) { w++; pr += o < 0 ? 100 : o; } else pr -= rk; } } return { thr, n, w, roi: risk ? pr / risk : NaN }; };
   const bt = btRows.length >= 50 ? { n: btRows.length, from: btRows[0].date, to: btRows[btRows.length - 1].date, model: btLL(btRows, pM), market: btLL(btRows, r => r.mk), halves: [btRows.slice(0, btH), btRows.slice(btH)].map(h => ({ n: h.length, model: btLL(h, pM), market: btLL(h, r => r.mk) })), sim: [0, .02, .03, .05].map(btSim) } : null;
-  return { W, Wfull, Wb, keep, abl: ablR, restV, restCmp, luV, luCmp, slimV, slimCmp, bt, lam, cv, ridge: true, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, GS, PR: PR ? { O: PR.O, D: PR.D, sh: PR.sh, mu: PR.mu } : null, tune: { best, dflt, grid, sadj }, t: Date.now() };
+  return { W, Wfull, Wb, keep, abl: ablR, restV, restCmp, luV, luCmp, slimV, slimCmp, bt, carry: GM_CARRY, lam, cv, ridge: true, sBase, sAll, sKeep, market, blend, nRows: rows.length, nTrain: train.length, nTest: test.length, testFrom: test[0].date, testTo: test[test.length - 1].date, nGames: games.length, seasons: [...seasons].sort(), S, GS, PR: PR ? { O: PR.O, D: PR.D, sh: PR.sh, mu: PR.mu } : null, tune: { best, dflt, grid, sadj }, t: Date.now() };
 }
 // predict an upcoming game, with a factor-by-factor breakdown
 function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
@@ -4869,7 +4873,7 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
   return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, ctx: { hId, aId, dateIso, gH, gA, ml, dH, dA, phf, pht, mH, mA }, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
-async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.luV && m.slimV && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
+async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.luV && m.slimV && m.carry === GM_CARRY && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
 async function gmCollect(onProg) {
   const seasons = [S.curSeason - 2, S.curSeason - 1, S.curSeason], today = todayStr(), ids = [];
   for (const y of seasons) {
@@ -4940,7 +4944,7 @@ async function renderGameModelCard() {
     ${M.slimV ? `<p style="margin:0 0 8px;font-size:12.5px"><b>Factors:</b> ${M.slimV === 'slim' ? 'the slim model (team ratings + rest, starting goalie, lineup ratings, Post Hockey, special teams, recent form)' : 'the full model (every factor)'}, because it predicted held-out training games better (log loss ×1,000: full ${fin(M.slimCmp.full) ? (M.slimCmp.full * 1000).toFixed(1) : '–'} vs. slim ${fin(M.slimCmp.slim) ? (M.slimCmp.slim * 1000).toFixed(1) : '–'}; ties go to slim).</p>` : ''}
     ${gmBacktestCard(M)}
     <div class="twrap"><table><thead><tr><th class="l">Factor</th><th class="l">Unit</th><th>Effect</th><th data-gloss="Increase in test log loss (×1,000) when this group of factors is removed. Positive = the factor makes predictions better.">Test impact</th><th>Status</th></tr></thead><tbody>${inputs}</tbody></table></div>
-    <p class="muted" style="font-size:12px;margin:8px 0 0">${grpRows}. Every factor is built only from what was known before each game (walk-forward), and ratings carry over from last season pulled halfway back toward average. Starting goalies use whoever started; for upcoming games the confirmed or probable starter is used when ESPN lists one.</p></div>`;
+    <p class="muted" style="font-size:12px;margin:8px 0 0">${grpRows}. Every factor is built only from what was known before each game (walk-forward), and team ratings keep 25% of last season (pulled most of the way back toward average, because that predicted early-season games better than 50% in a backtest); player and goalie ratings keep 50%. Starting goalies use whoever started; for upcoming games the confirmed or probable starter is used when ESPN lists one.</p></div>`;
   $('#gmRe').onclick = () => { gmRun(true); renderGameModelCard(); };
 }
 // Model Lab: does the game model beat the closing line on games it never trained on? + saved picks' closing line value
