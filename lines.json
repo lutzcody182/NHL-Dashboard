@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-27",
- "updated": "2026-10-27T18:56:50.630Z",
+ "updated": "2026-10-27T22:00:21.426Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -245,7 +245,7 @@
         {
          "n": "Cam York",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -368,7 +368,7 @@
         {
          "n": "Mason Lohrei",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Frederic Brunet",
@@ -427,11 +427,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Taylor Hall",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Seth Jarvis",
          "pos": "W",
          "pp": "PP2"
@@ -440,12 +435,22 @@
          "n": "Jordan Martinook",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Mark Jankowski",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Taylor Hall",
+         "pos": "W",
+         "pp": "PP2"
+        },
         {
          "n": "Eric Robinson",
          "pos": "W",
@@ -454,11 +459,6 @@
         {
          "n": "Jesperi Kotkaniemi",
          "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Nicolas Deslauriers",
-         "pos": "W",
          "pp": ""
         }
        ]
@@ -479,7 +479,7 @@
         {
          "n": "K'Andre Miller",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Sean Walker",
@@ -811,12 +811,12 @@
         {
          "n": "Ondrej Palat",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jean-Gabriel Pageau",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -1169,9 +1169,9 @@
          "pp": ""
         },
         {
-         "n": "Justin Hryckowian",
+         "n": "Dylan Hryckowian",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jamie Benn",
@@ -1184,9 +1184,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Dylan Hryckowian",
+         "n": "Justin Hryckowian",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Matthew Seminoff",
@@ -1642,26 +1642,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Ryan Donato",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Tyler Bertuzzi",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Anton Frondell",
-         "pos": "C",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
          "n": "Patrick Kane",
          "pos": "W",
          "pp": "PP1"
@@ -1673,6 +1653,26 @@
         },
         {
          "n": "Frank Nazar",
+         "pos": "C",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Ryan Donato",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Tyler Bertuzzi",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Anton Frondell",
          "pos": "C",
          "pp": "PP2"
         }
@@ -1847,7 +1847,7 @@
         {
          "n": "Jonas Brodin",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Zach Bogosian",
