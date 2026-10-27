@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-27",
- "updated": "2026-10-27T17:00:19.577Z",
+ "updated": "2026-10-27T18:00:20.034Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -832,11 +832,6 @@
          "n": "Mitchell Chaffee",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Kyle MacLean",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -1002,7 +997,7 @@
    "teams": [
     {
      "team": "New Jersey Devils",
-     "goalie": "Jake Allen",
+     "goalie": "Connor Hellebuyck",
      "groups": [
       {
        "label": "Line 1",
@@ -1251,7 +1246,7 @@
    "teams": [
     {
      "team": "Montreal Canadiens",
-     "goalie": "Jakub Dobes",
+     "goalie": "Jacob Fowler",
      "groups": [
       {
        "label": "Line 1",
@@ -1363,6 +1358,11 @@
         },
         {
          "n": "Kaiden Guhle",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Adam Engstrom",
          "pos": "D",
          "pp": ""
         }
@@ -1881,21 +1881,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Dylan Guenther",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Vincent Trocheck",
-         "pos": "C",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
          "n": "Lawson Crouse",
          "pos": "W",
          "pp": ""
@@ -1904,11 +1889,26 @@
          "n": "Nick Schmaltz",
          "pos": "C",
          "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Dylan Guenther",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "Logan Cooley",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Vincent Trocheck",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -1936,7 +1936,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Daniil But",
+         "n": "Liam O'Brien",
          "pos": "W",
          "pp": ""
         },
@@ -2459,12 +2459,17 @@
          "pp": ""
         },
         {
+         "n": "Tristan Luneau",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
          "n": "Tyson Hinds",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Drew Helleson",
+         "n": "Nick Jensen",
          "pos": "D",
          "pp": ""
         },
@@ -2472,11 +2477,6 @@
          "n": "Travis Mitchell",
          "pos": "D",
          "pp": ""
-        },
-        {
-         "n": "Tristan Luneau",
-         "pos": "D",
-         "pp": "PP2"
         }
        ]
       }
