@@ -1,4 +1,3 @@
-
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders, and props.json with
 # DraftKings anytime and first goal scorer odds (The Odds API) plus period-by-period ice time from the NHL's shift charts.
 # The same run saves the models' pre-game picks to picks.json and grades finished games. Evening runs also record the
@@ -539,7 +538,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB, setLinesData, unitsFor, unitsProof };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB, SOGHA, setLinesData, unitsFor, unitsProof };`);
             return w.__t;
           }
 
@@ -575,7 +574,7 @@ jobs:
             let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
             const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); T.setLinesData(LF); // starting goalies come from RotoGrinders' lines await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
             let added = 0, updated = 0, gAdded = 0, dropped = 0, sAdded = 0;
-            T.gsBlendFit(picks); T.sogBlendFit(picks); T.unitsProof(picks); // recommended bet sizes use each market's track record log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
+            T.gsBlendFit(picks); T.sogBlendFit(picks); T.unitsProof(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendWUp * 100)}% model when it's above the books, ${Math.round(T.GS.blendWDn * 100)}% when below (learned from ${T.GS.blendN} graded picks). Shots on goal: home ×${Math.exp(T.SOGHA.A / 2).toFixed(3)}, a 60% favorite ×${Math.exp(T.SOGHA.B * .1).toFixed(3)} (from ${T.SOGHA.n} graded player-games).`);
             // last season is the goal scorer model's starting point (counted at half weight)
             T.GS.prior = [...T.A.games.values()].filter(g => g && g.final && T.seasonOf(g.date) === T.S.curSeason - 1);
             const gs = T.A.filtered.length || T.GS.prior.length ? T.gsGetState() : null;
@@ -614,7 +613,7 @@ jobs:
                     for (const s of ['o', 'u']) {
                       if (r[s + 'Best'] == null) continue;
                       const x = s === 'o' ? r.mk.ov : r.mk.un, k = `s|${e.id}|${r.pid}|${s}`; sKeep.add(k);
-                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], u: (T.unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) || {}).u || 0, imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
+                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), q: Number.isFinite(r.q) ? r4(r.q) : null, haF: r4(r.haF), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], u: (T.unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) || {}).u || 0, imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
                       if (sByKey.has(k)) { if (sByKey.get(k).res == null) Object.assign(sByKey.get(k), rec); } else { sByKey.set(k, rec); sAdded++; }
                     }
                   }
@@ -903,7 +902,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB, setLinesData, unitsFor, unitsProof };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB, SOGHA, setLinesData, unitsFor, unitsProof };`);
             return w.__t;
           }
 
@@ -939,7 +938,7 @@ jobs:
             let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
             const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); T.setLinesData(LF); // starting goalies come from RotoGrinders' lines await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
             let added = 0, updated = 0, gAdded = 0, dropped = 0, sAdded = 0;
-            T.gsBlendFit(picks); T.sogBlendFit(picks); T.unitsProof(picks); // recommended bet sizes use each market's track record log(`Goal scorer chances: ${Math.round(T.GS.blendW * 100)}% model / ${Math.round((1 - T.GS.blendW) * 100)}% DraftKings (learned from ${T.GS.blendN} graded picks).`);
+            T.gsBlendFit(picks); T.sogBlendFit(picks); T.unitsProof(picks); log(`Goal scorer chances: ${Math.round(T.GS.blendWUp * 100)}% model when it's above the books, ${Math.round(T.GS.blendWDn * 100)}% when below (learned from ${T.GS.blendN} graded picks). Shots on goal: home ×${Math.exp(T.SOGHA.A / 2).toFixed(3)}, a 60% favorite ×${Math.exp(T.SOGHA.B * .1).toFixed(3)} (from ${T.SOGHA.n} graded player-games).`);
             // last season is the goal scorer model's starting point (counted at half weight)
             T.GS.prior = [...T.A.games.values()].filter(g => g && g.final && T.seasonOf(g.date) === T.S.curSeason - 1);
             const gs = T.A.filtered.length || T.GS.prior.length ? T.gsGetState() : null;
@@ -978,7 +977,7 @@ jobs:
                     for (const s of ['o', 'u']) {
                       if (r[s + 'Best'] == null) continue;
                       const x = s === 'o' ? r.mk.ov : r.mk.un, k = `s|${e.id}|${r.pid}|${s}`; sKeep.add(k);
-                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], u: (T.unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) || {}).u || 0, imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
+                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), q: Number.isFinite(r.q) ? r4(r.q) : null, haF: r4(r.haF), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], u: (T.unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) || {}).u || 0, imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
                       if (sByKey.has(k)) { if (sByKey.get(k).res == null) Object.assign(sByKey.get(k), rec); } else { sByKey.set(k, rec); sAdded++; }
                     }
                   }
