@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-27",
- "updated": "2026-10-27T14:48:06.760Z",
+ "updated": "2026-10-27T17:00:19.577Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -11,7 +11,7 @@
    "teams": [
     {
      "team": "Columbus Blue Jackets",
-     "goalie": "Jet Greaves",
+     "goalie": "Cam Talbot",
      "groups": [
       {
        "label": "Line 1",
@@ -630,7 +630,7 @@
     },
     {
      "team": "Winnipeg Jets",
-     "goalie": "Stuart Skinner",
+     "goalie": "Clay Stevenson",
      "groups": [
       {
        "label": "Line 1",
@@ -656,14 +656,34 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Viggo Bjorck",
+         "n": "Adam Lowry",
          "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Isak Rosen",
+         "pos": "W",
          "pp": "PP2"
         },
         {
          "n": "Gabriel Vilardi",
          "pos": "W",
          "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Dawson Mercer",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Viggo Bjorck",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Alex Iafallo",
@@ -673,30 +693,10 @@
        ]
       },
       {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Adam Lowry",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Dawson Mercer",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Isak Rosen",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
        "label": "Line 4",
        "players": [
         {
-         "n": "Nino Niederreiter",
+         "n": "Brad Lambert",
          "pos": "W",
          "pp": "PP2"
         },
@@ -726,7 +726,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Mario Ferraro",
+         "n": "Dylan DeMelo",
          "pos": "D",
          "pp": ""
         },
@@ -736,12 +736,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Haydn Fleury",
+         "n": "Tyrel Bauer",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Dylan DeMelo",
+         "n": "Mario Ferraro",
          "pos": "D",
          "pp": ""
         }
@@ -758,7 +758,7 @@
    "teams": [
     {
      "team": "New York Islanders",
-     "goalie": "Ilya Sorokin",
+     "goalie": "Semyon Varlamov",
      "groups": [
       {
        "label": "Line 1",
@@ -1123,7 +1123,7 @@
     },
     {
      "team": "Dallas Stars",
-     "goalie": "Jake Oettinger",
+     "goalie": "Casey DeSmith",
      "groups": [
       {
        "label": "Line 1",
@@ -1372,7 +1372,7 @@
     },
     {
      "team": "St. Louis Blues",
-     "goalie": "Joel Hofer",
+     "goalie": "Jordan Binnington",
      "groups": [
       {
        "label": "Line 1",
@@ -1443,7 +1443,7 @@
          "pp": ""
         },
         {
-         "n": "Otto Stenberg",
+         "n": "Alexey Toropchenko",
          "pos": "W",
          "pp": ""
         },
@@ -1458,22 +1458,12 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Justin Barron",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Philip Broberg",
          "pos": "D",
          "pp": "PP1"
         },
         {
-         "n": "Colton Parayko",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Adam Jiricek",
+         "n": "Brandon Carlo",
          "pos": "D",
          "pp": ""
         },
@@ -1483,7 +1473,17 @@
          "pp": "PP2"
         },
         {
-         "n": "Brandon Carlo",
+         "n": "Colton Parayko",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Justin Barron",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Adam Jiricek",
          "pos": "D",
          "pp": ""
         }
@@ -1627,11 +1627,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Patrick Kane",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Connor Bedard",
          "pos": "C",
          "pp": "PP1"
@@ -1640,6 +1635,11 @@
          "n": "Roman Kantserov",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Ryan Greene",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -1647,9 +1647,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Jordan Greenway",
+         "n": "Ryan Donato",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Tyler Bertuzzi",
@@ -1667,14 +1667,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Ryan Donato",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Teuvo Teravainen",
+         "n": "Patrick Kane",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Oliver Moore",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Frank Nazar",
@@ -1692,14 +1692,14 @@
          "pp": ""
         },
         {
-         "n": "Andrew Mangiapane",
+         "n": "Jordan Greenway",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Ryan Greene",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Teuvo Teravainen",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
