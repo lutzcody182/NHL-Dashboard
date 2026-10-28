@@ -3625,7 +3625,7 @@ async function renderModel() {
       const sb = await getJSON(`${API}/scoreboard?dates=${todayStr()}`);
       const up = (sb.events || []).filter(e => e.competitions[0].status.type.state === 'pre');
       await gmLoadSaved();
-      const INJS = {}; await pool(up, 6, async e => { INJS[e.id] = await getInjuries(e.id); }); const LFm = await getLinesFile();
+      const INJS = {}; await pool(up, 6, async e => { INJS[e.id] = await getInjuries(e.id); }); const LFm = await getLinesFile(); await getPicksFile();
       const rowsT = up.map(e => { const c = e.competitions[0], h = c.competitors.find(x => x.homeAway === 'home'), a = c.competitors.find(x => x.homeAway === 'away'); const pr = predictMatch(String(h.team.id), String(a.team.id)); if (!pr) return ''; const pick = pr.pH >= .5 ? h.team : a.team;
         let v2 = '<span class="muted">train in Model Lab</span>';
         if (GM.model) { const pg = probableGoalies(e), H = String(h.team.id), Aw = String(a.team.id); const o = c.odds && c.odds[0]; const ml = o && o.homeTeamOdds && o.awayTeamOdds && isFinite(o.homeTeamOdds.moneyLine) && isFinite(o.awayTeamOdds.moneyLine) ? { h: +o.homeTeamOdds.moneyLine, a: +o.awayTeamOdds.moneyLine } : null; const gp0 = gmEventPick(e, INJS[e.id], LFm), r = gp0 && gp0.r; if (r) { const p = r.p, t2 = p >= .5 ? h.team : a.team; v2 = `<b>${esc(t2.abbreviation)}</b> ${pct1(Math.max(p, 1 - p))}% <span class="muted">fair ${fairAmerican(Math.max(p, 1 - p))}</span>${r.parts[0] ? ` <span class="muted" style="font-size:12px">· ${esc(r.parts[0].l.toLowerCase())}</span>` : ''}`;
@@ -4892,7 +4892,23 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   parts.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
   const mk = devig(ml);
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
-  return { p, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, ctx: { hId, aId, dateIso, gH, gA, ml, dH, dA, phf, pht, mH, mA }, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
+  // live check: mix in the betting line by how the model's saved picks have actually done against it (gmBlendFit)
+  const pModel = p;
+  if (fin(mk) && GMB.w < .999) { p = clamp(sigm(GMB.w * logit(clamp(pModel, .01, .99)) + (1 - GMB.w) * logit(clamp(mk, .02, .98))), .01, .99); if (Math.abs(p - pModel) >= .0005) parts.push({ k: 'live', l: 'Leaning on the betting line (live track record)', d: p - pModel }); }
+  return { p, pModel, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, ctx: { hId, aId, dateIso, gH, gA, ml, dH, dA, phf, pht, mH, mA }, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
+}
+/* Backtest (Oct 2026): on its first 93 graded live picks the game model predicted worse than the betting line in both the
+   older and newer half, even though it beat the closing line on held-out past games. So each game's chance mixes in the
+   line by how much the model has earned: the weight that best predicted graded live picks (log loss), pulled toward 50%
+   with 150 games of "unknown" so one bad or good week can't swing it. Saved picks keep the model's own chance (p), so the
+   fit always compares the model alone with the line. */
+const GMB = { w: .5, n: 0, fit: null };
+function gmBlendFit(PK) {
+  const gs = ((PK && PK.games) || []).filter(x => x.hw != null && fin(x.p) && fin(x.mk));
+  GMB.n = gs.length; if (gs.length < 30) { GMB.w = .5; GMB.fit = null; return GMB; }
+  let best = .5, bl = Infinity;
+  for (let w = 0; w <= 1.0001; w += .05) { let L = 0; for (const x of gs) { const q = clamp(sigm(w * logit(clamp(x.p, .01, .99)) + (1 - w) * logit(clamp(x.mk, .02, .98))), 1e-4, 1 - 1e-4); L -= x.hw ? Math.log(q) : Math.log(1 - q); } if (L < bl) { bl = L; best = w; } }
+  GMB.fit = best; GMB.w = (gs.length * best + 150 * .5) / (gs.length + 150); return GMB;
 }
 async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.luV && m.slimV && m.carry === GM_CARRY && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
 async function gmCollect(onProg) {
@@ -5038,6 +5054,7 @@ function gmWhyTip(x, r, g) {
     case 'pht5': inp.push(row(`5v5 xG differential /60, ${hA} minus ${aA}`, sgn2(c.pht ? c.pht[0] * .5 : 0))); break;
     case 'phst': inp.push(row(`PP xGF minus PK xGA /60, ${hA} minus ${aA}`, sgn2(c.pht ? c.pht[1] * 2 : 0))); break;
     case 'inj': for (const [w, ab] of [[r.inj.h, hA], [r.inj.a, aA]]) if (w.who.length) inp.push(row(`${ab} missing`, `${w.who.slice(0, 3).map(q => esc(q.n)).join(', ')} (${pct1(w.who.reduce((s, q) => s + q.share, 0))}% of its xG)`)); break;
+    case 'live': inp.push(row('Model alone', pct1(r.pModel) + '% ' + hA), row('Betting line, margin removed', pct1(r.mk) + '% ' + hA), row('Trust in the model', `${Math.round(GMB.w * 100)}%`), row('Learned from', `${GMB.n} graded live game picks`)); break;
     case 'ref': inp.push(row('Crew', esc((r.ref.names || []).join(' & ') || '–')), row('Penalties vs. an average crew', `${pct1(Math.abs(r.ref.crew - 1))}% ${r.ref.crew >= 1 ? 'more' : 'fewer'}`)); break;
   }
   const feat = GM_FEATS.find(f => f[0] === x.k), toward = x.d >= 0 ? hA : aA;
@@ -5057,7 +5074,7 @@ async function renderGameModelPreview(s, g) {
   const ml = pk && pk.homeTeamOdds && pk.awayTeamOdds && isFinite(pk.homeTeamOdds.moneyLine) && isFinite(pk.awayTeamOdds.moneyLine) ? { h: +pk.homeTeamOdds.moneyLine, a: +pk.awayTeamOdds.moneyLine } : null;
   if (ml) ml.open = mlOpenOf(pk);
   const LFp = await getLinesFile(); await getPHFile(); const fdmlG = fdMoneyline(await getPropsFile(), g.date, g.home.id, g.away.id);
-  const r = gmPredict(g.home.id, g.away.id, g.date || new Date().toISOString(), gH, gA, ml, inj, LFp);
+  await getPicksFile(); const r = gmPredict(g.home.id, g.away.id, g.date || new Date().toISOString(), gH, gA, ml, inj, LFp);
   if (!r || !box()) return;
   const injTxt = [[g.away, r.inj.a], [g.home, r.inj.h]].filter(([, x]) => x.who.length).map(([t, x]) => `<p style="margin:0 0 4px;font-size:13px"><b>${esc(t.abbr)}</b> missing ${x.who.slice(0, 4).map(w => `${esc(w.n)} <span class="muted">(${pct1(w.share)}% of recent xG)</span>`).join(', ')}${x.who.length > 4 ? ` +${x.who.length - 4} more` : ''}${r.inj.viaLineup ? ' <span class="muted">→ counted through lineup strength</span>' : ` → scoring −${pct1(x.cut)}%`}</p>`).join('');
   const meter = (l, p) => fin(p) ? `<div class="pred-row"><span>${l}</span><div class="meter"><i style="width:${(1 - p) * 100}%;background:var(--away)"></i><i style="width:${p * 100}%;background:var(--home)"></i></div><span class="num">${f0((1 - p) * 100)}% – ${f0(p * 100)}%</span></div>` : '';
@@ -5571,8 +5588,20 @@ function gsBuild(games) {
   for (const r of test) { const p = 1 - Math.exp(-gsLam(W, r) * c1); pSum += p; hits += r.y; const bn = bins.find(x => p >= x.lo && p < x.hi); if (bn) { bn.n++; bn.p += p; bn.hit += r.y; } }
   if (test.length) out.bt = { n: test.length, games: games.length - b, from: games[b].date, to: games[games.length - 1].date, brier: gsBrier(test, W, c1), brierBase: gsBrier(test, W0, c0), brierPrior: gsBrier(test, Wp, cp), expected: pSum, actual: hits, bins: bins.filter(x => x.n), W, fitN: fitRows.length,
     ablate: GS_FACT.map(([k, l], i) => { const Wk = { ...W, b: W.b.map((x, j) => j === i ? 0 : x) }; return { k, l, w: W.b[i], d: gsBrier(test, Wk, gsCal(fitRows, Wk)) - gsBrier(test, W, c1) }; }) };
-  // final model: stats from every game, learned weights, recalibrated
-  const S = gsState(games); S.W = W; S.c = gsCal(gsRows(S2, games.slice(b)), W) || 1; S.ref = refBuild(games); out.S = S;
+  // automatic choice (Oct 2026: the matchup factors stopped beating the simpler version on the newest games): keep all
+  // factors, drop only the ones whose removal helped the test games, or use none, whichever graded the newest games best.
+  // Ties go to the simpler choice.
+  let Wuse = W, mode = 'all';
+  if (out.bt) {
+    const hurt = out.bt.ablate.map((a, i) => a.d < 0 ? i : -1).filter(i => i >= 0);
+    const Wsel = { ...W, b: W.b.map((x, j) => hurt.includes(j) ? 0 : x) };
+    const cand = [['none', W0, out.bt.brierBase], ['some', Wsel, hurt.length ? gsBrier(test, Wsel, gsCal(fitRows, Wsel)) : Infinity], ['all', W, out.bt.brier]];
+    const pick = cand.reduce((m, c) => c[2] < m[2] - 1e-7 ? c : m, cand[0]); // listed simplest first, so a tie keeps the simpler one
+    mode = pick[0]; Wuse = pick[1];
+    out.bt.mode = mode; out.bt.dropped = mode === 'some' ? hurt.map(i => GS_FACT[i][1]) : mode === 'none' ? GS_FACT.map(f => f[1]) : []; out.bt.brierSel = cand[1][2];
+  }
+  // final model: stats from every game, the chosen weights, recalibrated
+  const S = gsState(games); S.W = Wuse; S.mode = mode; S.c = gsCal(gsRows(S2, games.slice(b)), Wuse) || 1; S.ref = refBuild(games); out.S = S;
   return out;
 }
 const seasonOf = d => { const x = new Date(d); return x.getMonth() >= 7 ? x.getFullYear() + 1 : x.getFullYear(); };
@@ -5792,9 +5821,30 @@ function pxOdd(dk, fd, ox) {
    for a model, so Ice Lab uses a fraction of it: quarter Kelly in markets whose pick log has proven itself (300+ graded
    positive-edge picks with a profit), eighth Kelly everywhere else. 1 unit = 1% of a 100-unit bankroll. Sizes are rounded
    to half units, 0.5 minimum and 2 maximum; shaky spots (players with few games) get half. */
-const UNITS = { proof: {} };
+const UNITS = { proof: {}, hair: {} };
+/* sizing haircut (Oct 2026): in every market, recommended bets won about as often as the price said, not as often as the
+   model said, because betting the biggest disagreements picks up model mistakes too. So bet sizes use a more cautious
+   chance: the price's own chance plus h × the model's edge. h is learned from graded recommended bets (how much of the
+   predicted edge actually showed up), starting at half and weighted by how sure that estimate is, between 20% and 100%.
+   Edges shown on the boards are unchanged; only the unit sizes use it. The game model doesn't use it, since its chance is
+   already mixed with the betting line by its live record (GMB). */
+const HAIR_MKTS = ['goal', 'fg', 'sog'];
+function unitsHairFit(PK) {
+  const lists = { goal: [(PK && PK.picks) || [], p => p.best != null ? p.best : p.dk], fg: [(PK && PK.first) || [], p => p.best != null ? p.best : p.dk], sog: [(PK && PK.sog) || [], p => p.best] };
+  for (const m of HAIR_MKTS) {
+    const [list, pxf] = lists[m]; let W = 0, Q = 0, I = 0, V = 0, n = 0;
+    for (const x of list) { if (x.res !== 'W' && x.res !== 'L') continue; const px = pxf(x); if (!fin(+px) || !fin(x.p)) continue; const u = unitsFor(m, x.p, px, { frac: .125, noHair: true }); if (!u || u.u < .5) continue;
+      const im = amImplied(+px); n++; W += x.res === 'W' ? 1 : 0; Q += x.p; I += im; V += x.p * (1 - x.p); }
+    const den = Q - I, prior = .5, tau = .25;
+    if (n < 20 || den <= 0) { UNITS.hair[m] = { h: prior, n, r: NaN, se: NaN }; continue; }
+    const r = (W - I) / den, se = Math.sqrt(V) / den, wD = 1 / (se * se), wP = 1 / (tau * tau);
+    UNITS.hair[m] = { h: clamp((r * wD + prior * wP) / (wD + wP), .2, 1), n, r, se, won: W, model: Q, price: I };
+  }
+  return UNITS.hair;
+}
 const UNIT_MKT = { goal: 'Goal scorer', fg: 'First goal scorer', sog: 'Shots on goal', ml: 'Moneyline (game model)' };
 function unitsProof(PK) {
+  unitsHairFit(PK);
   // a market is "proven" once its recommended bets (0.5u+) have 300+ graded results and a profit in units
   const tally = list => { let n = 0, pr = 0, risk = 0; for (const x of list) { if (!(x.u >= .5) || (x.res !== 'W' && x.res !== 'L') || x.px == null || !isFinite(x.px)) continue; n++; risk += x.u; pr += uProfit(x.u, x.px, x.res); } return { n, roi: risk ? pr / risk : NaN }; };
   const pl = (l, m, px) => (l || []).map(p => ({ u: recU(m, p, p.p, px(p)), px: px(p), res: p.res }));
@@ -5810,14 +5860,15 @@ function unitsProof(PK) {
 // units for one bet: chance p at American price `price` in market m; null when there's no edge worth a bet
 function unitsFor(m, p, price, opt = {}) {
   if (!fin(p) || price == null || !isFinite(price)) return null;
-  const b = amDec(+price) - 1, kelly = (b * p - (1 - p)) / b; if (!(kelly > 0)) return null;
+  const b = amDec(+price) - 1, im = amImplied(+price), hr = !opt.noHair && HAIR_MKTS.includes(m) ? (UNITS.hair[m] || { h: .5 }).h : 1;
+  const pS = im + hr * (p - im), kelly = (b * pS - (1 - pS)) / b; if (!(kelly > 0)) return null;
   const pr = UNITS.proof[m] || { n: 0, roi: NaN, proven: false }, frac = opt.frac || (pr.proven ? .25 : .125);
   let raw = frac * kelly * 100; if (opt.shaky) raw *= .5;
   if (raw < .25) return null;
   const u = Math.min(2, Math.max(.5, Math.round(raw * 2) / 2));
-  return { u, raw, kelly, frac, proven: pr.proven, n: pr.n, roi: pr.roi, shaky: !!opt.shaky };
+  return { u, raw, kelly, frac, proven: pr.proven, n: pr.n, roi: pr.roi, shaky: !!opt.shaky, p, pS, hr, hair: HAIR_MKTS.includes(m) && !opt.noHair ? UNITS.hair[m] || null : null };
 }
-const unitsTip = (m, x) => `<b>${x.u} unit${x.u === 1 ? '' : 's'}</b><div class='row'><span>Sizing</span><b>${x.proven ? 'Quarter' : 'Eighth'} Kelly</b></div><div class='row'><span>${UNIT_MKT[m]} track record</span><b>${x.n.toLocaleString()} graded recommended bets${fin(x.roi) ? `, ROI ${x.roi > 0 ? '+' : ''}${pct1(x.roi)}%` : ''}</b></div><div class='row'><span>Full Kelly would be</span><b>${(x.kelly * 100).toFixed(1)}% of bankroll</b></div>${x.shaky ? "<div class='row'><span>Few games of data</span><b>halved</b></div>" : ''}<div class='muted' style='margin-top:4px'>${x.proven ? 'This market&#39;s recommended bets are profitable over 300+ graded bets, so it gets quarter Kelly.' : 'Not proven yet (needs 300+ graded recommended bets with a profit in units), so it gets the more cautious eighth Kelly.'} 1 unit = 1% of a 100-unit bankroll; capped at 2 units.</div>`;
+const unitsTip = (m, x) => `<b>${x.u} unit${x.u === 1 ? '' : 's'}</b><div class='row'><span>Sizing</span><b>${x.proven ? 'Quarter' : 'Eighth'} Kelly</b></div><div class='row'><span>${UNIT_MKT[m]} track record</span><b>${x.n.toLocaleString()} graded recommended bets${fin(x.roi) ? `, ROI ${x.roi > 0 ? '+' : ''}${pct1(x.roi)}%` : ''}</b></div>${x.hr < 1 ? `<div class='row'><span>Sizing chance (cautious)</span><b>${pct1(x.pS)}% (model ${pct1(x.p)}%, keeping ${Math.round(x.hr * 100)}% of the edge)</b></div>` : ''}<div class='row'><span>Full Kelly would be</span><b>${(x.kelly * 100).toFixed(1)}% of bankroll</b></div>${x.shaky ? "<div class='row'><span>Few games of data</span><b>halved</b></div>" : ''}<div class='muted' style='margin-top:4px'>${x.proven ? 'This market&#39;s recommended bets are profitable over 300+ graded bets, so it gets quarter Kelly.' : 'Not proven yet (needs 300+ graded recommended bets with a profit in units), so it gets the more cautious eighth Kelly.'} 1 unit = 1% of a 100-unit bankroll; capped at 2 units.</div>`;
 const unitsCell = (m, p, price, opt) => { const x = unitsFor(m, p, price, opt); return x ? `<b data-tip="${esc(unitsTip(m, x))}" style="color:var(--good)">${x.u}u</b>${opt && opt.side ? ` <span class="muted" style="font-size:11px">${opt.side}</span>` : ''}` : '<span class="muted">–</span>'; };
 const ODD_TAG = ' <span class="injb" data-tip="Way off the other books&#39; prices for this player, so it&#39;s probably a different player with the same name. Left out of the best price and edge.">⚠ ignored</span>';
 function bestPrice(dk, fd, ox) { const odd = pxOdd(dk, fd, ox); const c = [['dk', dk], ['fd', fd], ...XBK.map(k => [k, ox ? ox[k] : null])].filter(([k, v]) => v != null && isFinite(v) && !odd.has(k)); if (!c.length) return null; c.sort((a, b) => amDec(b[1]) - amDec(a[1])); return { price: +c[0][1], book: c[0][0] }; }
@@ -5963,6 +6014,7 @@ async function renderScorers() {
       <div class="tiles" style="margin-bottom:10px"><div class="tile"><div class="k">Predicted scorers</div><div class="v num">${f0(bt.expected)}</div><div class="s">vs. ${bt.actual} who actually scored</div></div>
       <div class="tile"><div class="k">Brier · full model</div><div class="v num">${bt.brier.toFixed(4)}</div><div class="s">lower is better</div></div>
       <div class="tile"><div class="k">Without matchup factors</div><div class="v num">${bt.brierBase.toFixed(4)}</div><div class="s">player baseline + power play only · ${bt.brier < bt.brierBase ? `<b style="color:var(--good)">factors help</b>` : `<b style="color:var(--neg)">factors not helping yet</b>`}</div></div></div>
+      ${bt.mode ? `<p style="margin:8px 0 0;font-size:12.5px"><b>In use tonight:</b> ${bt.mode === 'all' ? 'every matchup factor, because that graded the newest games best' : bt.mode === 'none' ? 'the player baseline + power play only (no matchup factors), because the factors weren&#39;t beating it on the newest games' : `the matchup factors minus ${esc(bt.dropped.join(', '))}, because switching ${bt.dropped.length === 1 ? 'that one' : 'those'} off graded the newest games better`}. Rechecked every rebuild, so factors come back on as soon as they start helping.</p>` : ''}
       <h3 class="cmp-sec">What it learned</h3>
       <div class="twrap"><table><thead><tr><th class="l">Factor</th><th data-gloss="How strongly the model uses this factor: 1 = exactly as designed, 0 = ignored, above 1 = matters even more than expected. Learned from the loaded games every time the model rebuilds.">Learned weight</th><th data-gloss="How much worse the test predictions get (Brier ×1,000) when this factor is switched off. Positive = it helps.">Test impact</th></tr></thead><tbody>
       ${bt.ablate.map(a => `<tr><td class="l">${esc(a.l)}</td><td>${f2(a.w)}</td><td style="color:${a.d > 0 ? 'var(--good)' : a.d < 0 ? 'var(--neg)' : 'inherit'}">${a.d >= 0 ? '+' : ''}${(a.d * 1000).toFixed(2)}</td></tr>`).join('')}
@@ -6009,7 +6061,7 @@ const PKF = { data: null, t: 0, strat: 'pos', all: false };
 async function getPicksFile() {
   if (PKF.data !== null && Date.now() - PKF.t < 5 * 60e3) return PKF.data;
   try { const r = await fetch('picks.json?t=' + Date.now(), { cache: 'no-store' }); PKF.data = r.ok ? await r.json() : false; } catch (e) { PKF.data = false; }
-  PKF.t = Date.now(); try { unitsProof(PKF.data); } catch (e) {} return PKF.data;
+  PKF.t = Date.now(); try { gmBlendFit(PKF.data); unitsProof(PKF.data); } catch (e) {} return PKF.data;
 }
 const pkRisk = o => o < 0 ? -o : 100, pkWin = o => o < 0 ? 100 : o;
 const pkPx = p => p.best != null ? p.best : p.dk;
@@ -6963,7 +7015,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
   (async () => {
     if (ex && fin(ex.pH)) { st.p = ex.pH; calc(); return; }
     if (!G.e) return;
-    try { await gmLoadSaved(); if (!GM.model) return; let inj = null; try { inj = await getInjuries(G.gid); } catch (err) {} const LF = await getLinesFile(); const pk = gmEventPick(G.e, inj, LF); if (pk && fin(pk.r.p) && document.body.contains(m)) { st.p = pk.r.p; calc(); } } catch (err) {}
+    try { await gmLoadSaved(); if (!GM.model) return; let inj = null; try { inj = await getInjuries(G.gid); } catch (err) {} const LF = await getLinesFile(); await getPicksFile(); const pk = gmEventPick(G.e, inj, LF); if (pk && fin(pk.r.p) && document.body.contains(m)) { st.p = pk.r.p; calc(); } } catch (err) {}
   })();
   $('#mbSaveBtn').onclick = async () => {
     const o = Math.round(+$('#mbOdds').value), s = +$('#mbStake').value, line = st.type === 'ml' ? null : +$('#gbLine').value;
