@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-27",
- "updated": "2026-10-27T22:55:34.096Z",
+ "updated": "2026-10-28T00:00:18.467Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -447,11 +447,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Taylor Hall",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Eric Robinson",
          "pos": "W",
          "pp": ""
@@ -459,6 +454,11 @@
         {
          "n": "Jesperi Kotkaniemi",
          "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Nicolas Deslauriers",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -1543,7 +1543,7 @@
         {
          "n": "Joel Armia",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Scott Laughton",
@@ -1561,8 +1561,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Corey Perry",
-         "pos": "W",
+         "n": "Alex Turcotte",
+         "pos": "C",
          "pp": "PP2"
         },
         {
@@ -1591,9 +1591,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Drew Doughty",
+         "n": "Cody Ceci",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Joel Edmundson",
@@ -2181,6 +2181,11 @@
        "players": [
         {
          "n": "Marc Gatcomb",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Raphael Lavoie",
          "pos": "W",
          "pp": ""
         },
