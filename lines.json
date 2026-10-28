@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-28",
- "updated": "2026-10-28T17:00:20.375Z",
+ "updated": "2026-10-28T19:00:18.641Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -764,9 +764,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Easton Cowan",
+         "n": "Gavin McKenna",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Jack Roslovic",
@@ -789,14 +789,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Gavin McKenna",
+         "n": "William Nylander",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "William Nylander",
+         "n": "Easton Cowan",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
