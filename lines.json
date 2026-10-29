@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-28",
- "updated": "2026-10-29T00:00:16.637Z",
+ "updated": "2026-10-29T01:00:19.033Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -427,6 +427,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Isaac Howard",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Trent Frederic",
          "pos": "W",
          "pp": "PP2"
@@ -435,11 +440,6 @@
          "n": "Owen Michaels",
          "pos": "C",
          "pp": ""
-        },
-        {
-         "n": "Alex Formenton",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -447,13 +447,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Isaac Howard",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Jason Dickinson",
          "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Alex Formenton",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -615,7 +615,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Johnathan Kovacevic",
+         "n": "Declan Chisholm",
          "pos": "D",
          "pp": ""
         },
@@ -726,22 +726,22 @@
          "pp": "PP2"
         },
         {
-         "n": "Brett Kulak",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Sam Malinski",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Josh Manson",
          "pos": "D",
          "pp": ""
         },
         {
+         "n": "Brett Kulak",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Brent Burns",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Sam Malinski",
          "pos": "D",
          "pp": ""
         }
