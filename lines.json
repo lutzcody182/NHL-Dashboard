@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-28",
- "updated": "2026-10-28T22:00:17.356Z",
+ "updated": "2026-10-29T00:00:16.637Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -42,14 +42,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Denver Barkey",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
          "n": "Alex Bump",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Sean Couturier",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -87,9 +87,9 @@
          "pp": ""
         },
         {
-         "n": "Sean Couturier",
+         "n": "Denver Barkey",
          "pos": "C",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       },
@@ -97,9 +97,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Oliver Bonk",
+         "n": "Jamie Drysdale",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Travis Sanheim",
@@ -107,22 +107,22 @@
          "pp": "PP2"
         },
         {
-         "n": "Jamie Drysdale",
-         "pos": "D",
-         "pp": "PP1"
-        },
-        {
          "n": "Cam York",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Hunter McDonald",
+         "n": "Nick Seeler",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Nick Seeler",
+         "n": "Oliver Bonk",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
+         "n": "Hunter McDonald",
          "pos": "D",
          "pp": ""
         }
