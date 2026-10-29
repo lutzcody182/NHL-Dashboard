@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-29",
- "updated": "2026-10-29T22:00:18.182Z",
+ "updated": "2026-10-29T23:00:18.537Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -22,39 +22,19 @@
          "pp": "PP1"
         },
         {
-         "n": "Mark Scheifele",
-         "pos": "C",
+         "n": "Gabriel Vilardi",
+         "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Kyle Connor",
-         "pos": "W",
+         "n": "Mark Scheifele",
+         "pos": "C",
          "pp": "PP1"
         }
        ]
       },
       {
        "label": "Line 2",
-       "players": [
-        {
-         "n": "Adam Lowry",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Isak Rosen",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Gabriel Vilardi",
-         "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
        "players": [
         {
          "n": "Dawson Mercer",
@@ -64,6 +44,26 @@
         {
          "n": "Viggo Bjorck",
          "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Kyle Connor",
+         "pos": "W",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Adam Lowry",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Isak Rosen",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -138,13 +138,13 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Gage Goncalves",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Brayden Point",
          "pos": "C",
+         "pp": "PP1"
+        },
+        {
+         "n": "Jake Guentzel",
+         "pos": "W",
          "pp": "PP1"
         },
         {
@@ -168,9 +168,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Jake Guentzel",
+         "n": "Pontus Holmberg",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -178,14 +178,14 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Gage Goncalves",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Dominic James",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Pontus Holmberg",
-         "pos": "W",
-         "pp": "PP2"
         },
         {
          "n": "Ilya Mikheyev",
@@ -255,7 +255,7 @@
    "teams": [
     {
      "team": "Utah Hockey Club",
-     "goalie": "Karel Vejmelka",
+     "goalie": "Sebastian Cossa",
      "groups": [
       {
        "label": "Line 1",
@@ -266,9 +266,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Lawson Crouse",
+         "n": "Dylan Guenther",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Nick Schmaltz",
@@ -281,9 +281,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Dylan Guenther",
+         "n": "Lawson Crouse",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Logan Cooley",
@@ -321,7 +321,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Liam O'Brien",
+         "n": "Daniil But",
          "pos": "W",
          "pp": ""
         },
@@ -1169,9 +1169,9 @@
          "pp": ""
         },
         {
-         "n": "Justin Hryckowian",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Joel Kiviranta",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Jamie Benn",
@@ -1184,12 +1184,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Matthew Seminoff",
-         "pos": "W",
-         "pp": ""
+         "n": "Justin Hryckowian",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
-         "n": "Joel Kiviranta",
+         "n": "Matthew Seminoff",
          "pos": "W",
          "pp": ""
         },
@@ -1913,7 +1913,7 @@
         {
          "n": "Nils Hoglander",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jonathan Marchessault",
@@ -1933,7 +1933,7 @@
         {
          "n": "Ross Colton",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Adam Edstrom",
@@ -2094,7 +2094,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Zach Metsa",
+         "n": "Dennis Gilbert",
          "pos": "D",
          "pp": ""
         },
@@ -2115,9 +2115,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Cutter Gauthier",
+         "n": "Alex Killorn",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Judd Caulfield",
@@ -2155,29 +2155,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Alex Killorn",
+         "n": "Cutter Gauthier",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Nikita Nesterenko",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Roger McQueen",
-         "pos": "C",
-         "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
-         "n": "Sam Colangelo",
-         "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Tim Washe",
@@ -2187,6 +2167,26 @@
         {
          "n": "A.J. Greer",
          "pos": "W",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Frank Vatrano",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Sam Colangelo",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Roger McQueen",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -2215,12 +2215,12 @@
          "pp": ""
         },
         {
-         "n": "Travis Mitchell",
+         "n": "Nick Jensen",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Drew Helleson",
+         "n": "Travis Mitchell",
          "pos": "D",
          "pp": ""
         }
@@ -2559,7 +2559,7 @@
         {
          "n": "Paul Cotter",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Arshdeep Bains",
@@ -2584,7 +2584,7 @@
         {
          "n": "Tom Willander",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jamie Oleksiak",
