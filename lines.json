@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-29",
- "updated": "2026-10-29T13:09:44.187Z",
+ "updated": "2026-10-29T17:00:18.836Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -104,7 +104,12 @@
         {
          "n": "Neal Pionk",
          "pos": "D",
-         "pp": "PP1"
+         "pp": "PP2"
+        },
+        {
+         "n": "Mario Ferraro",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Dylan DeMelo",
@@ -112,19 +117,14 @@
          "pp": ""
         },
         {
+         "n": "Haydn Fleury",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Elias Salomonsson",
          "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Tyrel Bauer",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Mario Ferraro",
-         "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       }
@@ -178,8 +178,8 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Zemgus Girgensons",
-         "pos": "C",
+         "n": "Dominic James",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -197,11 +197,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Scott Sabourin",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Conor Geekie",
          "pos": "C",
@@ -238,14 +233,14 @@
          "pp": ""
         },
         {
-         "n": "Emil Lilleberg",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Charle-Edouard D'Astous",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Victor Hedman",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -575,12 +570,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ryan Lomberg",
+         "n": "Danton Heinen",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Dmitri Voronkov",
+         "n": "Ryan Lomberg",
          "pos": "W",
          "pp": ""
         },
@@ -774,9 +769,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Ryan Greene",
+         "n": "Teuvo Teravainen",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -834,9 +829,9 @@
          "pp": ""
         },
         {
-         "n": "Teuvo Teravainen",
+         "n": "Ryan Greene",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -859,7 +854,7 @@
          "pp": ""
         },
         {
-         "n": "Alex Vlasic",
+         "n": "Ethan Del Mastro",
          "pos": "D",
          "pp": ""
         },
@@ -905,6 +900,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Andrew Copp",
+         "pos": "C",
+         "pp": "PP1"
+        },
+        {
          "n": "Michael Brandsegg-Nygard",
          "pos": "W",
          "pp": "PP2"
@@ -913,11 +913,6 @@
          "n": "Lucas Raymond",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Dylan Larkin",
-         "pos": "C",
-         "pp": "PP1"
         }
        ]
       },
@@ -925,7 +920,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Andrew Copp",
+         "n": "Nate Danielson",
          "pos": "C",
          "pp": "PP2"
         },
@@ -944,11 +939,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Nate Danielson",
-         "pos": "C",
-         "pp": ""
-        },
         {
          "n": "Keegan Kolesar",
          "pos": "W",
@@ -1179,9 +1169,9 @@
          "pp": ""
         },
         {
-         "n": "Justin Hryckowian",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Joel Kiviranta",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Jamie Benn",
@@ -1194,12 +1184,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Matthew Seminoff",
-         "pos": "W",
-         "pp": ""
+         "n": "Justin Hryckowian",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
-         "n": "Joel Kiviranta",
+         "n": "Matthew Seminoff",
          "pos": "W",
          "pp": ""
         },
@@ -1876,6 +1866,11 @@
          "pp": "PP1"
         },
         {
+         "n": "Mavrik Bourque",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Ryan O'Reilly",
          "pos": "C",
          "pp": "PP1"
@@ -1891,9 +1886,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Mavrik Bourque",
+         "n": "Vitali Pinchuk",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Filip Forsberg",
