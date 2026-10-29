@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-29",
- "updated": "2026-10-29T19:40:37.145Z",
+ "updated": "2026-10-29T22:00:18.182Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1999,6 +1999,11 @@
          "pp": "PP1"
         },
         {
+         "n": "Peyton Krebs",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Tage Thompson",
          "pos": "C",
          "pp": "PP1"
@@ -2049,8 +2054,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Peyton Krebs",
-         "pos": "W",
+         "n": "Sam Carrick",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -2449,22 +2454,22 @@
          "pp": "PP2"
         },
         {
-         "n": "Brian Dumoulin",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Mikey Anderson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Drew Doughty",
          "pos": "D",
          "pp": ""
         },
         {
          "n": "Joel Edmundson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Brian Dumoulin",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Mikey Anderson",
          "pos": "D",
          "pp": ""
         }
