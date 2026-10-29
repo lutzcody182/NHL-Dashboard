@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-29",
- "updated": "2026-10-29T18:24:12.614Z",
+ "updated": "2026-10-29T19:00:19.300Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1988,7 +1988,7 @@
    "teams": [
     {
      "team": "Buffalo Sabres",
-     "goalie": "Ukko-Pekka Luukkonen",
+     "goalie": "Colten Ellis",
      "groups": [
       {
        "label": "Line 1",
@@ -2237,7 +2237,7 @@
    "teams": [
     {
      "team": "Ottawa Senators",
-     "goalie": "Samuel Ersson",
+     "goalie": "Jonas Johansson",
      "groups": [
       {
        "label": "Line 1",
@@ -2273,9 +2273,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Warren Foegele",
+         "n": "Andre Burakovsky",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -2313,9 +2313,9 @@
          "pp": ""
         },
         {
-         "n": "Andre Burakovsky",
+         "n": "Hayden Hodgson",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2343,12 +2343,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Tyler Kleven",
+         "n": "Nikolas Matinpalo",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Carter Yakemchuk",
+         "n": "Tyler Kleven",
          "pos": "D",
          "pp": ""
         }
