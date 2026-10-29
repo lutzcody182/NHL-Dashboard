@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-29",
- "updated": "2026-10-29T17:32:32.579Z",
+ "updated": "2026-10-29T18:00:18.659Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -366,7 +366,7 @@
          "pp": ""
         },
         {
-         "n": "Nick DeSimone",
+         "n": "Artem Duda",
          "pos": "D",
          "pp": ""
         }
@@ -854,7 +854,7 @@
          "pp": ""
         },
         {
-         "n": "Ethan Del Mastro",
+         "n": "Alex Vlasic",
          "pos": "D",
          "pp": ""
         },
@@ -1169,9 +1169,9 @@
          "pp": ""
         },
         {
-         "n": "Joel Kiviranta",
-         "pos": "W",
-         "pp": ""
+         "n": "Justin Hryckowian",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Jamie Benn",
@@ -1184,12 +1184,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Justin Hryckowian",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Matthew Seminoff",
+         "pos": "W",
+         "pp": ""
         },
         {
-         "n": "Matthew Seminoff",
+         "n": "Joel Kiviranta",
          "pos": "W",
          "pp": ""
         },
@@ -1329,7 +1329,7 @@
         {
          "n": "Hampus Lindholm",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Charlie McAvoy",
@@ -1354,7 +1354,7 @@
         {
          "n": "Mason Lohrei",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -1564,6 +1564,11 @@
          "n": "Mitchell Chaffee",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Kyle MacLean",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1591,14 +1596,14 @@
          "pp": ""
         },
         {
-         "n": "Matthew Kessel",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Tony DeAngelo",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Scott Mayfield",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -1697,9 +1702,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Jared Spurgeon",
+         "n": "Jonas Brodin",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Olli Maatta",
@@ -1707,14 +1712,14 @@
          "pp": ""
         },
         {
-         "n": "Jonas Brodin",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Zach Bogosian",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "David Spacek",
+         "pos": "D",
+         "pp": "PP2"
         },
         {
          "n": "Matt Kiersted",
@@ -2602,7 +2607,7 @@
     },
     {
      "team": "San Jose Sharks",
-     "goalie": "Alex Nedeljkovic",
+     "goalie": "Yaroslav Askarov",
      "groups": [
       {
        "label": "Line 1",
