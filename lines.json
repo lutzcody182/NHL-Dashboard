@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-29",
- "updated": "2026-10-29T19:00:19.300Z",
+ "updated": "2026-10-29T19:40:37.145Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1994,11 +1994,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Konsta Helenius",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Zach Benson",
          "pos": "W",
          "pp": "PP1"
@@ -2424,8 +2419,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Alex Turcotte",
-         "pos": "C",
+         "n": "Corey Perry",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -2464,7 +2459,7 @@
          "pp": ""
         },
         {
-         "n": "Cody Ceci",
+         "n": "Drew Doughty",
          "pos": "D",
          "pp": ""
         },
