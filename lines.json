@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-29",
- "updated": "2026-10-29T17:00:18.836Z",
+ "updated": "2026-10-29T17:32:32.579Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -887,7 +887,7 @@
         {
          "n": "Emmitt Finnie",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Viktor Arvidsson",
@@ -902,7 +902,7 @@
         {
          "n": "Andrew Copp",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Michael Brandsegg-Nygard",
@@ -1329,7 +1329,7 @@
         {
          "n": "Hampus Lindholm",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Charlie McAvoy",
@@ -1347,14 +1347,14 @@
          "pp": ""
         },
         {
-         "n": "Mason Lohrei",
+         "n": "Connor Clifton",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Frederic Brunet",
+         "n": "Mason Lohrei",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -1368,7 +1368,7 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Dylan Holloway",
+         "n": "Jake Neighbours",
          "pos": "W",
          "pp": "PP1"
         },
@@ -1398,7 +1398,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Connor McMichael",
+         "n": "Pavel Buchnevich",
          "pos": "W",
          "pp": "PP2"
         }
@@ -1408,7 +1408,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Jake Neighbours",
+         "n": "Dylan Holloway",
          "pos": "W",
          "pp": "PP1"
         },
@@ -1418,7 +1418,7 @@
          "pp": ""
         },
         {
-         "n": "Pavel Buchnevich",
+         "n": "Connor McMichael",
          "pos": "W",
          "pp": "PP2"
         }
