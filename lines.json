@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-30",
- "updated": "2026-10-30T20:00:18.106Z",
+ "updated": "2026-10-30T21:00:18.132Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -574,6 +574,11 @@
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Ben Meyers",
+         "pos": "W",
+         "pp": ""
+        },
         {
          "n": "Ryan Winterton",
          "pos": "W",
