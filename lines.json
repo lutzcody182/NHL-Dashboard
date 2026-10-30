@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-30",
- "updated": "2026-10-30T21:00:18.132Z",
+ "updated": "2026-10-30T22:00:16.123Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -117,12 +117,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Declan Chisholm",
+         "n": "Johnathan Kovacevic",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Brenden Dillon",
+         "n": "Declan Chisholm",
          "pos": "D",
          "pp": ""
         }
@@ -163,14 +163,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Mitch Marner",
+         "n": "Trevor Connelly",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Brett Howden",
+         "n": "Mitch Marner",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       },
@@ -183,14 +183,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Trevor Connelly",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Tomas Hertl",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Brett Howden",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -199,11 +199,6 @@
        "players": [
         {
          "n": "Marc Gatcomb",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Raphael Lavoie",
          "pos": "W",
          "pp": ""
         },
