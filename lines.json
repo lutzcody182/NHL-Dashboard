@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-30",
- "updated": "2026-10-30T17:00:19.238Z",
+ "updated": "2026-10-30T20:00:18.106Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -132,7 +132,7 @@
     },
     {
      "team": "Vegas Golden Knights",
-     "goalie": "Carter Hart",
+     "goalie": "Adin Hill",
      "groups": [
       {
        "label": "Line 1",
@@ -574,11 +574,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Ben Meyers",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Ryan Winterton",
          "pos": "W",
