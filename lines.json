@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-29",
- "updated": "2026-10-29T23:00:18.537Z",
+ "updated": "2026-10-30T00:00:17.218Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -948,6 +948,11 @@
          "n": "Carter Mazur",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Sheldon Dries",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -1093,17 +1098,17 @@
          "pp": "PP1"
         },
         {
-         "n": "Mike Matheson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Kaiden Guhle",
          "pos": "D",
          "pp": ""
         },
         {
          "n": "Adam Engstrom",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Arber Xhekaj",
          "pos": "D",
          "pp": ""
         },
@@ -1871,11 +1876,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Mavrik Bourque",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Ryan O'Reilly",
          "pos": "C",
          "pp": "PP1"
@@ -1891,9 +1891,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Vitali Pinchuk",
+         "n": "Mavrik Bourque",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Filip Forsberg",
