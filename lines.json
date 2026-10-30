@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-29",
- "updated": "2026-10-30T00:00:17.218Z",
+ "updated": "2026-10-30T02:00:20.836Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2109,7 +2109,7 @@
     },
     {
      "team": "Anaheim Ducks",
-     "goalie": "Lukas Dostal",
+     "goalie": "Ville Husso",
      "groups": [
       {
        "label": "Line 1",
@@ -2394,7 +2394,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Taylor Ward",
+         "n": "Corey Perry",
          "pos": "W",
          "pp": "PP2"
         }
@@ -2414,9 +2414,9 @@
          "pp": ""
         },
         {
-         "n": "Erik Haula",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Andre Lee",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -2424,14 +2424,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Corey Perry",
+         "n": "Taylor Ward",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Andre Lee",
-         "pos": "W",
-         "pp": ""
+         "n": "Erik Haula",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Samuel Helenius",
