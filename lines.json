@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-30",
- "updated": "2026-10-30T22:00:16.123Z",
+ "updated": "2026-10-30T23:00:20.177Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -313,18 +313,13 @@
         {
          "n": "Alex Iafallo",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Brad Lambert",
-         "pos": "W",
-         "pp": "PP2"
-        },
         {
          "n": "Morgan Barron",
          "pos": "C",
@@ -343,7 +338,7 @@
         {
          "n": "Dylan Samberg",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Neal Pionk",
