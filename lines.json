@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-31",
- "updated": "2026-10-31T19:00:15.386Z",
+ "updated": "2026-10-31T20:00:18.488Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1113,7 +1113,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Dennis Gilbert",
+         "n": "Zach Metsa",
          "pos": "D",
          "pp": ""
         },
@@ -1128,19 +1128,19 @@
     },
     {
      "team": "Los Angeles Kings",
-     "goalie": "Darcy Kuemper",
+     "goalie": "Anton Forsberg",
      "groups": [
       {
        "label": "Line 1",
        "players": [
         {
-         "n": "Alex Laferriere",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Martin Chromiak",
+         "pos": "W",
+         "pp": ""
         },
         {
-         "n": "Adrian Kempe",
-         "pos": "W",
+         "n": "Alex Laferriere",
+         "pos": "C",
          "pp": "PP1"
         },
         {
@@ -1166,7 +1166,7 @@
         {
          "n": "Corey Perry",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -1186,7 +1186,7 @@
         {
          "n": "Andre Lee",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1196,7 +1196,7 @@
         {
          "n": "Taylor Ward",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Erik Haula",
@@ -2237,7 +2237,7 @@
    "teams": [
     {
      "team": "Calgary Flames",
-     "goalie": "",
+     "goalie": "Arsenii Sergeev",
      "groups": [
       {
        "label": "Line 1",
