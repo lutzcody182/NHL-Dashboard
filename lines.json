@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-31",
- "updated": "2026-10-31T15:00:19.051Z",
+ "updated": "2026-10-31T16:00:17.812Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -132,7 +132,7 @@
     },
     {
      "team": "Boston Bruins",
-     "goalie": "Jeremy Swayman",
+     "goalie": "Michael DiPietro",
      "groups": [
       {
        "label": "Line 1",
@@ -208,7 +208,7 @@
          "pp": ""
         },
         {
-         "n": "Matthew Poitras",
+         "n": "Sean Kuraly",
          "pos": "C",
          "pp": ""
         }
@@ -238,14 +238,14 @@
          "pp": ""
         },
         {
-         "n": "Connor Clifton",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Mason Lohrei",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Jonathan Aspirot",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -1672,14 +1672,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Florian Xhekaj",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Kirby Dach",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Owen Beck",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Jake Evans",
@@ -2170,13 +2170,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Radek Faksa",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Justin Hryckowian",
          "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "David Perron",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -2190,14 +2190,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Esa Lindell",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Miro Heiskanen",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Thomas Harley",
-         "pos": "D",
-         "pp": "PP2"
         },
         {
          "n": "Nils Lundkvist",
@@ -2205,9 +2205,9 @@
          "pp": ""
         },
         {
-         "n": "Lian Bichsel",
+         "n": "Thomas Harley",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Tyler Myers",
@@ -2215,7 +2215,7 @@
          "pp": ""
         },
         {
-         "n": "Trey Taylor",
+         "n": "Lian Bichsel",
          "pos": "D",
          "pp": ""
         }
