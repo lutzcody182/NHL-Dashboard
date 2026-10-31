@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-31",
- "updated": "2026-10-31T17:00:18.802Z",
+ "updated": "2026-10-31T18:00:16.562Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -575,6 +575,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Scott Sabourin",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Conor Geekie",
          "pos": "C",
          "pp": "PP2"
@@ -590,9 +595,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "John Carlson",
+         "n": "Ryan McDonagh",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "J.J. Moser",
@@ -600,19 +605,19 @@
          "pp": ""
         },
         {
-         "n": "Ryan McDonagh",
+         "n": "John Carlson",
          "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Erik Cernak",
-         "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Charle-Edouard D'Astous",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Max Crozier",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Victor Hedman",
@@ -625,7 +630,7 @@
     },
     {
      "team": "Nashville Predators",
-     "goalie": "Juuse Saros",
+     "goalie": "Justus Annunen",
      "groups": [
       {
        "label": "Line 1",
@@ -651,7 +656,7 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Matthew Wood",
+         "n": "Alexander Kerfoot",
          "pos": "C",
          "pp": "PP2"
         },
@@ -671,7 +676,12 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Alexander Kerfoot",
+         "n": "Reid Schaefer",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Matthew Wood",
          "pos": "C",
          "pp": "PP2"
         },
@@ -716,16 +726,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Nicolas Hague",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Jayden Struble",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Nick Perbix",
          "pos": "D",
          "pp": ""
@@ -734,6 +734,16 @@
          "n": "Brady Skjei",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Daemon Hunt",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Jayden Struble",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -1294,7 +1304,7 @@
         {
          "n": "Ridly Greig",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Michael Amadio",
@@ -2419,17 +2429,17 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Logan O'Connor",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Parker Kelly",
          "pos": "W",
          "pp": ""
         },
         {
          "n": "Fedor Svechkov",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Gavin Brindley",
          "pos": "C",
          "pp": ""
         }
