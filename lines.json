@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-31",
- "updated": "2026-10-31T16:00:17.812Z",
+ "updated": "2026-10-31T17:00:18.802Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -11,7 +11,7 @@
    "teams": [
     {
      "team": "Chicago Blackhawks",
-     "goalie": "Spencer Knight",
+     "goalie": "Arvid Soderblom",
      "groups": [
       {
        "label": "Line 1",
@@ -27,9 +27,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Teuvo Teravainen",
+         "n": "Ryan Donato",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -57,9 +57,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Ryan Donato",
+         "n": "Andrew Mangiapane",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Tyler Bertuzzi",
@@ -99,7 +99,7 @@
         {
          "n": "Artyom Levshunov",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Wyatt Kaiser",
@@ -117,14 +117,14 @@
          "pp": ""
         },
         {
-         "n": "Kevin Korchinski",
+         "n": "Ethan Del Mastro",
          "pos": "D",
          "pp": ""
         },
         {
          "n": "Sam Rinzel",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       }
@@ -361,9 +361,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Colton Parayko",
+         "n": "Adam Jiricek",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Justin Barron",
@@ -371,9 +371,9 @@
          "pp": ""
         },
         {
-         "n": "Adam Jiricek",
+         "n": "Theo Lindstein",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -955,17 +955,17 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Logan Stanley",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Matthew Schaefer",
          "pos": "D",
          "pp": "PP1"
         },
         {
          "n": "Adam Pelech",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Logan Stanley",
          "pos": "D",
          "pp": ""
         },
@@ -1485,7 +1485,7 @@
    "teams": [
     {
      "team": "Pittsburgh Penguins",
-     "goalie": "Arturs Silovs",
+     "goalie": "Sergei Murashov",
      "groups": [
       {
        "label": "Line 1",
