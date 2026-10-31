@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-30",
- "updated": "2026-10-30T23:00:20.177Z",
+ "updated": "2026-10-31T00:00:17.524Z",
  "games": [
   {
    "time": "6:00 PM ET",
@@ -499,7 +499,7 @@
    "teams": [
     {
      "team": "Seattle Kraken",
-     "goalie": "Joey Daccord",
+     "goalie": "Philipp Grubauer",
      "groups": [
       {
        "label": "Line 1",
@@ -535,8 +535,8 @@
          "pp": "PP2"
         },
         {
-         "n": "Jani Nyman",
-         "pos": "W",
+         "n": "Freddy Gaudreau",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -565,6 +565,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Curtis Douglas",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Ben Meyers",
          "pos": "W",
          "pp": ""
@@ -572,11 +577,6 @@
         {
          "n": "Ryan Winterton",
          "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Freddy Gaudreau",
-         "pos": "C",
          "pp": ""
         }
        ]
