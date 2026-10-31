@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-31",
- "updated": "2026-10-31T18:00:16.562Z",
+ "updated": "2026-10-31T19:00:15.386Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -980,14 +980,14 @@
          "pp": ""
         },
         {
-         "n": "Matthew Kessel",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Tony DeAngelo",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Matthew Kessel",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Scott Mayfield",
@@ -1425,7 +1425,7 @@
         {
          "n": "Filip Bystedt",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1443,9 +1443,9 @@
          "pp": ""
         },
         {
-         "n": "Adam Gaudette",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Zack Ostapchuk",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -2059,11 +2059,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Danton Heinen",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Ryan Lomberg",
          "pos": "W",
          "pp": ""
@@ -2089,12 +2084,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Jake Christiansen",
+         "n": "Denton Mateychuk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
-         "n": "Denton Mateychuk",
+         "n": "Ivan Provorov",
          "pos": "D",
          "pp": "PP2"
         },
