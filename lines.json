@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-31",
- "updated": "2026-10-31T21:00:20.818Z",
+ "updated": "2026-10-31T23:00:26.662Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1136,7 +1136,7 @@
         {
          "n": "Martin Chromiak",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Alex Laferriere",
@@ -1166,7 +1166,7 @@
         {
          "n": "Corey Perry",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -1186,7 +1186,7 @@
         {
          "n": "Andre Lee",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -1196,7 +1196,7 @@
         {
          "n": "Taylor Ward",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Erik Haula",
@@ -1591,16 +1591,6 @@
          "pp": ""
         },
         {
-         "n": "Declan Carlile",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Kris Letang",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Kaedan Korczak",
          "pos": "D",
          "pp": ""
@@ -1609,6 +1599,16 @@
          "n": "Samuel Girard",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Declan Carlile",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Kris Letang",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
@@ -1642,11 +1642,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Oliver Kapanen",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Josh Anderson",
          "pos": "W",
          "pp": ""
@@ -1655,6 +1650,11 @@
          "n": "Chris Kreider",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Jake Evans",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -1664,7 +1664,7 @@
         {
          "n": "Phillip Danault",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Zachary Bolduc",
@@ -1682,18 +1682,18 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Kirby Dach",
-         "pos": "W",
+         "n": "Oliver Kapanen",
+         "pos": "C",
          "pp": "PP1"
         },
         {
-         "n": "Owen Beck",
+         "n": "Florian Xhekaj",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Jake Evans",
-         "pos": "C",
+         "n": "Owen Beck",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -1891,9 +1891,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Liam Ohgren",
+         "n": "Jonathan Lekkerimaki",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Marco Rossi",
@@ -1901,9 +1901,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Linus Karlsson",
+         "n": "Drew O'Connor",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -1911,19 +1911,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Jonathan Lekkerimaki",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Paul Cotter",
+         "n": "Liam Ohgren",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Drew O'Connor",
+         "n": "Linus Karlsson",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1941,9 +1936,9 @@
          "pp": ""
         },
         {
-         "n": "Arshdeep Bains",
+         "n": "Paul Cotter",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1971,14 +1966,14 @@
          "pp": ""
         },
         {
+         "n": "Luke Schenn",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Zeev Buium",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Victor Mancini",
-         "pos": "D",
-         "pp": ""
         }
        ]
       }
