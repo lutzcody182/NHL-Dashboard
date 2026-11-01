@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-01",
- "updated": "2026-11-01T20:00:17.100Z",
+ "updated": "2026-11-01T21:00:16.828Z",
  "games": [
   {
    "time": "2:00 PM ET",
@@ -555,17 +555,17 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Kailer Yamamoto",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Barrett Hayton",
          "pos": "C",
          "pp": "PP2"
         },
         {
          "n": "Anders Lee",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Michael Carcone",
          "pos": "W",
          "pp": "PP2"
         }
@@ -575,7 +575,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Daniil But",
+         "n": "Liam O'Brien",
          "pos": "W",
          "pp": ""
         },
@@ -696,12 +696,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Alex Bump",
+         "n": "Noel Acciari",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Michael Bunting",
+         "n": "Cole Knuble",
          "pos": "W",
          "pp": ""
         },
@@ -1128,7 +1128,7 @@
     },
     {
      "team": "Anaheim Ducks",
-     "goalie": "",
+     "goalie": "Laurent Brossoit",
      "groups": [
       {
        "label": "Line 1",
