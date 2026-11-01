@@ -5405,8 +5405,8 @@ function gsState(games, S0) {
   S0_.L = L;
   L.toiE = L.toiE || [0, 0, 0, 0, 0]; L.ppE = L.ppE || [0, 0, 0, 0, 0]; L.enG = L.enG || 0;
   for (const g of games) {
-    // new season: last season becomes the starting point, counted at half weight
-    if (S0_.lastD && (new Date(g.date) - new Date(S0_.lastD)) / 864e5 > 60) gsScale(S0_, .5);
+    // new season: last season becomes the starting point, counted at GS_PRIOR_W
+    if (S0_.lastD && (new Date(g.date) - new Date(S0_.lastD)) / 864e5 > 60) gsScale(S0_, GS_PRIOR_W);
     S0_.lastD = g.date;
     const teamPP = {};
     for (const [id, p] of Object.entries(g.sk || {})) {
@@ -5447,7 +5447,12 @@ function gsState(games, S0) {
   S0_.L = L; return S0_;
 }
 const TOI_A = [0, .2, .4, .6, .8];
-// scale every count in a goal scorer state (used to carry last season in at half weight)
+/* how much last season counts in the player models (goal scorer and shots on goal). Backtest (Nov 2026: weeks 1-8 of last
+   season and of this season, same player-games for every setting): counting last season at 75% predicted goals and shots
+   as well or better than 50% in every period; 25%, or fading last season out by mid-season, did worse. One season of a
+   player's shots and goals is a small sample, so last year stays useful well into the season. */
+const GS_PRIOR_W = .75, SOG_PRIOR_W = .75;
+// scale every count in a goal scorer state (used to carry last season in at GS_PRIOR_W)
 function gsScale(S, w) {
   const skip = new Set(['id', 'n', 'tm', 'pos', 'last', 'lastG', 'lastGd', 'rec', 'lastD', 'W', 'c', 'ref', 'toiE', 'ppE', 'pv']);
   const sc = o => { for (const k of Object.keys(o)) { if (skip.has(k)) continue; const v = o[k]; if (typeof v === 'number') o[k] = v * w; else if (Array.isArray(v)) { for (let i = 0; i < v.length; i++) if (typeof v[i] === 'number') v[i] *= w; } else if (v && typeof v === 'object') sc(v); } };
@@ -6028,7 +6033,7 @@ async function renderScorers() {
       <div class="ctl"><label>Team</label><select id="gsTeam"><option value="">All</option>${teamsTonight.map(t => `<option value="${t}" ${t === GS.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>
       <div class="ctl"><label>Player</label><input id="gsQ" type="search" placeholder="Search a name" value="${esc(GS.q)}" autocomplete="off"></div></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Chance each skater scores tonight. It starts from where he shoots, how dangerous those shots are, his finishing and tonight's projected minutes and power-play role, then adjusts for his team's scoring environment (betting total and moneyline), the opponent's shot volume and quality allowed by zone, how often they take penalties and how good their penalty kill is, and the goalie's results by zone, by shot type and on rebounds and rush chances. How much each adjustment counts is learned from the loaded games and rebuilds every time new games load. Hover a chance for the breakdown. Lineups come from RotoGrinders when posted (otherwise each team's last game), and players ESPN lists as out or on injured reserve are left off; goalies are the confirmed or probable starter when ESPN lists one. Uses the analytics range above; <b>Full season</b> gives the best samples.</p>
-    <p class="muted" id="gsPriorMsg" style="margin:-6px 0 12px;font-size:12.5px">${GS.prior ? `✓ Using last season (${GS.prior.length.toLocaleString()} games) as the starting point, counted at half weight, so a hot or cold first week can't fool the model.` : GS.priorLoading ? esc(GS.priorMsg || 'Checking for last season\'s games…') : /^need:/.test(GS.priorMsg) ? `Last season isn't loaded, so early-season numbers rest on few games. <button class="btn sm" id="gsPriorGo">Load last season</button> (one-time download of about ${GS.priorMsg.split(':')[1]} games; saved after; training the game model in Model Lab also loads it).` : /^err:/.test(GS.priorMsg) ? `Couldn't load last season (${esc(GS.priorMsg.slice(4))}).` : ''}</p>
+    <p class="muted" id="gsPriorMsg" style="margin:-6px 0 12px;font-size:12.5px">${GS.prior ? `✓ Using last season (${GS.prior.length.toLocaleString()} games) as the starting point, counted at 75% weight, so a hot or cold first week can't fool the model.` : GS.priorLoading ? esc(GS.priorMsg || 'Checking for last season\'s games…') : /^need:/.test(GS.priorMsg) ? `Last season isn't loaded, so early-season numbers rest on few games. <button class="btn sm" id="gsPriorGo">Load last season</button> (one-time download of about ${GS.priorMsg.split(':')[1]} games; saved after; training the game model in Model Lab also loads it).` : /^err:/.test(GS.priorMsg) ? `Couldn't load last season (${esc(GS.priorMsg.slice(4))}).` : ''}</p>
     ${dkCard}<div class="empty" id="gsNoMatch" hidden>No player matching that name in these games. Try the last name only, or set Game and Team to All.</div>${rows.length ? `<div class="card">${table('gs', cols.filter(c => c.k !== 'ox' || rows.some(r => r.ox)), rows, { sort: withDk.length ? 'ev' : 'p', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}${trustCard(PK, 'gs')}${overfitCard(PK, 'gs')}${pickTrackerCard(PK)}${accuracyCard(PK, 'gs')}${btCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For fun and analysis, not betting advice.</p>`;
   RERENDER.gs = renderScorers;
@@ -7306,7 +7311,7 @@ const fgFirstScorer = g => { const x = (g.shots || []).filter(s => s.t === 0 && 
 
 /* ============================== SHOTS ON GOAL MODEL ==============================
    Each skater's expected shots on goal tonight: his shot rates (even strength and power play, this season + last season at
-   half weight, with shot attempts as a steadier second opinion), tonight's projected minutes (from the goal scorer model:
+   75% weight, with shot attempts as a steadier second opinion), tonight's projected minutes (from the goal scorer model:
    posted lines, power-play unit, recent ice time), the opponent's shots allowed, home ice and whether the team is favored
    (learned from graded picks), the game total, back-to-backs, his line's shot share together, and each arena's scorekeeping.
    Shots are a count, so tonight's range is a negative binomial (a Poisson with extra spread, learned from real games).
@@ -7325,7 +7330,7 @@ function sogBuild(games, opt = SOG_OPT) {
   const tm = id => T[id] || (T[id] = { f: 0, a: 0, aF: 0, aD: 0, gp: 0 });
   for (const g of games) {
     const days = (lastDay - new Date(g.date)) / 864e5, curS = seasonOf(g.date) === cur;
-    const w = (curS ? 1 : .5) * (opt.rec && curS ? 1 + 1.5 * Math.pow(.5, days / 14) : 1); // the last two weeks count up to 2.5×
+    const w = (curS ? 1 : (opt.pw != null ? opt.pw : SOG_PRIOR_W)) * (opt.rec && curS ? 1 + 1.5 * Math.pow(.5, days / 14) : 1); // the last two weeks count up to 2.5×
     const ppS = {}, att = {};
     for (const s of g.shots || []) { if (!s.pl || (g.so && s.per >= 5)) continue; if (s.str !== 1) att[s.pl] = (att[s.pl] || 0) + 1; // even-strength attempts (on net, missed or blocked)
       if ((s.t === 0 || s.t === 1) && s.str === 1) ppS[s.pl] = (ppS[s.pl] || 0) + 1; }
@@ -7530,7 +7535,7 @@ async function renderSog() {
       <div class="ctl"><label>Game</label><select id="sogGame"><option value="">All games</option>${gameOpts}</select></div>
       <div class="ctl"><label>Team</label><select id="sogTeam"><option value="">All</option>${teamsTonight.map(t => `<option value="${t}" ${t === SOG.team ? 'selected' : ''}>${esc(TM(t).abbr)}</option>`).join('')}</select></div>
       <div class="ctl"><label>Player</label><input id="sogQ" type="search" placeholder="Search a name" value="${esc(SOG.q)}" autocomplete="off"></div></div>
-    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Expected shots on goal for every skater: his shot rates at even strength and on the power play (this season, plus last season at half weight, with shot attempts as a steadier second opinion), tonight's projected minutes, the opponent's shots allowed, home ice and whether the team is favored, the game total, back-to-backs, his line's shot share and the arena's scorekeeping. Tonight's range is a negative binomial, so the over/under chances fit each line. Built from ${St.n.toLocaleString()} games.</p>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Expected shots on goal for every skater: his shot rates at even strength and on the power play (this season, plus last season at 75% weight, with shot attempts as a steadier second opinion), tonight's projected minutes, the opponent's shots allowed, home ice and whether the team is favored, the game total, back-to-backs, his line's shot share and the arena's scorekeeping. Tonight's range is a negative binomial, so the over/under chances fit each line. Built from ${St.n.toLocaleString()} games.</p>
     ${PF && !priced.length ? '<div class="note">No shots on goal prices for these games yet. The odds job pulls them with the goal scorer prices.</div>' : ''}
     ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best shots on goal values</h3><p>Ranked by expected return at the best price</p></div><div class="edges">${best.map(({ r, s, edge }) => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">${s === 'o' ? 'Over' : 'Under'} ${r.line} · ${f2(r.mu)} expected · vs. ${esc(TM(r.opp).abbr)}</div><div style="margin-top:4px"><b>${fmtML(r[s + 'Best'])}</b> <span class="muted">${BK[r[s + 'Book']]}</span> · <b style="color:var(--good)">+${(edge * 100).toFixed(1)} pts</b></div></div>`).join('')}</div></div>` : ''}
     <div class="empty" id="sogNoMatch" hidden>No player matching that name in these games.</div>
