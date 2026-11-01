@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-01",
- "updated": "2026-11-01T18:00:16.083Z",
+ "updated": "2026-11-01T20:00:17.100Z",
  "games": [
   {
    "time": "2:00 PM ET",
@@ -69,13 +69,18 @@
         {
          "n": "Alex Iafallo",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Nino Niederreiter",
+         "pos": "W",
+         "pp": "PP2"
+        },
         {
          "n": "Tyrel Bauer",
          "pos": "W",
@@ -84,11 +89,6 @@
         {
          "n": "Morgan Barron",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Cole Koepke",
-         "pos": "W",
          "pp": ""
         }
        ]
