@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-10-31",
- "updated": "2026-10-31T23:00:26.662Z",
+ "updated": "2026-11-01T00:00:18.011Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -2054,13 +2054,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ryan Lomberg",
+         "n": "Danton Heinen",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Luca Del Bel Belluz",
-         "pos": "C",
+         "n": "Ryan Lomberg",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -2155,9 +2155,9 @@
          "pp": ""
         },
         {
-         "n": "Joel Kiviranta",
+         "n": "David Perron",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jamie Benn",
@@ -2175,9 +2175,9 @@
          "pp": "PP2"
         },
         {
-         "n": "David Perron",
+         "n": "Joel Kiviranta",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Colin Blackwell",
