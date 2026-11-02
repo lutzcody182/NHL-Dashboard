@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-01",
- "updated": "2026-11-01T21:00:16.828Z",
+ "updated": "2026-11-02T00:00:17.014Z",
  "games": [
   {
    "time": "2:00 PM ET",
@@ -975,17 +975,12 @@
          "pp": ""
         },
         {
-         "n": "Marcus Pettersson",
+         "n": "Braden Schneider",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Sean Durzi",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Braden Schneider",
+         "n": "Marcus Pettersson",
          "pos": "D",
          "pp": ""
         },
@@ -993,6 +988,11 @@
          "n": "Alberts Smits",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Scott Morrow",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
