@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-02",
- "updated": "2026-11-02T13:19:32.639Z",
+ "updated": "2026-11-02T16:00:20.126Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -132,7 +132,7 @@
     },
     {
      "team": "Florida Panthers",
-     "goalie": "Akira Schmid",
+     "goalie": "Jacob Markstrom",
      "groups": [
       {
        "label": "Line 1",
@@ -457,7 +457,7 @@
          "pp": ""
         },
         {
-         "n": "Sean Kuraly",
+         "n": "Matthew Poitras",
          "pos": "C",
          "pp": ""
         }
