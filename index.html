@@ -434,6 +434,7 @@ ol.plist{list-style:none;margin:0;padding:0;display:grid;gap:6px}ol.plist li{dis
 div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6px;font-size:12.5px;margin:0 0 5px}span.whyv{display:flex;align-items:center;gap:6px;white-space:nowrap}span.whyv i{display:inline-block;height:6px;border-radius:3px}ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}ul.gmwhy li{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:8px;background:var(--surface-2)}
 .sst{position:relative;height:22px;min-width:180px;background:var(--surface-2);border-radius:11px}.sst .mid{position:absolute;left:50%;top:3px;bottom:3px;width:1px;background:var(--text-2);opacity:.5}.sst i{position:absolute;top:2px;width:18px;height:18px;margin-left:-9px;border-radius:50%;font-style:normal;font-size:10px;font-weight:800;display:grid;place-items:center;color:#fff}.sst i.trail{background:var(--away)}.sst i.tied{background:var(--text-2)}.sst i.lead{background:var(--home)}
 .edges{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.edge{padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);display:grid;gap:4px}.edge .eg{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.rsseg{display:flex;gap:4px;flex-wrap:wrap}.rsseg .dbtn{padding:4px 9px;font-size:11.5px}.rsseg .dbtn.on{color:#fff;border-color:transparent;background:var(--accent)}.rsseg .dbtn.on.placed{background:var(--good)}.rsseg .dbtn.on.not{background:var(--neg)}.rsseg .dbtn.on.pending{background:#e8a33d}.rsb{display:inline-block;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;background:var(--surface-2);color:var(--text-2)}.rsb.on{background:var(--good);color:#fff}.rsb.ex{background:#e8a33d;color:#fff}.rstab td{vertical-align:top}.rstab tr.rsneed td{background:color-mix(in srgb,#e8a33d 9%,transparent)}.rsbanner{margin:10px 0 0;padding:8px 12px;border:1px solid #e8a33d;border-left-width:4px;border-radius:10px;background:var(--surface);font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .btn.sm{padding:3px 9px;font-size:12px;border-radius:8px}.mybet{white-space:nowrap}.mybet.on{background:var(--good);border-color:var(--good);color:#fff}
 .mbmodal{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}.mbbox{background:var(--surface);color:var(--text);border-radius:16px;padding:18px;width:min(460px,100%);box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .gbseg{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}.gbseg .dbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;font-size:13.5px}.gbseg .dbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}.gbseg .dbtn:disabled{opacity:.35;cursor:default}
@@ -513,6 +514,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
       <button data-tab="luck" data-g="league">Luck Watch</button>
       <button data-tab="upsets" data-g="league">Upsets</button>
       <button data-tab="bets" data-g="league">Bet Tracker</button>
+      <button data-tab="recs" data-g="league">Recommended Bets</button>
       <button data-tab="mybets" data-g="league">My Bets</button>
       <button data-tab="refs" data-g="league">Referees</button>
       <button data-tab="arenas" data-g="league">Arenas</button>
@@ -524,6 +526,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
 </header>
 
 <main>
+  <div id="recBanner"></div>
   <!-- SCORES -->
   <section class="tab on" id="tab-scores">
     <div class="datebar">
@@ -562,6 +565,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
   <section class="tab" id="tab-props"><div class="abar"></div><div id="prBody"></div></section>
   <section class="tab" id="tab-periods"><div class="abar"></div><div id="pdBody"></div></section>
   <section class="tab" id="tab-faceoffs"><div class="abar"></div><div id="foBody"></div></section>
+  <section class="tab" id="tab-recs"><div id="recBody"></div></section>
   <section class="tab" id="tab-mybets"><div id="mbBody"></div></section>
   <section class="tab" id="tab-bets"><div class="abar"></div><div id="btBody"></div></section>
   <section class="tab" id="tab-upsets"><div class="abar"></div><div id="upBody"></div></section>
@@ -6211,7 +6215,9 @@ function mbOpenForm(seed, editId) {
     <div class="card-h"><h3>${editId ? 'Edit bet' : 'Log my bet'}</h3><button class="btn" data-mbclose>✕</button></div>
     <div class="tcell" style="margin-bottom:8px">${b.tm ? logoImg(b.tm, 22) : ''}<b>${esc(b.n || 'Player')}</b> <span class="muted">${b.type === 'fg' ? 'first goal of the game' : b.type === 'sog' ? `${b.side === 'o' ? 'over' : 'under'} ${b.line} shots on goal` : 'anytime goal'} · ${esc(TM(b.tm || '').abbr || '')} vs. ${esc(TM(b.opp || '').abbr || '')}${b.start ? ' · ' + new Date(b.start).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}</span></div>
     ${b.p != null ? `<p class="muted" style="margin:0 0 10px;font-size:12.5px">Ice Lab chance ${pct1(b.p)}% (fair ${fairAmerican(b.p)})${b.dk != null ? ` · DraftKings ${fmtML(b.dk)}` : ''}${b.fd != null ? ` · FanDuel ${fmtML(b.fd)}` : ''}</p>` : ''}
-    <div class="mbgrid">
+    ${b.recId && b.recPrice != null ? `<div class="note" style="margin:0 0 10px;font-size:12.5px">★ Recommended ${new Date(b.recAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}: <b>${fmtML(b.recPrice)}</b> ${esc(BK[b.recBook] || b.recBook || '')}${b.recLine != null ? ` · line ${b.recLine}` : ''} · <b>${b.u}u</b>. ${editId ? 'Linked to that recommendation.' : 'Filled in below. Change the odds, line or amount if yours were different.'}</div>` : ''}
+    <div class="mbgrid">${b.type === 'sog' ? `
+      <label>Line (shots)<input id="mbLine" type="number" step="0.5" min="0.5" value="${esc(String(b.line != null ? b.line : ''))}"></label>` : ''}
       <label>Odds I got (American)<input id="mbOdds" type="number" step="1" value="${esc(String(odds))}" placeholder="+250 or -120"></label>
       <label>Amount bet ($)<input id="mbStake" type="number" step="0.01" min="0" value="${esc(String(stake))}"></label>
       <label>Sportsbook<input id="mbBook" type="text" value="${esc(b.bookName || (BOOKS[b.book] ? BOOKS[b.book] : b.book) || 'DraftKings')}"></label>
@@ -6221,17 +6227,23 @@ function mbOpenForm(seed, editId) {
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" data-mbclose>Cancel</button><button class="btn primary" id="mbSaveBtn">${editId ? 'Save changes' : 'Confirm bet'}</button></div></div>`;
   document.body.appendChild(m);
   const calc = () => { const o = +$('#mbOdds').value, s = +$('#mbStake').value; $('#mbCalc').innerHTML = o && Math.abs(o) >= 100 && s > 0 ? `To win <b>${money(mbToWin(s, o)).replace('+', '')}</b> · total payout ${money(s + mbToWin(s, o)).replace('+', '')}` : 'Enter odds like +250 or −120 and an amount.'; };
-  $('#mbOdds').oninput = () => { if (!editId && !$('#mbStake').dataset.touched) { const o = +$('#mbOdds').value; if (Math.abs(o) >= 100) $('#mbStake').value = mbDefaultStake(o); } calc(); };
+  $('#mbOdds').oninput = () => { if (!editId && !$('#mbStake').dataset.touched) { const o = +$('#mbOdds').value; if (Math.abs(o) >= 100) $('#mbStake').value = Math.round(mbDefaultStake(o) * (b.recId && b.u ? b.u : 1) * 100) / 100; } calc(); };
   $('#mbStake').oninput = () => { $('#mbStake').dataset.touched = '1'; calc(); };
   calc();
   m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-mbclose]')) m.remove(); });
   $('#mbSaveBtn').onclick = () => {
-    const o = Math.round(+$('#mbOdds').value), s = +$('#mbStake').value;
+    const o = Math.round(+$('#mbOdds').value), s = +$('#mbStake').value, ln = $('#mbLine') ? +$('#mbLine').value : b.line;
     if (!(Math.abs(o) >= 100) || !(s > 0)) { alertBox('Enter valid odds (like +250 or -120) and an amount.'); return; }
+    if ($('#mbLine') && !(ln > 0 && ln < 20)) { alertBox('Enter the shots line you bet (like 2.5).'); return; }
     const list = mbLoad();
-    if (editId) { const x = list.find(q => q.id === editId); if (x) Object.assign(x, { odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim() }); }
-    else list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type: b.type === 'fg' ? 'fg' : b.type === 'sog' ? 'sog' : 'goal', side: b.side, line: b.line, placed: new Date().toISOString(), gid: b.gid, start: b.start, date: b.start ? localDay(b.start) : todayStr(), pid: b.pid, n: b.n, tm: b.tm, opp: b.opp, gl: b.gl || '', p: b.p, dk: b.dk, odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim(), res: null });
-    if (mbSave(list)) { m.remove(); alertBox(editId ? 'Bet updated' : `Bet logged: ${b.n} ${fmtML(o)} for ${money(s).replace('+', '')}`); if (activeTab() === 'mybets') renderMyBets(); else if (activeTab() === 'scorers') mbMarkButtons(); else if (activeTab() === 'firstgoal') fgMarkButtons(); else if (activeTab() === 'sog') sogMarkButtons(); }
+    if (editId) { const x = list.find(q => q.id === editId); if (x) Object.assign(x, { odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim() }, x.type === 'sog' ? { line: ln } : {}); }
+    else {
+      const type = b.type === 'fg' ? 'fg' : b.type === 'sog' ? 'sog' : 'goal';
+      // linked to its recommendation: the one it came from, or the matching one if you logged it from a table
+      const link = b.recId ? { recId: b.recId, u: b.u, recPrice: b.recPrice, recBook: b.recBook, recLine: b.recLine, recAt: b.recAt } : (() => { const id = recFind({ type, gid: b.gid, pid: b.pid, side: b.side, line: ln }), r = id && recsAll().find(x => x.id === id); return r ? { recId: id, u: r.first.u, recPrice: r.first.price, recBook: r.first.book, recLine: r.line, recAt: r.first.t } : {}; })();
+      list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, side: b.side, line: ln, placed: new Date().toISOString(), gid: b.gid, start: b.start, date: b.start ? localDay(b.start) : todayStr(), pid: b.pid, n: b.n, tm: b.tm, opp: b.opp, gl: b.gl || '', p: b.p, dk: b.dk, odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim(), res: null, ...link });
+    }
+    if (mbSave(list)) { m.remove(); recAfterChange(); alertBox(editId ? 'Bet updated' : `Bet logged: ${b.n} ${fmtML(o)} for ${money(s).replace('+', '')}`); if (activeTab() === 'mybets') renderMyBets(); else if (activeTab() === 'scorers') mbMarkButtons(); else if (activeTab() === 'firstgoal') fgMarkButtons(); else if (activeTab() === 'sog') sogMarkButtons(); }
   };
 }
 // mark "logged" buttons on the Goal Scorers tab
@@ -6269,11 +6281,13 @@ async function renderMyBets() {
   const withP = done.filter(b => fin(b.p)), expP = withP.reduce((s, b) => s + b.p * mbToWin(b.stake, b.odds) - (1 - b.p) * b.stake, 0), actP = withP.reduce((s, b) => s + mbProfit(b), 0);
   let streak = 0; const sorted = [...done].sort((a, b) => (a.start || a.placed) < (b.start || b.placed) ? -1 : 1);
   for (let i = sorted.length - 1; i >= 0; i--) { if (!streak) streak = sorted[i].res === 'W' ? 1 : -1; else if ((sorted[i].res === 'W') === (streak > 0)) streak += streak > 0 ? 1 : -1; else break; }
+  const uWonAll = done.reduce((s, b) => s + mbProfit(b) / mbDefaultStake(b.odds), 0), uRiskAll = done.reduce((s, b) => s + b.stake / mbDefaultStake(b.odds), 0);
   const tile = (k, v, s, col) => `<div class="tile"><div class="k">${k}</div><div class="v num"${col ? ` style="color:${col}"` : ''}>${v}</div><div class="s">${s}</div></div>`;
   const tiles = `<div class="tiles" style="margin-bottom:14px">
     ${tile('Profit / loss', money(profit), `${w}-${done.length - w} · ROI ${staked ? (profit >= 0 ? '+' : '') + pct1(profit / staked) + '%' : '–'}`, profit > 0 ? 'var(--good)' : profit < 0 ? 'var(--neg)' : '')}
     ${tile('Total bet', money(staked).replace('+', ''), `${done.length} settled bets · avg ${done.length ? money(staked / done.length).replace('+', '') : '–'}`)}
     ${tile('Pending', String(pend.length), pend.length ? `${money(atRisk).replace('+', '')} at risk · could win ${money(potential).replace('+', '')}` : 'Nothing open')}
+    ${tile('Units', done.length ? `${uWonAll >= 0 ? '+' : '−'}${Math.abs(uWonAll).toFixed(2)}u` : '–', done.length ? `${uRiskAll.toFixed(1)}u risked · 1u = your standard bet ($100, or to win $100 on minus odds)` : '', uWonAll > 0 ? 'var(--good)' : uWonAll < 0 ? 'var(--neg)' : '')}
     ${tile('Hit rate', done.length ? pct1(w / done.length) + '%' : '–', done.length ? `avg odds ${fmtML(Math.round(done.reduce((s, b) => s + b.odds, 0) / done.length))}` : '')}
     ${tile('Streak', streak ? `${Math.abs(streak)} ${streak > 0 ? 'W' : 'L'}` : '–', 'current run of results')}
     ${withP.length ? tile('Ice Lab expected', money(expP), `vs. ${money(actP)} actual on these bets · ${actP >= expP ? 'running hot' : 'running cold'}`) : ''}</div>`;
@@ -6286,11 +6300,11 @@ async function renderMyBets() {
   // by odds range
   const ob = [[-10000, 0, 'Favorites (minus odds)'], [100, 200, '+100 to +199'], [200, 400, '+200 to +399'], [400, 100000, '+400 and longer']].map(([lo, hi, l]) => { const g = done.filter(b => b.odds >= lo && b.odds < hi); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s, b) => s + b.stake, 0), p: g.reduce((s, b) => s + mbProfit(b), 0) }; }).filter(x => x.n);
   const obRows = ob.map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
-  const tyRows = [['goal', 'Goal scorer'], ['fg', 'First goal scorer'], ['sog', 'Shots on goal'], ['ml', 'Moneyline'], ['total', 'Total'], ['pl', 'Puck line']].map(([k, l]) => { const g = done.filter(b => (b.type || 'goal') === k); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s2, b) => s2 + b.stake, 0), p: g.reduce((s2, b) => s2 + mbProfit(b), 0) }; }).filter(x => x.n).map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
+  const tyRows = [['goal', 'Goal scorer'], ['fg', 'First goal scorer'], ['sog', 'Shots on goal'], ['ml', 'Moneyline'], ['total', 'Total'], ['pl', 'Puck line'], ['★rec', '★ Ice Lab recommended bets'], ['own', 'Your own picks']].map(([k, l]) => { const g = done.filter(b => k === '★rec' ? !!b.recId : k === 'own' ? !b.recId : (b.type || 'goal') === k); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s2, b) => s2 + b.stake, 0), p: g.reduce((s2, b) => s2 + mbProfit(b), 0) }; }).filter(x => x.n).map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
   // bet list
   const all = [...list].sort((a, b) => (b.start || b.placed).localeCompare(a.start || a.placed)), shown = MB.all ? all : all.slice(0, 50);
   const resCell = b => b.res === 'W' ? `<b style="color:var(--good)">✓ Won${b.type === 'sog' ? ` (${b.shots} SOG)` : b.goals > 1 && b.type !== 'fg' ? ` (${b.goals} G)` : ''}</b>` : b.res === 'L' ? `<span style="color:var(--neg)">✗ Lost${b.type === 'sog' ? ` (${b.shots} SOG)` : ''}</span>` : b.res === 'V' ? '<span class="muted">Void / refunded</span>' : b.res === 'PU' ? '<span class="muted">Push / refunded</span>' : '<span class="muted">Pending</span>';
-  const rows = shown.map(b => `<tr><td class="l">${new Date(b.start || b.placed).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${GB_TYPES[b.type] ? `<div class="tcell">${b.type !== 'total' ? logoImg(b.tm, 16) : ''}<b>${mbLabel(b)}</b></div><div class="muted" style="font-size:11.5px">${GB_TYPES[b.type]} · ${esc(TM(b.aid || '').abbr || '')} @ ${esc(TM(b.hid || '').abbr || '')}${b.final ? ' · final ' + esc(b.final) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>` : `<div class="tcell">${b.tm ? logoImg(b.tm, 16) : ''}${b.pid ? plink(b.pid, b.n) : esc(b.n)}</div><div class="muted" style="font-size:11.5px">${b.type === 'fg' ? 'First goal scorer' : b.type === 'sog' ? `${b.side === 'o' ? 'Over' : 'Under'} ${b.line} shots on goal` : 'Goal scorer'} · vs. ${esc(TM(b.opp || '').abbr || '')}${b.gl ? ' · ' + esc(b.gl) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>`}</td><td><b>${fmtML(b.odds)}</b><div class="muted" style="font-size:11.5px">${esc(b.book || '')}</div></td><td>${money(b.stake).replace('+', '')}</td><td>${money(mbToWin(b.stake, b.odds)).replace('+', '')}</td><td>${fin(b.p) ? pct1(b.p) + '%' : '–'}</td><td class="l">${resCell(b)}</td><td>${b.res === 'W' || b.res === 'L' ? moneyCell(mbProfit(b)) : '–'}</td>
+  const rows = shown.map(b => `<tr><td class="l">${new Date(b.start || b.placed).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${GB_TYPES[b.type] ? `<div class="tcell">${b.type !== 'total' ? logoImg(b.tm, 16) : ''}<b>${mbLabel(b)}</b>${b.recId ? ` <span class="rsb on" title="Recommended ${b.recPrice != null ? fmtML(b.recPrice) : ''}${b.u ? ' · ' + b.u + 'u' : ''}">★ Rec</span>` : ''}</div><div class="muted" style="font-size:11.5px">${GB_TYPES[b.type]} · ${esc(TM(b.aid || '').abbr || '')} @ ${esc(TM(b.hid || '').abbr || '')}${b.final ? ' · final ' + esc(b.final) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>` : `<div class="tcell">${b.tm ? logoImg(b.tm, 16) : ''}${b.pid ? plink(b.pid, b.n) : esc(b.n)}${b.recId ? ` <span class="rsb on" title="Recommended ${b.recPrice != null ? fmtML(b.recPrice) : ''}${b.u ? ' · ' + b.u + 'u' : ''}">★ Rec</span>` : ''}</div><div class="muted" style="font-size:11.5px">${b.type === 'fg' ? 'First goal scorer' : b.type === 'sog' ? `${b.side === 'o' ? 'Over' : 'Under'} ${b.line} shots on goal` : 'Goal scorer'} · vs. ${esc(TM(b.opp || '').abbr || '')}${b.gl ? ' · ' + esc(b.gl) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>`}</td><td><b>${fmtML(b.odds)}</b><div class="muted" style="font-size:11.5px">${esc(b.book || '')}</div></td><td>${money(b.stake).replace('+', '')}</td><td>${money(mbToWin(b.stake, b.odds)).replace('+', '')}</td><td>${fin(b.p) ? pct1(b.p) + '%' : '–'}</td><td class="l">${resCell(b)}</td><td>${b.res === 'W' || b.res === 'L' ? moneyCell(mbProfit(b)) : '–'}</td>
     <td class="l"><div class="mbact"><button class="btn sm" data-mbedit="${b.id}" title="Edit odds or amount">Edit</button><select data-mbres="${b.id}" title="Set the result yourself"><option value="">${b.res ? 'Change…' : 'Settle…'}</option><option value="W">Won</option><option value="L">Lost</option><option value="V">Void</option><option value="PU">Push</option><option value="P">Back to pending</option></select><button class="btn sm" data-mbdel="${b.id}" title="Delete this bet">✕</button></div></td></tr>`).join('');
   body.innerHTML = `<div class="bar"><h2 class="grow">My bets</h2><button class="btn" id="mbExport">⬇ Export backup</button><label class="btn" style="cursor:pointer">⬆ Import<input type="file" id="mbImport" accept=".json,application/json" hidden></label></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Log a goal scorer bet from <b>Players → Goal Scorers</b> with the <b>＋ Bet</b> button, or a moneyline, total or puck line bet with the <b>Bet</b> button on any game (Today tab or the game page). Enter the odds you got and how much you bet, and it's tracked here all season. Results settle automatically from ESPN once the game is final (a player who doesn't play is void; a total or puck line landing exactly on the number is a push; a shootout winner counts as one goal, like the sportsbook), or you can settle one yourself. ${graded ? `<b>${graded} bet${graded > 1 ? 's' : ''} just settled.</b>` : ''}</p>
@@ -6304,18 +6318,198 @@ async function renderMyBets() {
     : `<div class="empty">No bets logged yet. Tap <b>Bet</b> on a game on the Today tab, or <b>＋ Bet</b> next to a player on <b>Players → Goal Scorers</b>.</div>`}
     <p class="muted" style="font-size:12px;margin:10px 0 0">For tracking only. Please bet responsibly.</p>`;
   if (MBS.mode === 'memory') mbDiag().then(d => { const el = $('#mbDiag'); if (el) el.textContent = 'Details to send Claude:\n' + d.join('\n'); });
-  const save = fn => { const l = mbLoad(); fn(l); mbSave(l); renderMyBets(); };
+  const save = fn => { const l = mbLoad(); fn(l); mbSave(l); renderMyBets(); recBanner(); };
   $$('[data-mbedit]').forEach(el => el.onclick = () => { const b = mbLoad().find(x => x.id === el.dataset.mbedit); if (b) mbOpenForm(b, b.id); });
   $$('[data-mbdel]').forEach(el => el.onclick = () => { const b = mbLoad().find(x => x.id === el.dataset.mbdel); if (!b) return; if (el.dataset.sure) save(l => l.splice(l.findIndex(x => x.id === b.id), 1)); else { el.dataset.sure = '1'; el.textContent = 'Delete?'; setTimeout(() => { if (document.body.contains(el)) { el.textContent = '✕'; delete el.dataset.sure; } }, 3000); } });
   $$('[data-mbres]').forEach(el => el.onchange = () => { const v = el.value; if (!v) return; save(l => { const b = l.find(x => x.id === el.dataset.mbres); if (b) { b.res = v === 'P' ? null : v; b.auto = false; if (v === 'P') delete b.goals; } }); });
   const ab = $('#mbAllBtn'); if (ab) ab.onclick = () => { MB.all = !MB.all; renderMyBets(); };
-  $('#mbExport').onclick = () => { const blob = new Blob([JSON.stringify({ app: 'NHL Ice Lab', exported: new Date().toISOString(), bets: mbLoad() }, null, 1)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `ice-lab-bets-${todayStr()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
+  $('#mbExport').onclick = async () => { await rsInit(); const blob = new Blob([JSON.stringify({ app: 'NHL Ice Lab', exported: new Date().toISOString(), bets: mbLoad(), recStatus: RS.map }, null, 1)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `ice-lab-bets-${todayStr()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
   $('#mbImport').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
-    try { const j = JSON.parse(await f.text()), inc = Array.isArray(j) ? j : j.bets || []; const l = mbLoad(), ids = new Set(l.map(b => b.id)); let n = 0; inc.forEach(b => { if (b && b.id && !ids.has(b.id) && Math.abs(b.odds) >= 100 && b.stake > 0) { l.push(b); n++; } }); mbSave(l); alertBox(`Imported ${n} bet${n === 1 ? '' : 's'}`); renderMyBets(); }
+    try { const j = JSON.parse(await f.text()), inc = Array.isArray(j) ? j : j.bets || []; const l = mbLoad(), ids = new Set(l.map(b => b.id)); let n = 0; inc.forEach(b => { if (b && b.id && !ids.has(b.id) && Math.abs(b.odds) >= 100 && b.stake > 0) { l.push(b); n++; } }); mbSave(l); if (j && j.recStatus && typeof j.recStatus === 'object') { await rsInit(); for (const [k, v] of Object.entries(j.recStatus)) if (!RS.map[k]) RS.map[k] = v; await rsSave(); } alertBox(`Imported ${n} bet${n === 1 ? '' : 's'}`); renderMyBets(); }
     catch (err) { alertBox('That file isn\'t an Ice Lab bet backup.'); }
   };
 }
+
+/* ============================== RECOMMENDED BETS: permanent log + "did you bet it?" ==============================
+   The GitHub job keeps every recommendation (0.5u+) in picks.json → recs, each with a unique ID, and never deletes one: when
+   the price moves, the line changes or the edge drops it becomes "no longer recommended" with the reason, then "game started",
+   then it's graded. Your answer for each one (Bet placed / Not placed / Pending) is saved in this browser next to My Bets
+   (and included in Export backup). "Bet placed" opens the bet form filled in with the recommended price, line and size, and
+   the bet it saves is linked to the recommendation, so it counts in My Bets (record, ROI, units) like any other bet. */
+const RST_KEY = 'icelab-recstatus', RSEEN_KEY = 'icelab-recseen';
+const RS = { map: {}, ready: null, f: '', mk: '', all: false, asked: new Set() };
+const REC_MKT = { goal: 'Anytime goal', fg: 'First goal', sog: 'Shots on goal', ml: 'Moneyline' };
+function rsInit() {
+  if (RS.ready) return RS.ready;
+  RS.ready = (async () => {
+    await mbInit(); let v = null;
+    try {
+      if (MBS.mode === 'idb') v = await mbIdbDo(MBS.db, 'readonly', s => s.get(RST_KEY));
+      else if (MBS.mode === 'local') v = JSON.parse(localStorage.getItem(RST_KEY) || 'null');
+      else if (MBS.mode === 'cache') { const c = await caches.open('icelab-mybets'); const r = await c.match('/recstatus.json'); v = r ? await r.json() : null; }
+    } catch (e) {}
+    if (!v) { try { v = JSON.parse(localStorage.getItem(RST_KEY) || 'null'); } catch (e) {} }
+    RS.map = v && typeof v === 'object' ? v : {};
+  })();
+  return RS.ready;
+}
+async function rsSave() {
+  try {
+    if (MBS.mode === 'idb') await mbIdbDo(MBS.db, 'readwrite', s => s.put(RS.map, RST_KEY));
+    else if (MBS.mode === 'local') localStorage.setItem(RST_KEY, JSON.stringify(RS.map));
+    else if (MBS.mode === 'cache') { const c = await caches.open('icelab-mybets'); await c.put('/recstatus.json', new Response(JSON.stringify(RS.map), { headers: { 'Content-Type': 'application/json' } })); }
+    else throw new Error('memory');
+  } catch (e) { try { localStorage.setItem(RST_KEY, JSON.stringify(RS.map)); } catch (e2) {} }
+}
+const recsAll = () => ((PKF.data && PKF.data.recs) || []);
+const recLabel = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'over' : 'under'} ${r.line} shots` : r.m === 'fg' ? `${r.n} first goal` : `${r.n} anytime goal`;
+const recBetsMap = () => { const o = {}; for (const b of mbLoad()) if (b.recId) (o[b.recId] = o[b.recId] || []).push(b); return o; };
+const recPlace = (r, BM) => (BM[r.id] && BM[r.id].length) ? 'placed' : (RS.map[r.id] || {}).s === 'not' ? 'not' : 'pending';
+const recNeeds = (r, BM) => r.status !== 'active' && recPlace(r, BM) === 'pending';
+// the recommendation a bet you log elsewhere belongs to (so it's linked automatically)
+function recFind(b) {
+  const R = recsAll(); if (!R.length || !b.gid) return null;
+  const has = id => R.some(r => r.id === id) ? id : null;
+  if (b.type === 'ml') return has(`ml|${b.gid}|${b.side}`);
+  if (b.type === 'sog') return has(`sog|${b.gid}|${b.pid}|${b.side}|${b.line}`) || ((R.filter(r => r.m === 'sog' && r.gid === String(b.gid) && r.pid === String(b.pid) && r.side === b.side).pop() || {}).id || null);
+  if (b.type === 'fg') return has(`fg|${b.gid}|${b.pid}`);
+  if (!b.type || b.type === 'goal') return has(`goal|${b.gid}|${b.pid}`);
+  return null;
+}
+const recFields = r => ({ recId: r.id, u: r.first.u, recPrice: r.first.price, recBook: r.first.book, recLine: r.line, recAt: r.first.t });
+// "Bet placed": the bet form, filled in with the original recommendation (edit anything that differs, then confirm)
+async function recLog(r) {
+  await mbInit();
+  for (const [id, ab] of [[r.tm, r.tmA], [r.opp, r.oppA]]) if (id && ab && !TEAMS[String(id)]) addTeam({ id, abbreviation: ab, displayName: ab, shortDisplayName: ab }); // names even before ESPN loads
+  const px = r.first.price, stake = Math.round(r.first.u * mbDefaultStake(px) * 100) / 100;
+  if (r.m === 'ml') {
+    const hid = r.side === 'h' ? r.tm : r.opp, aid = r.side === 'h' ? r.opp : r.tm;
+    let G = null; try { G = await gbSeed(r.gid); } catch (e) {}
+    if (!G) G = { gid: r.gid, e: null, start: r.start, hid, aid, ml: null, tot: null, pl: { h: null, a: null, fav: null } };
+    G.pre = { side: r.side, odds: px, stake, book: BOOKS[r.first.book] || r.first.book, ...recFields(r) };
+    return mbOpenGameForm(G);
+  }
+  mbOpenForm({ type: r.m, gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, side: r.side, line: r.line, p: r.first.p, odds: px, stake, bookName: BOOKS[r.first.book] || r.first.book, ...recFields(r) });
+}
+// after any bet is saved, edited or deleted: refresh the places that show placement status
+function recAfterChange() { recClearStale(); if (activeTab() === 'recs') renderRecs(); recBanner(); if ($('#rsModal')) recAskPaint(); }
+// a logged bet is the answer: drop any older "Not placed" for recommendations that now have a bet
+function recClearStale() { let ch = false; const BM = recBetsMap(); for (const id of Object.keys(RS.map)) if (BM[id] && BM[id].length) { delete RS.map[id]; ch = true; } if (ch) rsSave(); }
+async function recSet(id, s) {
+  await rsInit();
+  if (s === 'pending') delete RS.map[id]; else RS.map[id] = { s, t: new Date().toISOString() };
+  await rsSave(); recAfterChange();
+}
+function recUnlink(id) { const l = mbLoad(), keep = l.filter(b => b.recId !== id); if (keep.length !== l.length) mbSave(keep); }
+// one recommendation's details, shared by the tab and the "did you bet it?" prompt
+const recDt = t => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+function recStatusCell(r) {
+  const res = r.res === 'W' ? '<b style="color:var(--good)">✓ Won</b>' : r.res === 'L' ? '<span style="color:var(--neg)">✗ Lost</span>' : r.res === 'PU' ? '<span class="muted">Push</span>' : r.res === 'V' ? '<span class="muted">Void (didn&#39;t play)</span>' : '';
+  const det = r.m === 'sog' && r.shots != null ? ` (${r.shots} SOG)` : r.m === 'goal' && r.goals > 1 ? ` (${r.goals} G)` : r.m === 'ml' && r.score ? ` (${esc(r.score)})` : '';
+  const st = r.status === 'active' ? '<span class="rsb on">Active now</span>' : r.status === 'expired' ? `<span class="rsb ex">No longer recommended</span><div class="muted" style="font-size:11.5px">${esc(r.why || '')} · ${recDt(r.ended)}</div>` : '<span class="rsb cl">Game started</span>';
+  return `${st}${res ? `<div>${res}${det}</div>` : ''}`;
+}
+function recPlaceCell(r, BM) {
+  const pl = recPlace(r, BM), bs = BM[r.id] || [];
+  const btn = (s, l) => `<button class="dbtn${pl === s ? ' on ' + s : ''}" data-rsset="${s}" data-rid="${esc(r.id)}">${l}</button>`;
+  return `<div class="rsseg">${btn('placed', '✓ Bet placed')}${btn('not', 'Not placed')}${btn('pending', 'Pending')}</div>${bs.map(b => `<div class="muted" style="font-size:11.5px;margin-top:3px">Logged ${fmtML(b.odds)}${b.type === 'sog' && b.line !== r.line ? ` on ${b.line}` : ''} · ${money(b.stake).replace('+', '')}${b.book ? ' · ' + esc(b.book) : ''}${b.res ? ` · ${b.res === 'W' ? 'won ' + money(mbProfit(b)) : b.res === 'L' ? 'lost ' + money(mbProfit(b)).replace('+', '') : 'refunded'}` : ''} <button class="btn sm" data-rsedit="${esc(b.id)}">Edit</button></div>`).join('')}`;
+}
+function recRowHtml(r, BM) {
+  const tmId = r.m === 'ml' ? r.tm : r.tm, match = r.m === 'ml' ? `${esc(r.side === 'h' ? r.oppA : r.tmA)} @ ${esc(r.side === 'h' ? r.tmA : r.oppA)}` : `${esc(r.tmA)} vs ${esc(r.oppA)}`;
+  const f = r.first, l = r.end || r.last, moved = r.endPrice != null && r.endPrice !== f.price ? `<div class="muted" style="font-size:11.5px">Price at end ${fmtML(r.endPrice)}</div>` : r.last && r.last.price !== f.price ? `<div class="muted" style="font-size:11.5px">Latest ${fmtML(r.last.price)} ${esc(BK[r.last.book] || '')} · ${r.last.u}u</div>` : '';
+  return `<tr class="${recNeeds(r, BM) ? 'rsneed' : ''}"><td class="l">${recDt(f.t)}</td>
+    <td class="l"><div class="tcell">${logoImg(tmId, 16)}<b>${esc(recLabel(r))}</b></div><div class="muted" style="font-size:11.5px">${REC_MKT[r.m]} · ${match} · ${recDt(r.start)}</div></td>
+    <td><b>${fmtML(f.price)}</b> <span class="muted" style="font-size:11.5px">${esc(BK[f.book] || f.book || '')}</span><div style="font-size:11.5px"><b style="color:var(--good)">${f.u}u</b>${fin(f.edge) ? ` · edge +${(f.edge * 100).toFixed(1)} pts` : ''}</div>${moved}</td>
+    <td class="l">${recStatusCell(r)}</td>
+    <td class="l">${recPlaceCell(r, BM)}</td></tr>`;
+}
+const recHead = '<tr><th class="l">Recommended</th><th class="l">Bet</th><th data-gloss="The price, book and size when it was first recommended. This is what Bet placed fills in; change it if you got something different.">Recommended at</th><th class="l">Status</th><th class="l">Did you bet it?</th></tr>';
+async function renderRecs() {
+  const body = $('#recBody'); if (!body) return;
+  await rsInit(); await mbInit(); try { await mbGrade(); } catch (e) {}
+  const PK = await getPicksFile(); if (activeTab() !== 'recs') return;
+  const R = ((PK && PK.recs) || []).slice(), BM = recBetsMap();
+  if (!R.length) { body.innerHTML = `<div class="bar"><h2 class="grow">Recommended bets</h2></div><div class="empty">No recommendations saved yet. The GitHub job starts this log on its next run: every bet the dashboard recommends (0.5 units or more) is kept here with its own ID, even after the price moves or the model stops recommending it.</div>`; return; }
+  const needs = R.filter(r => recNeeds(r, BM)), active = R.filter(r => r.status === 'active');
+  if (!RS.f) RS.f = needs.length ? 'needs' : 'all';
+  // your placed recommended bets (from My Bets) vs. every recommendation at its first price (the model's record)
+  const placedBets = R.flatMap(r => BM[r.id] || []), pDone = placedBets.filter(b => b.res === 'W' || b.res === 'L');
+  const pProfit = pDone.reduce((s, b) => s + mbProfit(b), 0), pStake = pDone.reduce((s, b) => s + b.stake, 0), pUnits = pDone.reduce((s, b) => s + mbProfit(b) / mbDefaultStake(b.odds), 0), pW = pDone.filter(b => b.res === 'W').length;
+  const gr = R.filter(r => r.res === 'W' || r.res === 'L'), uRisk = gr.reduce((s, r) => s + r.first.u, 0), uWon = gr.reduce((s, r) => s + uProfit(r.first.u, r.first.price, r.res), 0), mW = gr.filter(r => r.res === 'W').length;
+  const notR = R.filter(r => recPlace(r, BM) === 'not' && (r.res === 'W' || r.res === 'L')), notU = notR.reduce((s, r) => s + uProfit(r.first.u, r.first.price, r.res), 0);
+  const tile = (k, v, s, col) => `<div class="tile"><div class="k">${k}</div><div class="v num"${col ? ` style="color:${col}"` : ''}>${v}</div><div class="s">${s}</div></div>`;
+  const col = v => v > 0 ? 'var(--good)' : v < 0 ? 'var(--neg)' : '';
+  const tiles = `<div class="tiles" style="margin-bottom:12px">
+    ${tile('Active now', String(active.length), active.length ? `${active.reduce((s, r) => s + r.last.u, 0)}u recommended` : 'none right now')}
+    ${tile('Need your answer', String(needs.length), needs.length ? 'ended without a Bet placed / Not placed' : 'all answered', needs.length ? '#e8a33d' : '')}
+    ${tile('Your placed bets', pDone.length ? money(pProfit) : '–', pDone.length ? `${pW}-${pDone.length - pW} · ${pUnits >= 0 ? '+' : '−'}${Math.abs(pUnits).toFixed(2)}u · ROI ${pStake ? (pProfit >= 0 ? '+' : '') + pct1(pProfit / pStake) + '%' : '–'}` : `${placedBets.length} placed, none settled yet`, col(pProfit))}
+    ${tile('Every recommendation', gr.length ? `${uWon >= 0 ? '+' : '−'}${Math.abs(uWon).toFixed(2)}u` : '–', gr.length ? `${mW}-${gr.length - mW} at the first price · ROI ${uRisk ? (uWon >= 0 ? '+' : '') + pct1(uWon / uRisk) + '%' : '–'}` : 'none graded yet', col(uWon))}
+    ${notR.length ? tile('Ones you skipped', `${notU >= 0 ? '+' : '−'}${Math.abs(notU).toFixed(2)}u`, `${notR.length} graded · what they would have made`, col(notU)) : ''}</div>`;
+  const F = [['needs', `Needs your answer (${needs.length})`, r => recNeeds(r, BM)], ['active', `Active (${active.length})`, r => r.status === 'active'], ['placed', 'Placed', r => recPlace(r, BM) === 'placed'], ['not', 'Not placed', r => recPlace(r, BM) === 'not'], ['ended', 'Expired / ended', r => r.status !== 'active'], ['all', `All (${R.length})`, () => true]];
+  const fx = (F.find(x => x[0] === RS.f) || F[F.length - 1])[2];
+  const list = R.filter(r => fx(r) && (!RS.mk || r.m === RS.mk)).sort((a, b) => a.start > b.start ? -1 : a.start < b.start ? 1 : a.first.t > b.first.t ? -1 : 1), shown = RS.all ? list : list.slice(0, 60);
+  body.innerHTML = `<div class="bar"><h2 class="grow">Recommended bets</h2></div>
+    <p class="muted" style="margin:-6px 0 12px;font-size:13px">Every bet the dashboard recommends (0.5 units or more) is kept here with its own ID, even after the price moves, the line changes or the model stops recommending it. Mark each one <b>Bet placed</b>, <b>Not placed</b> or <b>Pending</b> any time. <b>Bet placed</b> opens the bet form with the recommended odds, line and size filled in (change anything that differs), and saves it to <b>My Bets</b>, where it counts in your record, ROI and units. Your answers are saved in this browser and included in My Bets' Export backup.</p>
+    ${tiles}
+    <div class="card"><div class="card-h" style="flex-wrap:wrap;gap:8px"><div class="rsseg">${F.map(([k, l]) => `<button class="dbtn${RS.f === k ? ' on' : ''}" data-rsf="${k}">${l}</button>`).join('')}</div>
+      <select id="rsMk"><option value="">All markets</option>${Object.entries(REC_MKT).map(([k, l]) => `<option value="${k}"${RS.mk === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      ${RS.f === 'needs' && list.length ? `<p class="muted" style="margin:0 0 8px;font-size:12.5px">These ended (no longer recommended, or the game started) and you haven't said whether you bet them. <button class="btn sm" id="rsAllNot">Mark all ${list.length} as Not placed</button></p>` : ''}
+      ${list.length ? `<div class="twrap"><table class="rstab"><thead>${recHead}</thead><tbody>${shown.map(r => recRowHtml(r, BM)).join('')}</tbody></table></div>${list.length > 60 ? `<button class="btn" id="rsMore" style="margin-top:8px">${RS.all ? 'Show fewer' : `Show all ${list.length}`}</button>` : ''}` : '<p class="muted" style="margin:0">Nothing here.</p>'}</div>`;
+  $$('[data-rsf]').forEach(el => el.onclick = () => { RS.f = el.dataset.rsf; RS.all = false; renderRecs(); });
+  $('#rsMk').onchange = e => { RS.mk = e.target.value; renderRecs(); };
+  const more = $('#rsMore'); if (more) more.onclick = () => { RS.all = !RS.all; renderRecs(); };
+  const an = $('#rsAllNot'); if (an) an.onclick = async () => { if (!an.dataset.sure) { an.dataset.sure = '1'; an.textContent = `Sure? Mark ${list.length} as Not placed`; return; } for (const r of list) RS.map[r.id] = { s: 'not', t: new Date().toISOString() }; await rsSave(); recAfterChange(); };
+  recSeenUpdate(R);
+}
+// placement buttons (tab and prompt): Bet placed opens the filled-in form; Not placed / Pending ask before removing a logged bet
+document.addEventListener('click', async e => {
+  const ed = e.target.closest('[data-rsedit]');
+  if (ed) { await mbInit(); const b = mbLoad().find(x => x.id === ed.dataset.rsedit); if (b) mbOpenForm(b, b.id); return; }
+  const el = e.target.closest('[data-rsset]'); if (!el) return;
+  await rsInit(); await mbInit();
+  const r = recsAll().find(x => x.id === el.dataset.rid); if (!r) return;
+  const s = el.dataset.rsset, bs = recBetsMap()[r.id] || [];
+  if (s === 'placed') { if (bs.length) mbOpenForm(bs[0], bs[0].id); else recLog(r); return; }
+  if (bs.length) { if (!el.dataset.sure) { el.dataset.sure = '1'; el.textContent = 'Remove logged bet?'; setTimeout(() => { if (document.body.contains(el)) { delete el.dataset.sure; el.textContent = s === 'not' ? 'Not placed' : 'Pending'; } }, 3500); return; } recUnlink(r.id); }
+  recSet(r.id, s);
+});
+// "did you bet it?": recommendations you saw while they were active that have since ended, asked as soon as the dashboard
+// notices (on load and every 5 minutes); everything else still unanswered shows in the banner and the Needs your answer list
+function recSeenGet() { try { return new Set(JSON.parse(localStorage.getItem(RSEEN_KEY) || '[]')); } catch (e) { return new Set(); } }
+function recSeenUpdate(R) { try { localStorage.setItem(RSEEN_KEY, JSON.stringify(R.filter(r => r.status === 'active').map(r => r.id))); } catch (e) {} }
+function recAskPaint() {
+  const m = $('#rsModal'); if (!m) return; const BM = recBetsMap(), ids = (m.dataset.ids || '').split(',');
+  const R = recsAll().filter(r => ids.includes(r.id));
+  $('#rsAskBody').innerHTML = `<div class="twrap"><table class="rstab"><thead>${recHead}</thead><tbody>${R.map(r => recRowHtml(r, BM)).join('')}</tbody></table></div>`;
+  const left = R.filter(r => recPlace(r, BM) === 'pending').length; $('#rsAskLeft').textContent = left ? `${left} still unanswered` : 'All answered, thanks!';
+}
+function recAsk(list) {
+  if (!list.length || $('#rsModal')) return;
+  list.forEach(r => RS.asked.add(r.id));
+  const m = document.createElement('div'); m.id = 'rsModal'; m.className = 'mbmodal'; m.style.zIndex = 999; m.dataset.ids = list.map(r => r.id).join(',');
+  m.innerHTML = `<div class="mbbox" role="dialog" aria-label="Did you place these bets?" style="max-width:980px;width:100%"><div class="card-h"><h3>Did you place ${list.length === 1 ? 'this bet' : 'these bets'}?</h3><button class="btn" data-rsclose>✕</button></div>
+    <p class="muted" style="margin:0 0 10px;font-size:13px">${list.length === 1 ? 'This recommendation has' : 'These recommendations have'} ended since you last looked (the price moved, the line changed, the edge dropped or the game started). If you bet it, tap <b>Bet placed</b> to record it with the recommended odds and size; you can change anything that differs. They stay under <b>League → Recommended Bets</b>, so you can answer later too.</p>
+    <div id="rsAskBody"></div><div style="display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:10px"><span class="muted" id="rsAskLeft" style="font-size:12.5px"></span><button class="btn primary" data-rsclose>Done for now</button></div></div>`;
+  document.body.appendChild(m); recAskPaint();
+  m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-rsclose]')) { m.remove(); recBanner(); } });
+}
+function recBanner() {
+  const el = $('#recBanner'); if (!el) return;
+  const BM = recBetsMap(), n = recsAll().filter(r => recNeeds(r, BM)).length;
+  el.innerHTML = n && activeTab() !== 'recs' ? `<div class="rsbanner">⚠️ <b>${n} recommended bet${n === 1 ? '' : 's'}</b> ended without an answer. Did you place ${n === 1 ? 'it' : 'them'}? <button class="btn sm primary" id="rsGo">Review</button></div>` : '';
+  const go = $('#rsGo'); if (go) go.onclick = () => { RS.f = 'needs'; setTab('recs'); };
+}
+async function recCheck() {
+  try {
+    await rsInit(); await mbInit(); const PK = await getPicksFile(); const R = (PK && PK.recs) || []; if (!R.length) { recBanner(); return; }
+    const BM = recBetsMap(), seen = recSeenGet();
+    const ended = R.filter(r => seen.has(r.id) && r.status !== 'active' && recPlace(r, BM) === 'pending' && !RS.asked.has(r.id));
+    if (ended.length) recAsk(ended);
+    recSeenUpdate(R); recBanner();
+  } catch (e) {}
+}
+setTimeout(recCheck, 6000); setInterval(recCheck, 5 * 60e3);
 
 /* ---- 🥊 Tale of the tape (game preview) ---- */
 async function renderTape(s, g) {
@@ -6964,6 +7158,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
   m.innerHTML = `<div class="mbbox" role="dialog" aria-label="Log a game bet">
     <div class="card-h"><h3>${ex ? 'Edit bet' : 'Log my bet'}</h3><button class="btn" data-mbclose>✕</button></div>
     <div class="tcell" style="margin-bottom:10px">${logoImg(G.aid, 22)}<b>${esc(ab('a'))}</b><span class="muted">@</span>${logoImg(G.hid, 22)}<b>${esc(ab('h'))}</b><span class="muted">${G.start ? ' · ' + new Date(G.start).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}</span></div>
+    ${!ex && G.pre ? `<div class="note" style="margin:0 0 10px;font-size:12.5px">★ Recommended ${new Date(G.pre.recAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}: <b>${esc(TM(G.pre.side === 'h' ? G.hid : G.aid).abbr || '')} moneyline ${fmtML(G.pre.odds)}</b> ${esc(G.pre.book || '')} · <b>${G.pre.u}u</b>. Filled in below. Change the odds or amount if yours were different.</div>` : ''}
     ${others.length ? `<div class="note" style="margin:0 0 10px;font-size:12.5px"><b>Already logged on this game:</b> ${others.map(x => `${mbLabel(x)} ${fmtML(x.odds)} · ${money(x.stake).replace('+', '')} <button class="btn sm" data-gbedit="${x.id}">Edit</button>`).join(' · ')}</div>` : ''}
     <div class="gbseg" id="gbType">${Object.entries(GB_TYPES).map(([k, l]) => `<button class="dbtn" data-gbtype="${k}"${ex && ex.type !== k ? ' disabled' : ''}>${l}</button>`).join('')}</div>
     <div class="gbseg" id="gbSide"></div>
@@ -7016,6 +7211,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
   $('#mbStake').oninput = () => { st.stakeTouched = true; calc(); };
   const clr = $('#gbClear'); if (clr) clr.onclick = async () => { m.remove(); await decSet(G.gid, null); decPaint(G.gid); };
   paint(); if (!ex) setOdds(); else calc();
+  if (!ex && G.pre) { st.type = 'ml'; st.side = G.pre.side; paint(); $('#mbOdds').value = G.pre.odds; $('#mbStake').value = G.pre.stake; $('#mbBook').value = G.pre.book || ''; st.oddsTouched = st.stakeTouched = st.bookTouched = true; calc(); }
   // Ice Lab's win chance (game model), filled in when ready
   (async () => {
     if (ex && fin(ex.pH)) { st.p = ex.pH; calc(); return; }
@@ -7032,9 +7228,12 @@ async function mbOpenGameForm(seed, editId, onCancel) {
     rec.n = mbLabel(rec).replace(/&amp;/g, '&');
     const list = mbLoad();
     if (ex) { const x = list.find(y => y.id === ex.id); if (x) { Object.assign(x, rec); if (st.type === 'ml' && fin(st.p)) x.p = q; else if (st.type !== 'ml') delete x.p; } }
-    else list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), placed: new Date().toISOString(), gid: G.gid, start: G.start, date: G.start ? localDay(G.start) : todayStr(), ...rec, p: q, pH: st.p, res: null });
+    else {
+      const link = st.type !== 'ml' ? {} : G.pre && st.side === G.pre.side ? { recId: G.pre.recId, u: G.pre.u, recPrice: G.pre.recPrice, recBook: G.pre.recBook, recAt: G.pre.recAt } : (() => { const id = recFind({ type: 'ml', gid: G.gid, side: st.side }), r = id && recsAll().find(x => x.id === id); return r ? { recId: id, u: r.first.u, recPrice: r.first.price, recBook: r.first.book, recAt: r.first.t } : {}; })();
+      list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), placed: new Date().toISOString(), gid: G.gid, start: G.start, date: G.start ? localDay(G.start) : todayStr(), ...rec, p: q, pH: st.p, res: null, ...link });
+    }
     if (mbSave(list)) {
-      m.remove(); await decSet(G.gid, 'bet'); decPaint(G.gid);
+      m.remove(); await decSet(G.gid, 'bet'); decPaint(G.gid); recAfterChange();
       alertBox(ex ? 'Bet updated' : `Bet logged: ${rec.n} ${fmtML(o)} for ${money(s).replace('+', '')}`);
       if (activeTab() === 'mybets') renderMyBets();
     }
@@ -7971,6 +8170,8 @@ function setTab(t) {
   if (t === 'standings' && !ST.data[ST.season]) loadStandings();
   if (t === 'birth') renderBirth();
   if (t === 'mybets') renderMyBets();
+  if (t === 'recs') renderRecs();
+  recBanner();
   if (t === 'combos') renderCombos();
   if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers', 'firstgoal', 'sog'].includes(t)) {
     // every tab opens on the full current season
