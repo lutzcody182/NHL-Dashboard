@@ -1,4 +1,5 @@
 
+
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders, and props.json with
 # DraftKings anytime and first goal scorer odds (The Odds API) plus period-by-period ice time from the NHL's shift charts.
 # The same run saves the models' pre-game picks to picks.json and grades finished games. Evening runs also record the
@@ -513,6 +514,8 @@ jobs:
         run: npm install --prefix "$RUNNER_TEMP/tk" jsdom@24 --no-audit --no-fund --silent
 
       - name: Save and grade goal scorer and game model picks
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}   # phone notifications for new recommended bets (optional)
         run: |
           cat > "$RUNNER_TEMP/track.js" <<'EOF'
           // Pick tracker: runs the dashboard's own models (from index.html) headlessly. Saves today's pre-game goal scorer picks
@@ -595,7 +598,7 @@ jobs:
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
                   const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml ? gp.ml.h : null, mlA: gp.ml ? gp.ml.a : null, fdH: gp.fd ? gp.fd.h : null, fdA: gp.fd ? gp.fd.a : null, bH: gp.bH ? gp.bH.price : null, bA: gp.bA ? gp.bA.price : null, book: gp.side.book, p: +(Number.isFinite(gp.r.pModel) ? gp.r.pModel : gp.r.p).toFixed(4), pl: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), u: (T.unitsFor('ml', gp.side.q, gp.side.price) || {}).u || 0, verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) {
-                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
+                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt', 'nt', 'ntU']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
                     // line history: one snapshot per run when anything changed (fair chance, market price, goalies), with each factor's share, so the dashboard can chart and explain the moves
                     const snap = { t: now.toISOString(), p: rec.p, mlH: rec.mlH, mlA: rec.mlA, gH: rec.gH, gA: rec.gA, gHs: rec.gHs, gAs: rec.gAs, inj: out, crew: rec.crew, f: Object.fromEntries((gp.r.parts || []).map(x => [x.k, +x.d.toFixed(4)])) };
                     const hist = (old && old.hist) || [], prev = hist[hist.length - 1];
@@ -700,11 +703,39 @@ jobs:
             if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
+            await notifyNew({ byKey, fByKey, sByKey, gByKey }, now);
             const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
           }
-          module.exports = { run };
+          // phone notifications through ntfy.sh: each recommended bet (0.5u+) once, before its game starts, and again only if its
+          // recommended size goes up. Needs the NTFY_TOPIC secret; without it nothing is sent and nothing is marked.
+          async function notifyNew(M, now) {
+            const topic = (process.env.NTFY_TOPIC || '').trim(); if (!topic) return;
+            const BKN = { dk: 'DraftKings', fd: 'FanDuel', cz: 'Caesars', fn: 'Fanatics', sc: 'theScore' };
+            const am = v => v == null || !Number.isFinite(+v) ? '–' : (+v > 0 ? '+' : '') + Math.round(+v);
+            const tm = d => new Date(d).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+            const ed = e => Number.isFinite(e) ? ` · edge ${e > 0 ? '+' : '−'}${Math.abs(e * 100).toFixed(1)} pts` : '';
+            const due = p => p.res == null && new Date(p.start) > now && (p.u || 0) >= .5 && (!p.nt || p.u >= (p.ntU || 0) + .5);
+            const items = [];
+            for (const p of M.byKey.values()) if (due(p)) items.push([p, `🥅 ${p.n} anytime goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
+            for (const p of M.fByKey.values()) if (due(p)) items.push([p, `🚨 ${p.n} FIRST goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
+            for (const p of M.sByKey.values()) if (due(p)) items.push([p, `🏒 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} shots · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
+            for (const p of M.gByKey.values()) if (p.hw == null && due(p)) { const h = p.side === 'h'; items.push([p, `🧠 ${h ? p.ha : p.aa} moneyline vs ${h ? p.aa : p.ha} · ${am(h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA))} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]); }
+            if (!items.length) { log('Notifications: no new recommended bets.'); return; }
+            items.sort((a, b) => a[0].start < b[0].start ? -1 : a[0].start > b[0].start ? 1 : b[0].u - a[0].u);
+            const lines = []; let lastT = '';
+            for (const [p, txt] of items.slice(0, 20)) { const t = tm(p.start); if (t !== lastT) { lines.push(`— ${t} ET —`); lastT = t; } lines.push(txt + (p.nt ? ' (size raised)' : '')); }
+            if (items.length > 20) lines.push(`+${items.length - 20} more on the dashboard`);
+            const units = items.reduce((s, [p]) => s + p.u, 0);
+            try {
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/' } });
+              if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return; }
+              for (const [p] of items) { p.nt = now.toISOString(); p.ntU = p.u; }
+              log(`Notifications: sent ${items.length} recommended bet${items.length === 1 ? '' : 's'} to your phone.`);
+            } catch (e) { log('::warning::Notification failed: ' + e.message); }
+          }
+          module.exports = { run, notifyNew };
           if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::error::' + (e.stack || e.message)); process.exit(1); });
           EOF
           NODE_PATH="$RUNNER_TEMP/tk/node_modules" node "$RUNNER_TEMP/track.js"
@@ -877,6 +908,8 @@ jobs:
 
       - name: Re-run models and re-save picks
         if: steps.check.outputs.changed == 'yes'
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}   # phone notifications for new recommended bets (optional)
         run: |
           cat > "$RUNNER_TEMP/track.js" <<'EOF'
           // Pick tracker: runs the dashboard's own models (from index.html) headlessly. Saves today's pre-game goal scorer picks
@@ -959,7 +992,7 @@ jobs:
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
                   const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml ? gp.ml.h : null, mlA: gp.ml ? gp.ml.a : null, fdH: gp.fd ? gp.fd.h : null, fdA: gp.fd ? gp.fd.a : null, bH: gp.bH ? gp.bH.price : null, bA: gp.bA ? gp.bA.price : null, book: gp.side.book, p: +(Number.isFinite(gp.r.pModel) ? gp.r.pModel : gp.r.p).toFixed(4), pl: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), u: (T.unitsFor('ml', gp.side.q, gp.side.price) || {}).u || 0, verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) {
-                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
+                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt', 'nt', 'ntU']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
                     // line history: one snapshot per run when anything changed (fair chance, market price, goalies), with each factor's share, so the dashboard can chart and explain the moves
                     const snap = { t: now.toISOString(), p: rec.p, mlH: rec.mlH, mlA: rec.mlA, gH: rec.gH, gA: rec.gA, gHs: rec.gHs, gAs: rec.gAs, inj: out, crew: rec.crew, f: Object.fromEntries((gp.r.parts || []).map(x => [x.k, +x.d.toFixed(4)])) };
                     const hist = (old && old.hist) || [], prev = hist[hist.length - 1];
@@ -1064,11 +1097,39 @@ jobs:
             if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
+            await notifyNew({ byKey, fByKey, sByKey, gByKey }, now);
             const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
           }
-          module.exports = { run };
+          // phone notifications through ntfy.sh: each recommended bet (0.5u+) once, before its game starts, and again only if its
+          // recommended size goes up. Needs the NTFY_TOPIC secret; without it nothing is sent and nothing is marked.
+          async function notifyNew(M, now) {
+            const topic = (process.env.NTFY_TOPIC || '').trim(); if (!topic) return;
+            const BKN = { dk: 'DraftKings', fd: 'FanDuel', cz: 'Caesars', fn: 'Fanatics', sc: 'theScore' };
+            const am = v => v == null || !Number.isFinite(+v) ? '–' : (+v > 0 ? '+' : '') + Math.round(+v);
+            const tm = d => new Date(d).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+            const ed = e => Number.isFinite(e) ? ` · edge ${e > 0 ? '+' : '−'}${Math.abs(e * 100).toFixed(1)} pts` : '';
+            const due = p => p.res == null && new Date(p.start) > now && (p.u || 0) >= .5 && (!p.nt || p.u >= (p.ntU || 0) + .5);
+            const items = [];
+            for (const p of M.byKey.values()) if (due(p)) items.push([p, `🥅 ${p.n} anytime goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
+            for (const p of M.fByKey.values()) if (due(p)) items.push([p, `🚨 ${p.n} FIRST goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
+            for (const p of M.sByKey.values()) if (due(p)) items.push([p, `🏒 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} shots · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
+            for (const p of M.gByKey.values()) if (p.hw == null && due(p)) { const h = p.side === 'h'; items.push([p, `🧠 ${h ? p.ha : p.aa} moneyline vs ${h ? p.aa : p.ha} · ${am(h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA))} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]); }
+            if (!items.length) { log('Notifications: no new recommended bets.'); return; }
+            items.sort((a, b) => a[0].start < b[0].start ? -1 : a[0].start > b[0].start ? 1 : b[0].u - a[0].u);
+            const lines = []; let lastT = '';
+            for (const [p, txt] of items.slice(0, 20)) { const t = tm(p.start); if (t !== lastT) { lines.push(`— ${t} ET —`); lastT = t; } lines.push(txt + (p.nt ? ' (size raised)' : '')); }
+            if (items.length > 20) lines.push(`+${items.length - 20} more on the dashboard`);
+            const units = items.reduce((s, [p]) => s + p.u, 0);
+            try {
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/' } });
+              if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return; }
+              for (const [p] of items) { p.nt = now.toISOString(); p.ntU = p.u; }
+              log(`Notifications: sent ${items.length} recommended bet${items.length === 1 ? '' : 's'} to your phone.`);
+            } catch (e) { log('::warning::Notification failed: ' + e.message); }
+          }
+          module.exports = { run, notifyNew };
           if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::error::' + (e.stack || e.message)); process.exit(1); });
           EOF
           NODE_PATH="$RUNNER_TEMP/tk/node_modules" node "$RUNNER_TEMP/track.js"
