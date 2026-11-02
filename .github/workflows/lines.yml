@@ -576,7 +576,8 @@ jobs:
             // 1) today's pre-game picks
             const today = ET(now);
             let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
-            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); T.setLinesData(LF); // starting goalies come from RotoGrinders' lines await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
+            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); T.setLinesData(LF); // starting goalies come from RotoGrinders' lines
+            await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
             let added = 0, updated = 0, gAdded = 0, dropped = 0, sAdded = 0;
             T.gsBlendFit(picks); T.sogBlendFit(picks); T.gmBlendFit(picks); T.unitsProof(picks); log(`Game model: trusting the model ${Math.round(T.GMB.w * 100)}% vs. the betting line (learned from ${T.GMB.n} graded live picks). Bet sizes keep ${['goal', 'fg', 'sog'].map(m => m + ' ' + Math.round(((T.UNITS.hair || {})[m] || { h: .5 }).h * 100) + '%').join(', ')} of the edge.`); log(`Goal scorer chances: ${Math.round(T.GS.blendWUp * 100)}% model when it's above the books, ${Math.round(T.GS.blendWDn * 100)}% when below (learned from ${T.GS.blendN} graded picks). Shots on goal: home ×${Math.exp(T.SOGHA.A / 2).toFixed(3)}, a 60% favorite ×${Math.exp(T.SOGHA.B * .1).toFixed(3)} (from ${T.SOGHA.n} graded player-games).`);
             // last season is the goal scorer model's starting point (counted at half weight)
@@ -703,14 +704,15 @@ jobs:
             if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
-            await notifyNew({ byKey, fByKey, sByKey, gByKey }, now);
-            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
+            const recs = await updateRecs(T, { byKey, fByKey, sByKey, gByKey }, picks.recs, now);
+            await notifyNew({ byKey, fByKey, sByKey, gByKey }, now, recs);
+            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1), recs };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
           }
           // phone notifications through ntfy.sh: each recommended bet (0.5u+) once, before its game starts, and again only if its
           // recommended size goes up. Needs the NTFY_TOPIC secret; without it nothing is sent and nothing is marked.
-          async function notifyNew(M, now) {
+          async function notifyNew(M, now, recs = []) {
             const topic = (process.env.NTFY_TOPIC || '').trim(); if (!topic) return;
             const BKN = { dk: 'DraftKings', fd: 'FanDuel', cz: 'Caesars', fn: 'Fanatics', sc: 'theScore' };
             const am = v => v == null || !Number.isFinite(+v) ? '–' : (+v > 0 ? '+' : '') + Math.round(+v);
@@ -722,20 +724,87 @@ jobs:
             for (const p of M.fByKey.values()) if (due(p)) items.push([p, `🚨 ${p.n} FIRST goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.sByKey.values()) if (due(p)) items.push([p, `🏒 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} shots · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.gByKey.values()) if (p.hw == null && due(p)) { const h = p.side === 'h'; items.push([p, `🧠 ${h ? p.ha : p.aa} moneyline vs ${h ? p.aa : p.ha} · ${am(h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA))} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]); }
-            if (!items.length) { log('Notifications: no new recommended bets.'); return; }
+            // recommendations that ended before their game: ask whether you bet them (once each)
+            const gone = recs.filter(r => r.status === 'expired' && !r.ntE && new Date(r.start) > now);
+            const recLbl = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots` : r.m === 'fg' ? `${r.n} FIRST goal` : `${r.n} anytime goal`;
+            if (!items.length && !gone.length) { log('Notifications: nothing new.'); return; }
             items.sort((a, b) => a[0].start < b[0].start ? -1 : a[0].start > b[0].start ? 1 : b[0].u - a[0].u);
             const lines = []; let lastT = '';
             for (const [p, txt] of items.slice(0, 20)) { const t = tm(p.start); if (t !== lastT) { lines.push(`— ${t} ET —`); lastT = t; } lines.push(txt + (p.nt ? ' (size raised)' : '')); }
             if (items.length > 20) lines.push(`+${items.length - 20} more on the dashboard`);
+            if (gone.length) { lines.push('— No longer recommended: did you bet these? Record it under Recommended Bets —'); for (const r of gone.slice(0, 10)) lines.push(`⚠️ ${recLbl(r)} · was ${am(r.first.price)} ${BKN[r.first.book] || ''} ${r.first.u}u · ${r.why}`); if (gone.length > 10) lines.push(`+${gone.length - 10} more`); }
             const units = items.reduce((s, [p]) => s + p.u, 0);
             try {
-              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/' } });
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: items.length ? `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)${gone.length ? ` + ${gone.length} ended` : ''}` : `Ice Lab: ${gone.length} recommendation${gone.length === 1 ? '' : 's'} ended - did you bet ${gone.length === 1 ? 'it' : 'them'}?`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/#recs' } });
               if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return; }
               for (const [p] of items) { p.nt = now.toISOString(); p.ntU = p.u; }
-              log(`Notifications: sent ${items.length} recommended bet${items.length === 1 ? '' : 's'} to your phone.`);
+              for (const r of gone) r.ntE = now.toISOString();
+              log(`Notifications: sent ${items.length} new recommended bet${items.length === 1 ? '' : 's'} and ${gone.length} ended recommendation${gone.length === 1 ? '' : 's'} to your phone.`);
             } catch (e) { log('::warning::Notification failed: ' + e.message); }
           }
-          module.exports = { run, notifyNew };
+          // permanent recommendation log (picks.json → recs): every bet the dashboard recommends (0.5u+) gets one record with a unique
+          // ID that is never deleted. If it stops being recommended before its game (price gone, line moved, edge dropped) it's marked
+          // "expired" with the reason; when the game starts it's "closed"; after the game it's graded from the box score. So a bet you
+          // placed on it can always be recorded and checked later, even after the model drops it.
+          async function updateRecs(T, M, recs0, now) {
+            const R = new Map((recs0 || []).map(r => [r.id, r])), cur = new Map(), iso = now.toISOString();
+            const pre = p => p.res == null && new Date(p.start) > now && (p.u || 0) >= .5;
+            const ab = id => { try { return (T.TM(id) || {}).abbr || ''; } catch (e) { return ''; } };
+            for (const p of M.byKey.values()) if (pre(p)) cur.set(`goal|${p.gid}|${p.pid}`, { m: 'goal', p, price: p.best != null ? p.best : p.dk });
+            for (const p of M.fByKey.values()) if (pre(p)) cur.set(`fg|${p.gid}|${p.pid}`, { m: 'fg', p, price: p.best != null ? p.best : p.dk });
+            for (const p of M.sByKey.values()) if (pre(p)) cur.set(`sog|${p.gid}|${p.pid}|${p.side}|${p.line}`, { m: 'sog', p, price: p.best });
+            for (const p of M.gByKey.values()) if (p.hw == null && pre(p)) { const h = p.side === 'h'; cur.set(`ml|${p.gid}|${p.side}`, { m: 'ml', p, price: h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA) }); }
+            const snap = x => ({ t: iso, price: x.price != null ? +x.price : null, book: x.p.book || 'dk', u: x.p.u, p: Number.isFinite(x.p.p) ? (x.m === 'ml' && x.p.side === 'a' ? +(1 - x.p.p).toFixed(4) : x.p.p) : null, edge: x.p.edge });
+            let created = 0, ended = 0, graded = 0;
+            for (const [id, x] of cur) {
+              const p = x.p, r = R.get(id), s = snap(x);
+              if (!r) {
+                const ml = x.m === 'ml', h = p.side === 'h';
+                R.set(id, { id, m: x.m, gid: p.gid, start: p.start, date: p.date, pid: ml ? null : p.pid, n: ml ? `${h ? p.ha : p.aa} moneyline` : p.n,
+                  tm: ml ? (h ? p.h : p.a) : p.tm, opp: ml ? (h ? p.a : p.h) : p.opp, tmA: ml ? (h ? p.ha : p.aa) : ab(p.tm), oppA: ml ? (h ? p.aa : p.ha) : ab(p.opp), home: ml ? p.ha : null,
+                  side: x.m === 'sog' || ml ? p.side : null, line: x.m === 'sog' ? p.line : null, first: s, last: s, peak: s, status: 'active', hist: [{ t: iso, s: 'active' }] });
+                created++;
+              } else {
+                r.last = s; if ((s.u || 0) > (r.peak.u || 0)) r.peak = s;
+                if (r.status !== 'active') { r.status = 'active'; r.why = null; r.ended = null; r.hist.push({ t: iso, s: 'active', why: 'recommended again' }); }
+              }
+            }
+            const pts = e => Number.isFinite(e) ? `${e > 0 ? '+' : '−'}${Math.abs(e * 100).toFixed(1)} pts` : '';
+            const am = v => v == null || !Number.isFinite(+v) ? '–' : (+v > 0 ? '+' : '') + Math.round(+v);
+            const reason = r => {
+              const pk = r.m === 'goal' ? M.byKey.get(`${r.gid}|${r.pid}`) : r.m === 'fg' ? M.fByKey.get(`f|${r.gid}|${r.pid}`) : r.m === 'sog' ? M.sByKey.get(`s|${r.gid}|${r.pid}|${r.side}`) : M.gByKey.get(`g|${r.gid}`);
+              if (!pk) return ['price no longer posted', null];
+              if (r.m === 'sog' && pk.line !== r.line) return [`line moved to ${pk.line}`, pk.best];
+              if (r.m === 'ml' && pk.side !== r.side) return ['model now favors the other team', null];
+              const px = r.m === 'ml' ? (r.side === 'h' ? (pk.bH != null ? pk.bH : pk.mlH) : (pk.bA != null ? pk.bA : pk.mlA)) : pk.best != null ? pk.best : pk.dk;
+              return [`edge dropped to ${pts(pk.edge) || 'none'} at ${am(px)}`, px];
+            };
+            for (const r of R.values()) {
+              if (r.status !== 'active' || cur.has(r.id)) continue;
+              if (new Date(r.start) <= now) { r.status = 'closed'; r.why = 'game started'; }
+              else { const [why, px] = reason(r); r.status = 'expired'; r.why = why; if (px != null) r.endPrice = +px; }
+              r.ended = iso; r.hist.push({ t: iso, s: r.status, why: r.why }); ended++;
+            }
+            // grade from the official box score (a player who didn't play is void; landing exactly on a shots line is a push)
+            const G = {};
+            for (const r of R.values()) {
+              if (r.res != null || new Date(r.start) > new Date(now - 4 * 3600e3)) continue;
+              if (!(r.gid in G)) { let g = null; try { g = await T.getGame(r.gid); } catch (e) {} G[r.gid] = g && g.final ? g : null; }
+              const g = G[r.gid]; if (!g) continue;
+              if (r.m === 'ml') { const hw = g.home.score > g.away.score; r.res = (r.side === 'h') === hw ? 'W' : 'L'; r.score = `${g.away.score}-${g.home.score}`; }
+              else {
+                const s = g.sk[r.pid];
+                if (!s || !(s.toi > 0)) r.res = 'V';
+                else if (r.m === 'goal') { r.goals = s.g; r.res = s.g > 0 ? 'W' : 'L'; }
+                else if (r.m === 'fg') { const f = (g.shots || []).filter(x => x.t === 0 && x.per >= 1 && x.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0]; r.res = f && f.pl === r.pid ? 'W' : 'L'; }
+                else { r.shots = s.sog || 0; r.res = r.shots === r.line ? 'PU' : (r.shots > r.line) === (r.side === 'o') ? 'W' : 'L'; }
+              }
+              r.graded = iso; graded++;
+            }
+            log(`Recommendation log: ${created} new, ${ended} ended (expired or game started), ${graded} graded, ${R.size} kept in all.`);
+            return [...R.values()].sort((a, b) => a.first.t < b.first.t ? -1 : a.first.t > b.first.t ? 1 : 0);
+          }
+          module.exports = { run, notifyNew, updateRecs };
           if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::error::' + (e.stack || e.message)); process.exit(1); });
           EOF
           NODE_PATH="$RUNNER_TEMP/tk/node_modules" node "$RUNNER_TEMP/track.js"
@@ -970,7 +1039,8 @@ jobs:
             // 1) today's pre-game picks
             const today = ET(now);
             let sb = null; try { sb = await T.getJSON(`${T.API}/scoreboard?dates=${today}`); } catch (e) { log('Scoreboard error: ' + e.message); }
-            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); T.setLinesData(LF); // starting goalies come from RotoGrinders' lines await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
+            const PF = readJSON('props.json', null), LF = readJSON('lines.json', null); T.setLinesData(LF); // starting goalies come from RotoGrinders' lines
+            await T.dobPrep(PF); // birth years for same-named players (e.g. the two Elias Petterssons)
             let added = 0, updated = 0, gAdded = 0, dropped = 0, sAdded = 0;
             T.gsBlendFit(picks); T.sogBlendFit(picks); T.gmBlendFit(picks); T.unitsProof(picks); log(`Game model: trusting the model ${Math.round(T.GMB.w * 100)}% vs. the betting line (learned from ${T.GMB.n} graded live picks). Bet sizes keep ${['goal', 'fg', 'sog'].map(m => m + ' ' + Math.round(((T.UNITS.hair || {})[m] || { h: .5 }).h * 100) + '%').join(', ')} of the edge.`); log(`Goal scorer chances: ${Math.round(T.GS.blendWUp * 100)}% model when it's above the books, ${Math.round(T.GS.blendWDn * 100)}% when below (learned from ${T.GS.blendN} graded picks). Shots on goal: home ×${Math.exp(T.SOGHA.A / 2).toFixed(3)}, a 60% favorite ×${Math.exp(T.SOGHA.B * .1).toFixed(3)} (from ${T.SOGHA.n} graded player-games).`);
             // last season is the goal scorer model's starting point (counted at half weight)
@@ -1097,14 +1167,15 @@ jobs:
             if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
-            await notifyNew({ byKey, fByKey, sByKey, gByKey }, now);
-            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1) };
+            const recs = await updateRecs(T, { byKey, fByKey, sByKey, gByKey }, picks.recs, now);
+            await notifyNew({ byKey, fByKey, sByKey, gByKey }, now, recs);
+            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1), recs };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
           }
           // phone notifications through ntfy.sh: each recommended bet (0.5u+) once, before its game starts, and again only if its
           // recommended size goes up. Needs the NTFY_TOPIC secret; without it nothing is sent and nothing is marked.
-          async function notifyNew(M, now) {
+          async function notifyNew(M, now, recs = []) {
             const topic = (process.env.NTFY_TOPIC || '').trim(); if (!topic) return;
             const BKN = { dk: 'DraftKings', fd: 'FanDuel', cz: 'Caesars', fn: 'Fanatics', sc: 'theScore' };
             const am = v => v == null || !Number.isFinite(+v) ? '–' : (+v > 0 ? '+' : '') + Math.round(+v);
@@ -1116,20 +1187,87 @@ jobs:
             for (const p of M.fByKey.values()) if (due(p)) items.push([p, `🚨 ${p.n} FIRST goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.sByKey.values()) if (due(p)) items.push([p, `🏒 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} shots · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.gByKey.values()) if (p.hw == null && due(p)) { const h = p.side === 'h'; items.push([p, `🧠 ${h ? p.ha : p.aa} moneyline vs ${h ? p.aa : p.ha} · ${am(h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA))} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]); }
-            if (!items.length) { log('Notifications: no new recommended bets.'); return; }
+            // recommendations that ended before their game: ask whether you bet them (once each)
+            const gone = recs.filter(r => r.status === 'expired' && !r.ntE && new Date(r.start) > now);
+            const recLbl = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots` : r.m === 'fg' ? `${r.n} FIRST goal` : `${r.n} anytime goal`;
+            if (!items.length && !gone.length) { log('Notifications: nothing new.'); return; }
             items.sort((a, b) => a[0].start < b[0].start ? -1 : a[0].start > b[0].start ? 1 : b[0].u - a[0].u);
             const lines = []; let lastT = '';
             for (const [p, txt] of items.slice(0, 20)) { const t = tm(p.start); if (t !== lastT) { lines.push(`— ${t} ET —`); lastT = t; } lines.push(txt + (p.nt ? ' (size raised)' : '')); }
             if (items.length > 20) lines.push(`+${items.length - 20} more on the dashboard`);
+            if (gone.length) { lines.push('— No longer recommended: did you bet these? Record it under Recommended Bets —'); for (const r of gone.slice(0, 10)) lines.push(`⚠️ ${recLbl(r)} · was ${am(r.first.price)} ${BKN[r.first.book] || ''} ${r.first.u}u · ${r.why}`); if (gone.length > 10) lines.push(`+${gone.length - 10} more`); }
             const units = items.reduce((s, [p]) => s + p.u, 0);
             try {
-              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/' } });
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: items.length ? `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)${gone.length ? ` + ${gone.length} ended` : ''}` : `Ice Lab: ${gone.length} recommendation${gone.length === 1 ? '' : 's'} ended - did you bet ${gone.length === 1 ? 'it' : 'them'}?`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/#recs' } });
               if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return; }
               for (const [p] of items) { p.nt = now.toISOString(); p.ntU = p.u; }
-              log(`Notifications: sent ${items.length} recommended bet${items.length === 1 ? '' : 's'} to your phone.`);
+              for (const r of gone) r.ntE = now.toISOString();
+              log(`Notifications: sent ${items.length} new recommended bet${items.length === 1 ? '' : 's'} and ${gone.length} ended recommendation${gone.length === 1 ? '' : 's'} to your phone.`);
             } catch (e) { log('::warning::Notification failed: ' + e.message); }
           }
-          module.exports = { run, notifyNew };
+          // permanent recommendation log (picks.json → recs): every bet the dashboard recommends (0.5u+) gets one record with a unique
+          // ID that is never deleted. If it stops being recommended before its game (price gone, line moved, edge dropped) it's marked
+          // "expired" with the reason; when the game starts it's "closed"; after the game it's graded from the box score. So a bet you
+          // placed on it can always be recorded and checked later, even after the model drops it.
+          async function updateRecs(T, M, recs0, now) {
+            const R = new Map((recs0 || []).map(r => [r.id, r])), cur = new Map(), iso = now.toISOString();
+            const pre = p => p.res == null && new Date(p.start) > now && (p.u || 0) >= .5;
+            const ab = id => { try { return (T.TM(id) || {}).abbr || ''; } catch (e) { return ''; } };
+            for (const p of M.byKey.values()) if (pre(p)) cur.set(`goal|${p.gid}|${p.pid}`, { m: 'goal', p, price: p.best != null ? p.best : p.dk });
+            for (const p of M.fByKey.values()) if (pre(p)) cur.set(`fg|${p.gid}|${p.pid}`, { m: 'fg', p, price: p.best != null ? p.best : p.dk });
+            for (const p of M.sByKey.values()) if (pre(p)) cur.set(`sog|${p.gid}|${p.pid}|${p.side}|${p.line}`, { m: 'sog', p, price: p.best });
+            for (const p of M.gByKey.values()) if (p.hw == null && pre(p)) { const h = p.side === 'h'; cur.set(`ml|${p.gid}|${p.side}`, { m: 'ml', p, price: h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA) }); }
+            const snap = x => ({ t: iso, price: x.price != null ? +x.price : null, book: x.p.book || 'dk', u: x.p.u, p: Number.isFinite(x.p.p) ? (x.m === 'ml' && x.p.side === 'a' ? +(1 - x.p.p).toFixed(4) : x.p.p) : null, edge: x.p.edge });
+            let created = 0, ended = 0, graded = 0;
+            for (const [id, x] of cur) {
+              const p = x.p, r = R.get(id), s = snap(x);
+              if (!r) {
+                const ml = x.m === 'ml', h = p.side === 'h';
+                R.set(id, { id, m: x.m, gid: p.gid, start: p.start, date: p.date, pid: ml ? null : p.pid, n: ml ? `${h ? p.ha : p.aa} moneyline` : p.n,
+                  tm: ml ? (h ? p.h : p.a) : p.tm, opp: ml ? (h ? p.a : p.h) : p.opp, tmA: ml ? (h ? p.ha : p.aa) : ab(p.tm), oppA: ml ? (h ? p.aa : p.ha) : ab(p.opp), home: ml ? p.ha : null,
+                  side: x.m === 'sog' || ml ? p.side : null, line: x.m === 'sog' ? p.line : null, first: s, last: s, peak: s, status: 'active', hist: [{ t: iso, s: 'active' }] });
+                created++;
+              } else {
+                r.last = s; if ((s.u || 0) > (r.peak.u || 0)) r.peak = s;
+                if (r.status !== 'active') { r.status = 'active'; r.why = null; r.ended = null; r.hist.push({ t: iso, s: 'active', why: 'recommended again' }); }
+              }
+            }
+            const pts = e => Number.isFinite(e) ? `${e > 0 ? '+' : '−'}${Math.abs(e * 100).toFixed(1)} pts` : '';
+            const am = v => v == null || !Number.isFinite(+v) ? '–' : (+v > 0 ? '+' : '') + Math.round(+v);
+            const reason = r => {
+              const pk = r.m === 'goal' ? M.byKey.get(`${r.gid}|${r.pid}`) : r.m === 'fg' ? M.fByKey.get(`f|${r.gid}|${r.pid}`) : r.m === 'sog' ? M.sByKey.get(`s|${r.gid}|${r.pid}|${r.side}`) : M.gByKey.get(`g|${r.gid}`);
+              if (!pk) return ['price no longer posted', null];
+              if (r.m === 'sog' && pk.line !== r.line) return [`line moved to ${pk.line}`, pk.best];
+              if (r.m === 'ml' && pk.side !== r.side) return ['model now favors the other team', null];
+              const px = r.m === 'ml' ? (r.side === 'h' ? (pk.bH != null ? pk.bH : pk.mlH) : (pk.bA != null ? pk.bA : pk.mlA)) : pk.best != null ? pk.best : pk.dk;
+              return [`edge dropped to ${pts(pk.edge) || 'none'} at ${am(px)}`, px];
+            };
+            for (const r of R.values()) {
+              if (r.status !== 'active' || cur.has(r.id)) continue;
+              if (new Date(r.start) <= now) { r.status = 'closed'; r.why = 'game started'; }
+              else { const [why, px] = reason(r); r.status = 'expired'; r.why = why; if (px != null) r.endPrice = +px; }
+              r.ended = iso; r.hist.push({ t: iso, s: r.status, why: r.why }); ended++;
+            }
+            // grade from the official box score (a player who didn't play is void; landing exactly on a shots line is a push)
+            const G = {};
+            for (const r of R.values()) {
+              if (r.res != null || new Date(r.start) > new Date(now - 4 * 3600e3)) continue;
+              if (!(r.gid in G)) { let g = null; try { g = await T.getGame(r.gid); } catch (e) {} G[r.gid] = g && g.final ? g : null; }
+              const g = G[r.gid]; if (!g) continue;
+              if (r.m === 'ml') { const hw = g.home.score > g.away.score; r.res = (r.side === 'h') === hw ? 'W' : 'L'; r.score = `${g.away.score}-${g.home.score}`; }
+              else {
+                const s = g.sk[r.pid];
+                if (!s || !(s.toi > 0)) r.res = 'V';
+                else if (r.m === 'goal') { r.goals = s.g; r.res = s.g > 0 ? 'W' : 'L'; }
+                else if (r.m === 'fg') { const f = (g.shots || []).filter(x => x.t === 0 && x.per >= 1 && x.per <= 4).sort((a, b) => a.per - b.per || a.sec - b.sec)[0]; r.res = f && f.pl === r.pid ? 'W' : 'L'; }
+                else { r.shots = s.sog || 0; r.res = r.shots === r.line ? 'PU' : (r.shots > r.line) === (r.side === 'o') ? 'W' : 'L'; }
+              }
+              r.graded = iso; graded++;
+            }
+            log(`Recommendation log: ${created} new, ${ended} ended (expired or game started), ${graded} graded, ${R.size} kept in all.`);
+            return [...R.values()].sort((a, b) => a.first.t < b.first.t ? -1 : a.first.t > b.first.t ? 1 : 0);
+          }
+          module.exports = { run, notifyNew, updateRecs };
           if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::error::' + (e.stack || e.message)); process.exit(1); });
           EOF
           NODE_PATH="$RUNNER_TEMP/tk/node_modules" node "$RUNNER_TEMP/track.js"
