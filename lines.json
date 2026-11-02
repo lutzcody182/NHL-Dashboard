@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-02",
- "updated": "2026-11-02T17:00:18.775Z",
+ "updated": "2026-11-02T19:00:18.356Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -57,11 +57,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Nate Danielson",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Michael Rasmussen",
          "pos": "W",
          "pp": "PP2"
@@ -69,7 +64,7 @@
         {
          "n": "J.T. Compher",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -273,7 +268,7 @@
         {
          "n": "Ivan Barbashev",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jack Eichel",
@@ -291,28 +286,8 @@
          "pp": "PP2"
         },
         {
-         "n": "Trevor Connelly",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Mitch Marner",
          "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Braeden Bowman",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Tomas Hertl",
-         "pos": "C",
          "pp": "PP1"
         },
         {
@@ -323,12 +298,32 @@
        ]
       },
       {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Victor Olofsson",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Trevor Connelly",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Tomas Hertl",
+         "pos": "C",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
        "label": "Line 4",
        "players": [
         {
-         "n": "Jonas Rondbjerg",
+         "n": "Braeden Bowman",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Marc Gatcomb",
@@ -361,9 +356,9 @@
          "pp": ""
         },
         {
-         "n": "Noah Hanifin",
+         "n": "Rasmus Andersson",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Dylan Coghlan",
@@ -371,9 +366,9 @@
          "pp": ""
         },
         {
-         "n": "Rasmus Andersson",
+         "n": "Noah Hanifin",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -701,14 +696,14 @@
          "pp": ""
         },
         {
-         "n": "Jordan Greenway",
+         "n": "Teuvo Teravainen",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ryan Greene",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -824,14 +819,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Maxim Tsyplakov",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Adam Klapka",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "William Stromgren",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Jonathan Castagna",
@@ -885,12 +880,12 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Collin Graf",
+         "n": "Will Smith",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
-         "n": "Will Smith",
+         "n": "Tyler Toffoli",
          "pos": "W",
          "pp": "PP1"
         },
@@ -925,19 +920,19 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Collin Graf",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Ivar Stenberg",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Tyler Toffoli",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Filip Bystedt",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -950,14 +945,14 @@
          "pp": ""
         },
         {
-         "n": "Ty Dellandrea",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Zack Ostapchuk",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Adam Gaudette",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -987,7 +982,7 @@
         {
          "n": "Dmitry Orlov",
          "pos": "D",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Nolan Allan",
