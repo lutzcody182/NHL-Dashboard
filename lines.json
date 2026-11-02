@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-02",
- "updated": "2026-11-02T19:00:18.356Z",
+ "updated": "2026-11-02T21:00:19.184Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -570,6 +570,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Logan O'Connor",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Parker Kelly",
          "pos": "W",
          "pp": ""
@@ -577,11 +582,6 @@
         {
          "n": "Fedor Svechkov",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Gavin Brindley",
-         "pos": "W",
          "pp": ""
         }
        ]
