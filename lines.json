@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-03",
- "updated": "2026-11-03T14:09:16.175Z",
+ "updated": "2026-11-03T16:00:27.952Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1123,7 +1123,7 @@
     },
     {
      "team": "Philadelphia Flyers",
-     "goalie": "Joseph Woll",
+     "goalie": "Dan Vladar",
      "groups": [
       {
        "label": "Line 1",
@@ -2187,7 +2187,7 @@
         {
          "n": "Connor Brown",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Amadeus Lombardi",
