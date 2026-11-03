@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-02",
- "updated": "2026-11-03T00:00:19.045Z",
+ "updated": "2026-11-03T02:00:20.421Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -286,14 +286,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Trevor Connelly",
+         "n": "Mitch Marner",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Mitch Marner",
+         "n": "Brett Howden",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       },
@@ -306,14 +306,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Tomas Hertl",
-         "pos": "C",
+         "n": "Trevor Connelly",
+         "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Brett Howden",
-         "pos": "W",
-         "pp": ""
+         "n": "Tomas Hertl",
+         "pos": "C",
+         "pp": "PP1"
         }
        ]
       },
@@ -540,9 +540,9 @@
          "pp": ""
         },
         {
-         "n": "Brock Nelson",
+         "n": "Nazem Kadri",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -560,9 +560,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Nazem Kadri",
+         "n": "Brock Nelson",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
