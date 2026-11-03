@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-03",
- "updated": "2026-11-03T16:00:27.952Z",
+ "updated": "2026-11-03T16:29:17.655Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1403,13 +1403,13 @@
          "pp": "PP2"
         },
         {
-         "n": "Ben Kindel",
-         "pos": "C",
+         "n": "Andrei Kuzmenko",
+         "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Evgeni Malkin",
-         "pos": "W",
+         "n": "Ben Kindel",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -1420,17 +1420,12 @@
         {
          "n": "Hendrix Lapierre",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ville Koivunen",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Andrei Kuzmenko",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -1627,11 +1622,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Nick Suzuki",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
          "n": "Cole Caufield",
          "pos": "W",
          "pp": "PP1"
@@ -1639,6 +1629,11 @@
         {
          "n": "Juraj Slafkovsky",
          "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Alex Newhook",
+         "pos": "C",
          "pp": "PP1"
         }
        ]
@@ -1697,9 +1692,9 @@
          "pp": ""
         },
         {
-         "n": "Alex Newhook",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Owen Beck",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1936,11 +1931,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Luke Glendening",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Matt Rempe",
          "pos": "W",
          "pp": ""
@@ -1948,6 +1938,11 @@
         {
          "n": "Noah Laba",
          "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Jaroslav Chmelar",
+         "pos": "W",
          "pp": ""
         }
        ]
