@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-03",
- "updated": "2026-11-03T18:00:28.666Z",
+ "updated": "2026-11-03T19:50:21.583Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1561,7 +1561,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Brad Lambert",
+         "n": "Dawson Mercer",
          "pos": "W",
          "pp": "PP2"
         },
@@ -2612,7 +2612,7 @@
     },
     {
      "team": "Vancouver Canucks",
-     "goalie": "Leevi Merilainen",
+     "goalie": "Kevin Lankinen",
      "groups": [
       {
        "label": "Line 1",
