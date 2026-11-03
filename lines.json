@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-03",
- "updated": "2026-11-03T19:50:21.583Z",
+ "updated": "2026-11-03T21:00:23.792Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -447,6 +447,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Danton Heinen",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Ryan Lomberg",
          "pos": "W",
          "pp": ""
@@ -455,11 +460,6 @@
          "n": "Sean Monahan",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Dmitri Voronkov",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -487,12 +487,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Erik Gudbranson",
+         "n": "Jake Christiansen",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Jake Christiansen",
+         "n": "Dante Fabbro",
          "pos": "D",
          "pp": ""
         }
@@ -1533,7 +1533,7 @@
         {
          "n": "Alex Iafallo",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -2491,7 +2491,7 @@
    "teams": [
     {
      "team": "Anaheim Ducks",
-     "goalie": "Lukas Dostal",
+     "goalie": "Laurent Brossoit",
      "groups": [
       {
        "label": "Line 1",
