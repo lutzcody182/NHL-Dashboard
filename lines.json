@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-03",
- "updated": "2026-11-03T16:29:17.655Z",
+ "updated": "2026-11-03T17:00:29.217Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -381,7 +381,7 @@
     },
     {
      "team": "Columbus Blue Jackets",
-     "goalie": "Jet Greaves",
+     "goalie": "Cam Talbot",
      "groups": [
       {
        "label": "Line 1",
@@ -1750,9 +1750,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Jake Neighbours",
+         "n": "Dylan Holloway",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Robert Thomas",
@@ -1780,7 +1780,7 @@
          "pp": ""
         },
         {
-         "n": "Pavel Buchnevich",
+         "n": "Connor McMichael",
          "pos": "W",
          "pp": "PP2"
         }
@@ -1790,9 +1790,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Dylan Holloway",
+         "n": "Jake Neighbours",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Dalibor Dvorsky",
@@ -1800,7 +1800,7 @@
          "pp": ""
         },
         {
-         "n": "Connor McMichael",
+         "n": "Pavel Buchnevich",
          "pos": "W",
          "pp": "PP2"
         }
@@ -1810,17 +1810,17 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Ross Johnston",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Pius Suter",
          "pos": "C",
          "pp": ""
         },
         {
          "n": "Alexey Toropchenko",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Aleksanteri Kaskimaki",
          "pos": "W",
          "pp": ""
         }
@@ -2059,17 +2059,17 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Trent Frederic",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Owen Michaels",
          "pos": "C",
          "pp": ""
         },
         {
          "n": "Filip Hallander",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Max Jones",
          "pos": "W",
          "pp": ""
         }
@@ -2104,7 +2104,7 @@
          "pp": ""
         },
         {
-         "n": "Ty Emberson",
+         "n": "Jake Walman",
          "pos": "D",
          "pp": ""
         }
