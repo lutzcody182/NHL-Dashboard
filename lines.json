@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-04",
- "updated": "2026-11-04T17:00:20.326Z",
+ "updated": "2026-11-04T18:32:23.735Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -122,7 +122,7 @@
          "pp": ""
         },
         {
-         "n": "Tyler Kleven",
+         "n": "Carter Yakemchuk",
          "pos": "D",
          "pp": ""
         }
@@ -278,7 +278,7 @@
         {
          "n": "Tyler Bertuzzi",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -333,7 +333,7 @@
         {
          "n": "Ryan Greene",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -343,7 +343,7 @@
         {
          "n": "Artyom Levshunov",
          "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Wyatt Kaiser",
@@ -731,7 +731,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Cale Fleury",
+         "n": "Ville Ottavainen",
          "pos": "D",
          "pp": ""
         },
