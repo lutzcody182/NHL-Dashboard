@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-04",
- "updated": "2026-11-04T18:32:23.735Z",
+ "updated": "2026-11-04T20:00:21.671Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -753,7 +753,7 @@
    "teams": [
     {
      "team": "San Jose Sharks",
-     "goalie": "Alex Nedeljkovic",
+     "goalie": "Yaroslav Askarov",
      "groups": [
       {
        "label": "Line 1",
@@ -824,13 +824,13 @@
          "pp": ""
         },
         {
-         "n": "Zack Ostapchuk",
-         "pos": "C",
+         "n": "Ty Dellandrea",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Adam Gaudette",
-         "pos": "W",
+         "n": "Zack Ostapchuk",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -846,7 +846,7 @@
         {
          "n": "Jacob Trouba",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Michael Kesselring",
@@ -862,11 +862,6 @@
          "n": "Dmitry Orlov",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Nolan Allan",
-         "pos": "D",
-         "pp": ""
         }
        ]
       }
