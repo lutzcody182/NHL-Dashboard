@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-03",
- "updated": "2026-11-03T21:00:23.792Z",
+ "updated": "2026-11-04T00:00:19.798Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -520,14 +520,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Dylan Guenther",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Barrett Hayton",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
-         "n": "Nick Schmaltz",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Anders Lee",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -555,19 +555,19 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Barrett Hayton",
+         "n": "Dylan Guenther",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Nick Schmaltz",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Anders Lee",
+         "n": "Jack McBain",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Michael Carcone",
-         "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -585,9 +585,9 @@
          "pp": ""
         },
         {
-         "n": "Jack McBain",
+         "n": "Michael Carcone",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -620,7 +620,7 @@
          "pp": ""
         },
         {
-         "n": "Artem Duda",
+         "n": "Nick DeSimone",
          "pos": "D",
          "pp": ""
         }
@@ -1219,12 +1219,12 @@
          "pp": ""
         },
         {
-         "n": "Cam York",
+         "n": "Oliver Bonk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
-         "n": "Nick Seeler",
+         "n": "Cam York",
          "pos": "D",
          "pp": ""
         },
@@ -1234,9 +1234,9 @@
          "pp": ""
         },
         {
-         "n": "Oliver Bonk",
+         "n": "Nick Seeler",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -1458,7 +1458,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Spencer Stastney",
+         "n": "Samuel Girard",
          "pos": "D",
          "pp": ""
         },
@@ -1468,7 +1468,7 @@
          "pp": ""
         },
         {
-         "n": "Samuel Girard",
+         "n": "Spencer Stastney",
          "pos": "D",
          "pp": ""
         },
@@ -1526,25 +1526,20 @@
          "pp": ""
         },
         {
+         "n": "Dawson Mercer",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Cole Perfetti",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Alex Iafallo",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
       {
        "label": "Line 3",
        "players": [
-        {
-         "n": "Nino Niederreiter",
-         "pos": "W",
-         "pp": "PP2"
-        },
         {
          "n": "Morgan Barron",
          "pos": "C",
@@ -1554,6 +1549,11 @@
          "n": "Viggo Bjorck",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Alex Iafallo",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -1561,12 +1561,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Dawson Mercer",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Isak Rosen",
+         "n": "Nino Niederreiter",
          "pos": "W",
          "pp": "PP2"
         },
@@ -2376,7 +2371,7 @@
         {
          "n": "Mavrik Bourque",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Ryan O'Reilly",
@@ -2409,26 +2404,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Reid Schaefer",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Alexander Kerfoot",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Jonathan Marchessault",
-         "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
          "n": "Jack Drury",
          "pos": "C",
          "pp": ""
@@ -2442,6 +2417,26 @@
          "n": "Adam Edstrom",
          "pos": "W",
          "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Reid Schaefer",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Alexander Kerfoot",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Vitali Pinchuk",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -2536,11 +2531,6 @@
       {
        "label": "Line 3",
        "players": [
-        {
-         "n": "Frank Vatrano",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Sam Colangelo",
          "pos": "W",
