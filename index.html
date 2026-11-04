@@ -6338,7 +6338,23 @@ async function renderMyBets() {
    (and included in Export backup). "Bet placed" opens the bet form filled in with the recommended price, line and size, and
    the bet it saves is linked to the recommendation, so it counts in My Bets (record, ROI, units) like any other bet. */
 const RST_KEY = 'icelab-recstatus', RSEEN_KEY = 'icelab-recseen';
-const RS = { map: {}, ready: null, f: '', mk: '', all: false, asked: new Set() };
+const RS = { map: {}, ready: null, f: '', mk: '', all: false, asked: new Set(), when: '', from: '', to: '', sort: 'game' };
+// "Recommended" time filter: when the recommendation first appeared (your local time)
+const REC_WHEN = [['', 'Any time'], ['6h', 'Last 6 hours'], ['24h', 'Last 24 hours'], ['today', 'Today'], ['yday', 'Yesterday'], ['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['custom', 'Custom range…']];
+function recWhenRange() {
+  const now = new Date(), day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()), h = x => x * 3600e3;
+  switch (RS.when) {
+    case '6h': return [new Date(now - h(6)), null];
+    case '24h': return [new Date(now - h(24)), null];
+    case 'today': return [day0, null];
+    case 'yday': return [new Date(+day0 - h(24)), day0];
+    case '7d': return [new Date(+day0 - h(24 * 6)), null];
+    case '30d': return [new Date(+day0 - h(24 * 29)), null];
+    case 'custom': return [RS.from ? new Date(RS.from) : null, RS.to ? new Date(RS.to) : null];
+    default: return [null, null];
+  }
+}
+const recInWhen = r => { const [a, b] = recWhenRange(), t = new Date(r.first.t); return (!a || t >= a) && (!b || t < b); };
 const REC_MKT = { goal: 'Anytime goal', fg: 'First goal', sog: 'Shots on goal', ml: 'Moneyline' };
 function rsInit() {
   if (RS.ready) return RS.ready;
@@ -6448,16 +6464,23 @@ async function renderRecs() {
     ${notR.length ? tile('Ones you skipped', `${notU >= 0 ? '+' : '−'}${Math.abs(notU).toFixed(2)}u`, `${notR.length} graded · what they would have made`, col(notU)) : ''}</div>`;
   const F = [['needs', `Needs your answer (${needs.length})`, r => recNeeds(r, BM)], ['active', `Active (${active.length})`, r => r.status === 'active'], ['placed', 'Placed', r => recPlace(r, BM) === 'placed'], ['not', 'Not placed', r => recPlace(r, BM) === 'not'], ['ended', 'Expired / ended', r => r.status !== 'active'], ['all', `All (${R.length})`, () => true]];
   const fx = (F.find(x => x[0] === RS.f) || F[F.length - 1])[2];
-  const list = R.filter(r => fx(r) && (!RS.mk || r.m === RS.mk)).sort((a, b) => a.start > b.start ? -1 : a.start < b.start ? 1 : a.first.t > b.first.t ? -1 : 1), shown = RS.all ? list : list.slice(0, 60);
+  const byRec = (a, b) => a.first.t > b.first.t ? -1 : a.first.t < b.first.t ? 1 : 0, byGame = (a, b) => a.start > b.start ? -1 : a.start < b.start ? 1 : byRec(a, b);
+  const list = R.filter(r => fx(r) && (!RS.mk || r.m === RS.mk) && recInWhen(r)).sort(RS.sort === 'rec' ? byRec : RS.sort === 'recOld' ? (a, b) => -byRec(a, b) : byGame), shown = RS.all ? list : list.slice(0, 60);
   body.innerHTML = `<div class="bar"><h2 class="grow">Recommended bets</h2></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Every bet the dashboard recommends (0.5 units or more) is kept here with its own ID, even after the price moves, the line changes or the model stops recommending it. Mark each one <b>Bet placed</b>, <b>Not placed</b> or <b>Pending</b> any time. <b>Bet placed</b> opens the bet form with the recommended odds, line and size filled in (change anything that differs), and saves it to <b>My Bets</b>, where it counts in your record, ROI and units. Your answers are saved in this browser and included in My Bets' Export backup.</p>
     ${tiles}
     <div class="card"><div class="card-h" style="flex-wrap:wrap;gap:8px"><div class="rsseg">${F.map(([k, l]) => `<button class="dbtn${RS.f === k ? ' on' : ''}" data-rsf="${k}">${l}</button>`).join('')}</div>
-      <select id="rsMk"><option value="">All markets</option>${Object.entries(REC_MKT).map(([k, l]) => `<option value="${k}"${RS.mk === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><select id="rsMk"><option value="">All markets</option>${Object.entries(REC_MKT).map(([k, l]) => `<option value="${k}"${RS.mk === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <select id="rsWhen" title="When the recommendation first appeared">${REC_WHEN.map(([k, l]) => `<option value="${k}"${RS.when === k ? ' selected' : ''}>${k ? 'Recommended: ' + l : 'Recommended: any time'}</option>`).join('')}</select>
+      ${RS.when === 'custom' ? `<label class="muted" style="font-size:12px">From <input type="datetime-local" id="rsFrom" value="${esc(RS.from)}"></label><label class="muted" style="font-size:12px">To <input type="datetime-local" id="rsTo" value="${esc(RS.to)}"></label>` : ''}
+      <select id="rsSort" title="Order of the table"><option value="game"${RS.sort === 'game' ? ' selected' : ''}>Sort: game time</option><option value="rec"${RS.sort === 'rec' ? ' selected' : ''}>Sort: recommended, newest first</option><option value="recOld"${RS.sort === 'recOld' ? ' selected' : ''}>Sort: recommended, oldest first</option></select></div></div>
       ${RS.f === 'needs' && list.length ? `<p class="muted" style="margin:0 0 8px;font-size:12.5px">These ended (no longer recommended, or the game started) and you haven't said whether you bet them. <button class="btn sm" id="rsAllNot">Mark all ${list.length} as Not placed</button></p>` : ''}
       ${list.length ? `<div class="twrap"><table class="rstab"><thead>${recHead}</thead><tbody>${shown.map(r => recRowHtml(r, BM)).join('')}</tbody></table></div>${list.length > 60 ? `<button class="btn" id="rsMore" style="margin-top:8px">${RS.all ? 'Show fewer' : `Show all ${list.length}`}</button>` : ''}` : '<p class="muted" style="margin:0">Nothing here.</p>'}</div>`;
   $$('[data-rsf]').forEach(el => el.onclick = () => { RS.f = el.dataset.rsf; RS.all = false; renderRecs(); });
   $('#rsMk').onchange = e => { RS.mk = e.target.value; renderRecs(); };
+  $('#rsWhen').onchange = e => { RS.when = e.target.value; RS.all = false; if (RS.when === 'custom' && !RS.from) { const d = new Date(Date.now() - 7 * 864e5), z = n => String(n).padStart(2, '0'); RS.from = `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T00:00`; } renderRecs(); };
+  for (const [id, k] of [['#rsFrom', 'from'], ['#rsTo', 'to']]) { const el = $(id); if (el) el.onchange = e => { RS[k] = e.target.value; renderRecs(); }; }
+  $('#rsSort').onchange = e => { RS.sort = e.target.value; renderRecs(); };
   const more = $('#rsMore'); if (more) more.onclick = () => { RS.all = !RS.all; renderRecs(); };
   const an = $('#rsAllNot'); if (an) an.onclick = async () => { if (!an.dataset.sure) { an.dataset.sure = '1'; an.textContent = `Sure? Mark ${list.length} as Not placed`; return; } for (const r of list) RS.map[r.id] = { s: 'not', t: new Date().toISOString() }; await rsSave(); recAfterChange(); };
   recSeenUpdate(R);
