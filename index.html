@@ -6180,8 +6180,10 @@ async function mbWrite(mode) {
   else if (mode === 'cache') { const c = await caches.open('icelab-mybets'); await c.put('/mybets.json', new Response(json, { headers: { 'Content-Type': 'application/json' } })); }
   else throw new Error('no storage');
 }
-function mbSave(list) {
+function mbSave(list, opt = {}) {
+  if (!opt.raw) syncNoteBets(MBS.cache, list); // remember what changed, for syncing between browsers
   MBS.cache = list.map(b => ({ ...b }));
+  if (!opt.raw) syncSoon();
   (async () => {
     // try the current place first, then fall back to the others (e.g. site storage full → database)
     const order = [MBS.mode, 'idb', 'local', 'cache'].filter((m, i, a) => m && m !== 'memory' && a.indexOf(m) === i);
@@ -6306,7 +6308,7 @@ async function renderMyBets() {
   const resCell = b => b.res === 'W' ? `<b style="color:var(--good)">✓ Won${b.type === 'sog' ? ` (${b.shots} SOG)` : b.goals > 1 && b.type !== 'fg' ? ` (${b.goals} G)` : ''}</b>` : b.res === 'L' ? `<span style="color:var(--neg)">✗ Lost${b.type === 'sog' ? ` (${b.shots} SOG)` : ''}</span>` : b.res === 'V' ? '<span class="muted">Void / refunded</span>' : b.res === 'PU' ? '<span class="muted">Push / refunded</span>' : '<span class="muted">Pending</span>';
   const rows = shown.map(b => `<tr><td class="l">${new Date(b.start || b.placed).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${GB_TYPES[b.type] ? `<div class="tcell">${b.type !== 'total' ? logoImg(b.tm, 16) : ''}<b>${mbLabel(b)}</b>${b.recId ? ` <span class="rsb on" title="Recommended ${b.recPrice != null ? fmtML(b.recPrice) : ''}${b.u ? ' · ' + b.u + 'u' : ''}">★ Rec</span>` : ''}</div><div class="muted" style="font-size:11.5px">${GB_TYPES[b.type]} · ${esc(TM(b.aid || '').abbr || '')} @ ${esc(TM(b.hid || '').abbr || '')}${b.final ? ' · final ' + esc(b.final) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>` : `<div class="tcell">${b.tm ? logoImg(b.tm, 16) : ''}${b.pid ? plink(b.pid, b.n) : esc(b.n)}${b.recId ? ` <span class="rsb on" title="Recommended ${b.recPrice != null ? fmtML(b.recPrice) : ''}${b.u ? ' · ' + b.u + 'u' : ''}">★ Rec</span>` : ''}</div><div class="muted" style="font-size:11.5px">${b.type === 'fg' ? 'First goal scorer' : b.type === 'sog' ? `${b.side === 'o' ? 'Over' : 'Under'} ${b.line} shots on goal` : 'Goal scorer'} · vs. ${esc(TM(b.opp || '').abbr || '')}${b.gl ? ' · ' + esc(b.gl) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>`}</td><td><b>${fmtML(b.odds)}</b><div class="muted" style="font-size:11.5px">${esc(b.book || '')}</div></td><td>${money(b.stake).replace('+', '')}</td><td>${money(mbToWin(b.stake, b.odds)).replace('+', '')}</td><td>${fin(b.p) ? pct1(b.p) + '%' : '–'}</td><td class="l">${resCell(b)}</td><td>${b.res === 'W' || b.res === 'L' ? moneyCell(mbProfit(b)) : '–'}</td>
     <td class="l"><div class="mbact"><button class="btn sm" data-mbedit="${b.id}" title="Edit odds or amount">Edit</button><select data-mbres="${b.id}" title="Set the result yourself"><option value="">${b.res ? 'Change…' : 'Settle…'}</option><option value="W">Won</option><option value="L">Lost</option><option value="V">Void</option><option value="PU">Push</option><option value="P">Back to pending</option></select><button class="btn sm" data-mbdel="${b.id}" title="Delete this bet">✕</button></div></td></tr>`).join('');
-  body.innerHTML = `<div class="bar"><h2 class="grow">My bets</h2><button class="btn" id="mbExport">⬇ Export backup</button><label class="btn" style="cursor:pointer">⬆ Import<input type="file" id="mbImport" accept=".json,application/json" hidden></label></div>
+  body.innerHTML = `<div class="bar"><h2 class="grow">My bets</h2><button class="btn" id="mbSync" title="Keep My Bets and your Recommended Bets answers the same in every browser">☁ Sync <span id="syncState" class="muted" style="font-size:12px"></span></button><button class="btn" id="mbExport">⬇ Export backup</button><label class="btn" style="cursor:pointer">⬆ Import<input type="file" id="mbImport" accept=".json,application/json" hidden></label></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Log a goal scorer bet from <b>Players → Goal Scorers</b> with the <b>＋ Bet</b> button, or a moneyline, total or puck line bet with the <b>Bet</b> button on any game (Today tab or the game page). Enter the odds you got and how much you bet, and it's tracked here all season. Results settle automatically from ESPN once the game is final (a player who doesn't play is void; a total or puck line landing exactly on the number is a push; a shootout winner counts as one goal, like the sportsbook), or you can settle one yourself. ${graded ? `<b>${graded} bet${graded > 1 ? 's' : ''} just settled.</b>` : ''}</p>
     ${MBS.mode === 'memory' ? `<div class="note" style="border-color:var(--neg)"><b>This browser is blocking storage for the site, so bets you log here are lost when the page closes.</b> <span id="mbDiag" class="muted" style="display:block;font-size:12px;margin-top:6px;white-space:pre-line"></span> This happens in private/incognito windows, when cookies and site data are blocked, or when the page is opened inside another app's preview instead of your own site. Open your GitHub Pages address in a normal browser window to save bets. Until then, use <b>Export backup</b> before closing.</div>` : `<div class="note">Your bets are saved in this browser on this device. Use <b>Export backup</b> now and then, and <b>Import</b> to move them to another computer or phone.</div>`}
     ${list.length ? `${tiles}<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Running profit</h3><p>Settled bets in date order</p></div>${chart}</div>
@@ -6319,6 +6321,7 @@ async function renderMyBets() {
     <p class="muted" style="font-size:12px;margin:10px 0 0">For tracking only. Please bet responsibly.</p>`;
   if (MBS.mode === 'memory') mbDiag().then(d => { const el = $('#mbDiag'); if (el) el.textContent = 'Details to send Claude:\n' + d.join('\n'); });
   const save = fn => { const l = mbLoad(); fn(l); mbSave(l); renderMyBets(); recBanner(); };
+  $('#mbSync').onclick = () => syncOpen(); syncPaint();
   $$('[data-mbedit]').forEach(el => el.onclick = () => { const b = mbLoad().find(x => x.id === el.dataset.mbedit); if (b) mbOpenForm(b, b.id); });
   $$('[data-mbdel]').forEach(el => el.onclick = () => { const b = mbLoad().find(x => x.id === el.dataset.mbdel); if (!b) return; if (el.dataset.sure) save(l => l.splice(l.findIndex(x => x.id === b.id), 1)); else { el.dataset.sure = '1'; el.textContent = 'Delete?'; setTimeout(() => { if (document.body.contains(el)) { el.textContent = '✕'; delete el.dataset.sure; } }, 3000); } });
   $$('[data-mbres]').forEach(el => el.onchange = () => { const v = el.value; if (!v) return; save(l => { const b = l.find(x => x.id === el.dataset.mbres); if (b) { b.res = v === 'P' ? null : v; b.auto = false; if (v === 'P') delete b.goals; } }); });
@@ -6370,7 +6373,8 @@ function rsInit() {
   })();
   return RS.ready;
 }
-async function rsSave() {
+async function rsSave(opt = {}) {
+  if (!opt.raw) syncSoon();
   try {
     if (MBS.mode === 'idb') await mbIdbDo(MBS.db, 'readwrite', s => s.put(RS.map, RST_KEY));
     else if (MBS.mode === 'local') localStorage.setItem(RST_KEY, JSON.stringify(RS.map));
@@ -6411,10 +6415,10 @@ async function recLog(r) {
 // after any bet is saved, edited or deleted: refresh the places that show placement status
 function recAfterChange() { recClearStale(); if (activeTab() === 'recs') renderRecs(); recBanner(); if ($('#rsModal')) recAskPaint(); }
 // a logged bet is the answer: drop any older "Not placed" for recommendations that now have a bet
-function recClearStale() { let ch = false; const BM = recBetsMap(); for (const id of Object.keys(RS.map)) if (BM[id] && BM[id].length) { delete RS.map[id]; ch = true; } if (ch) rsSave(); }
+function recClearStale() { let ch = false; const BM = recBetsMap(); for (const id of Object.keys(RS.map)) if (BM[id] && BM[id].length) { delete RS.map[id]; syncNoteRecDel(id); ch = true; } if (ch) rsSave(); }
 async function recSet(id, s) {
   await rsInit();
-  if (s === 'pending') delete RS.map[id]; else RS.map[id] = { s, t: new Date().toISOString() };
+  if (s === 'pending') { delete RS.map[id]; syncNoteRecDel(id); } else RS.map[id] = { s, t: new Date().toISOString() };
   await rsSave(); recAfterChange();
 }
 function recUnlink(id) { const l = mbLoad(), keep = l.filter(b => b.recId !== id); if (keep.length !== l.length) mbSave(keep); }
@@ -6533,6 +6537,121 @@ async function recCheck() {
   } catch (e) {}
 }
 setTimeout(recCheck, 6000); setInterval(recCheck, 5 * 60e3);
+
+/* ============================== SYNC BETWEEN BROWSERS (private GitHub Gist) ==============================
+   My Bets and your Recommended Bets answers live in each browser's own storage. With sync on, they are also kept in one
+   secret gist on your GitHub account (file icelab-sync.json) and merged in every browser you connect: on page load, a few
+   seconds after any change, when you come back to the tab, and every 5 minutes. Each bet and answer carries the time it last
+   changed, and deletions are remembered, so the newest change wins and nothing deleted comes back.
+   The token is saved only in this browser. Make it able to edit gists and nothing else. */
+const SYNC_TOKEN = 'icelab-gh-token', SYNC_GIST = 'icelab-gh-gist', SYNC_DEL = 'icelab-sync-del', SYNC_FILE = 'icelab-sync.json';
+const SYNC = { busy: false, last: null, err: '', timer: null, del: { bets: {}, rec: {} } };
+try { const d = JSON.parse(localStorage.getItem(SYNC_DEL) || 'null'); if (d && d.bets && d.rec) SYNC.del = d; } catch (e) {}
+const syncTok = () => { try { return localStorage.getItem(SYNC_TOKEN) || ''; } catch (e) { return ''; } };
+const syncOn = () => !!syncTok();
+const syncDelSave = () => { try { localStorage.setItem(SYNC_DEL, JSON.stringify(SYNC.del)); } catch (e) {} };
+const betMt = b => b.mt || Date.parse(b.placed || '') || 0;
+// remembered by mbSave / recSet: when each bet or answer changed, and which ones were removed
+function syncNoteBets(prev, next) {
+  const now = Date.now(), old = new Map(prev.map(b => [b.id, b])), ids = new Set();
+  const strip = b => { const { mt, ...r } = b; return JSON.stringify(r); };
+  for (const b of next) { ids.add(b.id); const o = old.get(b.id); if (!o || strip(o) !== strip(b)) b.mt = now; else if (o.mt && !b.mt) b.mt = o.mt; }
+  let gone = false; for (const id of old.keys()) if (!ids.has(id)) { SYNC.del.bets[id] = now; gone = true; }
+  if (gone) syncDelSave();
+}
+function syncNoteRecDel(id) { SYNC.del.rec[id] = Date.now(); syncDelSave(); }
+function syncSoon() { if (!syncOn()) return; clearTimeout(SYNC.timer); SYNC.timer = setTimeout(() => syncNow(), 3000); }
+async function ghApi(path, opt = {}) {
+  const r = await fetch('https://api.github.com' + path, { ...opt, headers: { Authorization: 'Bearer ' + syncTok(), Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(opt.body ? { 'Content-Type': 'application/json' } : {}) } });
+  if (r.status === 401) throw new Error('GitHub turned the token down (401). It may be mistyped, expired or deleted. Paste a new one.');
+  if (r.status === 403 || r.status === 404) { let m = ''; try { m = (await r.json()).message || ''; } catch (e) {} throw new Error(`GitHub said ${r.status}${m ? ': ' + m : ''}. Make sure the token is allowed to read and write gists.`); }
+  if (!r.ok) throw new Error('GitHub error ' + r.status);
+  return r.status === 204 ? null : r.json();
+}
+// find the sync gist (or make a secret one) the first time this browser connects
+async function syncGistId() {
+  let id = ''; try { id = localStorage.getItem(SYNC_GIST) || ''; } catch (e) {}
+  if (id) return id;
+  for (let page = 1; page <= 5 && !id; page++) { const list = await ghApi(`/gists?per_page=100&page=${page}`); const g = (list || []).find(x => x.files && x.files[SYNC_FILE]); if (g) id = g.id; if (!list || list.length < 100) break; }
+  if (!id) { const g = await ghApi('/gists', { method: 'POST', body: JSON.stringify({ description: 'NHL Ice Lab sync: my bets and recommended bet answers', public: false, files: { [SYNC_FILE]: { content: JSON.stringify({ v: 1, bets: {}, betDel: {}, rec: {}, recDel: {} }) } } }) }); id = g.id; }
+  try { localStorage.setItem(SYNC_GIST, id); } catch (e) {}
+  return id;
+}
+async function syncRead(id) {
+  const g = await ghApi('/gists/' + id), f = g.files && g.files[SYNC_FILE]; if (!f) return { v: 1, bets: {}, betDel: {}, rec: {}, recDel: {} };
+  let txt = f.content; if (f.truncated && f.raw_url) txt = await (await fetch(f.raw_url, { headers: { Authorization: 'Bearer ' + syncTok() } })).text();
+  try { const d = JSON.parse(txt || '{}'); return { v: 1, bets: d.bets || {}, betDel: d.betDel || {}, rec: d.rec || {}, recDel: d.recDel || {} }; } catch (e) { return { v: 1, bets: {}, betDel: {}, rec: {}, recDel: {} }; }
+}
+// newest change wins; a deletion wins over anything older than it; deletions older than 120 days are forgotten
+function syncMerge(A, B) {
+  const cut = Date.now() - 120 * 864e5, out = { v: 1, bets: {}, betDel: {}, rec: {}, recDel: {} };
+  for (const k of ['betDel', 'recDel']) for (const src of [A[k], B[k]]) for (const [id, t] of Object.entries(src || {})) if (t > cut && !(out[k][id] >= t)) out[k][id] = t;
+  for (const src of [A.bets, B.bets]) for (const [id, b] of Object.entries(src || {})) { const cur = out.bets[id]; if (!cur || betMt(b) > betMt(cur)) out.bets[id] = b; }
+  for (const [id, b] of Object.entries(out.bets)) if (out.betDel[id] >= betMt(b)) delete out.bets[id];
+  const rt = x => Date.parse(x && x.t || '') || 0;
+  for (const src of [A.rec, B.rec]) for (const [id, x] of Object.entries(src || {})) { const cur = out.rec[id]; if (!cur || rt(x) > rt(cur)) out.rec[id] = x; }
+  for (const [id, x] of Object.entries(out.rec)) if (out.recDel[id] >= rt(x)) delete out.rec[id];
+  return out;
+}
+const syncSig = d => JSON.stringify([Object.keys(d.bets).sort().map(k => [k, betMt(d.bets[k])]), Object.keys(d.rec).sort().map(k => [k, d.rec[k].s, d.rec[k].t]), Object.keys(d.betDel).length, Object.keys(d.recDel).length]);
+async function syncNow(manual) {
+  if (!syncOn() || SYNC.busy) return false;
+  SYNC.busy = true; SYNC.err = ''; syncPaint();
+  try {
+    await mbInit(); await rsInit();
+    const id = await syncGistId(), remote = await syncRead(id);
+    const local = { v: 1, bets: Object.fromEntries(MBS.cache.map(b => [b.id, b])), betDel: SYNC.del.bets, rec: RS.map, recDel: SYNC.del.rec };
+    const M = syncMerge(local, remote), changedHere = syncSig(M) !== syncSig(local);
+    // this browser: take the merged copy
+    if (changedHere) {
+      mbSave(Object.values(M.bets).sort((a, b) => (a.placed || '') < (b.placed || '') ? -1 : 1), { raw: true });
+      RS.map = M.rec; await rsSave({ raw: true });
+    }
+    SYNC.del = { bets: M.betDel, rec: M.recDel }; syncDelSave();
+    // the gist: write back only when it's missing something
+    if (syncSig(M) !== syncSig(remote)) await ghApi('/gists/' + id, { method: 'PATCH', body: JSON.stringify({ files: { [SYNC_FILE]: { content: JSON.stringify({ ...M, updated: new Date().toISOString() }) } } }) });
+    SYNC.last = new Date();
+    if (changedHere) { if (activeTab() === 'mybets') renderMyBets(); if (activeTab() === 'recs') renderRecs(); recBanner(); }
+    if (manual) alertBox(changedHere ? 'Synced: brought in changes from your other browsers' : 'Synced: everything already matches');
+    return true;
+  } catch (e) { SYNC.err = e.message || String(e); if (manual) alertBox('Sync failed: ' + SYNC.err); return false; }
+  finally { SYNC.busy = false; syncPaint(); }
+}
+function syncPaint() {
+  const el = $('#syncState'); if (!el) return;
+  el.innerHTML = !syncOn() ? 'Off' : SYNC.busy ? 'Syncing…' : SYNC.err ? `<span style="color:var(--neg)">Error</span>` : SYNC.last ? `<span style="color:var(--good)">✓</span> ${SYNC.last.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'On';
+}
+function syncOpen() {
+  const old = $('#syModal'); if (old) old.remove();
+  const m = document.createElement('div'); m.id = 'syModal'; m.className = 'mbmodal';
+  const on = syncOn();
+  m.innerHTML = `<div class="mbbox" role="dialog" aria-label="Sync between browsers" style="max-width:620px">
+    <div class="card-h"><h3>☁ Sync between browsers</h3><button class="btn" data-syclose>✕</button></div>
+    <p style="margin:0 0 10px;font-size:13.5px">Keeps <b>My Bets</b> and your <b>Recommended Bets answers</b> the same in every browser you connect, by saving them in a <b>secret gist</b> on your GitHub account. It's never in your public dashboard repo, and nobody can find it without the link.</p>
+    ${on ? `<div class="note" style="margin:0 0 10px;font-size:13px">Sync is <b>on</b> in this browser${SYNC.last ? `, last synced ${SYNC.last.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}.${SYNC.err ? `<div style="color:var(--neg);margin-top:4px">${esc(SYNC.err)}</div>` : ''}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="syNow">Sync now</button><button class="btn" id="syOff">Turn off in this browser</button></div>
+      <p class="muted" style="margin:10px 0 0;font-size:12px">Turning it off only removes the token from this browser. Your bets stay here and in the gist.</p>`
+    : `<ol style="margin:0 0 10px 18px;padding:0;font-size:13px;line-height:1.55">
+        <li>On GitHub, open <b>Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token (classic)</b>.</li>
+        <li>Note: <b>Ice Lab sync</b>. Expiration: your choice (1 year is fine). Tick <b>only "gist"</b> and nothing else.</li>
+        <li>Generate, copy the token, and paste it below. Do the same paste in each browser you use (phone, laptop…). It's saved only in that browser.</li></ol>
+      <label style="display:block;font-size:13px">GitHub token<input id="syTok" type="password" autocomplete="off" placeholder="ghp_…" style="width:100%;margin-top:4px"></label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" data-syclose>Cancel</button><button class="btn primary" id="syGo">Connect and sync</button></div>
+      <p class="muted" style="margin:10px 0 0;font-size:12px">The first browser you connect makes the gist. Every browser after that finds it and merges its own bets in, so nothing already logged anywhere is lost. If a bet was changed in two places, the newest change wins.</p>`}</div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-syclose]')) m.remove(); });
+  const go = $('#syGo'); if (go) go.onclick = async () => {
+    const t = $('#syTok').value.trim(); if (!/^(ghp_|github_pat_|gho_)[A-Za-z0-9_]{20,}$/.test(t)) { alertBox('That doesn\'t look like a GitHub token (it starts with ghp_ or github_pat_).'); return; }
+    try { localStorage.setItem(SYNC_TOKEN, t); localStorage.removeItem(SYNC_GIST); } catch (e) { alertBox('This browser won\'t let the site save the token.'); return; }
+    go.disabled = true; go.textContent = 'Connecting…';
+    const ok = await syncNow(true);
+    if (ok) { m.remove(); syncPaint(); } else { try { localStorage.removeItem(SYNC_TOKEN); } catch (e) {} go.disabled = false; go.textContent = 'Connect and sync'; }
+  };
+  const now = $('#syNow'); if (now) now.onclick = async () => { await syncNow(true); syncOpen(); };
+  const off = $('#syOff'); if (off) off.onclick = () => { try { localStorage.removeItem(SYNC_TOKEN); localStorage.removeItem(SYNC_GIST); } catch (e) {} SYNC.last = null; SYNC.err = ''; m.remove(); syncPaint(); alertBox('Sync turned off in this browser'); };
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && syncOn()) syncNow(); });
+setTimeout(() => { if (syncOn()) syncNow(); }, 2500); setInterval(() => { if (syncOn() && document.visibilityState === 'visible') syncNow(); }, 5 * 60e3);
 
 /* ---- 🥊 Tale of the tape (game preview) ---- */
 async function renderTape(s, g) {
