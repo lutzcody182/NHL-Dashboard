@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-04",
- "updated": "2026-11-04T13:08:19.266Z",
+ "updated": "2026-11-04T17:00:20.326Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -276,9 +276,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Ryan Donato",
+         "n": "Tyler Bertuzzi",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -291,9 +291,9 @@
          "pp": ""
         },
         {
-         "n": "Tyler Bertuzzi",
+         "n": "Teuvo Teravainen",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Anton Frondell",
@@ -306,12 +306,12 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Oliver Moore",
+         "n": "Ryan Donato",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Teuvo Teravainen",
+         "n": "Oliver Moore",
          "pos": "W",
          "pp": "PP2"
         },
@@ -325,11 +325,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Cole Smith",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Jordan Greenway",
          "pos": "W",
@@ -487,12 +482,12 @@
          "pp": ""
         },
         {
-         "n": "Dmitry Kulikov",
+         "n": "Uvis Balinskis",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Radko Gudas",
+         "n": "Dmitry Kulikov",
          "pos": "D",
          "pp": ""
         }
