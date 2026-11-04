@@ -6546,10 +6546,30 @@ setTimeout(recCheck, 6000); setInterval(recCheck, 5 * 60e3);
    The token is saved only in this browser. Make it able to edit gists and nothing else. */
 const SYNC_TOKEN = 'icelab-gh-token', SYNC_GIST = 'icelab-gh-gist', SYNC_DEL = 'icelab-sync-del', SYNC_FILE = 'icelab-sync.json';
 const SYNC = { busy: false, last: null, err: '', timer: null, del: { bets: {}, rec: {} } };
-try { const d = JSON.parse(localStorage.getItem(SYNC_DEL) || 'null'); if (d && d.bets && d.rec) SYNC.del = d; } catch (e) {}
-const syncTok = () => { try { return localStorage.getItem(SYNC_TOKEN) || ''; } catch (e) { return ''; } };
+/* where sync keeps its own settings: the site's database first (like My Bets), because the quick site storage is shared
+   with your other github.io projects and fills up (or is blocked in private windows); then site storage; then memory */
+const SYNC_MEM = {};
+async function syncKvGet(k) {
+  await mbInit();
+  if (MBS.db) { try { const v = await mbIdbDo(MBS.db, 'readonly', s => s.get(k)); if (v != null) return v; } catch (e) {} }
+  try { const v = localStorage.getItem(k); if (v != null) return JSON.parse(v); } catch (e) {}
+  return k in SYNC_MEM ? SYNC_MEM[k] : null;
+}
+async function syncKvSet(k, v) {
+  await mbInit(); let ok = false, err = '';
+  if (MBS.db) { try { await mbIdbDo(MBS.db, 'readwrite', s => v == null ? s.delete(k) : s.put(v, k)); ok = true; } catch (e) { err = mbErr(e); } }
+  try { if (v == null) localStorage.removeItem(k); else if (!ok) { localStorage.setItem(k, JSON.stringify(v)); ok = true; } else localStorage.removeItem(k); } catch (e) { if (!ok) err = err || mbErr(e); }
+  if (v == null) delete SYNC_MEM[k]; else SYNC_MEM[k] = v;
+  if (!ok && v != null) throw new Error(err || 'no storage');
+}
+const SYNC_INIT = (async () => {
+  const [t, g, d] = await Promise.all([syncKvGet(SYNC_TOKEN), syncKvGet(SYNC_GIST), syncKvGet(SYNC_DEL)]);
+  SYNC.tok = typeof t === 'string' ? t : ''; SYNC.gist = typeof g === 'string' ? g : '';
+  if (d && d.bets && d.rec) SYNC.del = d;
+})().catch(() => {});
+const syncTok = () => SYNC.tok || '';
 const syncOn = () => !!syncTok();
-const syncDelSave = () => { try { localStorage.setItem(SYNC_DEL, JSON.stringify(SYNC.del)); } catch (e) {} };
+const syncDelSave = () => { syncKvSet(SYNC_DEL, SYNC.del).catch(() => {}); };
 const betMt = b => b.mt || Date.parse(b.placed || '') || 0;
 // remembered by mbSave / recSet: when each bet or answer changed, and which ones were removed
 function syncNoteBets(prev, next) {
@@ -6570,11 +6590,11 @@ async function ghApi(path, opt = {}) {
 }
 // find the sync gist (or make a secret one) the first time this browser connects
 async function syncGistId() {
-  let id = ''; try { id = localStorage.getItem(SYNC_GIST) || ''; } catch (e) {}
+  let id = SYNC.gist || '';
   if (id) return id;
   for (let page = 1; page <= 5 && !id; page++) { const list = await ghApi(`/gists?per_page=100&page=${page}`); const g = (list || []).find(x => x.files && x.files[SYNC_FILE]); if (g) id = g.id; if (!list || list.length < 100) break; }
   if (!id) { const g = await ghApi('/gists', { method: 'POST', body: JSON.stringify({ description: 'NHL Ice Lab sync: my bets and recommended bet answers', public: false, files: { [SYNC_FILE]: { content: JSON.stringify({ v: 1, bets: {}, betDel: {}, rec: {}, recDel: {} }) } } }) }); id = g.id; }
-  try { localStorage.setItem(SYNC_GIST, id); } catch (e) {}
+  SYNC.gist = id; await syncKvSet(SYNC_GIST, id).catch(() => {});
   return id;
 }
 async function syncRead(id) {
@@ -6642,16 +6662,17 @@ function syncOpen() {
   m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-syclose]')) m.remove(); });
   const go = $('#syGo'); if (go) go.onclick = async () => {
     const t = $('#syTok').value.trim(); if (!/^(ghp_|github_pat_|gho_)[A-Za-z0-9_]{20,}$/.test(t)) { alertBox('That doesn\'t look like a GitHub token (it starts with ghp_ or github_pat_).'); return; }
-    try { localStorage.setItem(SYNC_TOKEN, t); localStorage.removeItem(SYNC_GIST); } catch (e) { alertBox('This browser won\'t let the site save the token.'); return; }
+    let saveErr = ''; SYNC.tok = t; SYNC.gist = ''; try { await syncKvSet(SYNC_TOKEN, t); await syncKvSet(SYNC_GIST, null); } catch (e) { saveErr = e.message || String(e); }
     go.disabled = true; go.textContent = 'Connecting…';
     const ok = await syncNow(true);
-    if (ok) { m.remove(); syncPaint(); } else { try { localStorage.removeItem(SYNC_TOKEN); } catch (e) {} go.disabled = false; go.textContent = 'Connect and sync'; }
+    if (ok) { m.remove(); syncPaint(); if (saveErr) alertBox('Synced, but this browser won\'t keep the token after the page closes (' + saveErr + '). You\'ll need to paste it again next time.'); }
+    else { SYNC.tok = ''; await syncKvSet(SYNC_TOKEN, null).catch(() => {}); go.disabled = false; go.textContent = 'Connect and sync'; }
   };
   const now = $('#syNow'); if (now) now.onclick = async () => { await syncNow(true); syncOpen(); };
-  const off = $('#syOff'); if (off) off.onclick = () => { try { localStorage.removeItem(SYNC_TOKEN); localStorage.removeItem(SYNC_GIST); } catch (e) {} SYNC.last = null; SYNC.err = ''; m.remove(); syncPaint(); alertBox('Sync turned off in this browser'); };
+  const off = $('#syOff'); if (off) off.onclick = async () => { SYNC.tok = ''; SYNC.gist = ''; await syncKvSet(SYNC_TOKEN, null).catch(() => {}); await syncKvSet(SYNC_GIST, null).catch(() => {}); SYNC.last = null; SYNC.err = ''; m.remove(); syncPaint(); alertBox('Sync turned off in this browser'); };
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && syncOn()) syncNow(); });
-setTimeout(() => { if (syncOn()) syncNow(); }, 2500); setInterval(() => { if (syncOn() && document.visibilityState === 'visible') syncNow(); }, 5 * 60e3);
+SYNC_INIT.then(() => setTimeout(() => { if (syncOn()) syncNow(); }, 1500)); setInterval(() => { if (syncOn() && document.visibilityState === 'visible') syncNow(); }, 5 * 60e3);
 
 /* ---- 🥊 Tale of the tape (game preview) ---- */
 async function renderTape(s, g) {
