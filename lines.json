@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-05",
- "updated": "2026-11-05T15:49:33.273Z",
+ "updated": "2026-11-05T17:00:20.431Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -42,7 +42,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Jonatan Berggren",
+         "n": "Aleksanteri Kaskimaki",
          "pos": "W",
          "pp": ""
         },
@@ -64,7 +64,7 @@
         {
          "n": "Dalibor Dvorsky",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Pavel Buchnevich",
@@ -114,7 +114,7 @@
         {
          "n": "Adam Jiricek",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Justin Barron",
@@ -381,7 +381,7 @@
     },
     {
      "team": "New York Islanders",
-     "goalie": "Ilya Sorokin",
+     "goalie": "Semyon Varlamov",
      "groups": [
       {
        "label": "Line 1",
@@ -676,7 +676,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "John Leonard",
+         "n": "Nate Danielson",
          "pos": "W",
          "pp": ""
         },
@@ -1149,13 +1149,13 @@
          "pp": "PP2"
         },
         {
-         "n": "Andrei Kuzmenko",
-         "pos": "W",
+         "n": "Ben Kindel",
+         "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Ben Kindel",
-         "pos": "C",
+         "n": "Evgeni Malkin",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -1164,25 +1164,30 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Justin Brazeau",
-         "pos": "W",
+         "n": "Hendrix Lapierre",
+         "pos": "C",
          "pp": ""
         },
         {
-         "n": "Hendrix Lapierre",
-         "pos": "C",
+         "n": "Andrei Kuzmenko",
+         "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Ville Koivunen",
+         "n": "Nick Robertson",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       },
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Ville Koivunen",
+         "pos": "W",
+         "pp": "PP1"
+        },
         {
          "n": "Connor Dewar",
          "pos": "W",
@@ -1191,11 +1196,6 @@
         {
          "n": "Blake Lizotte",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Nick Robertson",
-         "pos": "W",
          "pp": ""
         }
        ]
@@ -1367,7 +1367,7 @@
     },
     {
      "team": "Columbus Blue Jackets",
-     "goalie": "Jet Greaves",
+     "goalie": "Cam Talbot",
      "groups": [
       {
        "label": "Line 1",
@@ -1521,13 +1521,13 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Tyson Foerster",
+         "n": "Cole Knuble",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Denver Barkey",
-         "pos": "C",
+         "n": "Porter Martone",
+         "pos": "W",
          "pp": "PP1"
         },
         {
@@ -1541,12 +1541,12 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Matvei Michkov",
+         "n": "Tyson Foerster",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
-         "n": "Porter Martone",
+         "n": "Matvei Michkov",
          "pos": "W",
          "pp": "PP1"
         },
@@ -1566,9 +1566,9 @@
          "pp": ""
         },
         {
-         "n": "Cole Knuble",
-         "pos": "W",
-         "pp": ""
+         "n": "Denver Barkey",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
          "n": "Sean Couturier",
@@ -1865,11 +1865,16 @@
     },
     {
      "team": "Montreal Canadiens",
-     "goalie": "Jacob Fowler",
+     "goalie": "Jakub Dobes",
      "groups": [
       {
        "label": "Line 1",
        "players": [
+        {
+         "n": "Nick Suzuki",
+         "pos": "C",
+         "pp": "PP1"
+        },
         {
          "n": "Cole Caufield",
          "pos": "W",
@@ -1878,11 +1883,6 @@
         {
          "n": "Juraj Slafkovsky",
          "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Alex Newhook",
-         "pos": "C",
          "pp": "PP1"
         }
        ]
@@ -1896,14 +1896,14 @@
          "pp": ""
         },
         {
-         "n": "Chris Kreider",
-         "pos": "W",
+         "n": "Alex Newhook",
+         "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Jake Evans",
-         "pos": "C",
-         "pp": ""
+         "n": "Chris Kreider",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -1936,13 +1936,13 @@
          "pp": "PP2"
         },
         {
-         "n": "Florian Xhekaj",
+         "n": "Kirby Dach",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Owen Beck",
-         "pos": "W",
+         "n": "Jake Evans",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -2140,11 +2140,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Adam Lowry",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Dawson Mercer",
          "pos": "W",
          "pp": "PP2"
@@ -2153,6 +2148,11 @@
          "n": "Cole Perfetti",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Brayden Yager",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -2160,7 +2160,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Morgan Barron",
+         "n": "Adam Lowry",
          "pos": "C",
          "pp": ""
         },
@@ -2180,9 +2180,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Nino Niederreiter",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Morgan Barron",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Cole Koepke",
