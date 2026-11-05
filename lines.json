@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-05",
- "updated": "2026-11-05T18:00:19.992Z",
+ "updated": "2026-11-05T20:00:20.904Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -107,22 +107,22 @@
          "pp": ""
         },
         {
-         "n": "Cam Fowler",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Adam Jiricek",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Justin Barron",
          "pos": "D",
          "pp": ""
         },
         {
          "n": "Colton Parayko",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Cam Fowler",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
+         "n": "Adam Jiricek",
          "pos": "D",
          "pp": ""
         }
@@ -555,14 +555,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Braeden Bowman",
+         "n": "Victor Olofsson",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Trevor Connelly",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Tomas Hertl",
@@ -575,12 +575,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Marc Gatcomb",
+         "n": "Braeden Bowman",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
-         "n": "Raphael Lavoie",
+         "n": "Marc Gatcomb",
          "pos": "W",
          "pp": ""
         },
@@ -2237,7 +2237,7 @@
    "teams": [
     {
      "team": "Anaheim Ducks",
-     "goalie": "Lukas Dostal",
+     "goalie": "Laurent Brossoit",
      "groups": [
       {
        "label": "Line 1",
