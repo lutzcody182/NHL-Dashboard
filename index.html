@@ -7929,6 +7929,27 @@ const SOG_STRATS = [
   ['e3', 'Edge 3+ pts', ps => ps.filter(p => p.edge >= .03)],
   ['over', 'Positive-edge overs', ps => ps.filter(p => p.side === 'o' && p.edge > 0)],
   ['under', 'Positive-edge unders', ps => ps.filter(p => p.side === 'u' && p.edge > 0)]];
+/* closing line check for shots on goal: DraftKings' last price before puck drop (recorded by the GitHub job in the final
+   90 minutes) vs. the price we flagged. Same line: did we get a better price, and by how much after DraftKings' margin.
+   Different line: did the line move toward our side (an over line going up, an under line going down)? */
+function sogClose(side, line, price, p) {
+  if (!fin(p.closeLine) || !fin(+price)) return null;
+  if (+p.closeLine !== +line) return { moved: true, our: (p.closeLine > line) === (side === 'o') };
+  const c = side === 'o' ? p.closeO : p.closeU; if (!fin(c) || !fin(p.closeO) || !fin(p.closeU)) return null;
+  const fc = amImplied(c) / (amImplied(p.closeO) + amImplied(p.closeU)), im = amImplied(+price);
+  return { moved: false, v: fc - im, beat: im < amImplied(c) - 1e-9, same: Math.abs(im - amImplied(c)) < 1e-9 };
+}
+function sogClvHtml(PK) {
+  const S = {}; for (const p of (PK && PK.sog) || []) S[`${p.gid}|${p.pid}|${p.side}`] = p;
+  const recs = ((PK && PK.recs) || []).filter(r => r.m === 'sog').map(r => { const p = S[`${r.gid}|${r.pid}|${r.side}`]; return p && sogClose(r.side, r.line, r.first.price, p); }).filter(Boolean);
+  const all = ((PK && PK.sog) || []).filter(p => p.edge > 0).map(p => sogClose(p.side, p.line, p.best, p)).filter(Boolean);
+  const sum = (L, what) => {
+    if (!L.length) return `<span class="muted">${what}: no closing prices yet (the job records them in the last 90 minutes before each game)</span>`;
+    const px = L.filter(x => !x.moved), mv = L.filter(x => x.moved), ci = ciMean(px.map(x => x.v)), b = px.filter(x => x.beat).length, eq = px.filter(x => x.same).length;
+    return `<b>${what}</b> (${L.length}): ${px.length ? `beat DraftKings' closing price <b>${b} of ${px.length}</b>${eq ? ` (${eq} even)` : ''} · <b style="color:${ci.m > 0 ? 'var(--good)' : ci.m < 0 ? 'var(--neg)' : 'inherit'}">${sgnPts(ci.m)} pts</b> per bet after the margin${fin(ci.lo) ? ` <span class="muted">(${rangeTxt(ci, sgnPts)})</span>` : ''}` : ''}${mv.length ? `${px.length ? ' · ' : ''}line moved our way <b>${mv.filter(x => x.our).length} of ${mv.length}</b>` : ''}`;
+  };
+  return `<div class="note" style="margin:0 0 10px;font-size:12.5px"><b>📈 Closing line check</b> (are prices moving our way before the game?)<div style="margin-top:4px">${sum(recs, 'Recommended bets, at the first price flagged')}</div><div style="margin-top:2px">${sum(all, 'Every positive-edge pick, at its last saved price')}</div></div>`;
+}
 function sogTrackCard(PK) {
   const ps = ((PK && PK.sog) || []).filter(p => p.best != null && fin(p.p));
   if (!ps.length) return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 Shots on goal pick log</h3></div><p class="muted" style="margin:0">No shots on goal picks saved yet. The GitHub job saves both sides for every priced player before each game and grades them the next morning.</p></div>`;
@@ -7939,7 +7960,7 @@ function sogTrackCard(PK) {
     cells: `${dateTd(p.date)}<td class="l"><div class="tcell">${logoImg(p.tm, 16)}${plink(p.pid, p.n)}</div></td><td class="l">${p.side === 'o' ? 'Over' : 'Under'} ${p.line}</td><td>${f2(p.mu)}</td><td>${pct1(p.p)}%</td><td><b>${fmtML(p.best)}</b> <span class="muted" style="font-size:11px">${BK[p.book] || ''}</span></td><td style="color:${p.edge > 0 ? 'var(--good)' : 'var(--neg)'}">${(p.edge > 0 ? '+' : '') + (p.edge * 100).toFixed(1)}</td>` })), SOGT, { strat: 'sogtStrat', all: 'sogtAll' }, '<th class="l">Date</th><th class="l">Player</th><th class="l">Bet</th><th>Expected</th><th>Ice Lab</th><th>Price</th><th>Edge</th>');
   return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 Shots on goal pick log</h3><p>${UT.done} graded recommended bets · ${UT.pend} pending · updated ${PK.updated ? new Date(PK.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</p></div>
     <p class="muted" style="margin:-4px 0 6px;font-size:12px">The GitHub job saves the over and the under for every priced player before each game (best price across your five books) and grades them from the official box score the next morning. Model vs. books blend: ${Math.round(SOGB.w * 100)}% model${SOGB.n ? ` (learned from ${SOGB.n} graded overs)` : ' (starting value until 150 picks are graded)'}.</p>
-    ${UT.note}${UT.tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit (units)</h3>${UT.chart}
+    ${sogClvHtml(PK)}${UT.note}${UT.tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit (units)</h3>${UT.chart}
     ${UT.log}</div>`;
 }
 function sogTrackRender(PK) {
