@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-05",
- "updated": "2026-11-05T20:00:20.904Z",
+ "updated": "2026-11-05T21:00:19.966Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -409,7 +409,7 @@
         {
          "n": "Emil Heineman",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Brayden Schenn",
@@ -439,7 +439,7 @@
         {
          "n": "Jean-Gabriel Pageau",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -577,7 +577,7 @@
         {
          "n": "Braeden Bowman",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Marc Gatcomb",
@@ -1164,30 +1164,25 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Hendrix Lapierre",
-         "pos": "C",
+         "n": "Justin Brazeau",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Andrei Kuzmenko",
-         "pos": "W",
+         "n": "Hendrix Lapierre",
+         "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Nick Robertson",
+         "n": "Ville Koivunen",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       },
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Ville Koivunen",
-         "pos": "W",
-         "pp": "PP1"
-        },
         {
          "n": "Connor Dewar",
          "pos": "W",
@@ -1196,6 +1191,11 @@
         {
          "n": "Blake Lizotte",
          "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Nick Robertson",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -1433,11 +1433,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Danton Heinen",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Ryan Lomberg",
          "pos": "W",
          "pp": ""
@@ -1446,6 +1441,11 @@
          "n": "Sean Monahan",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Dmitri Voronkov",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1896,14 +1896,14 @@
          "pp": ""
         },
         {
-         "n": "Alex Newhook",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Chris Kreider",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Jake Evans",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -1941,9 +1941,9 @@
          "pp": ""
         },
         {
-         "n": "Jake Evans",
+         "n": "Alex Newhook",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
