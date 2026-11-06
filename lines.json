@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-05",
- "updated": "2026-11-05T23:00:18.991Z",
+ "updated": "2026-11-06T00:00:24.176Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -920,7 +920,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Dominic James",
+         "n": "Zemgus Girgensons",
          "pos": "C",
          "pp": ""
         },
@@ -980,9 +980,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Charle-Edouard D'Astous",
+         "n": "Victor Hedman",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       }
@@ -2172,7 +2172,7 @@
         {
          "n": "Alex Iafallo",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2183,6 +2183,11 @@
          "n": "Morgan Barron",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Isak Rosen",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Cole Koepke",
@@ -2210,19 +2215,19 @@
          "pp": ""
         },
         {
-         "n": "Elias Salomonsson",
+         "n": "Dylan DeMelo",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
+        },
+        {
+         "n": "Tyrel Bauer",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Haydn Fleury",
          "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Dylan DeMelo",
-         "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
