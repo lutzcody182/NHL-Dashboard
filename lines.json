@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-06",
- "updated": "2026-11-06T17:00:19.614Z",
+ "updated": "2026-11-06T21:00:18.563Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -271,14 +271,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Tyler Toffoli",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Macklin Celebrini",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Michael Misa",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -291,13 +291,13 @@
          "pp": "PP1"
         },
         {
-         "n": "Kiefer Sherwood",
+         "n": "Collin Graf",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Michael Misa",
-         "pos": "C",
+         "n": "Kiefer Sherwood",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -306,19 +306,19 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Collin Graf",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Ivar Stenberg",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Filip Bystedt",
-         "pos": "C",
+         "n": "Ty Dellandrea",
+         "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Tyler Toffoli",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -331,14 +331,14 @@
          "pp": ""
         },
         {
-         "n": "Ty Dellandrea",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Zack Ostapchuk",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Adam Gaudette",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
