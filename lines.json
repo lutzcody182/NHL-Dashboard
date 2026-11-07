@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-07T19:00:19.481Z",
+ "updated": "2026-11-07T20:00:17.560Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -509,7 +509,7 @@
    "teams": [
     {
      "team": "New York Rangers",
-     "goalie": "Dylan Garand",
+     "goalie": "",
      "groups": [
       {
        "label": "Line 1",
@@ -2247,7 +2247,7 @@
    "teams": [
     {
      "team": "Pittsburgh Penguins",
-     "goalie": "Arturs Silovs",
+     "goalie": "Sergei Murashov",
      "groups": [
       {
        "label": "Line 1",
