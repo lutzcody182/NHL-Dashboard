@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-07T22:00:17.210Z",
+ "updated": "2026-11-07T23:00:17.564Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -1782,7 +1782,7 @@
         {
          "n": "Collin Graf",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Kiefer Sherwood",
@@ -1800,14 +1800,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Ty Dellandrea",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Tyler Toffoli",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Filip Bystedt",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -1820,14 +1820,14 @@
          "pp": ""
         },
         {
-         "n": "Zack Ostapchuk",
-         "pos": "C",
+         "n": "Ty Dellandrea",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Adam Gaudette",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Zack Ostapchuk",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -2031,7 +2031,7 @@
         {
          "n": "Anthony Cirelli",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Brandon Hagel",
@@ -2051,7 +2051,7 @@
         {
          "n": "Pontus Holmberg",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Ilya Mikheyev",
@@ -2106,12 +2106,12 @@
         {
          "n": "John Carlson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Victor Hedman",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -2761,9 +2761,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Jake DeBrusk",
+         "n": "Arshdeep Bains",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       },
@@ -2791,14 +2791,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Jacob Quillan",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Drew O'Connor",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Jake DeBrusk",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "Linus Karlsson",
@@ -2841,22 +2841,22 @@
          "pp": "PP1"
         },
         {
+         "n": "Tom Willander",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Jamie Oleksiak",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Zeev Buium",
          "pos": "D",
          "pp": "PP2"
         },
         {
          "n": "Guillaume Brisebois",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Victor Mancini",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Jamie Oleksiak",
          "pos": "D",
          "pp": ""
         }
