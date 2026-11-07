@@ -508,6 +508,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
       <button data-tab="scorers" data-g="players">Goal Scorers</button>
       <button data-tab="firstgoal" data-g="players">First Goal</button>
       <button data-tab="sog" data-g="players">Shots on Goal</button>
+      <button data-tab="trial" data-g="players">Saves & Puck Line</button>
       <button data-tab="compare" data-g="players">Compare</button>
       <button data-tab="birth" data-g="players">Birthplaces</button>
       <button data-tab="quads" data-g="league">Quadrants</button>
@@ -562,6 +563,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
   <section class="tab" id="tab-scorers"><div class="abar"></div><div id="gsBody2"></div></section>
   <section class="tab" id="tab-firstgoal"><div class="abar"></div><div id="fgBody"></div></section>
   <section class="tab" id="tab-sog"><div class="abar"></div><div id="sogBody"></div></section>
+  <section class="tab" id="tab-trial"><div class="abar"></div><div id="trialBody"></div></section>
   <section class="tab" id="tab-props"><div class="abar"></div><div id="prBody"></div></section>
   <section class="tab" id="tab-periods"><div class="abar"></div><div id="pdBody"></div></section>
   <section class="tab" id="tab-faceoffs"><div class="abar"></div><div id="foBody"></div></section>
@@ -4894,12 +4896,13 @@ function gmPredict(hId, aId, dateIso, gH, gA, ml, inj, LF) {
   // referees: extra (or fewer) power plays for both teams, converted at each team's power-play rate vs. the other's penalty kill
   if (rg.h || rg.a) { const p1 = p; p = clamp(sigm(logit(p1) + wp(f.lh + rg.h, f.la + rg.a) - wp(f.lh, f.la)), .01, .99); if (Math.abs(p - p1) >= .0005) parts.push({ k: 'ref', l: 'Referee crew', d: p - p1 }); }
   parts.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
-  const mk = devig(ml);
+  // the market: Pinnacle's no-margin line when it's posted (the sharpest book), otherwise DraftKings' via ESPN
+  const mkPn = ml && ml.pn ? devig(ml.pn) : NaN, mk = fin(mkPn) ? mkPn : devig(ml), mkSrc = fin(mkPn) ? 'Pinnacle' : fin(mk) ? 'DraftKings' : '';
   const pb = M.Wb && fin(mk) ? sigm(M.Wb[0] + M.Wb[1] * logit(p) + M.Wb[2] * logit(clamp(mk, .02, .98))) : NaN;
   // live check: mix in the betting line by how the model's saved picks have actually done against it (gmBlendFit)
   const pModel = p;
   if (fin(mk) && GMB.w < .999) { p = clamp(sigm(GMB.w * logit(clamp(pModel, .01, .99)) + (1 - GMB.w) * logit(clamp(mk, .02, .98))), .01, .99); if (Math.abs(p - pModel) >= .0005) parts.push({ k: 'live', l: 'Leaning on the betting line (live track record)', d: p - pModel }); }
-  return { p, pModel, p0, pb, mk, parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, ctx: { hId, aId, dateIso, gH, gA, ml, dH, dA, phf, pht, mH, mA }, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
+  return { p, pModel, p0, pb, mk, mkSrc, mkDk: devig(ml), parts, inj: { h: iH0, a: iA0, viaLineup: lineupOn }, match: M.GS ? { h: mH, a: mA } : null, lineup: M.PR ? { h: dH, a: dA, on: lineupOn } : null, phTeam: pht[0] || pht[1] ? { d5: pht[0] * .5, st: pht[1] * 2, on: M.W.length >= GM_FEATS.length && M.keep.includes('phteams') } : null, ph: PHF.idx && (phf[0] || phf[1]) ? { team: phf[0], vsUsual: phf[1] * .25, on: M.W.length >= GM_FEATS.length && M.keep.includes('posthockey') } : null, ref: { names: refs, crew, goals: rg, beta: M.S.refBeta }, x: f.x, ctx: { hId, aId, dateIso, gH, gA, ml, dH, dA, phf, pht, mH, mA }, n: Math.min((M.S.T[hId] || {}).n || 0, (M.S.T[aId] || {}).n || 0) };
 }
 /* Backtest (Oct 2026): on its first 93 graded live picks the game model predicted worse than the betting line in both the
    older and newer half, even though it beat the closing line on held-out past games. So each game's chance mixes in the
@@ -5058,7 +5061,7 @@ function gmWhyTip(x, r, g) {
     case 'pht5': inp.push(row(`5v5 xG differential /60, ${hA} minus ${aA}`, sgn2(c.pht ? c.pht[0] * .5 : 0))); break;
     case 'phst': inp.push(row(`PP xGF minus PK xGA /60, ${hA} minus ${aA}`, sgn2(c.pht ? c.pht[1] * 2 : 0))); break;
     case 'inj': for (const [w, ab] of [[r.inj.h, hA], [r.inj.a, aA]]) if (w.who.length) inp.push(row(`${ab} missing`, `${w.who.slice(0, 3).map(q => esc(q.n)).join(', ')} (${pct1(w.who.reduce((s, q) => s + q.share, 0))}% of its xG)`)); break;
-    case 'live': inp.push(row('Model alone', pct1(r.pModel) + '% ' + hA), row('Betting line, margin removed', pct1(r.mk) + '% ' + hA), row('Trust in the model', `${Math.round(GMB.w * 100)}%`), row('Learned from', `${GMB.n} graded live game picks`)); break;
+    case 'live': inp.push(row('Model alone', pct1(r.pModel) + '% ' + hA), row(`Betting line (${r.mkSrc || 'market'}), margin removed`, pct1(r.mk) + '% ' + hA), row('Trust in the model', `${Math.round(GMB.w * 100)}%`), row('Learned from', `${GMB.n} graded live game picks`)); break;
     case 'ref': inp.push(row('Crew', esc((r.ref.names || []).join(' & ') || '–')), row('Penalties vs. an average crew', `${pct1(Math.abs(r.ref.crew - 1))}% ${r.ref.crew >= 1 ? 'more' : 'fewer'}`)); break;
   }
   const feat = GM_FEATS.find(f => f[0] === x.k), toward = x.d >= 0 ? hA : aA;
@@ -5078,7 +5081,7 @@ async function renderGameModelPreview(s, g) {
   const ml = pk && pk.homeTeamOdds && pk.awayTeamOdds && isFinite(pk.homeTeamOdds.moneyLine) && isFinite(pk.awayTeamOdds.moneyLine) ? { h: +pk.homeTeamOdds.moneyLine, a: +pk.awayTeamOdds.moneyLine } : null;
   if (ml) ml.open = mlOpenOf(pk);
   const LFp = await getLinesFile(); await getPHFile(); const fdmlG = fdMoneyline(await getPropsFile(), g.date, g.home.id, g.away.id);
-  await getPicksFile(); const r = gmPredict(g.home.id, g.away.id, g.date || new Date().toISOString(), gH, gA, ml, inj, LFp);
+  await getPicksFile(); const r = gmPredict(g.home.id, g.away.id, g.date || new Date().toISOString(), gH, gA, fdmlG && fdmlG.pn ? { ...(ml || {}), pn: fdmlG.pn } : ml, inj, LFp);
   if (!r || !box()) return;
   const injTxt = [[g.away, r.inj.a], [g.home, r.inj.h]].filter(([, x]) => x.who.length).map(([t, x]) => `<p style="margin:0 0 4px;font-size:13px"><b>${esc(t.abbr)}</b> missing ${x.who.slice(0, 4).map(w => `${esc(w.n)} <span class="muted">(${pct1(w.share)}% of recent xG)</span>`).join(', ')}${x.who.length > 4 ? ` +${x.who.length - 4} more` : ''}${r.inj.viaLineup ? ' <span class="muted">→ counted through lineup strength</span>' : ` → scoring −${pct1(x.cut)}%`}</p>`).join('');
   const meter = (l, p) => fin(p) ? `<div class="pred-row"><span>${l}</span><div class="meter"><i style="width:${(1 - p) * 100}%;background:var(--away)"></i><i style="width:${p * 100}%;background:var(--home)"></i></div><span class="num">${f0((1 - p) * 100)}% – ${f0(p * 100)}%</span></div>` : '';
@@ -5089,7 +5092,7 @@ async function renderGameModelPreview(s, g) {
   const gName = (id, t) => { const G = t === g.home.id ? GH : GA; return pg[t] ? `${esc(pg[t].n)} ${gBadge(pg[t].st)}` : G.src === 'rg' ? `${esc(G.n)} <span class="muted">(projected by RotoGrinders; not announced yet${G.id ? '' : ', no games yet so treated as an average goalie'})</span>` : id ? `${esc((M.S.Gn || {})[id] || 'Usual starter')} <span class="muted">(not announced yet: assumes his usual starter)</span>` : '<span class="muted">unknown</span>'; };
   box().innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><p>Weighs every factor by how much it has actually mattered</p></div>
     <div style="display:flex;justify-content:space-between;font-weight:700"><span>${esc(g.away.abbr)}</span><span>${esc(g.home.abbr)}</span></div>
-    ${meter('Game model v2', r.p)}${fin(r.pb) ? meter('v2 + market', r.pb) : ''}${fin(r.mk) ? meter('Betting market', r.mk) : ''}
+    ${meter('Game model v2', r.p)}${fin(r.pb) ? meter('v2 + market', r.pb) : ''}${fin(r.mk) ? meter(r.mkSrc === 'Pinnacle' ? 'Pinnacle (sharp)' : 'Betting market', r.mk) : ''}${r.mkSrc === 'Pinnacle' && fin(r.mkDk) ? meter('DraftKings', r.mkDk) : ''}
     <h4 class="cmp-sec" style="margin-top:12px">Fair line & value</h4>${gmValueTable(r.p, ml, g.away.abbr, g.home.abbr, 'Game model v2', fdmlG)}
     ${fin(r.pb) ? `<p class="muted" style="font-size:12px;margin:6px 0 0">More cautious view: the v2 + market blend says ${esc(g.home.abbr)} ${pct1(r.pb)}% (fair ${fairAmerican(r.pb)}) and ${esc(g.away.abbr)} ${pct1(1 - r.pb)}% (fair ${fairAmerican(1 - r.pb)}). When both point the same way, the edge is more trustworthy.</p>` : ''}
     <div class="grid g2" style="margin-top:10px"><div><h4 class="cmp-sec" style="margin-top:0">Why</h4>${parts || '<p class="muted" style="margin:0">Mostly team strength and home ice.</p>'}</div>
@@ -5837,9 +5840,24 @@ const UNITS = { proof: {}, hair: {} };
    predicted edge actually showed up), starting at half and weighted by how sure that estimate is, between 20% and 100%.
    Edges shown on the boards are unchanged; only the unit sizes use it. The game model doesn't use it, since its chance is
    already mixed with the betting line by its live record (GMB). */
-const HAIR_MKTS = ['goal', 'fg', 'sog'];
+const HAIR_MKTS = ['goal', 'fg', 'sog', 'sogAlt', 'sv', 'pl'];
+/* trial markets (added Nov 2026): alternate shots lines, goalie saves and puck line (game totals failed their backtest). Their edges are shown and
+   their picks saved and graded (picks.json → xm), but they don't count as recommended bets or send alerts until they've
+   earned it: 150+ graded picks where the dashboard's chance predicted better (log loss) than the books' own chance (pb). */
+const TRIAL_MKTS = ['sogAlt', 'sv', 'pl'], TRIAL_NEED = 150;
+function trialFit(PK) {
+  UNITS.trial = UNITS.trial || {};
+  for (const m of TRIAL_MKTS) {
+    const L = ((PK && PK.xm) || []).filter(x => x.m === m && (x.res === 'W' || x.res === 'L') && fin(x.p) && fin(x.pb));
+    let a = 0, b = 0; for (const x of L) { const y = x.res === 'W'; a += llOne(x.p, y); b += llOne(x.pb, y); }
+    UNITS.trial[m] = { n: L.length, ll: L.length ? a / L.length : NaN, llB: L.length ? b / L.length : NaN, ok: L.length >= TRIAL_NEED && a < b };
+  }
+  return UNITS.trial;
+}
+const trialOk = m => !TRIAL_MKTS.includes(m) || !!((UNITS.trial || {})[m] || {}).ok;
 function unitsHairFit(PK) {
-  const lists = { goal: [(PK && PK.picks) || [], p => p.best != null ? p.best : p.dk], fg: [(PK && PK.first) || [], p => p.best != null ? p.best : p.dk], sog: [(PK && PK.sog) || [], p => p.best] };
+  const xm = m => ((PK && PK.xm) || []).filter(x => x.m === m);
+  const lists = { goal: [(PK && PK.picks) || [], p => p.best != null ? p.best : p.dk], fg: [(PK && PK.first) || [], p => p.best != null ? p.best : p.dk], sog: [(PK && PK.sog) || [], p => p.best], sogAlt: [xm('sogAlt'), p => p.best], sv: [xm('sv'), p => p.best], pl: [xm('pl'), p => p.best] };
   for (const m of HAIR_MKTS) {
     const [list, pxf] = lists[m]; let W = 0, Q = 0, I = 0, V = 0, n = 0;
     for (const x of list) { if (x.res !== 'W' && x.res !== 'L') continue; const px = pxf(x); if (!fin(+px) || !fin(x.p)) continue; const u = unitsFor(m, x.p, px, { frac: .125, noHair: true }); if (!u || u.u < .5) continue;
@@ -5851,9 +5869,9 @@ function unitsHairFit(PK) {
   }
   return UNITS.hair;
 }
-const UNIT_MKT = { goal: 'Goal scorer', fg: 'First goal scorer', sog: 'Shots on goal', ml: 'Moneyline (game model)' };
+const UNIT_MKT = { goal: 'Goal scorer', fg: 'First goal scorer', sog: 'Shots on goal', ml: 'Moneyline (game model)', sogAlt: 'Alternate shots lines', sv: 'Goalie saves', tot: 'Game totals', pl: 'Puck line' };
 function unitsProof(PK) {
-  unitsHairFit(PK);
+  trialFit(PK); unitsHairFit(PK);
   // a market is "proven" once its recommended bets (0.5u+) have 300+ graded results and a profit in units
   const tally = list => { let n = 0, pr = 0, risk = 0; for (const x of list) { if (!(x.u >= .5) || (x.res !== 'W' && x.res !== 'L') || x.px == null || !isFinite(x.px)) continue; n++; risk += x.u; pr += uProfit(x.u, x.px, x.res); } return { n, roi: risk ? pr / risk : NaN }; };
   const pl = (l, m, px) => (l || []).map(p => ({ u: recU(m, p, p.p, px(p)), px: px(p), res: p.res }));
@@ -5875,10 +5893,13 @@ function unitsFor(m, p, price, opt = {}) {
   let raw = frac * kelly * 100; if (opt.shaky) raw *= .5;
   if (raw < .25) return null;
   const u = Math.min(2, Math.max(.5, Math.round(raw * 2) / 2));
-  return { u, raw, kelly, frac, proven: pr.proven, n: pr.n, roi: pr.roi, shaky: !!opt.shaky, p, pS, hr, hair: HAIR_MKTS.includes(m) && !opt.noHair ? UNITS.hair[m] || null : null };
+  const out = { u, raw, kelly, frac, proven: pr.proven, n: pr.n, roi: pr.roi, shaky: !!opt.shaky, p, pS, hr, hair: HAIR_MKTS.includes(m) && !opt.noHair ? UNITS.hair[m] || null : null };
+  // trial market not proven yet: show what it would be, but it isn't a recommended bet (no log entry, no alert)
+  if (!opt.noTrial && !trialOk(m)) { const t = (UNITS.trial || {})[m] || { n: 0 }; return { ...out, trial: true, uT: u, u: 0, tn: t.n }; }
+  return out;
 }
 const unitsTip = (m, x) => `<b>${x.u} unit${x.u === 1 ? '' : 's'}</b><div class='row'><span>Sizing</span><b>${x.proven ? 'Quarter' : 'Eighth'} Kelly</b></div><div class='row'><span>${UNIT_MKT[m]} track record</span><b>${x.n.toLocaleString()} graded recommended bets${fin(x.roi) ? `, ROI ${x.roi > 0 ? '+' : ''}${pct1(x.roi)}%` : ''}</b></div>${x.hr < 1 ? `<div class='row'><span>Sizing chance (cautious)</span><b>${pct1(x.pS)}% (model ${pct1(x.p)}%, keeping ${Math.round(x.hr * 100)}% of the edge)</b></div>` : ''}<div class='row'><span>Full Kelly would be</span><b>${(x.kelly * 100).toFixed(1)}% of bankroll</b></div>${x.shaky ? "<div class='row'><span>Few games of data</span><b>halved</b></div>" : ''}<div class='muted' style='margin-top:4px'>${x.proven ? 'This market&#39;s recommended bets are profitable over 300+ graded bets, so it gets quarter Kelly.' : 'Not proven yet (needs 300+ graded recommended bets with a profit in units), so it gets the more cautious eighth Kelly.'} 1 unit = 1% of a 100-unit bankroll; capped at 2 units.</div>`;
-const unitsCell = (m, p, price, opt) => { const x = unitsFor(m, p, price, opt); return x ? `<b data-tip="${esc(unitsTip(m, x))}" style="color:var(--good)">${x.u}u</b>${opt && opt.side ? ` <span class="muted" style="font-size:11px">${opt.side}</span>` : ''}` : '<span class="muted">–</span>'; };
+const unitsCell = (m, p, price, opt) => { const x = unitsFor(m, p, price, opt); if (x && x.trial) return `<span class="muted" style="font-size:12px" data-tip="${esc(`<b>Trial market</b><div class='row'><span>Would be</span><b>${x.uT}u</b></div><div class='row'><span>Graded so far</span><b>${x.tn} of ${TRIAL_NEED}</b></div>Not a recommended bet yet: it becomes one after ${TRIAL_NEED}+ graded picks show the dashboard's chance beating the books' own chance.`)}">trial · ${x.uT}u</span>`; return x ? `<b data-tip="${esc(unitsTip(m, x))}" style="color:var(--good)">${x.u}u</b>${opt && opt.side ? ` <span class="muted" style="font-size:11px">${opt.side}</span>` : ''}` : '<span class="muted">–</span>'; };
 const ODD_TAG = ' <span class="injb" data-tip="Way off the other books&#39; prices for this player, so it&#39;s probably a different player with the same name. Left out of the best price and edge.">⚠ ignored</span>';
 function bestPrice(dk, fd, ox) { const odd = pxOdd(dk, fd, ox); const c = [['dk', dk], ['fd', fd], ...XBK.map(k => [k, ox ? ox[k] : null])].filter(([k, v]) => v != null && isFinite(v) && !odd.has(k)); if (!c.length) return null; c.sort((a, b) => amDec(b[1]) - amDec(a[1])); return { price: +c[0][1], book: c[0][0] }; }
 // FanDuel anytime (or first goal) prices for one game, by player
@@ -5911,8 +5932,8 @@ function fdMoneyline(PF, dateIso, hId, aId) {
   const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
   if (!g || !g.ml) return null;
   const x = {}; for (const k of XBK) if (g.ml[k]) x[k] = g.ml[k];
-  if (!g.ml.fd && !Object.keys(x).length) return null;
-  return { h: g.ml.fd ? g.ml.fd.h : null, a: g.ml.fd ? g.ml.fd.a : null, x };
+  if (!g.ml.fd && !Object.keys(x).length && !g.ml.pn) return null;
+  return { h: g.ml.fd ? g.ml.fd.h : null, a: g.ml.fd ? g.ml.fd.a : null, x, pn: g.ml.pn || null }; // pn = Pinnacle (reference only, never a place to bet)
 }
 function dkPriceMap(PF, dateIso, hId, aId) {
   if (!PF || !PF.games) return null;
@@ -6207,7 +6228,7 @@ const mbDefaultStake = odds => odds < 0 ? -odds : 100; // your rule: $100 on plu
 function alertBox(msg) { const n = document.createElement('div'); n.className = 'toast'; n.textContent = msg; document.body.appendChild(n); setTimeout(() => n.remove(), 2600); }
 // bet form (new or edit)
 function mbOpenForm(seed, editId) {
-  if (seed && seed.type && seed.type !== 'goal' && seed.type !== 'fg' && seed.type !== 'sog') return mbOpenGameForm(null, editId);
+  if (seed && seed.type && seed.type !== 'goal' && seed.type !== 'fg' && seed.type !== 'sog' && seed.type !== 'sv') return mbOpenGameForm(null, editId);
   const old = $('#mbModal'); if (old) old.remove();
   const b = seed || {};
   const odds = b.odds != null ? b.odds : (b.best != null ? b.best : b.dk != null ? b.dk : '');
@@ -6215,11 +6236,11 @@ function mbOpenForm(seed, editId) {
   const m = document.createElement('div'); m.id = 'mbModal'; m.className = 'mbmodal';
   m.innerHTML = `<div class="mbbox" role="dialog" aria-label="Log a bet">
     <div class="card-h"><h3>${editId ? 'Edit bet' : 'Log my bet'}</h3><button class="btn" data-mbclose>✕</button></div>
-    <div class="tcell" style="margin-bottom:8px">${b.tm ? logoImg(b.tm, 22) : ''}<b>${esc(b.n || 'Player')}</b> <span class="muted">${b.type === 'fg' ? 'first goal of the game' : b.type === 'sog' ? `${b.side === 'o' ? 'over' : 'under'} ${b.line} shots on goal` : 'anytime goal'} · ${esc(TM(b.tm || '').abbr || '')} vs. ${esc(TM(b.opp || '').abbr || '')}${b.start ? ' · ' + new Date(b.start).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}</span></div>
+    <div class="tcell" style="margin-bottom:8px">${b.tm ? logoImg(b.tm, 22) : ''}<b>${esc(b.n || 'Player')}</b> <span class="muted">${b.type === 'fg' ? 'first goal of the game' : b.type === 'sog' ? `${b.side === 'o' ? 'over' : 'under'} ${b.line} shots on goal` : b.type === 'sv' ? `${b.side === 'o' ? 'over' : 'under'} ${b.line} saves` : 'anytime goal'} · ${esc(TM(b.tm || '').abbr || '')} vs. ${esc(TM(b.opp || '').abbr || '')}${b.start ? ' · ' + new Date(b.start).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}</span></div>
     ${b.p != null ? `<p class="muted" style="margin:0 0 10px;font-size:12.5px">Ice Lab chance ${pct1(b.p)}% (fair ${fairAmerican(b.p)})${b.dk != null ? ` · DraftKings ${fmtML(b.dk)}` : ''}${b.fd != null ? ` · FanDuel ${fmtML(b.fd)}` : ''}</p>` : ''}
     ${b.recId && b.recPrice != null ? `<div class="note" style="margin:0 0 10px;font-size:12.5px">★ Recommended ${new Date(b.recAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}: <b>${fmtML(b.recPrice)}</b> ${esc(BK[b.recBook] || b.recBook || '')}${b.recLine != null ? ` · line ${b.recLine}` : ''} · <b>${b.u}u</b>. ${editId ? 'Linked to that recommendation.' : 'Filled in below. Change the odds, line or amount if yours were different.'}</div>` : ''}
-    <div class="mbgrid">${b.type === 'sog' ? `
-      <label>Line (shots)<input id="mbLine" type="number" step="0.5" min="0.5" value="${esc(String(b.line != null ? b.line : ''))}"></label>` : ''}
+    <div class="mbgrid">${b.type === 'sog' || b.type === 'sv' ? `
+      <label>Line (${b.type === 'sv' ? 'saves' : 'shots'})<input id="mbLine" type="number" step="0.5" min="0.5" value="${esc(String(b.line != null ? b.line : ''))}"></label>` : ''}
       <label>Odds I got (American)<input id="mbOdds" type="number" step="1" value="${esc(String(odds))}" placeholder="+250 or -120"></label>
       <label>Amount bet ($)<input id="mbStake" type="number" step="0.01" min="0" value="${esc(String(stake))}"></label>
       <label>Sportsbook<input id="mbBook" type="text" value="${esc(b.bookName || (BOOKS[b.book] ? BOOKS[b.book] : b.book) || 'DraftKings')}"></label>
@@ -6236,11 +6257,11 @@ function mbOpenForm(seed, editId) {
   $('#mbSaveBtn').onclick = () => {
     const o = Math.round(+$('#mbOdds').value), s = +$('#mbStake').value, ln = $('#mbLine') ? +$('#mbLine').value : b.line;
     if (!(Math.abs(o) >= 100) || !(s > 0)) { alertBox('Enter valid odds (like +250 or -120) and an amount.'); return; }
-    if ($('#mbLine') && !(ln > 0 && ln < 20)) { alertBox('Enter the shots line you bet (like 2.5).'); return; }
+    if ($('#mbLine') && !(ln > 0 && ln < 70)) { alertBox(`Enter the ${b.type === 'sv' ? 'saves' : 'shots'} line you bet (like ${b.type === 'sv' ? '27.5' : '2.5'}).`); return; }
     const list = mbLoad();
-    if (editId) { const x = list.find(q => q.id === editId); if (x) Object.assign(x, { odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim() }, x.type === 'sog' ? { line: ln } : {}); }
+    if (editId) { const x = list.find(q => q.id === editId); if (x) Object.assign(x, { odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim() }, x.type === 'sog' || x.type === 'sv' ? { line: ln } : {}); }
     else {
-      const type = b.type === 'fg' ? 'fg' : b.type === 'sog' ? 'sog' : 'goal';
+      const type = b.type === 'fg' ? 'fg' : b.type === 'sog' ? 'sog' : b.type === 'sv' ? 'sv' : 'goal';
       // linked to its recommendation: the one it came from, or the matching one if you logged it from a table
       const link = b.recId ? { recId: b.recId, u: b.u, recPrice: b.recPrice, recBook: b.recBook, recLine: b.recLine, recAt: b.recAt } : (() => { const id = recFind({ type, gid: b.gid, pid: b.pid, side: b.side, line: ln }), r = id && recsAll().find(x => x.id === id); return r ? { recId: id, u: r.first.u, recPrice: r.first.price, recBook: r.first.book, recLine: r.line, recAt: r.first.t } : {}; })();
       list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, side: b.side, line: ln, placed: new Date().toISOString(), gid: b.gid, start: b.start, date: b.start ? localDay(b.start) : todayStr(), pid: b.pid, n: b.n, tm: b.tm, opp: b.opp, gl: b.gl || '', p: b.p, dk: b.dk, odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim(), res: null, ...link });
@@ -6265,7 +6286,7 @@ async function mbGrade() {
   for (const gid of [...new Set(open.map(b => b.gid))]) {
     let g = null; try { g = await getGame(gid); } catch (e) {}
     if (!g || !g.final) continue;
-    for (const b of open.filter(x => x.gid === gid)) { if (b.type === 'sog') { const s = g.sk[b.pid]; if (!s || !(s.toi > 0)) b.res = 'V'; else { b.shots = s.sog || 0; b.res = b.shots === b.line ? 'PU' : (b.shots > b.line) === (b.side === 'o') ? 'W' : 'L'; } b.auto = true; changed++; continue; } if (b.type && b.type !== 'goal' && b.type !== 'fg') { const r = gbGrade(b, g); if (r) { b.res = r; b.final = `${g.away.score}-${g.home.score}`; b.auto = true; changed++; } continue; } const s = g.sk[b.pid]; if (b.type === 'fg') { if (!s || !(s.toi > 0)) { b.res = 'V'; b.goals = 0; } else { b.goals = s.g; b.res = fgFirstScorer(g) === b.pid ? 'W' : 'L'; } b.auto = true; changed++; continue; } if (!s || !(s.toi > 0)) { b.res = 'V'; b.goals = 0; } else { b.goals = s.g; b.res = s.g > 0 ? 'W' : 'L'; } b.auto = true; changed++; }
+    for (const b of open.filter(x => x.gid === gid)) { if (b.type === 'sv') { const q = (g.gk || {})[b.pid]; if (!q || !(q.toi > 0)) b.res = 'V'; else { b.saves = q.sv || 0; b.res = b.saves === b.line ? 'PU' : (b.saves > b.line) === (b.side === 'o') ? 'W' : 'L'; } b.auto = true; changed++; continue; } if (b.type === 'sog') { const s = g.sk[b.pid]; if (!s || !(s.toi > 0)) b.res = 'V'; else { b.shots = s.sog || 0; b.res = b.shots === b.line ? 'PU' : (b.shots > b.line) === (b.side === 'o') ? 'W' : 'L'; } b.auto = true; changed++; continue; } if (b.type && b.type !== 'goal' && b.type !== 'fg') { const r = gbGrade(b, g); if (r) { b.res = r; b.final = `${g.away.score}-${g.home.score}`; b.auto = true; changed++; } continue; } const s = g.sk[b.pid]; if (b.type === 'fg') { if (!s || !(s.toi > 0)) { b.res = 'V'; b.goals = 0; } else { b.goals = s.g; b.res = fgFirstScorer(g) === b.pid ? 'W' : 'L'; } b.auto = true; changed++; continue; } if (!s || !(s.toi > 0)) { b.res = 'V'; b.goals = 0; } else { b.goals = s.g; b.res = s.g > 0 ? 'W' : 'L'; } b.auto = true; changed++; }
   }
   if (changed) mbSave(list);
   return changed;
@@ -6302,11 +6323,11 @@ async function renderMyBets() {
   // by odds range
   const ob = [[-10000, 0, 'Favorites (minus odds)'], [100, 200, '+100 to +199'], [200, 400, '+200 to +399'], [400, 100000, '+400 and longer']].map(([lo, hi, l]) => { const g = done.filter(b => b.odds >= lo && b.odds < hi); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s, b) => s + b.stake, 0), p: g.reduce((s, b) => s + mbProfit(b), 0) }; }).filter(x => x.n);
   const obRows = ob.map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
-  const tyRows = [['goal', 'Goal scorer'], ['fg', 'First goal scorer'], ['sog', 'Shots on goal'], ['ml', 'Moneyline'], ['total', 'Total'], ['pl', 'Puck line'], ['★rec', '★ Ice Lab recommended bets'], ['own', 'Your own picks']].map(([k, l]) => { const g = done.filter(b => k === '★rec' ? !!b.recId : k === 'own' ? !b.recId : (b.type || 'goal') === k); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s2, b) => s2 + b.stake, 0), p: g.reduce((s2, b) => s2 + mbProfit(b), 0) }; }).filter(x => x.n).map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
+  const tyRows = [['goal', 'Goal scorer'], ['fg', 'First goal scorer'], ['sog', 'Shots on goal'], ['sv', 'Goalie saves'], ['ml', 'Moneyline'], ['total', 'Total'], ['pl', 'Puck line'], ['★rec', '★ Ice Lab recommended bets'], ['own', 'Your own picks']].map(([k, l]) => { const g = done.filter(b => k === '★rec' ? !!b.recId : k === 'own' ? !b.recId : (b.type || 'goal') === k); return { l, n: g.length, w: g.filter(b => b.res === 'W').length, st: g.reduce((s2, b) => s2 + b.stake, 0), p: g.reduce((s2, b) => s2 + mbProfit(b), 0) }; }).filter(x => x.n).map(x => `<tr><td class="l">${x.l}</td><td>${x.w}-${x.n - x.w}</td><td>${money(x.st).replace('+', '')}</td><td>${moneyCell(x.p)}</td><td>${(x.p >= 0 ? '+' : '') + pct1(x.p / x.st)}%</td></tr>`).join('');
   // bet list
   const all = [...list].sort((a, b) => (b.start || b.placed).localeCompare(a.start || a.placed)), shown = MB.all ? all : all.slice(0, 50);
-  const resCell = b => b.res === 'W' ? `<b style="color:var(--good)">✓ Won${b.type === 'sog' ? ` (${b.shots} SOG)` : b.goals > 1 && b.type !== 'fg' ? ` (${b.goals} G)` : ''}</b>` : b.res === 'L' ? `<span style="color:var(--neg)">✗ Lost${b.type === 'sog' ? ` (${b.shots} SOG)` : ''}</span>` : b.res === 'V' ? '<span class="muted">Void / refunded</span>' : b.res === 'PU' ? '<span class="muted">Push / refunded</span>' : '<span class="muted">Pending</span>';
-  const rows = shown.map(b => `<tr><td class="l">${new Date(b.start || b.placed).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${GB_TYPES[b.type] ? `<div class="tcell">${b.type !== 'total' ? logoImg(b.tm, 16) : ''}<b>${mbLabel(b)}</b>${b.recId ? ` <span class="rsb on" title="Recommended ${b.recPrice != null ? fmtML(b.recPrice) : ''}${b.u ? ' · ' + b.u + 'u' : ''}">★ Rec</span>` : ''}</div><div class="muted" style="font-size:11.5px">${GB_TYPES[b.type]} · ${esc(TM(b.aid || '').abbr || '')} @ ${esc(TM(b.hid || '').abbr || '')}${b.final ? ' · final ' + esc(b.final) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>` : `<div class="tcell">${b.tm ? logoImg(b.tm, 16) : ''}${b.pid ? plink(b.pid, b.n) : esc(b.n)}${b.recId ? ` <span class="rsb on" title="Recommended ${b.recPrice != null ? fmtML(b.recPrice) : ''}${b.u ? ' · ' + b.u + 'u' : ''}">★ Rec</span>` : ''}</div><div class="muted" style="font-size:11.5px">${b.type === 'fg' ? 'First goal scorer' : b.type === 'sog' ? `${b.side === 'o' ? 'Over' : 'Under'} ${b.line} shots on goal` : 'Goal scorer'} · vs. ${esc(TM(b.opp || '').abbr || '')}${b.gl ? ' · ' + esc(b.gl) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>`}</td><td><b>${fmtML(b.odds)}</b><div class="muted" style="font-size:11.5px">${esc(b.book || '')}</div></td><td>${money(b.stake).replace('+', '')}</td><td>${money(mbToWin(b.stake, b.odds)).replace('+', '')}</td><td>${fin(b.p) ? pct1(b.p) + '%' : '–'}</td><td class="l">${resCell(b)}</td><td>${b.res === 'W' || b.res === 'L' ? moneyCell(mbProfit(b)) : '–'}</td>
+  const resCell = b => b.res === 'W' ? `<b style="color:var(--good)">✓ Won${b.type === 'sv' ? ` (${b.saves} saves)` : b.type === 'sog' ? ` (${b.shots} SOG)` : b.goals > 1 && b.type !== 'fg' ? ` (${b.goals} G)` : ''}</b>` : b.res === 'L' ? `<span style="color:var(--neg)">✗ Lost${b.type === 'sv' ? ` (${b.saves} saves)` : b.type === 'sog' ? ` (${b.shots} SOG)` : ''}</span>` : b.res === 'V' ? '<span class="muted">Void / refunded</span>' : b.res === 'PU' ? '<span class="muted">Push / refunded</span>' : '<span class="muted">Pending</span>';
+  const rows = shown.map(b => `<tr><td class="l">${new Date(b.start || b.placed).toLocaleDateString([], { month: 'short', day: 'numeric' })}</td><td class="l">${GB_TYPES[b.type] ? `<div class="tcell">${b.type !== 'total' ? logoImg(b.tm, 16) : ''}<b>${mbLabel(b)}</b>${b.recId ? ` <span class="rsb on" title="Recommended ${b.recPrice != null ? fmtML(b.recPrice) : ''}${b.u ? ' · ' + b.u + 'u' : ''}">★ Rec</span>` : ''}</div><div class="muted" style="font-size:11.5px">${GB_TYPES[b.type]} · ${esc(TM(b.aid || '').abbr || '')} @ ${esc(TM(b.hid || '').abbr || '')}${b.final ? ' · final ' + esc(b.final) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>` : `<div class="tcell">${b.tm ? logoImg(b.tm, 16) : ''}${b.pid ? plink(b.pid, b.n) : esc(b.n)}${b.recId ? ` <span class="rsb on" title="Recommended ${b.recPrice != null ? fmtML(b.recPrice) : ''}${b.u ? ' · ' + b.u + 'u' : ''}">★ Rec</span>` : ''}</div><div class="muted" style="font-size:11.5px">${b.type === 'fg' ? 'First goal scorer' : b.type === 'sog' ? `${b.side === 'o' ? 'Over' : 'Under'} ${b.line} shots on goal` : b.type === 'sv' ? `${b.side === 'o' ? 'Over' : 'Under'} ${b.line} saves` : 'Goal scorer'} · vs. ${esc(TM(b.opp || '').abbr || '')}${b.gl ? ' · ' + esc(b.gl) : ''}${b.note ? ' · ' + esc(b.note) : ''}</div>`}</td><td><b>${fmtML(b.odds)}</b><div class="muted" style="font-size:11.5px">${esc(b.book || '')}</div></td><td>${money(b.stake).replace('+', '')}</td><td>${money(mbToWin(b.stake, b.odds)).replace('+', '')}</td><td>${fin(b.p) ? pct1(b.p) + '%' : '–'}</td><td class="l">${resCell(b)}</td><td>${b.res === 'W' || b.res === 'L' ? moneyCell(mbProfit(b)) : '–'}</td>
     <td class="l"><div class="mbact"><button class="btn sm" data-mbedit="${b.id}" title="Edit odds or amount">Edit</button><select data-mbres="${b.id}" title="Set the result yourself"><option value="">${b.res ? 'Change…' : 'Settle…'}</option><option value="W">Won</option><option value="L">Lost</option><option value="V">Void</option><option value="PU">Push</option><option value="P">Back to pending</option></select><button class="btn sm" data-mbdel="${b.id}" title="Delete this bet">✕</button></div></td></tr>`).join('');
   body.innerHTML = `<div class="bar"><h2 class="grow">My bets</h2><button class="btn" id="mbSync" title="Keep My Bets and your Recommended Bets answers the same in every browser">☁ Sync <span id="syncState" class="muted" style="font-size:12px"></span></button><button class="btn" id="mbExport">⬇ Export backup</button><label class="btn" style="cursor:pointer">⬆ Import<input type="file" id="mbImport" accept=".json,application/json" hidden></label></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Log a goal scorer bet from <b>Players → Goal Scorers</b> with the <b>＋ Bet</b> button, or a moneyline, total or puck line bet with the <b>Bet</b> button on any game (Today tab or the game page). Enter the odds you got and how much you bet, and it's tracked here all season. Results settle automatically from ESPN once the game is final (a player who doesn't play is void; a total or puck line landing exactly on the number is a push; a shootout winner counts as one goal, like the sportsbook), or you can settle one yourself. ${graded ? `<b>${graded} bet${graded > 1 ? 's' : ''} just settled.</b>` : ''}</p>
@@ -6358,7 +6379,7 @@ function recWhenRange() {
   }
 }
 const recInWhen = r => { const [a, b] = recWhenRange(), t = new Date(r.first.t); return (!a || t >= a) && (!b || t < b); };
-const REC_MKT = { goal: 'Anytime goal', fg: 'First goal', sog: 'Shots on goal', ml: 'Moneyline' };
+const REC_MKT = { goal: 'Anytime goal', fg: 'First goal', sog: 'Shots on goal', ml: 'Moneyline', sogAlt: 'Alternate shots line', sv: 'Goalie saves', pl: 'Puck line' };
 function rsInit() {
   if (RS.ready) return RS.ready;
   RS.ready = (async () => {
@@ -6383,7 +6404,7 @@ async function rsSave(opt = {}) {
   } catch (e) { try { localStorage.setItem(RST_KEY, JSON.stringify(RS.map)); } catch (e2) {} }
 }
 const recsAll = () => ((PKF.data && PKF.data.recs) || []);
-const recLabel = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'over' : 'under'} ${r.line} shots` : r.m === 'fg' ? `${r.n} first goal` : `${r.n} anytime goal`;
+const recLabel = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'pl' ? `${r.tmA} ${r.line > 0 ? '+' : ''}${r.line} puck line` : r.m === 'sv' ? `${r.n} ${r.side === 'o' ? 'over' : 'under'} ${r.line} saves` : r.m === 'sog' || r.m === 'sogAlt' ? `${r.n} ${r.side === 'o' ? 'over' : 'under'} ${r.line} shots` : r.m === 'fg' ? `${r.n} first goal` : `${r.n} anytime goal`;
 const recBetsMap = () => { const o = {}; for (const b of mbLoad()) if (b.recId) (o[b.recId] = o[b.recId] || []).push(b); return o; };
 const recPlace = (r, BM) => (BM[r.id] && BM[r.id].length) ? 'placed' : (RS.map[r.id] || {}).s === 'not' ? 'not' : 'pending';
 const recNeeds = (r, BM) => r.status !== 'active' && recPlace(r, BM) === 'pending';
@@ -6392,6 +6413,9 @@ function recFind(b) {
   const R = recsAll(); if (!R.length || !b.gid) return null;
   const has = id => R.some(r => r.id === id) ? id : null;
   if (b.type === 'ml') return has(`ml|${b.gid}|${b.side}`);
+  if (b.type === 'sv') return has(`sv|${b.gid}|${b.pid}|${b.side}|${b.line}`);
+  if (b.type === 'pl') return has(`pl|${b.gid}|-|${b.side}|${b.line}`);
+  if (b.type === 'sog' && has(`sogAlt|${b.gid}|${b.pid}|${b.side}|${b.line}`)) return `sogAlt|${b.gid}|${b.pid}|${b.side}|${b.line}`;
   if (b.type === 'sog') return has(`sog|${b.gid}|${b.pid}|${b.side}|${b.line}`) || ((R.filter(r => r.m === 'sog' && r.gid === String(b.gid) && r.pid === String(b.pid) && r.side === b.side).pop() || {}).id || null);
   if (b.type === 'fg') return has(`fg|${b.gid}|${b.pid}`);
   if (!b.type || b.type === 'goal') return has(`goal|${b.gid}|${b.pid}`);
@@ -6403,14 +6427,14 @@ async function recLog(r) {
   await mbInit();
   for (const [id, ab] of [[r.tm, r.tmA], [r.opp, r.oppA]]) if (id && ab && !TEAMS[String(id)]) addTeam({ id, abbreviation: ab, displayName: ab, shortDisplayName: ab }); // names even before ESPN loads
   const px = r.first.price, stake = Math.round(r.first.u * mbDefaultStake(px) * 100) / 100;
-  if (r.m === 'ml') {
+  if (r.m === 'ml' || r.m === 'pl') {
     const hid = r.side === 'h' ? r.tm : r.opp, aid = r.side === 'h' ? r.opp : r.tm;
     let G = null; try { G = await gbSeed(r.gid); } catch (e) {}
     if (!G) G = { gid: r.gid, e: null, start: r.start, hid, aid, ml: null, tot: null, pl: { h: null, a: null, fav: null } };
-    G.pre = { side: r.side, odds: px, stake, book: BOOKS[r.first.book] || r.first.book, ...recFields(r) };
+    G.pre = { type: r.m, line: r.m === 'pl' ? r.line : null, side: r.side, odds: px, stake, book: BOOKS[r.first.book] || r.first.book, ...recFields(r) };
     return mbOpenGameForm(G);
   }
-  mbOpenForm({ type: r.m, gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, side: r.side, line: r.line, p: r.first.p, odds: px, stake, bookName: BOOKS[r.first.book] || r.first.book, ...recFields(r) });
+  mbOpenForm({ type: r.m === 'sogAlt' ? 'sog' : r.m, gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, side: r.side, line: r.line, p: r.first.p, odds: px, stake, bookName: BOOKS[r.first.book] || r.first.book, ...recFields(r) });
 }
 // after any bet is saved, edited or deleted: refresh the places that show placement status
 function recAfterChange() { recClearStale(); if (activeTab() === 'recs') renderRecs(); recBanner(); if ($('#rsModal')) recAskPaint(); }
@@ -6436,7 +6460,7 @@ function recPlaceCell(r, BM) {
   return `<div class="rsseg">${btn('placed', '✓ Bet placed')}${btn('not', 'Not placed')}${btn('pending', 'Pending')}</div>${bs.map(b => `<div class="muted" style="font-size:11.5px;margin-top:3px">Logged ${fmtML(b.odds)}${b.type === 'sog' && b.line !== r.line ? ` on ${b.line}` : ''} · ${money(b.stake).replace('+', '')}${b.book ? ' · ' + esc(b.book) : ''}${b.res ? ` · ${b.res === 'W' ? 'won ' + money(mbProfit(b)) : b.res === 'L' ? 'lost ' + money(mbProfit(b)).replace('+', '') : 'refunded'}` : ''} <button class="btn sm" data-rsedit="${esc(b.id)}">Edit</button></div>`).join('')}`;
 }
 function recRowHtml(r, BM) {
-  const tmId = r.m === 'ml' ? r.tm : r.tm, match = r.m === 'ml' ? `${esc(r.side === 'h' ? r.oppA : r.tmA)} @ ${esc(r.side === 'h' ? r.tmA : r.oppA)}` : `${esc(r.tmA)} vs ${esc(r.oppA)}`;
+  const tmId = r.tm, match = r.m === 'ml' || r.m === 'pl' ? `${esc(r.side === 'h' ? r.oppA : r.tmA)} @ ${esc(r.side === 'h' ? r.tmA : r.oppA)}` : `${esc(r.tmA)} vs ${esc(r.oppA)}`;
   const f = r.first, l = r.end || r.last, moved = r.endPrice != null && r.endPrice !== f.price ? `<div class="muted" style="font-size:11.5px">Price at end ${fmtML(r.endPrice)}</div>` : r.last && r.last.price !== f.price ? `<div class="muted" style="font-size:11.5px">Latest ${fmtML(r.last.price)} ${esc(BK[r.last.book] || '')} · ${r.last.u}u</div>` : '';
   return `<tr class="${recNeeds(r, BM) ? 'rsneed' : ''}"><td class="l">${recDt(f.t)}</td>
     <td class="l"><div class="tcell">${logoImg(tmId, 16)}<b>${esc(recLabel(r))}</b></div><div class="muted" style="font-size:11.5px">${REC_MKT[r.m]} · ${match} · ${recDt(r.start)}</div></td>
@@ -6793,9 +6817,10 @@ function gmEventPick(e, inj, LF, PF = PRF.data) {
   const H = String(h.team.id), Aw = String(a.team.id), pg = probableGoalies(e), ml = gmEventML(e);
   const skip = t => new Set(((inj && inj.byTeam[t]) || []).filter(x => x.out).map(x => x.id));
   const GH = gmPickGoalie(M.S, H, pg, LF, e.date, skip(H)), GA = gmPickGoalie(M.S, Aw, pg, LF, e.date, skip(Aw)), gH = GH.id, gA = GA.id;
-  const r = gmPredict(H, Aw, e.date, gH, gA, ml, inj, LF); if (!r) return null;
-  // best price for each side: ESPN's line (DraftKings) or FanDuel, whichever pays more
-  const fd = PF ? fdMoneyline(PF, e.date, H, Aw) : null, bH = bestPrice(ml && ml.h, fd && fd.h, sx(fd, 'h')), bA = bestPrice(ml && ml.a, fd && fd.a, sx(fd, 'a'));
+  const fd = PF ? fdMoneyline(PF, e.date, H, Aw) : null, mlx = fd && fd.pn ? { ...(ml || {}), pn: fd.pn } : ml;
+  const r = gmPredict(H, Aw, e.date, gH, gA, mlx, inj, LF); if (!r) return null;
+  // best price for each side: ESPN's line (DraftKings) or FanDuel, whichever pays more (Pinnacle is a yardstick, not a bet)
+  const bH = bestPrice(ml && ml.h, fd && fd.h, sx(fd, 'h')), bA = bestPrice(ml && ml.a, fd && fd.a, sx(fd, 'a'));
   const side = bH && bA ? [['h', r.p, bH], ['a', 1 - r.p, bA]].map(([s, q, b]) => ({ s, q, price: b.price, book: b.book, edge: q - amImplied(b.price) })).sort((x, y) => y.edge - x.edge)[0] : null;
   const gn = (id, t) => pg[t] ? pg[t].n : (t === H ? GH : GA).n || ((M.S.Gn || {})[id] || '');
   return { H, Aw, ha: h.team.abbreviation, aa: a.team.abbreviation, ml, r, gHn: gn(gH, H), gAn: gn(gA, Aw), gHs: GH.st, gAs: GA.st, fd, bH, bA, side, verdict: side ? (side.edge >= .03 ? 'bet' : side.edge > 0 ? 'lean' : 'pass') : null };
@@ -7321,7 +7346,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
   m.innerHTML = `<div class="mbbox" role="dialog" aria-label="Log a game bet">
     <div class="card-h"><h3>${ex ? 'Edit bet' : 'Log my bet'}</h3><button class="btn" data-mbclose>✕</button></div>
     <div class="tcell" style="margin-bottom:10px">${logoImg(G.aid, 22)}<b>${esc(ab('a'))}</b><span class="muted">@</span>${logoImg(G.hid, 22)}<b>${esc(ab('h'))}</b><span class="muted">${G.start ? ' · ' + new Date(G.start).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}</span></div>
-    ${!ex && G.pre ? `<div class="note" style="margin:0 0 10px;font-size:12.5px">★ Recommended ${new Date(G.pre.recAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}: <b>${esc(TM(G.pre.side === 'h' ? G.hid : G.aid).abbr || '')} moneyline ${fmtML(G.pre.odds)}</b> ${esc(G.pre.book || '')} · <b>${G.pre.u}u</b>. Filled in below. Change the odds or amount if yours were different.</div>` : ''}
+    ${!ex && G.pre ? `<div class="note" style="margin:0 0 10px;font-size:12.5px">★ Recommended ${new Date(G.pre.recAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}: <b>${esc(TM(G.pre.side === 'h' ? G.hid : G.aid).abbr || '')} ${G.pre.type === 'pl' ? (G.pre.line > 0 ? '+' : '') + G.pre.line : 'moneyline'} ${fmtML(G.pre.odds)}</b> ${esc(G.pre.book || '')} · <b>${G.pre.u}u</b>. Filled in below. Change the odds or amount if yours were different.</div>` : ''}
     ${others.length ? `<div class="note" style="margin:0 0 10px;font-size:12.5px"><b>Already logged on this game:</b> ${others.map(x => `${mbLabel(x)} ${fmtML(x.odds)} · ${money(x.stake).replace('+', '')} <button class="btn sm" data-gbedit="${x.id}">Edit</button>`).join(' · ')}</div>` : ''}
     <div class="gbseg" id="gbType">${Object.entries(GB_TYPES).map(([k, l]) => `<button class="dbtn" data-gbtype="${k}"${ex && ex.type !== k ? ' disabled' : ''}>${l}</button>`).join('')}</div>
     <div class="gbseg" id="gbSide"></div>
@@ -7374,7 +7399,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
   $('#mbStake').oninput = () => { st.stakeTouched = true; calc(); };
   const clr = $('#gbClear'); if (clr) clr.onclick = async () => { m.remove(); await decSet(G.gid, null); decPaint(G.gid); };
   paint(); if (!ex) setOdds(); else calc();
-  if (!ex && G.pre) { st.type = 'ml'; st.side = G.pre.side; paint(); $('#mbOdds').value = G.pre.odds; $('#mbStake').value = G.pre.stake; $('#mbBook').value = G.pre.book || ''; st.oddsTouched = st.stakeTouched = st.bookTouched = true; calc(); }
+  if (!ex && G.pre) { st.type = G.pre.type || 'ml'; st.side = G.pre.side; if (st.type === 'pl' && G.pre.line != null) { st.line = G.pre.line; st.lineAuto = false; } paint(); $('#mbOdds').value = G.pre.odds; $('#mbStake').value = G.pre.stake; $('#mbBook').value = G.pre.book || ''; st.oddsTouched = st.stakeTouched = st.bookTouched = true; calc(); }
   // Ice Lab's win chance (game model), filled in when ready
   (async () => {
     if (ex && fin(ex.pH)) { st.p = ex.pH; calc(); return; }
@@ -7392,7 +7417,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
     const list = mbLoad();
     if (ex) { const x = list.find(y => y.id === ex.id); if (x) { Object.assign(x, rec); if (st.type === 'ml' && fin(st.p)) x.p = q; else if (st.type !== 'ml') delete x.p; } }
     else {
-      const link = st.type !== 'ml' ? {} : G.pre && st.side === G.pre.side ? { recId: G.pre.recId, u: G.pre.u, recPrice: G.pre.recPrice, recBook: G.pre.recBook, recAt: G.pre.recAt } : (() => { const id = recFind({ type: 'ml', gid: G.gid, side: st.side }), r = id && recsAll().find(x => x.id === id); return r ? { recId: id, u: r.first.u, recPrice: r.first.price, recBook: r.first.book, recAt: r.first.t } : {}; })();
+      const link = st.type !== 'ml' && st.type !== 'pl' ? {} : G.pre && st.type === (G.pre.type || 'ml') && st.side === G.pre.side ? { recId: G.pre.recId, u: G.pre.u, recPrice: G.pre.recPrice, recBook: G.pre.recBook, recAt: G.pre.recAt } : (() => { const id = recFind({ type: st.type, gid: G.gid, side: st.side, line: st.line }), r = id && recsAll().find(x => x.id === id); return r ? { recId: id, u: r.first.u, recPrice: r.first.price, recBook: r.first.book, recAt: r.first.t } : {}; })();
       list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), placed: new Date().toISOString(), gid: G.gid, start: G.start, date: G.start ? localDay(G.start) : todayStr(), ...rec, p: q, pH: st.p, res: null, ...link });
     }
     if (mbSave(list)) {
@@ -7783,6 +7808,38 @@ function sogPriceMap(PF, dateIso, hId, aId) {
   const m = {}; for (const p of g.sog) { const o = {}; for (const b of ['dk', 'fd', ...XBK]) if (p[b]) o[b] = p[b]; if (Object.keys(o).length) m[oddsKey(p.n)] = o; }
   return Object.keys(m).length ? m : null;
 }
+// alternate shots lines for one game, by player: { dk: [[line, over, under], ...], fd, cz, fn, sc } (Pinnacle left out)
+function sogAltPriceMap(PF, dateIso, hId, aId) {
+  if (!PF || !PF.games) return null;
+  const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
+  const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
+  const g = PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3);
+  if (!g || !g.sogAlt || !g.sogAlt.length) return null;
+  const m = {}; for (const p of g.sogAlt) { const o = {}; for (const b of ['dk', 'fd', ...XBK]) if (p[b] && p[b].length) o[b] = p[b]; if (Object.keys(o).length) m[oddsKey(p.n)] = o; }
+  return Object.keys(m).length ? m : null;
+}
+// the expected shots the books are pricing in: the mean whose chance of going over the main line equals their no-margin chance
+function nbMuFor(k, line, pOver) { let lo = .02, hi = 14; for (let i = 0; i < 50; i++) { const mid = (lo + hi) / 2; if (nbOver(mid, k, line) < pOver) lo = mid; else hi = mid; } return (lo + hi) / 2; }
+/* every alternate line for one player: Ice Lab's chance from his whole shot distribution, blended (same mix as the main line)
+   with the books' chance at that line, read off the expected shots their main line implies (books often post only the over) */
+function sogAlts(row, k, pa) {
+  if (!pa || !row.mk || !fin(row.mk.fair) || row.line == null) return [];
+  const muM = nbMuFor(k, row.line, clamp(row.mk.fair, .01, .99)); row.muMkt = muM;
+  const lines = {};
+  for (const [b, arr] of Object.entries(pa)) for (const [L, o, u] of arr) { if (!fin(L) || L === row.line || L % 1 === 0) continue; const x = lines[L] = lines[L] || { o: {}, u: {} }; if (o != null) x.o[b] = o; if (u != null) x.u[b] = u; }
+  const out = [];
+  for (const [Ls, x] of Object.entries(lines)) {
+    const L = +Ls, pm = nbOver(row.mu, k, L), pk = nbOver(muM, k, L);
+    for (const s of ['o', 'u']) {
+      const P = x[s]; if (!Object.keys(P).length) continue; const ox = {}; for (const b of XBK) if (P[b] != null) ox[b] = P[b];
+      const best = bestPrice(P.dk != null ? P.dk : null, P.fd != null ? P.fd : null, ox); if (!best) continue;
+      const pmS = s === 'o' ? pm : 1 - pm, pkS = s === 'o' ? pk : 1 - pk;
+      const p = sigm(SOGB.w * logit(clamp(pmS, .002, .998)) + (1 - SOGB.w) * logit(clamp(pkS, .002, .998))), ev = betEV(p, best.price);
+      out.push({ line: L, side: s, pModel: pmS, pMkt: pkS, p, best: best.price, book: best.book, edge: p - amImplied(best.price), ev: ev.ev, roi: ev.roi, dk: P.dk != null ? P.dk : null, fd: P.fd != null ? P.fd : null, ox });
+    }
+  }
+  return out.sort((a, b) => a.line - b.line || (a.side < b.side ? -1 : 1));
+}
 // the line most books use for this player, and each side's best price there
 function sogMarket(pb) {
   if (!pb) return null;
@@ -7799,7 +7856,7 @@ function sogMarket(pb) {
 function sogTonight(St, e, gsRows, PF) {
   const c = e.competitions[0], H = String(c.competitors.find(x => x.homeAway === 'home').team.id), Aw = String(c.competitors.find(x => x.homeAway === 'away').team.id);
   const ml = gmEventML(e), pH = ml ? devig(ml) : NaN, o = c.odds && c.odds[0], total = o && isFinite(parseFloat(o.overUnder)) ? parseFloat(o.overUnder) : NaN;
-  const ctx = { home: H, pH, total, date: e.date }, pm = sogPriceMap(PF, e.date, H, Aw), out = [];
+  const ctx = { home: H, pH, total, date: e.date }, pm = sogPriceMap(PF, e.date, H, Aw), pmA = sogAltPriceMap(PF, e.date, H, Aw), out = [];
   for (const r of gsRows) {
     const m = sogMu(St, r, ctx); if (!m) continue;
     const mk = pm ? sogMarket(dkLookup(pm, r.n, r.pid)) : null;
@@ -7810,6 +7867,7 @@ function sogTonight(St, e, gsRows, PF) {
       for (const [s, P_, x] of [['o', row.pO, mk.ov], ['u', row.pU, mk.un]]) { if (!x.best) continue; const ev = betEV(P_, x.best.price); row[s + 'Best'] = x.best.price; row[s + 'Book'] = x.best.book; row[s + 'Edge'] = P_ - amImplied(x.best.price); row[s + 'Ev'] = ev.ev; row[s + 'Roi'] = ev.roi; }
       const pick = [['o', row.oEv], ['u', row.uEv]].filter(([, v]) => fin(v)).sort((a, b) => b[1] - a[1])[0]; row.side = pick ? pick[0] : null;
     } else { row.line = null; row.pModelO = NaN; }
+    row.alts = pmA && row.line != null ? sogAlts(row, St.k, dkLookup(pmA, r.n, r.pid)) : [];
     out.push(row);
   }
   return out;
@@ -7891,6 +7949,22 @@ async function renderSog() {
     { k: 'uEdge', h: 'Under edge', v: r => r.uEdge, f: edgeCell, t: 'Under chance minus the under price\'s implied chance.' },
     { k: 'units', h: 'Units', v: r => { const s = r.side, x = s ? unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) : null; return x ? x.u : 0; }, f: (v, r) => r.side ? unitsCell('sog', r.side === 'o' ? r.pO : r.pU, r[r.side + 'Best'], { shaky: r.lowN, side: r.side === 'o' ? 'Over' : 'Under' }) : '<span class="muted">–</span>', t: 'Recommended bet size on the better side (hover for details).' },
     { k: 'bet', h: '', l: 1, v: () => 0, f: (v, r) => r.line == null ? '' : `<button class="btn sm mybet" data-sogbet="${r.idx}" data-side="o">＋ Over</button> <button class="btn sm mybet" data-sogbet="${r.idx}" data-side="u">＋ Under</button>` }];
+  // alternate lines (trial market): every positive edge, best expected return first
+  const alts = priced.flatMap(r => (r.alts || []).filter(a => a.edge > 0 && !r.lowN).map(a => ({ ...a, r, n: r.n, tm: r.tm, pid: r.pid, idx: r.idx, mu: r.mu, muMkt: r.muMkt }))).sort((x, y) => y.roi - x.roi).slice(0, 60);
+  const altCols = [
+    { k: 'n', h: 'Player', l: 1, v: a => a.n, f: (v, a) => `<div class="tcell">${logoImg(a.tm, 16)}${plink(a.pid, v)}</div>` },
+    { k: 'line', h: 'Bet', l: 1, v: a => a.line, f: (v, a) => `<b>${a.side === 'o' ? 'Over' : 'Under'} ${v}</b><div class="muted" style="font-size:11px">main line ${a.r.line}</div>` },
+    { k: 'mu', h: 'Expected shots', v: a => a.mu, f: (v, a) => `<b>${f2(v)}</b><div class="muted" style="font-size:11px">books ≈ ${f2(a.muMkt)}</div>`, t: 'Ice Lab\'s expected shots, and the expected shots the books\' main line implies.' },
+    { k: 'pModel', h: 'Ice Lab', v: a => a.pModel, f: v => `${pct1(v)}%`, t: 'Chance from Ice Lab\'s full shot distribution for him alone.' },
+    { k: 'pMkt', h: 'Books', v: a => a.pMkt, f: v => `${pct1(v)}%`, t: 'The books\' chance at this line, worked out from their main line (most books post only the over on alternates, so their margin can\'t be removed line by line).' },
+    { k: 'p', h: 'Fair odds', v: a => a.p, f: v => `<b>${fairAmerican(v)}</b><div class="muted" style="font-size:11px">${pct1(v)}%</div>`, t: 'The blended chance (same model/books mix as the main line) as a fair price.' },
+    { k: 'best', h: 'Best price', v: a => a.best, f: (v, a) => `<span data-tip="${esc(bookTip(a.dk, a.fd, a.ox))}"><b>${fmtML(v)}</b> <span class="muted" style="font-size:11px">${BK[a.book] || ''}</span></span>` },
+    { k: 'edge', h: 'Edge', v: a => a.edge, f: v => `<b style="color:var(--good)">+${(v * 100).toFixed(1)} pts</b>` },
+    { k: 'units', h: 'Units', v: a => { const x = unitsFor('sogAlt', a.p, a.best); return x ? x.uT || x.u : 0; }, f: (v, a) => unitsCell('sogAlt', a.p, a.best) },
+    { k: 'bet', h: '', l: 1, v: () => 0, f: (v, a) => `<button class="btn sm mybet" data-altbet="${a.idx}|${a.line}|${a.side}">＋ Bet</button>` }];
+  const altCard = !priced.some(r => r.alts && r.alts.length) ? '' : `<div class="card" style="margin-top:14px"><div class="card-h"><h3>🪜 Alternate lines</h3><p>Trial market · ${alts.length} positive edge${alts.length === 1 ? '' : 's'}</p></div>
+    <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">Every alternate over/under your books post (like over 4.5 or under 1.5), priced from each player's whole shot distribution and blended with the books' view the same way as the main line. Books often price these less carefully than the main line. <b>Trial:</b> edges are shown and every pick is saved and graded, but they aren't recommended bets (no Recommended Bets entry or phone alert) until ${TRIAL_NEED}+ graded picks show the blended chance beating the books' (${((UNITS.trial || {}).sogAlt || { n: 0 }).n} graded so far).</p>
+    ${alts.length ? table('sogalt', altCols, alts, { sort: 'edge', heat: false, rowAttr: a => `data-pname="${esc(normName(a.n))}"` }) : '<p class="muted" style="margin:0">No positive edges on alternate lines right now.</p>'}</div>`;
   const best = priced.flatMap(r => ['o', 'u'].filter(s => fin(r[s + 'Ev']) && r[s + 'Ev'] > 0 && !r.lowN).map(s => ({ r, s, roi: r[s + 'Roi'], edge: r[s + 'Edge'] }))).sort((a, b) => b.roi - a.roi).slice(0, 8);
   body.innerHTML = `<div class="bar"><h2 class="grow">Shots on goal</h2>
       <div class="ctl"><label>Date</label><input type="date" id="sogDate" value="${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}"></div>
@@ -7902,6 +7976,7 @@ async function renderSog() {
     ${best.length ? `<div class="card" style="margin-bottom:14px"><div class="card-h"><h3>💰 Best shots on goal values</h3><p>Ranked by expected return at the best price</p></div><div class="edges">${best.map(({ r, s, edge }) => `<div class="edge" data-pname="${esc(normName(r.n))}"><div class="tcell">${logoImg(r.tm, 18)}${plink(r.pid, r.n)}</div><div class="muted" style="font-size:12px">${s === 'o' ? 'Over' : 'Under'} ${r.line} · ${f2(r.mu)} expected · vs. ${esc(TM(r.opp).abbr)}</div><div style="margin-top:4px"><b>${fmtML(r[s + 'Best'])}</b> <span class="muted">${BK[r[s + 'Book']]}</span> · <b style="color:var(--good)">+${(edge * 100).toFixed(1)} pts</b></div></div>`).join('')}</div></div>` : ''}
     <div class="empty" id="sogNoMatch" hidden>No player matching that name in these games.</div>
     ${rows.length ? `<div class="card">${table('sog', cols, rows, { sort: priced.length ? 'oEdge' : 'mu', heat: false, rowAttr: r => `data-pname="${esc(normName(r.n))}"` })}</div>` : `<div class="empty">No games found for ${parseYmd(d).toLocaleDateString()}.</div>`}
+    ${altCard}
     <div id="sogTrack"></div>
     <p class="muted" style="font-size:12px;margin:10px 0 0">Shots on goal are counted by each arena's official scorer, which is why the arena matters. For fun and analysis, not betting advice.</p>`;
   RERENDER.sog = renderSog;
@@ -7913,6 +7988,13 @@ async function renderSog() {
   sogMarkButtons(); sogTrackRender(PK);
 }
 async function sogMarkButtons() { await mbInit(); const l = mbLoad().filter(b => b.type === 'sog'); $$('[data-sogbet]').forEach(el => { const r = (SOG.rows || [])[+el.dataset.sogbet]; const on = !!r && l.some(b => b.gid === r.gid && b.pid === r.pid && b.side === el.dataset.side); el.classList.toggle('on', on); el.textContent = (on ? '✓ ' : '＋ ') + (el.dataset.side === 'o' ? 'Over' : 'Under'); }); }
+// ＋ Bet on an alternate line: the bet form with that line and price
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('[data-altbet]'); if (!btn) return;
+  await mbInit(); const [i, L, s] = btn.dataset.altbet.split('|'), r = (SOG.rows || [])[+i]; if (!r) return;
+  const a = (r.alts || []).find(x => x.line === +L && x.side === s); if (!a) return;
+  mbOpenForm({ type: 'sog', side: s, line: a.line, gid: r.gid, start: r.start, pid: r.pid, n: r.n, tm: r.tm, opp: r.opp, gl: r.gl ? r.gl.n : '', p: a.p, dk: a.dk, fd: a.fd, best: a.best, odds: a.best, bookName: BOOKS[a.book] });
+});
 document.addEventListener('click', async e => {
   const btn = e.target.closest('[data-sogbet]'); if (!btn) return;
   await mbInit();
@@ -7968,6 +8050,145 @@ function sogTrackRender(PK) {
   box.innerHTML = sogTrackCard(PK);
   const ks = $('#sogtStrat'); if (ks) ks.onchange = () => { SOGT.strat = ks.value; SOGT.all = false; sogTrackRender(PK); };
   const ka = $('#sogtAll'); if (ka) ka.onclick = () => { SOGT.all = !SOGT.all; sogTrackRender(PK); };
+}
+
+/* ============================== TRIAL MARKETS: GOALIE SAVES + PUCK LINE ==============================
+   Goalie saves: the opponent's expected shots (its shots per game × this team's shots allowed, vs. the league, with home ice)
+   × the starter's save rate (pulled toward the league with 1,000 shots) × the share of the game starters usually play, then a
+   negative binomial spread. Backtest (Nov 2026, 1,654 unseen starts): log score 3.266 vs. 3.304 for the goalie's own average
+   saves. Teams keep 25% of last season, goalies 75%. Blended 50/50 with the books' no-margin chance (a trial market).
+   Puck line: the chance a team wins by 2+ read off its win chance (the game model, already mixed with the betting line),
+   using the pattern in 1,279 past games with betting lines (it beat a goals-based model on unseen games).
+   Game totals were tested too and left out: the goals model lost to the market and its disagreements pointed the wrong way. */
+const SV_CFG = { carry: .25, gcarry: .75, K: 1000, k: 30, lvl: .995, w: .5 };
+const PL_MAP = { aH: -1.0306, bH: 1.1911, aA: -0.8196, bA: 1.144 };
+const SVS = { key: '', st: null };
+function svState() {
+  const games = [...(GS.prior || []), ...A.filtered].filter(g => g && g.final && g.sk && g.gk && (g.stype === 2 || g.stype === 3)).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const key = games.length + '|' + (games.length ? games[games.length - 1].id : '');
+  if (SVS.st && SVS.key === key) return SVS.st;
+  const T = {}, Gk = {}, L = { s: 0, n: 0, hs: 0, as: 0, sv: 0, sa: 0, frac: 0, fn: 0 }; let season = null;
+  const tm = id => T[id] || (T[id] = { gp: 0, sf: 0, sa: 0 }), gk = id => Gk[id] || (Gk[id] = { sa: 0, sv: 0, st: 0, svs: 0, n: '', tm: '' });
+  for (const g of games) {
+    const s = seasonOf(g.date);
+    if (season !== null && s !== season) { for (const t of Object.values(T)) for (const k in t) t[k] *= SV_CFG.carry; for (const q of Object.values(Gk)) for (const k of ['sa', 'sv', 'st', 'svs']) q[k] *= SV_CFG.gcarry; for (const k of ['s', 'n', 'hs', 'as']) L[k] *= SV_CFG.carry; }
+    season = s;
+    const H = g.home.id, Aw = g.away.id, sk = Object.values(g.sk), shots = t => sk.filter(p => p.tm === t).reduce((a, p) => a + (p.sog || 0), 0);
+    const sH = shots(H), sA = shots(Aw); if (sH + sA < 20) continue;
+    const x = tm(H), y = tm(Aw); x.gp++; x.sf += sH; x.sa += sA; y.gp++; y.sf += sA; y.sa += sH;
+    L.s += sH + sA; L.n += 2; L.hs += sH; L.as += sA;
+    const starters = {}; for (const [id, q] of Object.entries(g.gk)) if (!starters[q.tm] || q.toi > starters[q.tm].q.toi) starters[q.tm] = { id, q };
+    for (const st of Object.values(starters)) { L.frac += Math.min(1, st.q.toi / 3600); L.fn++; if (st.q.toi >= 1800) { const q = gk(st.id); q.st++; q.svs += st.q.sv || 0; } }
+    for (const [id, q] of Object.entries(g.gk)) { const z = gk(id); z.sa += q.sa || 0; z.sv += q.sv || 0; z.n = q.n; z.tm = q.tm; L.sv += q.sv || 0; L.sa += q.sa || 0; }
+  }
+  const St = { T, Gk, lgS: L.n ? L.s / L.n : 30, hsF: L.hs + L.as ? L.hs / (L.hs + L.as) * 2 : 1.03, lgSv: L.sa ? L.sv / L.sa : .9, frac: L.fn ? L.frac / L.fn : .96 };
+  SVS.st = St; SVS.key = key; return St;
+}
+// one starter's expected saves tonight
+function svPredict(St, gid, team, opp, oppHome) {
+  const r = (a, n, lg, k) => (a + lg * k) / (n + k), F = t => r((St.T[t] || {}).sf || 0, (St.T[t] || {}).gp || 0, St.lgS, 10), Aa = t => r((St.T[t] || {}).sa || 0, (St.T[t] || {}).gp || 0, St.lgS, 10);
+  const q = St.Gk[gid] || { sa: 0, sv: 0, st: 0 }, hf = oppHome ? St.hsF : 2 - St.hsF;
+  const shots = F(opp) * Aa(team) / St.lgS * hf, sv = (q.sv + St.lgSv * SV_CFG.K) / (q.sa + SV_CFG.K);
+  return { shots, sv, frac: St.frac, mu: shots * sv * St.frac * SV_CFG.lvl, starts: q.st, rawSv: q.sa ? q.sv / q.sa : NaN };
+}
+function propsGameFor(PF, dateIso, hId, aId) {
+  if (!PF || !PF.games) return null;
+  const nm = id => normName(TM(id).name), mas = id => normName((TM(id).name || '').split(' ').slice(-1)[0]);
+  const same = (x, id) => normName(x) === nm(id) || (mas(id) && normName(x).endsWith(mas(id)));
+  return PF.games.find(x => same(x.home, hId) && same(x.away, aId) && Math.abs(new Date(x.commence) - new Date(dateIso)) < 20 * 3600e3) || null;
+}
+// tonight's starting goalies with saves lines: model, books, blend, both sides' edges
+function svTonight(St, e, PF) {
+  const c = e.competitions[0], H = String(c.competitors.find(x => x.homeAway === 'home').team.id), Aw = String(c.competitors.find(x => x.homeAway === 'away').team.id);
+  const pg = probableGoalies(e), g = propsGameFor(PF, e.date, H, Aw), out = [];
+  const pm = {}; if (g && g.saves) for (const p of g.saves) { const o = {}; for (const b of ['dk', 'fd', ...XBK]) if (p[b]) o[b] = p[b]; if (Object.keys(o).length) pm[oddsKey(p.n)] = o; }
+  for (const [t, o] of [[H, Aw], [Aw, H]]) {
+    let gl = pg[t];
+    // no RotoGrinders starter yet: the goalie the books' saves market lists for this team (that's who the line is for)
+    if (!gl || !gl.id) for (const p of (g && g.saves) || []) { const id = goalieIdByName(p.n, t); if (id && St.Gk[id] && St.Gk[id].tm === t) { gl = { id, n: p.n, st: 'Starter per the saves market (no RotoGrinders goalie yet)' }; break; } }
+    if (!gl || !gl.id) continue;
+    const m = svPredict(St, String(gl.id), t, o, o === H);
+    const row = { gid: String(e.id), start: e.date, pid: String(gl.id), n: gl.n, st: gl.st, tm: t, opp: o, ...m, mk: null, line: null };
+    const mk = Object.keys(pm).length ? sogMarket(dkLookup(pm, gl.n, String(gl.id))) : null;
+    if (mk && mk.line % 1 !== 0) {
+      row.mk = mk; row.line = mk.line; row.pModelO = nbOver(m.mu, SV_CFG.k, mk.line);
+      row.pO = fin(mk.fair) ? sigm(SV_CFG.w * logit(clamp(row.pModelO, .01, .99)) + (1 - SV_CFG.w) * logit(clamp(mk.fair, .02, .98))) : row.pModelO; row.pU = 1 - row.pO;
+      for (const [s, P_, x] of [['o', row.pO, mk.ov], ['u', row.pU, mk.un]]) { if (!x.best) continue; row[s + 'Best'] = x.best.price; row[s + 'Book'] = x.best.book; row[s + 'Edge'] = P_ - amImplied(x.best.price); row[s + 'Ev'] = betEV(P_, x.best.price).ev; }
+    }
+    out.push(row);
+  }
+  return out;
+}
+// puck line for one game: chance each side covers ±1.5, from the game's blended win chance
+const plCover = (pH, side, pt) => {
+  const hBy2 = sigm(PL_MAP.aH + PL_MAP.bH * logit(clamp(pH, .02, .98))), aBy2 = sigm(PL_MAP.aA + PL_MAP.bA * logit(clamp(1 - pH, .02, .98)));
+  if (side === 'h') return pt < 0 ? hBy2 : 1 - aBy2; return pt < 0 ? aBy2 : 1 - hBy2;
+};
+function plTonight(e, PF, gp) {
+  if (!gp || !gp.r) return [];
+  const c = e.competitions[0], H = String(c.competitors.find(x => x.homeAway === 'home').team.id), Aw = String(c.competitors.find(x => x.homeAway === 'away').team.id);
+  const g = propsGameFor(PF, e.date, H, Aw); if (!g || !g.pl) return [];
+  const books = Object.entries(g.pl).filter(([b, v]) => b !== 'pn' && v && v.h && v.a && Math.abs(v.h[0]) === 1.5 && v.h[0] === -v.a[0]); if (!books.length) return [];
+  const cnt = {}; for (const [, v] of books) cnt[v.h[0]] = (cnt[v.h[0]] || 0) + 1; const ptH = +Object.entries(cnt).sort((a, b) => b[1] - a[1])[0][0];
+  const at = books.filter(([, v]) => v.h[0] === ptH), ref = at.find(([b]) => b === 'dk') || at.find(([b]) => b === 'fd') || at[0];
+  const fairH = amImplied(ref[1].h[1]) / (amImplied(ref[1].h[1]) + amImplied(ref[1].a[1])), pH = gp.r.p, out = [];
+  for (const [s, pt] of [['h', ptH], ['a', -ptH]]) {
+    const pr = Object.fromEntries(at.map(([b, v]) => [b, v[s][1]])), ox = {}; for (const b of XBK) if (pr[b] != null) ox[b] = pr[b];
+    const best = bestPrice(pr.dk != null ? pr.dk : null, pr.fd != null ? pr.fd : null, ox); if (!best) continue;
+    const p = plCover(pH, s, pt), pb = s === 'h' ? fairH : 1 - fairH, ev = betEV(p, best.price);
+    out.push({ gid: String(e.id), start: e.date, side: s, pt, tm: s === 'h' ? H : Aw, opp: s === 'h' ? Aw : H, ha: TM(H).abbr, aa: TM(Aw).abbr, h: H, a: Aw, pWin: s === 'h' ? pH : 1 - pH, p, pb, best: best.price, book: best.book, edge: p - amImplied(best.price), ev: ev.ev, roi: ev.roi, dk: pr.dk != null ? pr.dk : null, fd: pr.fd != null ? pr.fd : null, ox });
+  }
+  return out;
+}
+const TRIAL = { date: '' };
+async function renderTrial() {
+  const body = $('#trialBody'); if (!body) return;
+  if (!GS.prior && !GS.priorLoading && !/^need|^err/.test(GS.priorMsg)) gsLoadPrior(false);
+  if (!A.filtered.length && !(GS.prior && GS.prior.length)) { body.innerHTML = `<div class="empty">No completed games loaded yet. Open <b>Goal Scorers</b> once to load last season as the starting point.</div>`; return; }
+  body.innerHTML = `<div class="empty"><div class="spinner"></div>Finding tonight's games…</div>`;
+  let d = TRIAL.date || todayStr(), sb = null;
+  for (let i = 0; i < 8; i++) { try { sb = await getJSON(`${API}/scoreboard?dates=${d}`); } catch (e) { sb = null; } if (TRIAL.date || (sb && (sb.events || []).some(e => e.competitions[0].status.type.state === 'pre'))) break; d = addDays(d, 1); }
+  if (activeTab() !== 'trial') return;
+  const evs = (sb && sb.events) || [], LF = await getLinesFile(), PF = await getPropsFile(), PK = await getPicksFile();
+  try { await gmLoadSaved(); } catch (e) {}
+  const INJS = {}; await pool(evs.filter(e => e.competitions[0].status.type.state === 'pre'), 6, async e => { INJS[e.id] = await getInjuries(e.id); });
+  if (activeTab() !== 'trial') return;
+  const St = svState(), svRows = [], plRows = [];
+  for (const e of evs) { e.competitions[0].competitors.forEach(x => addTeam(x.team)); if (e.competitions[0].status.type.state !== 'pre') continue; svRows.push(...svTonight(St, e, PF)); if (GM.model) { const gp = gmEventPick(e, INJS[e.id], LF, PF); plRows.push(...plTonight(e, PF, gp)); } }
+  const tr = m => ((UNITS.trial || {})[m] || { n: 0 }).n;
+  const edgeCell = v => fin(v) ? `<b style="color:${v > 0 ? 'var(--good)' : 'var(--neg)'}">${v > 0 ? '+' : ''}${(v * 100).toFixed(1)} pts</b>` : '–';
+  const pxCell = (price, book, dk, fd, ox) => price == null ? '<span class="muted">–</span>' : `<span data-tip="${esc(bookTip(dk, fd, ox))}"><b>${fmtML(price)}</b> <span class="muted" style="font-size:11px">${BK[book] || ''}</span></span>`;
+  const svCols = [
+    { k: 'n', h: 'Goalie', l: 1, v: r => r.n, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}<b>${esc(v)}</b> <span class="muted" style="font-size:11.5px">vs ${esc(TM(r.opp).abbr)}</span></div><div class="muted" style="font-size:11px">${esc(r.st || '')}</div>` },
+    { k: 'shots', h: 'Shots against', v: r => r.shots, f: v => f2(v), t: 'Expected shots on goal by the opponent: its shots per game × this team\'s shots allowed (vs. the league), with home ice.' },
+    { k: 'sv', h: 'Save %', v: r => r.sv, f: (v, r) => `<b>${(v * 100).toFixed(1)}%</b><div class="muted" style="font-size:11px">${Math.round(r.starts)} starts${fin(r.rawSv) ? ` · raw ${(r.rawSv * 100).toFixed(1)}%` : ''}</div>`, t: 'His save rate, pulled toward the league average with 1,000 shots (save % is very noisy).' },
+    { k: 'mu', h: 'Expected saves', v: r => r.mu, f: v => `<b>${f2(v)}</b>`, dir: 1 },
+    { k: 'line', h: 'Line', v: r => r.line, f: (v, r) => v == null ? '<span class="muted">no line</span>' : `<b>${v}</b> <span class="muted" style="font-size:11px">${r.mk.books} book${r.mk.books === 1 ? '' : 's'}</span>` },
+    { k: 'pO', h: 'Over fair', v: r => r.pO, f: v => fin(v) ? `<b>${fairAmerican(v)}</b><div class="muted" style="font-size:11px">${pct1(v)}%</div>` : '–' },
+    { k: 'oBest', h: 'Over price', v: r => r.oBest, f: (v, r) => r.mk ? pxCell(v, r.oBook, r.mk.ov.dk, r.mk.ov.fd, r.mk.ov.ox) : '–' },
+    { k: 'oEdge', h: 'Over edge', v: r => r.oEdge, f: edgeCell },
+    { k: 'uBest', h: 'Under price', v: r => r.uBest, f: (v, r) => r.mk ? pxCell(v, r.uBook, r.mk.un.dk, r.mk.un.fd, r.mk.un.ox) : '–' },
+    { k: 'uEdge', h: 'Under edge', v: r => r.uEdge, f: edgeCell },
+    { k: 'units', h: 'Units', v: () => 0, f: (v, r) => { const s = fin(r.oEdge) && fin(r.uEdge) ? (r.oEdge > r.uEdge ? 'o' : 'u') : null; return s ? unitsCell('sv', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { side: s === 'o' ? 'Over' : 'Under' }) : '–'; } }];
+  const plCols = [
+    { k: 'tm', h: 'Bet', l: 1, v: r => TM(r.tm).abbr, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}<b>${esc(v)} ${r.pt > 0 ? '+' : ''}${r.pt}</b></div><div class="muted" style="font-size:11px">${esc(r.aa)} @ ${esc(r.ha)} · ${new Date(r.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</div>` },
+    { k: 'pWin', h: 'Win chance', v: r => r.pWin, f: v => `${pct1(v)}%`, t: 'The game model\'s chance this team wins, already mixed with the betting line by the model\'s live track record.' },
+    { k: 'p', h: 'Covers', v: r => r.p, f: v => `<b>${fairAmerican(v)}</b><div class="muted" style="font-size:11px">${pct1(v)}%</div>`, t: 'Chance this side covers, from how often teams with this win chance won by 2+ in 1,279 past games.' },
+    { k: 'pb', h: 'Books', v: r => r.pb, f: v => `${pct1(v)}%`, t: 'The books\' chance with their margin removed.' },
+    { k: 'best', h: 'Best price', v: r => r.best, f: (v, r) => pxCell(v, r.book, r.dk, r.fd, r.ox) },
+    { k: 'edge', h: 'Edge', v: r => r.edge, f: edgeCell },
+    { k: 'units', h: 'Units', v: () => 0, f: (v, r) => r.edge > 0 ? unitsCell('pl', r.p, r.best) : '<span class="muted">–</span>' }];
+  const trialNote = m => `<b>Trial market:</b> shown, saved and graded, but not a recommended bet (no Recommended Bets entry or alert) until ${TRIAL_NEED}+ graded picks show these chances beating the books' own (${tr(m)} graded so far).`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Goalie saves & puck line</h2><div class="ctl"><label>Date</label><input type="date" id="trialDate" value="${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}"></div></div>
+    <div class="card"><div class="card-h"><h3>🧤 Goalie saves</h3><p>${svRows.filter(r => r.line != null).length} priced starters</p></div>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">Expected saves = the opponent's expected shots × the starter's save rate × how much of the game starters usually play. On 1,654 past starts this beat each goalie's own average saves. Starters come from RotoGrinders (or yours, if you set one). ${trialNote('sv')}</p>
+      ${svRows.length ? table('svtab', svCols, svRows, { sort: 'oEdge', heat: false }) : '<p class="muted" style="margin:0">No starting goalies found for these games yet.</p>'}</div>
+    <div class="card" style="margin-top:14px"><div class="card-h"><h3>🏒 Puck line</h3><p>${plRows.length} priced sides</p></div>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">The chance to cover ±1.5 comes from the game model's win chance (already mixed with the betting line) and how often teams with that win chance won by 2+ in past games, empty-net goals included. ${trialNote('pl')} ${GM.model ? '' : '<b>Train the game model in Model Lab to see these.</b>'}</p>
+      ${plRows.length ? table('pltab', plCols, plRows, { sort: 'edge', heat: false }) : '<p class="muted" style="margin:0">No puck line prices for these games yet.</p>'}</div>
+    <p class="muted" style="font-size:12px;margin:10px 0 0">Game totals were tested too and left out: the goals model predicted worse than the betting market on 638 unseen games. For fun and analysis, not betting advice.</p>`;
+  RERENDER.trial = renderTrial;
+  $('#trialDate').onchange = e => { TRIAL.date = e.target.value.replace(/-/g, ''); renderTrial(); };
 }
 
 /* ============================== DATA HEALTH CHECK ==============================
@@ -8341,6 +8562,7 @@ function renderActiveAnalytics() {
   const t = activeTab();
   if (t === 'firstgoal') { renderFirstGoal(); return; }
   if (t === 'sog') { renderSog(); return; }
+  if (t === 'trial') { renderTrial(); return; }
   if (t === 'teams') renderTeams(); else if (t === 'skaters') renderSkaters(); else if (t === 'goalies') renderGoalies(); else if (t === 'luck') renderLuck(); else if (t === 'compare') renderCompare(); else if (t === 'power') renderPower(); else if (t === 'special') renderSpecial(); else if (t === 'splits') renderSplits(); else if (t === 'rookies') renderRookies(); else if (t === 'model') renderModel(); else if (t === 'recap') renderRecap(); else if (t === 'clutch') renderClutch(); else if (t === 'sos') renderSOS(); else if (t === 'travel') renderTravel(); else if (t === 'streaks') renderStreaks(); else if (t === 'faceoffs') renderFaceoffs(); else if (t === 'refs') renderRefs(); else if (t === 'arenas') renderArenas(); else if (t === 'upsets') renderUpsets(); else if (t === 'bets') renderBets(); else if (t === 'props') renderProps(); else if (t === 'periods') renderPeriods(); else if (t === 'profiles') renderProfiles(); else if (t === 'quads') renderQuads(); else if (t === 'scorers') renderScorers();
 }
 const LASTTAB = {};
@@ -8357,7 +8579,7 @@ function setTab(t) {
   if (t === 'recs') renderRecs();
   recBanner();
   if (t === 'combos') renderCombos();
-  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers', 'firstgoal', 'sog'].includes(t)) {
+  if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers', 'firstgoal', 'sog', 'trial'].includes(t)) {
     // every tab opens on the full current season
     if (A.range !== 'season' || (S.curSeason && A.season !== S.curSeason)) { A.range = 'season'; if (S.curSeason) A.season = S.curSeason; A.note = ''; }
     renderAbar(); if (A.loading) return; ensureData();
