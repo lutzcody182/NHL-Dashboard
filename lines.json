@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-07T20:00:17.560Z",
+ "updated": "2026-11-07T21:00:17.472Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -2263,9 +2263,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Tommy Novak",
+         "n": "Evgeni Malkin",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2280,12 +2280,12 @@
         {
          "n": "Ben Kindel",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Evgeni Malkin",
+         "n": "Tommy Novak",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -2305,7 +2305,7 @@
         {
          "n": "Ville Koivunen",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2338,7 +2338,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Samuel Girard",
+         "n": "Spencer Stastney",
          "pos": "D",
          "pp": ""
         },
@@ -2348,7 +2348,7 @@
          "pp": ""
         },
         {
-         "n": "Spencer Stastney",
+         "n": "Samuel Girard",
          "pos": "D",
          "pp": ""
         },
