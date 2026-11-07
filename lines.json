@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-06",
- "updated": "2026-11-07T00:00:17.251Z",
+ "updated": "2026-11-07T01:00:16.274Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -706,14 +706,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Kevin Bahl",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Simon Nemec",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Joel Hanley",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Zach Whitecloud",
