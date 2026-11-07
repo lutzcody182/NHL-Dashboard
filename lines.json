@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-07T18:00:16.540Z",
+ "updated": "2026-11-07T19:00:19.481Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -917,7 +917,7 @@
         {
          "n": "Philip Tomasino",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -937,7 +937,7 @@
         {
          "n": "Claude Giroux",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -947,7 +947,7 @@
         {
          "n": "Stephen Halliday",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Hayden Hodgson",
@@ -992,7 +992,7 @@
         {
          "n": "Carter Yakemchuk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -2401,7 +2401,7 @@
         {
          "n": "Trevor Moore",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Corey Perry",
@@ -2434,9 +2434,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Martin Chromiak",
-         "pos": "W",
-         "pp": ""
+         "n": "Alex Turcotte",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Scott Laughton",
