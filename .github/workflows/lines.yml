@@ -1,5 +1,4 @@
 
-
 # Updates lines.json with today's NHL forward lines, defense pairs and goalies from RotoGrinders, and props.json with
 # DraftKings anytime and first goal scorer odds (The Odds API) plus period-by-period ice time from the NHL's shift charts.
 # The same run saves the models' pre-game picks to picks.json and grades finished games. Evening runs also record the
@@ -127,7 +126,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Fetch sportsbook odds (DraftKings, FanDuel, Caesars, Fanatics, theScore Bet; goals, moneyline, shots on goal)
+      - name: Fetch sportsbook odds (DraftKings, FanDuel, Caesars, Fanatics, theScore Bet + Pinnacle as the sharp reference; goals, moneyline, shots on goal, alternate shots, goalie saves, puck line)
         continue-on-error: true
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
@@ -152,8 +151,9 @@ jobs:
             const games = []; let remaining = null;
             for (const e of soon) {
               try {
-                // all five books in one request: credits are charged per market, not per book (up to 10 books count as one region)
-                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&markets=player_goal_scorer_anytime,player_goal_scorer_first,h2h,player_shots_on_goal&bookmakers=draftkings,fanduel,williamhill_us,fanatics,espnbet&oddsFormat=american`);
+                // all five books + Pinnacle in one request: credits are charged per market, not per book (up to 10 books count as one region).
+                // Pinnacle (pn) is a reference only: the sharpest market, used to judge prices, never offered as a place to bet.
+                const { data, left } = await get(`${BASE}/events/${e.id}/odds?apiKey=${KEY}&markets=player_goal_scorer_anytime,player_goal_scorer_first,h2h,player_shots_on_goal,player_shots_on_goal_alternate,player_total_saves,spreads&bookmakers=draftkings,fanduel,williamhill_us,fanatics,espnbet,pinnacle&oddsFormat=american`);
                 remaining = left ?? remaining;
                 const book = k => (data.bookmakers || []).find(b => b.key === k), mkt = (b, m) => b && (b.markets || []).find(x => x.key === m);
                 const nn = x => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); // keeps a "(2004)" birth-year tag, so two same-named players stay apart
@@ -161,12 +161,12 @@ jobs:
                 // one entry per player: price = DraftKings, fd = FanDuel, cz = Caesars, fn = Fanatics, sc = theScore Bet (any can be missing)
                 const XB = [['williamhill_us', 'cz'], ['fanatics', 'fn'], ['espnbet', 'sc']];
                 const merge = m => { const map = new Map(); for (const o of outs(book('draftkings'), m)) map.set(nn(o.n), { n: o.n, price: o.price });
-                  for (const [bk, f] of [['fanduel', 'fd'], ...XB]) for (const o of outs(book(bk), m)) { const k = nn(o.n), x = map.get(k) || { n: o.n, price: null }; x[f] = o.price; map.set(k, x); }
+                  for (const [bk, f] of [['fanduel', 'fd'], ...XB, ['pinnacle', 'pn']]) for (const o of outs(book(bk), m)) { const k = nn(o.n), x = map.get(k) || { n: o.n, price: null }; x[f] = o.price; map.set(k, x); }
                   return [...map.values()]; };
                 const players = merge('player_goal_scorer_anytime'), first = merge('player_goal_scorer_first');
                 // shots on goal: per player, per book: [line, over price, under price] (each book's main line)
                 const sogMap = new Map(), imp = v => v < 0 ? -v / (-v + 100) : 100 / (v + 100);
-                for (const [bk, f] of [['draftkings', 'dk'], ['fanduel', 'fd'], ...XB]) {
+                for (const [bk, f] of [['draftkings', 'dk'], ['fanduel', 'fd'], ...XB, ['pinnacle', 'pn']]) {
                   const mm = mkt(book(bk), 'player_shots_on_goal'); if (!mm) continue;
                   const by = {}; for (const o of mm.outcomes || []) { const n = o.description; if (!n || !Number.isFinite(o.price) || !Number.isFinite(o.point)) continue; const side = /^over$/i.test(o.name) ? 'o' : /^under$/i.test(o.name) ? 'u' : null; if (!side) continue; const b = by[nn(n)] || (by[nn(n)] = { n, lines: {} }); const L = b.lines[o.point] || (b.lines[o.point] = {}); L[side] = o.price; }
                   for (const [k, b] of Object.entries(by)) {
@@ -176,14 +176,40 @@ jobs:
                   }
                 }
                 const sog = [...sogMap.values()];
+                const BKS = [['draftkings', 'dk'], ['fanduel', 'fd'], ...XB, ['pinnacle', 'pn']];
+                // alternate shots lines: per player, per book: [[line, over, under or null], ...] (books often post only the over)
+                const altMap = new Map();
+                for (const [bk, f] of BKS) {
+                  const mm = mkt(book(bk), 'player_shots_on_goal_alternate'); if (!mm) continue; const by = {};
+                  for (const o of mm.outcomes || []) { const n = o.description; if (!n || !Number.isFinite(o.price) || !Number.isFinite(o.point)) continue; const side = /^over$/i.test(o.name) ? 'o' : /^under$/i.test(o.name) ? 'u' : null; if (!side) continue; const b = by[nn(n)] || (by[nn(n)] = { n, lines: {} }); const L = b.lines[o.point] || (b.lines[o.point] = {}); L[side] = o.price; }
+                  for (const [k, b] of Object.entries(by)) { const x = altMap.get(k) || { n: b.n }; x[f] = Object.entries(b.lines).map(([pt, L]) => [+pt, L.o != null ? L.o : null, L.u != null ? L.u : null]).sort((a, c) => a[0] - c[0]); altMap.set(k, x); }
+                }
+                const sogAlt = [...altMap.values()];
+                // goalie saves: per goalie, per book: [line, over, under] (each book's main line)
+                const svMap = new Map();
+                for (const [bk, f] of BKS) {
+                  const mm = mkt(book(bk), 'player_total_saves'); if (!mm) continue; const by = {};
+                  for (const o of mm.outcomes || []) { const n = o.description; if (!n || !Number.isFinite(o.price) || !Number.isFinite(o.point)) continue; const side = /^over$/i.test(o.name) ? 'o' : /^under$/i.test(o.name) ? 'u' : null; if (!side) continue; const b = by[nn(n)] || (by[nn(n)] = { n, lines: {} }); const L = b.lines[o.point] || (b.lines[o.point] = {}); L[side] = o.price; }
+                  for (const [k, b] of Object.entries(by)) { const best = Object.entries(b.lines).filter(([, L]) => L.o != null && L.u != null).sort((x, z) => Math.abs(imp(x[1].o) - imp(x[1].u)) - Math.abs(imp(z[1].o) - imp(z[1].u)))[0]; if (!best) continue; const x = svMap.get(k) || { n: b.n }; x[f] = [+best[0], best[1].o, best[1].u]; svMap.set(k, x); }
+                }
+                const saves = [...svMap.values()];
+                // game total and puck line: per book, the main total [line, over, under] and the puck line { h: [points, price], a: [points, price] }
+                const tot = {}, pl = {};
+                for (const [bk, f] of BKS) {
+                  const t = mkt(book(bk), 'totals');
+                  if (t) { const L = {}; for (const o of t.outcomes || []) { if (!Number.isFinite(o.price) || !Number.isFinite(o.point)) continue; const s = /^over$/i.test(o.name) ? 'o' : /^under$/i.test(o.name) ? 'u' : null; if (s) (L[o.point] = L[o.point] || {})[s] = o.price; } const best = Object.entries(L).filter(([, v]) => v.o != null && v.u != null).sort((x, z) => Math.abs(imp(x[1].o) - imp(x[1].u)) - Math.abs(imp(z[1].o) - imp(z[1].u)))[0]; if (best) tot[f] = [+best[0], best[1].o, best[1].u]; }
+                  const s = mkt(book(bk), 'spreads');
+                  if (s) { const h = (s.outcomes || []).find(o => o.name === e.home_team), a = (s.outcomes || []).find(o => o.name === e.away_team); if (h && a && Number.isFinite(h.point) && Number.isFinite(h.price) && Number.isFinite(a.point) && Number.isFinite(a.price)) pl[f] = { h: [h.point, h.price], a: [a.point, a.price] }; }
+                }
                 const h2h = b => { const mm = mkt(b, 'h2h'); if (!mm) return null; const f = nm => (mm.outcomes.find(o => o.name === nm) || {}).price; const h = f(e.home_team), a = f(e.away_team); return Number.isFinite(h) && Number.isFinite(a) ? { h, a } : null; };
                 const mk = mkt(book('draftkings'), 'player_goal_scorer_anytime') || mkt(book('fanduel'), 'player_goal_scorer_anytime');
-                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players, first, sog, ml: { dk: h2h(book('draftkings')), fd: h2h(book('fanduel')), cz: h2h(book('williamhill_us')), fn: h2h(book('fanatics')), sc: h2h(book('espnbet')) } });
+                games.push({ id: e.id, commence: e.commence_time, home: e.home_team, away: e.away_team, updated: mk ? mk.last_update : null, players, first, sog, sogAlt, saves, tot, pl, ml: { dk: h2h(book('draftkings')), fd: h2h(book('fanduel')), cz: h2h(book('williamhill_us')), fn: h2h(book('fanatics')), sc: h2h(book('espnbet')), pn: h2h(book('pinnacle')) } });
                 const c = (l, k) => l.filter(x => x[k] != null).length;
+                console.log(`  + alternate shots ${sogAlt.length} players, goalie saves ${saves.length}, totals ${Object.keys(tot).join('/') || 'none'}, puck line ${Object.keys(pl).join('/') || 'none'}, Pinnacle: moneyline ${h2h(book('pinnacle')) ? 'yes' : 'no'}, anytime ${c(players, 'pn')}, shots ${c(sog, 'pn')}`);
                 console.log(`${e.away_team} @ ${e.home_team}: anytime DK ${c(players, 'price')} / FD ${c(players, 'fd')} / CZ ${c(players, 'cz')} / FAN ${c(players, 'fn')} / SCR ${c(players, 'sc')}, first goal DK ${c(first, 'price')} / FD ${c(first, 'fd')} / CZ ${c(first, 'cz')} / FAN ${c(first, 'fn')} / SCR ${c(first, 'sc')}, shots on goal DK ${c(sog, 'dk')} / FD ${c(sog, 'fd')} / CZ ${c(sog, 'cz')} / FAN ${c(sog, 'fn')} / SCR ${c(sog, 'sc')}`);
               } catch (err) { console.log(`::warning::${e.away_team} @ ${e.home_team}: ${err.message}`); }
             }
-            const out = { source: 'DraftKings, FanDuel, Caesars, Fanatics and theScore Bet via The Odds API', updated: new Date().toISOString(), remaining, games };
+            const out = { source: 'DraftKings, FanDuel, Caesars, Fanatics and theScore Bet (Pinnacle as a sharp reference) via The Odds API', updated: new Date().toISOString(), remaining, games };
             fs.writeFileSync('props.json', JSON.stringify(out));
             console.log(`Saved ${games.reduce((s, g) => s + g.players.length, 0)} player prices for ${games.length} games.`);
           })().catch(err => { console.log('::error::' + err.message); process.exit(1); });
@@ -542,7 +568,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB, SOGHA, setLinesData, unitsFor, unitsProof, gmBlendFit, GMB, UNITS };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB, SOGHA, setLinesData, unitsFor, unitsProof, gmBlendFit, GMB, UNITS, svState, svTonight, plTonight, trialFit, TRIAL_MKTS };`);
             return w.__t;
           }
 
@@ -569,7 +595,8 @@ jobs:
             fs.writeFileSync('.cache/games.json', JSON.stringify([...T.A.games.values()].filter(g => g && g.final)));
 
             const picks = readJSON('picks.json', { picks: [] });
-            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p])), sByKey = new Map((picks.sog || []).map(p => [p.k, p]));
+            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p])), sByKey = new Map((picks.sog || []).map(p => [p.k, p])), xByKey = new Map((picks.xm || []).map(p => [p.k, p])); // xm = trial markets (alternate shots lines, goalie saves, puck line)
+            let xAdded = 0;
             // one-time fix: before Oct 18 2026 the forward Elias Pettersson was given the defenseman Elias Pettersson's prices (same name), so those picks were never real
             for (const M of [byKey, fByKey]) for (const [k, p] of M) if (p.pid === '4233566' && p.date <= '20261017') M.delete(k);
 
@@ -592,14 +619,15 @@ jobs:
               const c = e.competitions[0];
               if (c.status.type.state !== 'pre' || new Date(e.date) <= now) continue; // only games that haven't started
               const inj = await T.getInjuries(e.id);
+              let gpX = null; // this game's model pick (also used for the puck line)
               // game model moneyline pick
               if (gmOK) {
-                const gp = T.gmEventPick(e, inj, LF, PF);
+                const gp = T.gmEventPick(e, inj, LF, PF); gpX = gp;
                 if (gp && gp.side) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml ? gp.ml.h : null, mlA: gp.ml ? gp.ml.a : null, fdH: gp.fd ? gp.fd.h : null, fdA: gp.fd ? gp.fd.a : null, bH: gp.bH ? gp.bH.price : null, bA: gp.bA ? gp.bA.price : null, book: gp.side.book, p: +(Number.isFinite(gp.r.pModel) ? gp.r.pModel : gp.r.p).toFixed(4), pl: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), u: (T.unitsFor('ml', gp.side.q, gp.side.price) || {}).u || 0, verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml ? gp.ml.h : null, mlA: gp.ml ? gp.ml.a : null, fdH: gp.fd ? gp.fd.h : null, fdA: gp.fd ? gp.fd.a : null, bH: gp.bH ? gp.bH.price : null, bA: gp.bA ? gp.bA.price : null, book: gp.side.book, p: +(Number.isFinite(gp.r.pModel) ? gp.r.pModel : gp.r.p).toFixed(4), pl: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, mkSrc: gp.r.mkSrc || null, mkDk: Number.isFinite(gp.r.mkDk) ? +gp.r.mkDk.toFixed(4) : null, pnH: gp.fd && gp.fd.pn ? gp.fd.pn.h : null, pnA: gp.fd && gp.fd.pn ? gp.fd.pn.a : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), u: (T.unitsFor('ml', gp.side.q, gp.side.price) || {}).u || 0, verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) {
-                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt', 'nt', 'ntU']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
+                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'pnCloseH', 'pnCloseA', 'closeAt', 'nt', 'ntU']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
                     // line history: one snapshot per run when anything changed (fair chance, market price, goalies), with each factor's share, so the dashboard can chart and explain the moves
                     const snap = { t: now.toISOString(), p: rec.p, mlH: rec.mlH, mlA: rec.mlA, gH: rec.gH, gA: rec.gA, gHs: rec.gHs, gAs: rec.gAs, inj: out, crew: rec.crew, f: Object.fromEntries((gp.r.parts || []).map(x => [x.k, +x.d.toFixed(4)])) };
                     const hist = (old && old.hist) || [], prev = hist[hist.length - 1];
@@ -613,17 +641,45 @@ jobs:
                 const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.best != null); // priced at any of the five books
                 // shots on goal: the over and the under for every player with a line
                 try {
-                  const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null, sKeep = new Set();
-                  for (const r of T.sogTonight(T.sogState(), e, allRows, PF).filter(x => x.line != null)) {
+                  const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null, sKeep = new Set(), xKeep = new Set();
+                  const SR = T.sogTonight(T.sogState(), e, allRows, PF);
+                  for (const r of SR.filter(x => x.line != null)) {
                     for (const s of ['o', 'u']) {
                       if (r[s + 'Best'] == null) continue;
                       const x = s === 'o' ? r.mk.ov : r.mk.un, k = `s|${e.id}|${r.pid}|${s}`; sKeep.add(k);
-                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), q: Number.isFinite(r.q) ? r4(r.q) : null, haF: r4(r.haF), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], u: (T.unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) || {}).u || 0, imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
+                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), q: Number.isFinite(r.q) ? r4(r.q) : null, haF: r4(r.haF), evP: Math.round(r.evSec || 0), ppP: Math.round(r.ppSec || 0), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], u: (T.unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) || {}).u || 0, imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
                       if (sByKey.has(k)) { if (sByKey.get(k).res == null) Object.assign(sByKey.get(k), rec); } else { sByKey.set(k, rec); sAdded++; }
                     }
                   }
                   if (sKeep.size) for (const [k, p] of sByKey) if (p.gid === String(e.id) && p.res == null && !sKeep.has(k)) { sByKey.delete(k); dropped++; }
+                  // trial: alternate shots lines with a positive edge (the main line is already saved above)
+                  for (const r of SR) for (const a of r.alts || []) {
+                    if (!(a.edge > 0) || r.lowN) continue;
+                    const k = `a|${e.id}|${r.pid}|${a.side}|${a.line}`, uu = T.unitsFor('sogAlt', a.p, a.best) || {}; xKeep.add(k);
+                    const rec = { k, m: 'sogAlt', date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: a.side, line: a.line, main: r.line, mu: r4(r.mu), muMkt: r4(r.muMkt), p: r4(a.p), pRaw: r4(a.pModel), pb: r4(a.pMkt), dk: a.dk, fd: a.fd, ox: a.ox, best: a.best, book: a.book, edge: r4(a.edge), ev: r4(a.ev), u: uu.u || 0, uT: uu.uT || uu.u || 0 };
+                    if (xByKey.has(k)) { if (xByKey.get(k).res == null) Object.assign(xByKey.get(k), rec); } else { xByKey.set(k, rec); xAdded++; }
+                  }
+                  for (const [k, p] of xByKey) if (p.m === 'sogAlt' && p.gid === String(e.id) && p.res == null && !xKeep.has(k)) { xByKey.delete(k); dropped++; }
                 } catch (err) { log(`Game ${e.id}: shots on goal model error: ${err.message}`); }
+                // trial: goalie saves (both sides of every priced starter) and the puck line (both sides)
+                try {
+                  const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null, keep = new Set();
+                  for (const r of T.svTonight(T.svState(), e, PF)) {
+                    if (r.line == null) continue;
+                    for (const s of ['o', 'u']) {
+                      if (r[s + 'Best'] == null) continue;
+                      const P_ = s === 'o' ? r.pO : r.pU, k = `v|${e.id}|${r.pid}|${s}`, uu = T.unitsFor('sv', P_, r[s + 'Best']) || {}, x = s === 'o' ? r.mk.ov : r.mk.un; keep.add(k);
+                      const rec = { k, m: 'sv', date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, gst: r.st || '', tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), shotsE: r4(r.shots), svE: r4(r.sv), p: r4(P_), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), pb: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], edge: r4(r[s + 'Edge']), u: uu.u || 0, uT: uu.uT || uu.u || 0 };
+                      if (xByKey.has(k)) { if (xByKey.get(k).res == null) Object.assign(xByKey.get(k), rec); } else { xByKey.set(k, rec); xAdded++; }
+                    }
+                  }
+                  for (const r of T.plTonight(e, PF, gpX)) {
+                    const k = `p|${e.id}|${r.side}`, uu = T.unitsFor('pl', r.p, r.best) || {}; keep.add(k);
+                    const rec = { k, m: 'pl', date: today, gid: String(e.id), start: e.date, side: r.side, line: r.pt, tm: r.tm, opp: r.opp, ha: r.ha, aa: r.aa, h: r.h, a: r.a, pWin: r4(r.pWin), p: r4(r.p), pb: r4(r.pb), dk: r.dk, fd: r.fd, ox: r.ox, best: r.best, book: r.book, edge: r4(r.edge), ev: r4(r.ev), u: uu.u || 0, uT: uu.uT || uu.u || 0 };
+                    if (xByKey.has(k)) { if (xByKey.get(k).res == null) Object.assign(xByKey.get(k), rec); } else { xByKey.set(k, rec); xAdded++; }
+                  }
+                  for (const [k, p] of xByKey) if ((p.m === 'sv' || p.m === 'pl') && p.gid === String(e.id) && p.res == null && !keep.has(k)) { xByKey.delete(k); dropped++; }
+                } catch (err) { log(`Game ${e.id}: saves / puck line error: ${err.message}`); }
                 // first goal scorer: every player with a DraftKings first goal price
                 if (fgFitV) {
                   try {
@@ -693,20 +749,34 @@ jobs:
               if (!g || !g.final) continue;
               for (const p of sOpen.filter(x => x.gid === gid)) {
                 const s = g.sk[p.pid];
+                if (s) { p.evA = Math.max(0, (s.toi || 0) - (s.pp || 0)); p.ppA = s.pp || 0; } // actual minutes, to check the projection later
                 if (!s || !(s.toi > 0)) { p.res = 'V'; p.shots = 0; } else { p.shots = s.sog || 0; p.res = p.shots === p.line ? 'PU' : (p.shots > p.line) === (p.side === 'o') ? 'W' : 'L'; }
                 { const px = p.best; p.profit = p.res === 'W' ? (px < 0 ? 100 : px) : p.res === 'L' ? -(px < 0 ? -px : 100) : 0; }
                 sGraded++;
               }
             }
-            log(`Graded ${graded} goal scorer picks, ${gGraded} game picks, ${fGraded} first goal prices and ${sGraded} shots on goal picks.`);
+            // grade trial-market picks from the official box score
+            let xGraded = 0; const xOpen = [...xByKey.values()].filter(p => p.res == null && new Date(p.start) < new Date(now - 4 * 3600e3));
+            try { for (const gid of [...new Set(xOpen.map(p => p.gid))]) {
+              let g = null; try { g = await T.getGame(gid); } catch (e) { log(`Game ${gid}: ${e.message}`); }
+              if (!g || !g.final) continue;
+              for (const p of xOpen.filter(x => x.gid === gid)) {
+                if (p.m === 'sogAlt') { const s = g.sk[p.pid]; if (!s || !(s.toi > 0)) { p.res = 'V'; p.shots = 0; } else { p.shots = s.sog || 0; p.res = p.shots === p.line ? 'PU' : (p.shots > p.line) === (p.side === 'o') ? 'W' : 'L'; } }
+                else if (p.m === 'sv') { const q = (g.gk || {})[p.pid]; if (!q || !(q.toi > 0)) { p.res = 'V'; p.saves = 0; } else { p.saves = q.sv || 0; p.toiA = q.toi; p.res = p.saves === p.line ? 'PU' : (p.saves > p.line) === (p.side === 'o') ? 'W' : 'L'; } }
+                else if (p.m === 'pl') { const m = g.home.score - g.away.score, v = (p.side === 'h' ? m : -m) + p.line; p.score = `${g.away.score}-${g.home.score}`; p.res = v > 0 ? 'W' : v < 0 ? 'L' : 'PU'; }
+                xGraded++;
+              }
+            } } catch (err) { log(`Trial-market grading error: ${err.message}`); }
+            try { T.trialFit({ xm: [...xByKey.values()] }); } catch (err) { log(`Trial check error: ${err.message}`); }
+            log(`Graded ${graded} goal scorer picks, ${gGraded} game picks, ${fGraded} first goal prices, ${sGraded} shots on goal picks and ${xGraded} trial-market picks. Trial markets: ${T.TRIAL_MKTS.map(m => { const x = T.UNITS.trial[m] || { n: 0 }; return `${m} ${x.n} graded${x.ok ? ' (passed)' : ''}`; }).join(', ')}.`);
             // today's model test scores, for the accuracy-over-time charts (one snapshot per day)
             const hist = (picks.hist || []).filter(h => h.date !== today), snap = { date: today };
             if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
-            const recs = await updateRecs(T, { byKey, fByKey, sByKey, gByKey }, picks.recs, now);
-            await notifyNew({ byKey, fByKey, sByKey, gByKey }, now, recs);
-            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1), recs };
+            let recs = picks.recs || []; try { recs = await updateRecs(T, { byKey, fByKey, sByKey, gByKey, xByKey }, picks.recs, now); } catch (err) { log(`Recommendation log error: ${err.message}`); }
+            await notifyNew({ byKey, fByKey, sByKey, gByKey, xByKey }, now, recs);
+            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1), recs, xm: [...xByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0) };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
           }
@@ -723,10 +793,11 @@ jobs:
             for (const p of M.byKey.values()) if (due(p)) items.push([p, `🥅 ${p.n} anytime goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.fByKey.values()) if (due(p)) items.push([p, `🚨 ${p.n} FIRST goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.sByKey.values()) if (due(p)) items.push([p, `🏒 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} shots · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
+            for (const p of (M.xByKey ? M.xByKey.values() : [])) if (due(p)) items.push([p, p.m === 'sv' ? `🧤 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} saves · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}` : p.m === 'pl' ? `🏒 ${p.side === 'h' ? p.ha : p.aa} ${p.line > 0 ? '+' : ''}${p.line} puck line · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}` : `🪜 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} shots (alt) · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.gByKey.values()) if (p.hw == null && due(p)) { const h = p.side === 'h'; items.push([p, `🧠 ${h ? p.ha : p.aa} moneyline vs ${h ? p.aa : p.ha} · ${am(h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA))} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]); }
             // recommendations that ended before their game: ask whether you bet them (once each)
             const gone = recs.filter(r => r.status === 'expired' && !r.ntE && new Date(r.start) > now);
-            const recLbl = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots` : r.m === 'fg' ? `${r.n} FIRST goal` : `${r.n} anytime goal`;
+            const recLbl = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'pl' ? `${r.tmA} ${r.line > 0 ? '+' : ''}${r.line} puck line` : r.m === 'sv' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} saves` : r.m === 'sogAlt' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots (alt)` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots` : r.m === 'fg' ? `${r.n} FIRST goal` : `${r.n} anytime goal`;
             if (!items.length && !gone.length) { log('Notifications: nothing new.'); return; }
             items.sort((a, b) => a[0].start < b[0].start ? -1 : a[0].start > b[0].start ? 1 : b[0].u - a[0].u);
             const lines = []; let lastT = '';
@@ -753,16 +824,17 @@ jobs:
             for (const p of M.byKey.values()) if (pre(p)) cur.set(`goal|${p.gid}|${p.pid}`, { m: 'goal', p, price: p.best != null ? p.best : p.dk });
             for (const p of M.fByKey.values()) if (pre(p)) cur.set(`fg|${p.gid}|${p.pid}`, { m: 'fg', p, price: p.best != null ? p.best : p.dk });
             for (const p of M.sByKey.values()) if (pre(p)) cur.set(`sog|${p.gid}|${p.pid}|${p.side}|${p.line}`, { m: 'sog', p, price: p.best });
+            for (const p of (M.xByKey ? M.xByKey.values() : [])) if (pre(p)) cur.set(`${p.m}|${p.gid}|${p.pid || '-'}|${p.side}|${p.line}`, { m: p.m, p, price: p.best });
             for (const p of M.gByKey.values()) if (p.hw == null && pre(p)) { const h = p.side === 'h'; cur.set(`ml|${p.gid}|${p.side}`, { m: 'ml', p, price: h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA) }); }
             const snap = x => ({ t: iso, price: x.price != null ? +x.price : null, book: x.p.book || 'dk', u: x.p.u, p: Number.isFinite(x.p.p) ? (x.m === 'ml' && x.p.side === 'a' ? +(1 - x.p.p).toFixed(4) : x.p.p) : null, edge: x.p.edge });
             let created = 0, ended = 0, graded = 0;
             for (const [id, x] of cur) {
               const p = x.p, r = R.get(id), s = snap(x);
               if (!r) {
-                const ml = x.m === 'ml', h = p.side === 'h';
-                R.set(id, { id, m: x.m, gid: p.gid, start: p.start, date: p.date, pid: ml ? null : p.pid, n: ml ? `${h ? p.ha : p.aa} moneyline` : p.n,
-                  tm: ml ? (h ? p.h : p.a) : p.tm, opp: ml ? (h ? p.a : p.h) : p.opp, tmA: ml ? (h ? p.ha : p.aa) : ab(p.tm), oppA: ml ? (h ? p.aa : p.ha) : ab(p.opp), home: ml ? p.ha : null,
-                  side: x.m === 'sog' || ml ? p.side : null, line: x.m === 'sog' ? p.line : null, first: s, last: s, peak: s, status: 'active', hist: [{ t: iso, s: 'active' }] });
+                const ml = x.m === 'ml', h = p.side === 'h', gm = ml || x.m === 'pl', lined = ['sog', 'sogAlt', 'sv', 'pl'].includes(x.m);
+                R.set(id, { id, k: p.k || null, m: x.m, gid: p.gid, start: p.start, date: p.date, pid: gm ? null : p.pid, n: ml ? `${h ? p.ha : p.aa} moneyline` : x.m === 'pl' ? `${h ? p.ha : p.aa} ${p.line > 0 ? '+' : ''}${p.line}` : p.n,
+                  tm: gm ? (h ? p.h : p.a) : p.tm, opp: gm ? (h ? p.a : p.h) : p.opp, tmA: gm ? (h ? p.ha : p.aa) : ab(p.tm), oppA: gm ? (h ? p.aa : p.ha) : ab(p.opp), home: gm ? p.ha : null,
+                  side: lined || ml ? p.side : null, line: lined ? p.line : null, first: s, last: s, peak: s, status: 'active', hist: [{ t: iso, s: 'active' }] });
                 created++;
               } else {
                 r.last = s; if ((s.u || 0) > (r.peak.u || 0)) r.peak = s;
@@ -772,10 +844,11 @@ jobs:
             const pts = e => Number.isFinite(e) ? `${e > 0 ? '+' : '−'}${Math.abs(e * 100).toFixed(1)} pts` : '';
             const am = v => v == null || !Number.isFinite(+v) ? '–' : (+v > 0 ? '+' : '') + Math.round(+v);
             const reason = r => {
-              const pk = r.m === 'goal' ? M.byKey.get(`${r.gid}|${r.pid}`) : r.m === 'fg' ? M.fByKey.get(`f|${r.gid}|${r.pid}`) : r.m === 'sog' ? M.sByKey.get(`s|${r.gid}|${r.pid}|${r.side}`) : M.gByKey.get(`g|${r.gid}`);
+              const pk = r.m === 'goal' ? M.byKey.get(`${r.gid}|${r.pid}`) : r.m === 'fg' ? M.fByKey.get(`f|${r.gid}|${r.pid}`) : r.m === 'sog' ? M.sByKey.get(`s|${r.gid}|${r.pid}|${r.side}`) : r.m === 'ml' ? M.gByKey.get(`g|${r.gid}`) : (M.xByKey && r.k ? M.xByKey.get(r.k) : null);
               if (!pk) return ['price no longer posted', null];
               if (r.m === 'sog' && pk.line !== r.line) return [`line moved to ${pk.line}`, pk.best];
               if (r.m === 'ml' && pk.side !== r.side) return ['model now favors the other team', null];
+              if ((r.m === 'sv' || r.m === 'pl') && pk.line !== r.line) return [`line moved to ${pk.line}`, pk.best];
               const px = r.m === 'ml' ? (r.side === 'h' ? (pk.bH != null ? pk.bH : pk.mlH) : (pk.bA != null ? pk.bA : pk.mlA)) : pk.best != null ? pk.best : pk.dk;
               return [`edge dropped to ${pts(pk.edge) || 'none'} at ${am(px)}`, px];
             };
@@ -792,6 +865,8 @@ jobs:
               if (!(r.gid in G)) { let g = null; try { g = await T.getGame(r.gid); } catch (e) {} G[r.gid] = g && g.final ? g : null; }
               const g = G[r.gid]; if (!g) continue;
               if (r.m === 'ml') { const hw = g.home.score > g.away.score; r.res = (r.side === 'h') === hw ? 'W' : 'L'; r.score = `${g.away.score}-${g.home.score}`; }
+              else if (r.m === 'pl') { const m = g.home.score - g.away.score, v = (r.side === 'h' ? m : -m) + r.line; r.res = v > 0 ? 'W' : v < 0 ? 'L' : 'PU'; r.score = `${g.away.score}-${g.home.score}`; }
+              else if (r.m === 'sv') { const q = (g.gk || {})[r.pid]; if (!q || !(q.toi > 0)) r.res = 'V'; else { r.saves = q.sv || 0; r.res = r.saves === r.line ? 'PU' : (r.saves > r.line) === (r.side === 'o') ? 'W' : 'L'; } }
               else {
                 const s = g.sk[r.pid];
                 if (!s || !(s.toi > 0)) r.res = 'V';
@@ -870,17 +945,17 @@ jobs:
               }
             }
             // goal scorer and shots on goal prices (DraftKings via The Odds API; one request per game starting soon)
-            if ((picks.length || sogs.length) && !key) log('No ODDS_API_KEY: skipping goal scorer and shots on goal closing prices.');
-            if ((picks.length || sogs.length) && key) {
+            if ((picks.length || sogs.length || games.length) && !key) log('No ODDS_API_KEY: skipping DraftKings and Pinnacle closing prices.');
+            if ((picks.length || sogs.length || games.length) && key) {
               const BASE = 'https://api.the-odds-api.com/v4/sports/icehockey_nhl';
               let events = []; try { const r = await fetchImpl(`${BASE}/events?apiKey=${key}`); events = r.ok ? await r.json() : []; } catch (e) { log('Odds API error: ' + e.message); }
               for (const ev of events) {
                 const t = new Date(ev.commence_time).getTime(); if (!inWin(t)) continue;
                 const near = p => pre.has(String(p.gid)) && Math.abs(new Date(p.start).getTime() - t) < 20 * 60e3;
-                const mine = picks.filter(near), mineS = sogs.filter(near); if (!mine.length && !mineS.length) continue;
-                const mkts = [mine.length ? 'player_goal_scorer_anytime' : '', mineS.length ? 'player_shots_on_goal' : ''].filter(Boolean).join(','); // each market costs one credit
+                const mine = picks.filter(near), mineS = sogs.filter(near), mineG = games.filter(near); if (!mine.length && !mineS.length && !mineG.length) continue;
+                const mkts = [mine.length ? 'player_goal_scorer_anytime' : '', mineS.length ? 'player_shots_on_goal' : '', mineG.length ? 'h2h' : ''].filter(Boolean).join(','); // each market costs one credit (Pinnacle rides free with DraftKings)
                 try {
-                  const r = await fetchImpl(`${BASE}/events/${ev.id}/odds?apiKey=${key}&regions=us&markets=${mkts}&bookmakers=draftkings&oddsFormat=american`);
+                  const r = await fetchImpl(`${BASE}/events/${ev.id}/odds?apiKey=${key}&regions=us&markets=${mkts}&bookmakers=draftkings,pinnacle&oddsFormat=american`);
                   if (!r.ok) throw new Error('HTTP ' + r.status);
                   const data = await r.json(), bk = (data.bookmakers || []).find(b => b.key === 'draftkings'), mk = bk && (bk.markets || []).find(m => m.key === 'player_goal_scorer_anytime');
                   const m = {}; for (const o of (mk && mk.outcomes) || []) if (!/^no$/i.test(o.name || '') && Number.isFinite(o.price)) m[normName(o.description || o.name)] = o.price;
@@ -895,7 +970,10 @@ jobs:
                     const pick = both.find(([pt]) => +pt === +p.line) || both.sort((a, b) => Math.abs(imp(a[1].o) - imp(a[1].u)) - Math.abs(imp(b[1].o) - imp(b[1].u)))[0];
                     p.closeLine = +pick[0]; p.closeO = pick[1].o; p.closeU = pick[1].u; p.dkClose = +pick[0] === +p.line ? (p.side === 'o' ? pick[1].o : pick[1].u) : null; p.closeAt = new Date(now).toISOString(); ns++; changed++;
                   }
-                  log(`${ev.away_team} @ ${ev.home_team}: closing DraftKings prices for ${n} goal scorer and ${ns} shots on goal picks`);
+                  // Pinnacle's closing moneyline (the sharpest closing line) for game picks
+                  const pk = (data.bookmakers || []).find(b => b.key === 'pinnacle'), pm = pk && (pk.markets || []).find(m => m.key === 'h2h');
+                  if (pm) { const ph = (pm.outcomes.find(o => o.name === ev.home_team) || {}).price, pa = (pm.outcomes.find(o => o.name === ev.away_team) || {}).price; if (Number.isFinite(ph) && Number.isFinite(pa)) for (const g of mineG) { g.pnCloseH = ph; g.pnCloseA = pa; g.pnCloseAt = new Date(now).toISOString(); changed++; } }
+                  log(`${ev.away_team} @ ${ev.home_team}: closing DraftKings prices for ${n} goal scorer and ${ns} shots on goal picks${pm ? ', Pinnacle moneyline' : ''}`);
                 } catch (e) { log(`::warning::${ev.away_team} @ ${ev.home_team}: ${e.message}`); }
               }
             }
@@ -1018,7 +1096,7 @@ jobs:
             w.matchMedia = () => ({ matches: false, addEventListener() {} }); w.scrollTo = () => {};
             w.addEventListener('error', e => log('page error:', e.message));
             const script = html.split('<script>')[1].split('</script>')[0];
-            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB, SOGHA, setLinesData, unitsFor, unitsProof, gmBlendFit, GMB, UNITS };`);
+            w.eval(script + `;window.__t = { A, S, VER, API, ensureData, gsGetState, gsTonight, GM, gmCollect, gmTrain, gmEventPick, getInjuries, gsBlendFit, GS, gsMateMap, seasonOf, fixFinal, getPHFile, PHF, gsRoster, gsGoalie, gsLambda, dkPriceMap, dkLookup, dobPrep, amImplied, betEV, probableGoalies, getJSON, getGame, addTeam, TM, fairAmerican, fgShiftIdx, fgAttempts, fgFit, fgGame, sogState, sogTonight, sogBlendFit, SOGB, SOGHA, setLinesData, unitsFor, unitsProof, gmBlendFit, GMB, UNITS, svState, svTonight, plTonight, trialFit, TRIAL_MKTS };`);
             return w.__t;
           }
 
@@ -1045,7 +1123,8 @@ jobs:
             fs.writeFileSync('.cache/games.json', JSON.stringify([...T.A.games.values()].filter(g => g && g.final)));
 
             const picks = readJSON('picks.json', { picks: [] });
-            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p])), sByKey = new Map((picks.sog || []).map(p => [p.k, p]));
+            const byKey = new Map((picks.picks || []).map(p => [p.k, p])), gByKey = new Map((picks.games || []).map(g => [g.k, g])), fByKey = new Map((picks.first || []).map(p => [p.k, p])), sByKey = new Map((picks.sog || []).map(p => [p.k, p])), xByKey = new Map((picks.xm || []).map(p => [p.k, p])); // xm = trial markets (alternate shots lines, goalie saves, puck line)
+            let xAdded = 0;
             // one-time fix: before Oct 18 2026 the forward Elias Pettersson was given the defenseman Elias Pettersson's prices (same name), so those picks were never real
             for (const M of [byKey, fByKey]) for (const [k, p] of M) if (p.pid === '4233566' && p.date <= '20261017') M.delete(k);
 
@@ -1068,14 +1147,15 @@ jobs:
               const c = e.competitions[0];
               if (c.status.type.state !== 'pre' || new Date(e.date) <= now) continue; // only games that haven't started
               const inj = await T.getInjuries(e.id);
+              let gpX = null; // this game's model pick (also used for the puck line)
               // game model moneyline pick
               if (gmOK) {
-                const gp = T.gmEventPick(e, inj, LF, PF);
+                const gp = T.gmEventPick(e, inj, LF, PF); gpX = gp;
                 if (gp && gp.side) {
                   const k = 'g|' + e.id, out = [...gp.r.inj.h.who, ...gp.r.inj.a.who].map(w => w.n);
-                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml ? gp.ml.h : null, mlA: gp.ml ? gp.ml.a : null, fdH: gp.fd ? gp.fd.h : null, fdA: gp.fd ? gp.fd.a : null, bH: gp.bH ? gp.bH.price : null, bA: gp.bA ? gp.bA.price : null, book: gp.side.book, p: +(Number.isFinite(gp.r.pModel) ? gp.r.pModel : gp.r.p).toFixed(4), pl: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), u: (T.unitsFor('ml', gp.side.q, gp.side.price) || {}).u || 0, verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
+                  const rec = { k, date: today, gid: String(e.id), start: e.date, h: gp.H, a: gp.Aw, ha: gp.ha, aa: gp.aa, mlH: gp.ml ? gp.ml.h : null, mlA: gp.ml ? gp.ml.a : null, fdH: gp.fd ? gp.fd.h : null, fdA: gp.fd ? gp.fd.a : null, bH: gp.bH ? gp.bH.price : null, bA: gp.bA ? gp.bA.price : null, book: gp.side.book, p: +(Number.isFinite(gp.r.pModel) ? gp.r.pModel : gp.r.p).toFixed(4), pl: +gp.r.p.toFixed(4), p0: +gp.r.p0.toFixed(4), pb: Number.isFinite(gp.r.pb) ? +gp.r.pb.toFixed(4) : null, mk: Number.isFinite(gp.r.mk) ? +gp.r.mk.toFixed(4) : null, mkSrc: gp.r.mkSrc || null, mkDk: Number.isFinite(gp.r.mkDk) ? +gp.r.mkDk.toFixed(4) : null, pnH: gp.fd && gp.fd.pn ? gp.fd.pn.h : null, pnA: gp.fd && gp.fd.pn ? gp.fd.pn.a : null, side: gp.side.s, edge: +gp.side.edge.toFixed(4), u: (T.unitsFor('ml', gp.side.q, gp.side.price) || {}).u || 0, verdict: gp.verdict, gH: gp.gHn, gA: gp.gAn, gHs: gp.gHs || (T.probableGoalies(e)[gp.H] || {}).st || '', gAs: gp.gAs || (T.probableGoalies(e)[gp.Aw] || {}).st || '', inj: out, refs: gp.r.ref.names, crew: +gp.r.ref.crew.toFixed(3), hw: null, saved: now.toISOString() };
                   if (!gByKey.has(k) || gByKey.get(k).hw == null) {
-                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'closeAt', 'nt', 'ntU']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
+                    const old = gByKey.get(k); if (old) for (const f of ['mlCloseH', 'mlCloseA', 'pnCloseH', 'pnCloseA', 'closeAt', 'nt', 'ntU']) if (old[f] != null) rec[f] = old[f]; /* keep closing prices already recorded */
                     // line history: one snapshot per run when anything changed (fair chance, market price, goalies), with each factor's share, so the dashboard can chart and explain the moves
                     const snap = { t: now.toISOString(), p: rec.p, mlH: rec.mlH, mlA: rec.mlA, gH: rec.gH, gA: rec.gA, gHs: rec.gHs, gAs: rec.gAs, inj: out, crew: rec.crew, f: Object.fromEntries((gp.r.parts || []).map(x => [x.k, +x.d.toFixed(4)])) };
                     const hist = (old && old.hist) || [], prev = hist[hist.length - 1];
@@ -1089,17 +1169,45 @@ jobs:
                 const allRows = T.gsTonight(gs.S, e, LF, PF, inj, MATE), rows = allRows.filter(r => r.best != null); // priced at any of the five books
                 // shots on goal: the over and the under for every player with a line
                 try {
-                  const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null, sKeep = new Set();
-                  for (const r of T.sogTonight(T.sogState(), e, allRows, PF).filter(x => x.line != null)) {
+                  const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null, sKeep = new Set(), xKeep = new Set();
+                  const SR = T.sogTonight(T.sogState(), e, allRows, PF);
+                  for (const r of SR.filter(x => x.line != null)) {
                     for (const s of ['o', 'u']) {
                       if (r[s + 'Best'] == null) continue;
                       const x = s === 'o' ? r.mk.ov : r.mk.un, k = `s|${e.id}|${r.pid}|${s}`; sKeep.add(k);
-                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), q: Number.isFinite(r.q) ? r4(r.q) : null, haF: r4(r.haF), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], u: (T.unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) || {}).u || 0, imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
+                      const rec = { k, date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), q: Number.isFinite(r.q) ? r4(r.q) : null, haF: r4(r.haF), evP: Math.round(r.evSec || 0), ppP: Math.round(r.ppSec || 0), p: r4(s === 'o' ? r.pO : r.pU), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), fair: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], u: (T.unitsFor('sog', s === 'o' ? r.pO : r.pU, r[s + 'Best'], { shaky: r.lowN }) || {}).u || 0, imp: r4(T.amImplied(r[s + 'Best'])), edge: r4(r[s + 'Edge']), ev: Number.isFinite(r[s + 'Ev']) ? +r[s + 'Ev'].toFixed(2) : null, roi: r4(r[s + 'Roi']), saved: now.toISOString() };
                       if (sByKey.has(k)) { if (sByKey.get(k).res == null) Object.assign(sByKey.get(k), rec); } else { sByKey.set(k, rec); sAdded++; }
                     }
                   }
                   if (sKeep.size) for (const [k, p] of sByKey) if (p.gid === String(e.id) && p.res == null && !sKeep.has(k)) { sByKey.delete(k); dropped++; }
+                  // trial: alternate shots lines with a positive edge (the main line is already saved above)
+                  for (const r of SR) for (const a of r.alts || []) {
+                    if (!(a.edge > 0) || r.lowN) continue;
+                    const k = `a|${e.id}|${r.pid}|${a.side}|${a.line}`, uu = T.unitsFor('sogAlt', a.p, a.best) || {}; xKeep.add(k);
+                    const rec = { k, m: 'sogAlt', date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, side: a.side, line: a.line, main: r.line, mu: r4(r.mu), muMkt: r4(r.muMkt), p: r4(a.p), pRaw: r4(a.pModel), pb: r4(a.pMkt), dk: a.dk, fd: a.fd, ox: a.ox, best: a.best, book: a.book, edge: r4(a.edge), ev: r4(a.ev), u: uu.u || 0, uT: uu.uT || uu.u || 0 };
+                    if (xByKey.has(k)) { if (xByKey.get(k).res == null) Object.assign(xByKey.get(k), rec); } else { xByKey.set(k, rec); xAdded++; }
+                  }
+                  for (const [k, p] of xByKey) if (p.m === 'sogAlt' && p.gid === String(e.id) && p.res == null && !xKeep.has(k)) { xByKey.delete(k); dropped++; }
                 } catch (err) { log(`Game ${e.id}: shots on goal model error: ${err.message}`); }
+                // trial: goalie saves (both sides of every priced starter) and the puck line (both sides)
+                try {
+                  const r4 = x => Number.isFinite(x) ? +x.toFixed(4) : null, keep = new Set();
+                  for (const r of T.svTonight(T.svState(), e, PF)) {
+                    if (r.line == null) continue;
+                    for (const s of ['o', 'u']) {
+                      if (r[s + 'Best'] == null) continue;
+                      const P_ = s === 'o' ? r.pO : r.pU, k = `v|${e.id}|${r.pid}|${s}`, uu = T.unitsFor('sv', P_, r[s + 'Best']) || {}, x = s === 'o' ? r.mk.ov : r.mk.un; keep.add(k);
+                      const rec = { k, m: 'sv', date: today, gid: String(e.id), start: e.date, pid: r.pid, n: r.n, gst: r.st || '', tm: r.tm, opp: r.opp, side: s, line: r.line, mu: r4(r.mu), shotsE: r4(r.shots), svE: r4(r.sv), p: r4(P_), pRaw: r4(s === 'o' ? r.pModelO : 1 - r.pModelO), pb: r4(s === 'o' ? r.mk.fair : 1 - r.mk.fair), dk: x.dk, fd: x.fd, ox: x.ox, best: r[s + 'Best'], book: r[s + 'Book'], edge: r4(r[s + 'Edge']), u: uu.u || 0, uT: uu.uT || uu.u || 0 };
+                      if (xByKey.has(k)) { if (xByKey.get(k).res == null) Object.assign(xByKey.get(k), rec); } else { xByKey.set(k, rec); xAdded++; }
+                    }
+                  }
+                  for (const r of T.plTonight(e, PF, gpX)) {
+                    const k = `p|${e.id}|${r.side}`, uu = T.unitsFor('pl', r.p, r.best) || {}; keep.add(k);
+                    const rec = { k, m: 'pl', date: today, gid: String(e.id), start: e.date, side: r.side, line: r.pt, tm: r.tm, opp: r.opp, ha: r.ha, aa: r.aa, h: r.h, a: r.a, pWin: r4(r.pWin), p: r4(r.p), pb: r4(r.pb), dk: r.dk, fd: r.fd, ox: r.ox, best: r.best, book: r.book, edge: r4(r.edge), ev: r4(r.ev), u: uu.u || 0, uT: uu.uT || uu.u || 0 };
+                    if (xByKey.has(k)) { if (xByKey.get(k).res == null) Object.assign(xByKey.get(k), rec); } else { xByKey.set(k, rec); xAdded++; }
+                  }
+                  for (const [k, p] of xByKey) if ((p.m === 'sv' || p.m === 'pl') && p.gid === String(e.id) && p.res == null && !keep.has(k)) { xByKey.delete(k); dropped++; }
+                } catch (err) { log(`Game ${e.id}: saves / puck line error: ${err.message}`); }
                 // first goal scorer: every player with a DraftKings first goal price
                 if (fgFitV) {
                   try {
@@ -1169,20 +1277,34 @@ jobs:
               if (!g || !g.final) continue;
               for (const p of sOpen.filter(x => x.gid === gid)) {
                 const s = g.sk[p.pid];
+                if (s) { p.evA = Math.max(0, (s.toi || 0) - (s.pp || 0)); p.ppA = s.pp || 0; } // actual minutes, to check the projection later
                 if (!s || !(s.toi > 0)) { p.res = 'V'; p.shots = 0; } else { p.shots = s.sog || 0; p.res = p.shots === p.line ? 'PU' : (p.shots > p.line) === (p.side === 'o') ? 'W' : 'L'; }
                 { const px = p.best; p.profit = p.res === 'W' ? (px < 0 ? 100 : px) : p.res === 'L' ? -(px < 0 ? -px : 100) : 0; }
                 sGraded++;
               }
             }
-            log(`Graded ${graded} goal scorer picks, ${gGraded} game picks, ${fGraded} first goal prices and ${sGraded} shots on goal picks.`);
+            // grade trial-market picks from the official box score
+            let xGraded = 0; const xOpen = [...xByKey.values()].filter(p => p.res == null && new Date(p.start) < new Date(now - 4 * 3600e3));
+            try { for (const gid of [...new Set(xOpen.map(p => p.gid))]) {
+              let g = null; try { g = await T.getGame(gid); } catch (e) { log(`Game ${gid}: ${e.message}`); }
+              if (!g || !g.final) continue;
+              for (const p of xOpen.filter(x => x.gid === gid)) {
+                if (p.m === 'sogAlt') { const s = g.sk[p.pid]; if (!s || !(s.toi > 0)) { p.res = 'V'; p.shots = 0; } else { p.shots = s.sog || 0; p.res = p.shots === p.line ? 'PU' : (p.shots > p.line) === (p.side === 'o') ? 'W' : 'L'; } }
+                else if (p.m === 'sv') { const q = (g.gk || {})[p.pid]; if (!q || !(q.toi > 0)) { p.res = 'V'; p.saves = 0; } else { p.saves = q.sv || 0; p.toiA = q.toi; p.res = p.saves === p.line ? 'PU' : (p.saves > p.line) === (p.side === 'o') ? 'W' : 'L'; } }
+                else if (p.m === 'pl') { const m = g.home.score - g.away.score, v = (p.side === 'h' ? m : -m) + p.line; p.score = `${g.away.score}-${g.home.score}`; p.res = v > 0 ? 'W' : v < 0 ? 'L' : 'PU'; }
+                xGraded++;
+              }
+            } } catch (err) { log(`Trial-market grading error: ${err.message}`); }
+            try { T.trialFit({ xm: [...xByKey.values()] }); } catch (err) { log(`Trial check error: ${err.message}`); }
+            log(`Graded ${graded} goal scorer picks, ${gGraded} game picks, ${fGraded} first goal prices, ${sGraded} shots on goal picks and ${xGraded} trial-market picks. Trial markets: ${T.TRIAL_MKTS.map(m => { const x = T.UNITS.trial[m] || { n: 0 }; return `${m} ${x.n} graded${x.ok ? ' (passed)' : ''}`; }).join(', ')}.`);
             // today's model test scores, for the accuracy-over-time charts (one snapshot per day)
             const hist = (picks.hist || []).filter(h => h.date !== today), snap = { date: today };
             if (gmOK) { const M = T.GM.model; snap.gm = { n: M.nRows, test: M.nTest, acc: +M.sKeep.acc.toFixed(4), ll: +M.sKeep.ll.toFixed(4), base: +M.sBase.ll.toFixed(4), mktAcc: M.market ? +M.market.acc.toFixed(4) : null, mktLl: M.market ? +M.market.ll.toFixed(4) : null }; }
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
-            const recs = await updateRecs(T, { byKey, fByKey, sByKey, gByKey }, picks.recs, now);
-            await notifyNew({ byKey, fByKey, sByKey, gByKey }, now, recs);
-            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1), recs };
+            let recs = picks.recs || []; try { recs = await updateRecs(T, { byKey, fByKey, sByKey, gByKey, xByKey }, picks.recs, now); } catch (err) { log(`Recommendation log error: ${err.message}`); }
+            await notifyNew({ byKey, fByKey, sByKey, gByKey, xByKey }, now, recs);
+            const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1), recs, xm: [...xByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0) };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
           }
@@ -1199,10 +1321,11 @@ jobs:
             for (const p of M.byKey.values()) if (due(p)) items.push([p, `🥅 ${p.n} anytime goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.fByKey.values()) if (due(p)) items.push([p, `🚨 ${p.n} FIRST goal · ${am(p.best != null ? p.best : p.dk)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.sByKey.values()) if (due(p)) items.push([p, `🏒 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} shots · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
+            for (const p of (M.xByKey ? M.xByKey.values() : [])) if (due(p)) items.push([p, p.m === 'sv' ? `🧤 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} saves · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}` : p.m === 'pl' ? `🏒 ${p.side === 'h' ? p.ha : p.aa} ${p.line > 0 ? '+' : ''}${p.line} puck line · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}` : `🪜 ${p.n} ${p.side === 'o' ? 'OVER' : 'UNDER'} ${p.line} shots (alt) · ${am(p.best)} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]);
             for (const p of M.gByKey.values()) if (p.hw == null && due(p)) { const h = p.side === 'h'; items.push([p, `🧠 ${h ? p.ha : p.aa} moneyline vs ${h ? p.aa : p.ha} · ${am(h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA))} ${BKN[p.book] || ''} · ${p.u}u${ed(p.edge)}`]); }
             // recommendations that ended before their game: ask whether you bet them (once each)
             const gone = recs.filter(r => r.status === 'expired' && !r.ntE && new Date(r.start) > now);
-            const recLbl = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots` : r.m === 'fg' ? `${r.n} FIRST goal` : `${r.n} anytime goal`;
+            const recLbl = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'pl' ? `${r.tmA} ${r.line > 0 ? '+' : ''}${r.line} puck line` : r.m === 'sv' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} saves` : r.m === 'sogAlt' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots (alt)` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots` : r.m === 'fg' ? `${r.n} FIRST goal` : `${r.n} anytime goal`;
             if (!items.length && !gone.length) { log('Notifications: nothing new.'); return; }
             items.sort((a, b) => a[0].start < b[0].start ? -1 : a[0].start > b[0].start ? 1 : b[0].u - a[0].u);
             const lines = []; let lastT = '';
@@ -1229,16 +1352,17 @@ jobs:
             for (const p of M.byKey.values()) if (pre(p)) cur.set(`goal|${p.gid}|${p.pid}`, { m: 'goal', p, price: p.best != null ? p.best : p.dk });
             for (const p of M.fByKey.values()) if (pre(p)) cur.set(`fg|${p.gid}|${p.pid}`, { m: 'fg', p, price: p.best != null ? p.best : p.dk });
             for (const p of M.sByKey.values()) if (pre(p)) cur.set(`sog|${p.gid}|${p.pid}|${p.side}|${p.line}`, { m: 'sog', p, price: p.best });
+            for (const p of (M.xByKey ? M.xByKey.values() : [])) if (pre(p)) cur.set(`${p.m}|${p.gid}|${p.pid || '-'}|${p.side}|${p.line}`, { m: p.m, p, price: p.best });
             for (const p of M.gByKey.values()) if (p.hw == null && pre(p)) { const h = p.side === 'h'; cur.set(`ml|${p.gid}|${p.side}`, { m: 'ml', p, price: h ? (p.bH != null ? p.bH : p.mlH) : (p.bA != null ? p.bA : p.mlA) }); }
             const snap = x => ({ t: iso, price: x.price != null ? +x.price : null, book: x.p.book || 'dk', u: x.p.u, p: Number.isFinite(x.p.p) ? (x.m === 'ml' && x.p.side === 'a' ? +(1 - x.p.p).toFixed(4) : x.p.p) : null, edge: x.p.edge });
             let created = 0, ended = 0, graded = 0;
             for (const [id, x] of cur) {
               const p = x.p, r = R.get(id), s = snap(x);
               if (!r) {
-                const ml = x.m === 'ml', h = p.side === 'h';
-                R.set(id, { id, m: x.m, gid: p.gid, start: p.start, date: p.date, pid: ml ? null : p.pid, n: ml ? `${h ? p.ha : p.aa} moneyline` : p.n,
-                  tm: ml ? (h ? p.h : p.a) : p.tm, opp: ml ? (h ? p.a : p.h) : p.opp, tmA: ml ? (h ? p.ha : p.aa) : ab(p.tm), oppA: ml ? (h ? p.aa : p.ha) : ab(p.opp), home: ml ? p.ha : null,
-                  side: x.m === 'sog' || ml ? p.side : null, line: x.m === 'sog' ? p.line : null, first: s, last: s, peak: s, status: 'active', hist: [{ t: iso, s: 'active' }] });
+                const ml = x.m === 'ml', h = p.side === 'h', gm = ml || x.m === 'pl', lined = ['sog', 'sogAlt', 'sv', 'pl'].includes(x.m);
+                R.set(id, { id, k: p.k || null, m: x.m, gid: p.gid, start: p.start, date: p.date, pid: gm ? null : p.pid, n: ml ? `${h ? p.ha : p.aa} moneyline` : x.m === 'pl' ? `${h ? p.ha : p.aa} ${p.line > 0 ? '+' : ''}${p.line}` : p.n,
+                  tm: gm ? (h ? p.h : p.a) : p.tm, opp: gm ? (h ? p.a : p.h) : p.opp, tmA: gm ? (h ? p.ha : p.aa) : ab(p.tm), oppA: gm ? (h ? p.aa : p.ha) : ab(p.opp), home: gm ? p.ha : null,
+                  side: lined || ml ? p.side : null, line: lined ? p.line : null, first: s, last: s, peak: s, status: 'active', hist: [{ t: iso, s: 'active' }] });
                 created++;
               } else {
                 r.last = s; if ((s.u || 0) > (r.peak.u || 0)) r.peak = s;
@@ -1248,10 +1372,11 @@ jobs:
             const pts = e => Number.isFinite(e) ? `${e > 0 ? '+' : '−'}${Math.abs(e * 100).toFixed(1)} pts` : '';
             const am = v => v == null || !Number.isFinite(+v) ? '–' : (+v > 0 ? '+' : '') + Math.round(+v);
             const reason = r => {
-              const pk = r.m === 'goal' ? M.byKey.get(`${r.gid}|${r.pid}`) : r.m === 'fg' ? M.fByKey.get(`f|${r.gid}|${r.pid}`) : r.m === 'sog' ? M.sByKey.get(`s|${r.gid}|${r.pid}|${r.side}`) : M.gByKey.get(`g|${r.gid}`);
+              const pk = r.m === 'goal' ? M.byKey.get(`${r.gid}|${r.pid}`) : r.m === 'fg' ? M.fByKey.get(`f|${r.gid}|${r.pid}`) : r.m === 'sog' ? M.sByKey.get(`s|${r.gid}|${r.pid}|${r.side}`) : r.m === 'ml' ? M.gByKey.get(`g|${r.gid}`) : (M.xByKey && r.k ? M.xByKey.get(r.k) : null);
               if (!pk) return ['price no longer posted', null];
               if (r.m === 'sog' && pk.line !== r.line) return [`line moved to ${pk.line}`, pk.best];
               if (r.m === 'ml' && pk.side !== r.side) return ['model now favors the other team', null];
+              if ((r.m === 'sv' || r.m === 'pl') && pk.line !== r.line) return [`line moved to ${pk.line}`, pk.best];
               const px = r.m === 'ml' ? (r.side === 'h' ? (pk.bH != null ? pk.bH : pk.mlH) : (pk.bA != null ? pk.bA : pk.mlA)) : pk.best != null ? pk.best : pk.dk;
               return [`edge dropped to ${pts(pk.edge) || 'none'} at ${am(px)}`, px];
             };
@@ -1268,6 +1393,8 @@ jobs:
               if (!(r.gid in G)) { let g = null; try { g = await T.getGame(r.gid); } catch (e) {} G[r.gid] = g && g.final ? g : null; }
               const g = G[r.gid]; if (!g) continue;
               if (r.m === 'ml') { const hw = g.home.score > g.away.score; r.res = (r.side === 'h') === hw ? 'W' : 'L'; r.score = `${g.away.score}-${g.home.score}`; }
+              else if (r.m === 'pl') { const m = g.home.score - g.away.score, v = (r.side === 'h' ? m : -m) + r.line; r.res = v > 0 ? 'W' : v < 0 ? 'L' : 'PU'; r.score = `${g.away.score}-${g.home.score}`; }
+              else if (r.m === 'sv') { const q = (g.gk || {})[r.pid]; if (!q || !(q.toi > 0)) r.res = 'V'; else { r.saves = q.sv || 0; r.res = r.saves === r.line ? 'PU' : (r.saves > r.line) === (r.side === 'o') ? 'W' : 'L'; } }
               else {
                 const s = g.sk[r.pid];
                 if (!s || !(s.toi > 0)) r.res = 'V';
