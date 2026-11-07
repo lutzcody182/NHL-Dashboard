@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-07T15:00:17.271Z",
+ "updated": "2026-11-07T16:00:17.006Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -11,7 +11,7 @@
    "teams": [
     {
      "team": "Florida Panthers",
-     "goalie": "Jacob Markstrom",
+     "goalie": "Akira Schmid",
      "groups": [
       {
        "label": "Line 1",
@@ -39,7 +39,7 @@
         {
          "n": "Sandis Vilmanis",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Carter Verhaeghe",
@@ -57,11 +57,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Anton Lundell",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Eetu Luostarinen",
          "pos": "W",
          "pp": "PP2"
@@ -70,6 +65,11 @@
          "n": "Lars Eller",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Cole Reinhardt",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -104,7 +104,7 @@
         {
          "n": "Gustav Forsling",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Seth Jones",
@@ -1732,7 +1732,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Juuso Valimaki",
+         "n": "Alexander Nikishin",
          "pos": "D",
          "pp": "PP2"
         }
