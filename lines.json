@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-07T16:00:17.006Z",
+ "updated": "2026-11-07T17:00:17.565Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -630,7 +630,7 @@
     },
     {
      "team": "Seattle Kraken",
-     "goalie": "Philipp Grubauer",
+     "goalie": "Joey Daccord",
      "groups": [
       {
        "label": "Line 1",
@@ -1256,7 +1256,7 @@
    "teams": [
     {
      "team": "New Jersey Devils",
-     "goalie": "Connor Hellebuyck",
+     "goalie": "Jake Allen",
      "groups": [
       {
        "label": "Line 1",
@@ -1531,14 +1531,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Andrew Mangiapane",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Teuvo Teravainen",
+         "n": "Oliver Moore",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Frank Nazar",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
          "n": "Anton Frondell",
@@ -1556,14 +1556,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Oliver Moore",
+         "n": "Teuvo Teravainen",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Frank Nazar",
+         "n": "Ryan Greene",
          "pos": "C",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       },
@@ -1571,13 +1571,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Jordan Greenway",
+         "n": "Cole Smith",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Ryan Greene",
-         "pos": "C",
+         "n": "Jordan Greenway",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -1606,7 +1606,7 @@
          "pp": ""
         },
         {
-         "n": "Ethan Del Mastro",
+         "n": "Kevin Korchinski",
          "pos": "D",
          "pp": ""
         },
