@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-07T17:00:17.565Z",
+ "updated": "2026-11-07T18:00:16.540Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -1033,26 +1033,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Josh Anderson",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Chris Kreider",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Jake Evans",
-         "pos": "C",
-         "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
          "n": "Phillip Danault",
          "pos": "C",
          "pp": ""
@@ -1066,6 +1046,26 @@
          "n": "Alexandre Texier",
          "pos": "W",
          "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Owen Beck",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Chris Kreider",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Jake Evans",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -1926,7 +1926,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Joel Kiviranta",
+         "n": "Sam Steel",
          "pos": "W",
          "pp": ""
         }
@@ -1946,7 +1946,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Colin Blackwell",
+         "n": "Joel Kiviranta",
          "pos": "W",
          "pp": ""
         }
@@ -1998,7 +1998,7 @@
    "teams": [
     {
      "team": "Tampa Bay Lightning",
-     "goalie": "Andrei Vasilevskiy",
+     "goalie": "Dennis Hildeby",
      "groups": [
       {
        "label": "Line 1",
@@ -2496,7 +2496,7 @@
    "teams": [
     {
      "team": "Detroit Red Wings",
-     "goalie": "John Gibson",
+     "goalie": "Daniil Tarasov",
      "groups": [
       {
        "label": "Line 1",
@@ -2866,7 +2866,7 @@
     },
     {
      "team": "Edmonton Oilers",
-     "goalie": "Tristan Jarry",
+     "goalie": "Devon Levi",
      "groups": [
       {
        "label": "Line 1",
@@ -2892,9 +2892,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Colton Dach",
+         "n": "Zach Hyman",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Ryan Nugent-Hopkins",
@@ -2904,7 +2904,7 @@
         {
          "n": "Kasperi Kapanen",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2917,12 +2917,12 @@
          "pp": ""
         },
         {
-         "n": "Alex Formenton",
+         "n": "Mathieu Joseph",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Mathieu Joseph",
+         "n": "Max Jones",
          "pos": "W",
          "pp": ""
         }
@@ -2932,17 +2932,17 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Trent Frederic",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Owen Michaels",
          "pos": "C",
          "pp": ""
         },
         {
-         "n": "Filip Hallander",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Max Jones",
+         "n": "Alex Formenton",
          "pos": "W",
          "pp": ""
         }
@@ -2977,7 +2977,7 @@
          "pp": ""
         },
         {
-         "n": "Jake Walman",
+         "n": "Ty Emberson",
          "pos": "D",
          "pp": ""
         }
