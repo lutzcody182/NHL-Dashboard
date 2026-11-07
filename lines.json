@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-07T21:00:17.472Z",
+ "updated": "2026-11-07T22:00:17.210Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -104,7 +104,7 @@
         {
          "n": "Gustav Forsling",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Seth Jones",
@@ -520,13 +520,13 @@
          "pp": "PP1"
         },
         {
-         "n": "Mika Zibanejad",
-         "pos": "C",
+         "n": "Gabe Perreault",
+         "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Pavel Dorofeyev",
-         "pos": "W",
+         "n": "Mika Zibanejad",
+         "pos": "C",
          "pp": "PP1"
         }
        ]
@@ -540,13 +540,13 @@
          "pp": "PP2"
         },
         {
-         "n": "Gabe Perreault",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "J.T. Miller",
          "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Oliver Bjorkstrand",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -565,9 +565,9 @@
          "pp": ""
         },
         {
-         "n": "Oliver Bjorkstrand",
+         "n": "Pavel Dorofeyev",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
