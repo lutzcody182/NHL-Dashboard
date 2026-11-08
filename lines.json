@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-08",
- "updated": "2026-11-08T23:00:19.951Z",
+ "updated": "2026-11-08T23:36:15.234Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -530,14 +530,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Gage Goncalves",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Anthony Cirelli",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Yanni Gourde",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Brandon Hagel",
@@ -550,14 +550,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Yanni Gourde",
+         "n": "Zemgus Girgensons",
          "pos": "C",
          "pp": ""
         },
         {
          "n": "Pontus Holmberg",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Charle-Edouard D'Astous",
@@ -574,11 +574,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Zemgus Girgensons",
-         "pos": "C",
-         "pp": ""
-        },
         {
          "n": "Conor Geekie",
          "pos": "C",
@@ -1297,7 +1292,7 @@
          "pp": ""
         },
         {
-         "n": "Ville Koivunen",
+         "n": "Andrei Kuzmenko",
          "pos": "W",
          "pp": "PP2"
         }
@@ -1408,12 +1403,12 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Nico Myatovic",
+         "n": "Frank Vatrano",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Sam Colangelo",
+         "n": "Nico Myatovic",
          "pos": "W",
          "pp": ""
         },
@@ -1468,14 +1463,14 @@
          "pp": ""
         },
         {
-         "n": "Travis Mitchell",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Tristan Luneau",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Tyson Hinds",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
