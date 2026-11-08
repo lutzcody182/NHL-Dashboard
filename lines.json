@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-08",
- "updated": "2026-11-08T16:00:16.463Z",
+ "updated": "2026-11-08T17:00:17.637Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -163,11 +163,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Matthew Poitras",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Fraser Minten",
          "pos": "C",
          "pp": "PP2"
@@ -208,7 +203,7 @@
          "pp": ""
         },
         {
-         "n": "Sean Kuraly",
+         "n": "Matthew Poitras",
          "pos": "C",
          "pp": ""
         }
