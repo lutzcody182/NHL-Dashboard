@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-08",
- "updated": "2026-11-08T21:00:17.304Z",
+ "updated": "2026-11-08T23:00:19.951Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -550,7 +550,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Zemgus Girgensons",
+         "n": "Yanni Gourde",
          "pos": "C",
          "pp": ""
         },
@@ -575,8 +575,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Scott Sabourin",
-         "pos": "W",
+         "n": "Zemgus Girgensons",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -1048,26 +1048,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Anthony Mantha",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Jesper Boqvist",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Evan Rodrigues",
-         "pos": "C",
-         "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
          "n": "Connor Brown",
          "pos": "W",
          "pp": "PP1"
@@ -1081,6 +1061,21 @@
          "n": "Cody Glass",
          "pos": "C",
          "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Jesper Boqvist",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Evan Rodrigues",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -1227,11 +1222,6 @@
          "n": "Oliver Ekman-Larsson",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Chris Tanev",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Dakota Mermis",
