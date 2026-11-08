@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-08T01:00:16.791Z",
+ "updated": "2026-11-08T02:00:17.654Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -917,7 +917,7 @@
         {
          "n": "Philip Tomasino",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1767,7 +1767,7 @@
         {
          "n": "Michael Misa",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -1797,17 +1797,17 @@
         {
          "n": "Ivar Stenberg",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
+        },
+        {
+         "n": "Ty Dellandrea",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Tyler Toffoli",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Filip Bystedt",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -1820,14 +1820,14 @@
          "pp": ""
         },
         {
-         "n": "Ty Dellandrea",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Adam Gaudette",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Filip Bystedt",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -1956,9 +1956,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Esa Lindell",
+         "n": "Nils Lundkvist",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Thomas Harley",
@@ -1966,9 +1966,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Nils Lundkvist",
+         "n": "Esa Lindell",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Lian Bichsel",
