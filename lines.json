@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-07T23:00:17.564Z",
+ "updated": "2026-11-08T00:00:17.831Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -854,22 +854,22 @@
          "pp": "PP2"
         },
         {
-         "n": "Andrew Peeke",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Nate Schmidt",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Dmitri Simashev",
          "pos": "D",
          "pp": ""
         },
         {
+         "n": "Andrew Peeke",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Nick DeSimone",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Artem Duda",
          "pos": "D",
          "pp": ""
         }
@@ -990,9 +990,9 @@
          "pp": ""
         },
         {
-         "n": "Carter Yakemchuk",
+         "n": "Tyler Kleven",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -1782,7 +1782,7 @@
         {
          "n": "Collin Graf",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Kiefer Sherwood",
@@ -1825,9 +1825,9 @@
          "pp": ""
         },
         {
-         "n": "Zack Ostapchuk",
-         "pos": "C",
-         "pp": ""
+         "n": "Adam Gaudette",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -2145,6 +2145,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Ryan Hartman",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Bobby Brink",
          "pos": "W",
          "pp": "PP2"
@@ -2153,11 +2158,6 @@
          "n": "Blake Coleman",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Michael McCarron",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -2185,17 +2185,17 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Marcus Foligno",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Nico Sturm",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Ryan Hartman",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Tyler Pitlick",
+         "n": "Nick Foligno",
          "pos": "W",
          "pp": ""
         }
