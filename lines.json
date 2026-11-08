@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-08T00:00:17.831Z",
+ "updated": "2026-11-08T01:00:16.791Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -37,9 +37,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Sandis Vilmanis",
+         "n": "Cole Reinhardt",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Carter Verhaeghe",
@@ -57,6 +57,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Anton Lundell",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Eetu Luostarinen",
          "pos": "W",
          "pp": "PP2"
@@ -65,11 +70,6 @@
          "n": "Lars Eller",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Cole Reinhardt",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -2054,6 +2054,11 @@
          "pp": ""
         },
         {
+         "n": "Charle-Edouard D'Astous",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Ilya Mikheyev",
          "pos": "W",
          "pp": ""
@@ -2064,9 +2069,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Charle-Edouard D'Astous",
+         "n": "Scott Sabourin",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Conor Geekie",
@@ -2084,16 +2089,6 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Max Crozier",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "J.J. Moser",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Ryan McDonagh",
          "pos": "D",
          "pp": ""
@@ -2104,14 +2099,19 @@
          "pp": ""
         },
         {
-         "n": "John Carlson",
+         "n": "J.J. Moser",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Victor Hedman",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "John Carlson",
+         "pos": "D",
+         "pp": "PP1"
         }
        ]
       }
