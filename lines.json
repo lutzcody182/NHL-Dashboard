@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-07",
- "updated": "2026-11-08T02:00:17.654Z",
+ "updated": "2026-11-08T03:00:18.362Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -2542,7 +2542,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Nate Danielson",
+         "n": "John Leonard",
          "pos": "W",
          "pp": ""
         },
@@ -2776,14 +2776,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Liam Ohgren",
+         "n": "Paul Cotter",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Marco Rossi",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Jake DeBrusk",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -2791,18 +2791,18 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Drew O'Connor",
+         "n": "Liam Ohgren",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Brendan Gallagher",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Jake DeBrusk",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Linus Karlsson",
-         "pos": "W",
+         "n": "Marco Rossi",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -2816,12 +2816,12 @@
          "pp": ""
         },
         {
-         "n": "Brendan Gallagher",
+         "n": "Drew O'Connor",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Paul Cotter",
+         "n": "Linus Karlsson",
          "pos": "W",
          "pp": "PP2"
         }
@@ -2831,9 +2831,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Elias Nils Pettersson",
+         "n": "Zeev Buium",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Filip Hronek",
@@ -2841,7 +2841,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Tom Willander",
+         "n": "Guillaume Brisebois",
          "pos": "D",
          "pp": ""
         },
@@ -2851,12 +2851,12 @@
          "pp": ""
         },
         {
-         "n": "Zeev Buium",
+         "n": "Luke Schenn",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Guillaume Brisebois",
+         "n": "Elias Nils Pettersson",
          "pos": "D",
          "pp": ""
         }
