@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-08",
- "updated": "2026-11-08T18:00:17.512Z",
+ "updated": "2026-11-08T21:00:17.304Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -122,7 +122,7 @@
          "pp": ""
         },
         {
-         "n": "Dmitry Kulikov",
+         "n": "Radko Gudas",
          "pos": "D",
          "pp": ""
         }
@@ -205,7 +205,7 @@
         {
          "n": "Matthew Poitras",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -255,7 +255,7 @@
    "teams": [
     {
      "team": "Vegas Golden Knights",
-     "goalie": "Carter Hart",
+     "goalie": "Adin Hill",
      "groups": [
       {
        "label": "Line 1",
@@ -266,14 +266,14 @@
          "pp": "PP1"
         },
         {
+         "n": "Trevor Connelly",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Jack Eichel",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Brett Howden",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -286,14 +286,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Ivan Barbashev",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Mitch Marner",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Brett Howden",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -306,9 +306,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Trevor Connelly",
+         "n": "Ivan Barbashev",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Tomas Hertl",
