@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-08",
- "updated": "2026-11-08T17:00:17.637Z",
+ "updated": "2026-11-08T18:00:17.512Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -37,9 +37,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Cole Reinhardt",
+         "n": "Lars Eller",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Carter Verhaeghe",
@@ -67,9 +67,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Lars Eller",
+         "n": "Cole Reinhardt",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
