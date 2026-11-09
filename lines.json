@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-09",
- "updated": "2026-11-09T19:00:20.971Z",
+ "updated": "2026-11-09T21:30:16.386Z",
  "games": [
   {
    "time": "8:00 PM ET",
@@ -525,9 +525,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Emil Heineman",
+         "n": "Simon Holmstrom",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -535,14 +535,14 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Emil Heineman",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Brayden Schenn",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Ondrej Palat",
-         "pos": "W",
-         "pp": "PP2"
         },
         {
          "n": "Victor Eklund",
@@ -560,9 +560,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Simon Holmstrom",
+         "n": "Ondrej Palat",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Jean-Gabriel Pageau",
@@ -595,17 +595,17 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Logan Stanley",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Matthew Schaefer",
          "pos": "D",
          "pp": "PP1"
         },
         {
          "n": "Adam Pelech",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Logan Stanley",
          "pos": "D",
          "pp": ""
         },
@@ -716,16 +716,6 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Sam Dickinson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Jacob Trouba",
-         "pos": "D",
-         "pp": "PP1"
-        },
-        {
          "n": "Michael Kesselring",
          "pos": "D",
          "pp": ""
@@ -734,6 +724,16 @@
          "n": "Darnell Nurse",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Sam Dickinson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Jacob Trouba",
+         "pos": "D",
+         "pp": "PP1"
         },
         {
          "n": "Dmitry Orlov",
