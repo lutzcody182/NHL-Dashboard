@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-09",
- "updated": "2026-11-09T17:30:16.028Z",
+ "updated": "2026-11-09T18:00:25.702Z",
  "games": [
   {
    "time": "8:00 PM ET",
@@ -117,7 +117,7 @@
          "pp": ""
         },
         {
-         "n": "Alberts Smits",
+         "n": "Matthew Robertson",
          "pos": "D",
          "pp": ""
         },
@@ -387,6 +387,11 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Jonathan Lekkerimaki",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Elias Pettersson",
          "pos": "C",
          "pp": "PP1"
@@ -395,36 +400,11 @@
          "n": "Brock Boeser",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Arshdeep Bains",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
       {
        "label": "Line 2",
-       "players": [
-        {
-         "n": "Jonathan Lekkerimaki",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Paul Cotter",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Jake DeBrusk",
-         "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
        "players": [
         {
          "n": "Liam Ohgren",
@@ -444,7 +424,7 @@
        ]
       },
       {
-       "label": "Line 4",
+       "label": "Line 3",
        "players": [
         {
          "n": "Max Sasson",
@@ -460,6 +440,26 @@
          "n": "Linus Karlsson",
          "pos": "W",
          "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Paul Cotter",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Jake DeBrusk",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Arshdeep Bains",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
