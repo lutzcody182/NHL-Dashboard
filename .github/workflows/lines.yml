@@ -114,6 +114,16 @@ jobs:
           git pull --rebase --quiet || true
           git push || { echo "::error::Push failed. In the repo go to Settings > Actions > General > Workflow permissions, choose 'Read and write permissions', and run again."; exit 1; }
 
+      - name: Phone alert if this run failed
+        if: failure()
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$NTFY_TOPIC" ] || exit 0
+          curl -sS -o /dev/null -H "Title: Ice Lab lines update FAILED" -H "Priority: 4" -H "Tags: x" -H "Click: $RUN_URL" \
+            -d "The lines update failed at $(TZ=America/New_York date '+%-I:%M %p') ET. Tap to open the run log on GitHub." "https://ntfy.sh/$NTFY_TOPIC" || true
+
   props:
     if: github.event.inputs.task != 'lines'
     runs-on: ubuntu-latest
@@ -542,6 +552,7 @@ jobs:
       - name: Save and grade goal scorer and game model picks
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}   # phone notifications for new recommended bets (optional)
+          ICE_STATUS: props                     # quiet "pick run done" notification after each run
         run: |
           cat > "$RUNNER_TEMP/track.js" <<'EOF'
           // Pick tracker: runs the dashboard's own models (from index.html) headlessly. Saves today's pre-game goal scorer picks
@@ -775,7 +786,8 @@ jobs:
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
             let recs = picks.recs || []; try { recs = await updateRecs(T, { byKey, fByKey, sByKey, gByKey, xByKey }, picks.recs, now); } catch (err) { log(`Recommendation log error: ${err.message}`); }
-            await notifyNew({ byKey, fByKey, sByKey, gByKey, xByKey }, now, recs);
+            const sent = await notifyNew({ byKey, fByKey, sByKey, gByKey, xByKey }, now, recs);
+            await notifyStatus(now, { byKey, sByKey, gByKey, xByKey, sent, graded: graded + gGraded + fGraded + sGraded + xGraded });
             const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1), recs, xm: [...xByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0) };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
@@ -798,7 +810,7 @@ jobs:
             // recommendations that ended before their game: ask whether you bet them (once each)
             const gone = recs.filter(r => r.status === 'expired' && !r.ntE && new Date(r.start) > now);
             const recLbl = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'pl' ? `${r.tmA} ${r.line > 0 ? '+' : ''}${r.line} puck line` : r.m === 'sv' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} saves` : r.m === 'sogAlt' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots (alt)` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots` : r.m === 'fg' ? `${r.n} FIRST goal` : `${r.n} anytime goal`;
-            if (!items.length && !gone.length) { log('Notifications: nothing new.'); return; }
+            if (!items.length && !gone.length) { log('Notifications: nothing new.'); return 0; }
             items.sort((a, b) => a[0].start < b[0].start ? -1 : a[0].start > b[0].start ? 1 : b[0].u - a[0].u);
             const lines = []; let lastT = '';
             for (const [p, txt] of items.slice(0, 20)) { const t = tm(p.start); if (t !== lastT) { lines.push(`— ${t} ET —`); lastT = t; } lines.push(txt + (p.nt ? ' (size raised)' : '')); }
@@ -807,11 +819,31 @@ jobs:
             const units = items.reduce((s, [p]) => s + p.u, 0);
             try {
               const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: items.length ? `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)${gone.length ? ` + ${gone.length} ended` : ''}` : `Ice Lab: ${gone.length} recommendation${gone.length === 1 ? '' : 's'} ended - did you bet ${gone.length === 1 ? 'it' : 'them'}?`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/#recs' } });
-              if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return; }
+              if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return 0; }
               for (const [p] of items) { p.nt = now.toISOString(); p.ntU = p.u; }
               for (const r of gone) r.ntE = now.toISOString();
               log(`Notifications: sent ${items.length} new recommended bet${items.length === 1 ? '' : 's'} and ${gone.length} ended recommendation${gone.length === 1 ? '' : 's'} to your phone.`);
-            } catch (e) { log('::warning::Notification failed: ' + e.message); }
+              return items.length;
+            } catch (e) { log('::warning::Notification failed: ' + e.message); return 0; }
+          }
+          // a quiet "the run worked" notification after every pick run (ICE_STATUS=props) and goalie re-pick (ICE_STATUS=repick),
+          // even when there are no new bets, so a missing one means a run didn't happen. Failed runs send their own alert from the workflow.
+          async function notifyStatus(now, M) {
+            const topic = (process.env.NTFY_TOPIC || '').trim(), kind = (process.env.ICE_STATUS || '').trim(); if (!topic || !kind) return;
+            try {
+              const tm = d => new Date(d).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+              const up = p => p.res == null && new Date(p.start) > now, cnt = it => [...it].filter(up).length;
+              const games = new Set([...M.gByKey.values(), ...M.byKey.values(), ...M.sByKey.values()].filter(up).map(p => p.gid)).size;
+              let PF = null; try { PF = JSON.parse(fs.readFileSync('props.json', 'utf8')); } catch (e) {}
+              const oddsAge = PF && PF.updated ? Math.round((now - new Date(PF.updated)) / 60000) : null;
+              const lines = [
+                `${games} upcoming game${games === 1 ? '' : 's'} priced · ${cnt(M.byKey.values())} goal, ${cnt(M.sByKey.values())} shots, ${cnt(M.gByKey.values())} game and ${cnt(M.xByKey.values())} trial picks saved`,
+                M.sent ? `${M.sent} new recommended bet${M.sent === 1 ? '' : 's'} (sent in a separate alert)` : 'No new recommended bets this run',
+                `${M.graded} finished pick${M.graded === 1 ? '' : 's'} graded`,
+                PF ? `Odds from ${oddsAge != null && oddsAge <= 1 ? 'this run' : oddsAge != null ? (oddsAge < 90 ? `${oddsAge} min ago` : `${Math.round(oddsAge / 60)} hours ago`) : 'unknown time'}${Number.isFinite(+PF.remaining) ? ` · ${(+PF.remaining).toLocaleString('en-US')} API credits left` : ''}` : 'No odds file found'];
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `${kind === 'repick' ? 'Goalie re-pick' : 'Pick run'} done - ${tm(now)} ET`, Priority: '2', Tags: kind === 'repick' ? 'repeat' : 'white_check_mark' } });
+              log(r.ok ? 'Run-status notification sent.' : '::warning::Run-status notification failed: HTTP ' + r.status);
+            } catch (e) { log('::warning::Run-status notification failed: ' + e.message); }
           }
           // permanent recommendation log (picks.json → recs): every bet the dashboard recommends (0.5u+) gets one record with a unique
           // ID that is never deleted. If it stops being recommended before its game (price gone, line moved, edge dropped) it's marked
@@ -893,6 +925,16 @@ jobs:
           git commit -m "Update DraftKings odds, Post Hockey ratings, picks and model accuracy"
           git pull --rebase --quiet || true
           git push
+
+      - name: Phone alert if this run failed
+        if: failure()
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$NTFY_TOPIC" ] || exit 0
+          curl -sS -o /dev/null -H "Title: Ice Lab pick run FAILED" -H "Priority: 4" -H "Tags: x" -H "Click: $RUN_URL" \
+            -d "The pick run failed at $(TZ=America/New_York date '+%-I:%M %p') ET. Tap to open the run log on GitHub." "https://ntfy.sh/$NTFY_TOPIC" || true
 
   close:
     # every 30 minutes in the evening: record closing prices for picks starting in the next 90 minutes (the last reading before puck drop wins) (closing line value)
@@ -996,6 +1038,16 @@ jobs:
           git pull --rebase --quiet || true
           git push
 
+      - name: Phone alert if this run failed
+        if: failure()
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$NTFY_TOPIC" ] || exit 0
+          curl -sS -o /dev/null -H "Title: Ice Lab closing-price FAILED" -H "Priority: 4" -H "Tags: x" -H "Click: $RUN_URL" \
+            -d "The closing-price failed at $(TZ=America/New_York date '+%-I:%M %p') ET. Tap to open the run log on GitHub." "https://ntfy.sh/$NTFY_TOPIC" || true
+
   repick:
     # evening, every 30 minutes: if a starting goalie got confirmed or switched for a game with saved picks,
     # re-run both models and re-save those picks (no Odds API requests used)
@@ -1070,6 +1122,7 @@ jobs:
         if: steps.check.outputs.changed == 'yes'
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}   # phone notifications for new recommended bets (optional)
+          ICE_STATUS: repick                    # quiet "goalie re-pick done" notification after each run
         run: |
           cat > "$RUNNER_TEMP/track.js" <<'EOF'
           // Pick tracker: runs the dashboard's own models (from index.html) headlessly. Saves today's pre-game goal scorer picks
@@ -1303,7 +1356,8 @@ jobs:
             if (gs && gs.bt) snap.gs = { n: gs.bt.n, games: T.A.filtered.length, brier: +gs.bt.brier.toFixed(5), brierBase: +gs.bt.brierBase.toFixed(5) };
             if (snap.gm || snap.gs) hist.push(snap);
             let recs = picks.recs || []; try { recs = await updateRecs(T, { byKey, fByKey, sByKey, gByKey, xByKey }, picks.recs, now); } catch (err) { log(`Recommendation log error: ${err.message}`); }
-            await notifyNew({ byKey, fByKey, sByKey, gByKey, xByKey }, now, recs);
+            const sent = await notifyNew({ byKey, fByKey, sByKey, gByKey, xByKey }, now, recs);
+            await notifyStatus(now, { byKey, sByKey, gByKey, xByKey, sent, graded: graded + gGraded + fGraded + sGraded + xGraded });
             const out = { updated: now.toISOString(), picks: [...byKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), games: [...gByKey.values()].sort((a, b) => a.start < b.start ? -1 : 1), first: [...fByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.p - a.p), sog: [...sByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : b.ev - a.ev), hist: hist.sort((a, b) => a.date < b.date ? -1 : 1), recs, xm: [...xByKey.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : 0) };
             fs.writeFileSync('picks.json', JSON.stringify(out));
             return out;
@@ -1326,7 +1380,7 @@ jobs:
             // recommendations that ended before their game: ask whether you bet them (once each)
             const gone = recs.filter(r => r.status === 'expired' && !r.ntE && new Date(r.start) > now);
             const recLbl = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'pl' ? `${r.tmA} ${r.line > 0 ? '+' : ''}${r.line} puck line` : r.m === 'sv' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} saves` : r.m === 'sogAlt' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots (alt)` : r.m === 'sog' ? `${r.n} ${r.side === 'o' ? 'OVER' : 'UNDER'} ${r.line} shots` : r.m === 'fg' ? `${r.n} FIRST goal` : `${r.n} anytime goal`;
-            if (!items.length && !gone.length) { log('Notifications: nothing new.'); return; }
+            if (!items.length && !gone.length) { log('Notifications: nothing new.'); return 0; }
             items.sort((a, b) => a[0].start < b[0].start ? -1 : a[0].start > b[0].start ? 1 : b[0].u - a[0].u);
             const lines = []; let lastT = '';
             for (const [p, txt] of items.slice(0, 20)) { const t = tm(p.start); if (t !== lastT) { lines.push(`— ${t} ET —`); lastT = t; } lines.push(txt + (p.nt ? ' (size raised)' : '')); }
@@ -1335,11 +1389,31 @@ jobs:
             const units = items.reduce((s, [p]) => s + p.u, 0);
             try {
               const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: items.length ? `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)${gone.length ? ` + ${gone.length} ended` : ''}` : `Ice Lab: ${gone.length} recommendation${gone.length === 1 ? '' : 's'} ended - did you bet ${gone.length === 1 ? 'it' : 'them'}?`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/#recs' } });
-              if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return; }
+              if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return 0; }
               for (const [p] of items) { p.nt = now.toISOString(); p.ntU = p.u; }
               for (const r of gone) r.ntE = now.toISOString();
               log(`Notifications: sent ${items.length} new recommended bet${items.length === 1 ? '' : 's'} and ${gone.length} ended recommendation${gone.length === 1 ? '' : 's'} to your phone.`);
-            } catch (e) { log('::warning::Notification failed: ' + e.message); }
+              return items.length;
+            } catch (e) { log('::warning::Notification failed: ' + e.message); return 0; }
+          }
+          // a quiet "the run worked" notification after every pick run (ICE_STATUS=props) and goalie re-pick (ICE_STATUS=repick),
+          // even when there are no new bets, so a missing one means a run didn't happen. Failed runs send their own alert from the workflow.
+          async function notifyStatus(now, M) {
+            const topic = (process.env.NTFY_TOPIC || '').trim(), kind = (process.env.ICE_STATUS || '').trim(); if (!topic || !kind) return;
+            try {
+              const tm = d => new Date(d).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit' });
+              const up = p => p.res == null && new Date(p.start) > now, cnt = it => [...it].filter(up).length;
+              const games = new Set([...M.gByKey.values(), ...M.byKey.values(), ...M.sByKey.values()].filter(up).map(p => p.gid)).size;
+              let PF = null; try { PF = JSON.parse(fs.readFileSync('props.json', 'utf8')); } catch (e) {}
+              const oddsAge = PF && PF.updated ? Math.round((now - new Date(PF.updated)) / 60000) : null;
+              const lines = [
+                `${games} upcoming game${games === 1 ? '' : 's'} priced · ${cnt(M.byKey.values())} goal, ${cnt(M.sByKey.values())} shots, ${cnt(M.gByKey.values())} game and ${cnt(M.xByKey.values())} trial picks saved`,
+                M.sent ? `${M.sent} new recommended bet${M.sent === 1 ? '' : 's'} (sent in a separate alert)` : 'No new recommended bets this run',
+                `${M.graded} finished pick${M.graded === 1 ? '' : 's'} graded`,
+                PF ? `Odds from ${oddsAge != null && oddsAge <= 1 ? 'this run' : oddsAge != null ? (oddsAge < 90 ? `${oddsAge} min ago` : `${Math.round(oddsAge / 60)} hours ago`) : 'unknown time'}${Number.isFinite(+PF.remaining) ? ` · ${(+PF.remaining).toLocaleString('en-US')} API credits left` : ''}` : 'No odds file found'];
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `${kind === 'repick' ? 'Goalie re-pick' : 'Pick run'} done - ${tm(now)} ET`, Priority: '2', Tags: kind === 'repick' ? 'repeat' : 'white_check_mark' } });
+              log(r.ok ? 'Run-status notification sent.' : '::warning::Run-status notification failed: HTTP ' + r.status);
+            } catch (e) { log('::warning::Run-status notification failed: ' + e.message); }
           }
           // permanent recommendation log (picks.json → recs): every bet the dashboard recommends (0.5u+) gets one record with a unique
           // ID that is never deleted. If it stops being recommended before its game (price gone, line moved, edge dropped) it's marked
@@ -1422,3 +1496,13 @@ jobs:
           git commit -m "Re-save picks after goalie news"
           git pull --rebase --quiet || true
           git push
+
+      - name: Phone alert if this run failed
+        if: failure()
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$NTFY_TOPIC" ] || exit 0
+          curl -sS -o /dev/null -H "Title: Ice Lab goalie re-pick FAILED" -H "Priority: 4" -H "Tags: x" -H "Click: $RUN_URL" \
+            -d "The goalie re-pick failed at $(TZ=America/New_York date '+%-I:%M %p') ET. Tap to open the run log on GitHub." "https://ntfy.sh/$NTFY_TOPIC" || true
