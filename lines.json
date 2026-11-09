@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-08",
- "updated": "2026-11-08T23:36:15.234Z",
+ "updated": "2026-11-09T00:00:17.620Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1139,8 +1139,8 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Nick Paul",
-         "pos": "C",
+         "n": "Gavin McKenna",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -1164,8 +1164,8 @@
          "pp": ""
         },
         {
-         "n": "Gavin McKenna",
-         "pos": "W",
+         "n": "Nick Paul",
+         "pos": "C",
          "pp": "PP2"
         },
         {
