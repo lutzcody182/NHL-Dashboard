@@ -7704,7 +7704,15 @@ const fgFirstScorer = g => { const x = (g.shots || []).filter(s => s.t === 0 && 
    Shots are a count, so tonight's range is a negative binomial (a Poisson with extra spread, learned from real games).
    That gives his chance over/under each line, blended with the sportsbooks' no-margin price like the goal scorer model. */
 const SOG = { st: null, key: '', date: '', game: '', team: '', q: '', rows: null };
-const SOGB = { w: .4, n: 0, fit: null }; // model vs. market blend, learned from graded picks
+const SOGB = { w: .4, n: 0, fit: null, pos: { F: { w: .4, c: 0, n: 0 }, D: { w: .4, c: 0, n: 0 } } }; // model vs. market blend, learned from graded picks
+/* over chance = blend of Ice Lab's chance and the books' no-vig chance, learned separately for forwards and defensemen
+   (Nov 2026 check: the model beat the books on defensemen and lost to them on forwards), plus an over tilt c
+   (books' overs hit less often than their no-vig price says, most of all for defensemen). Both are learned from graded
+   picks and pulled toward the starting values (40% model, no tilt) with 300 picks' weight, so they move as results come in. */
+function sogBlendOver(pos, pModelO, pMktO) {
+  const b = SOGB.pos[pos === 'D' ? 'D' : 'F'] || { w: SOGB.w, c: 0 };
+  return clamp(sigm(b.w * logit(clamp(pModelO, .002, .998)) + (1 - b.w) * logit(clamp(pMktO, .002, .998)) + b.c), 1e-4, 1 - 1e-4);
+}
 const GSMATES = {}; // tonight's linemates' names per player (from gsMateMap), for the line shot-share factor
 // options, each checked on real games (3 rolling test windows, ~3,000 player-games): split = opponent shots allowed to
 // forwards vs. defensemen (catches shot-blocking teams) · rec = the last two weeks count more · lvl = automatic level
@@ -7829,12 +7837,12 @@ function sogAlts(row, k, pa) {
   for (const [b, arr] of Object.entries(pa)) for (const [L, o, u] of arr) { if (!fin(L) || L === row.line || L % 1 === 0) continue; const x = lines[L] = lines[L] || { o: {}, u: {} }; if (o != null) x.o[b] = o; if (u != null) x.u[b] = u; }
   const out = [];
   for (const [Ls, x] of Object.entries(lines)) {
-    const L = +Ls, pm = nbOver(row.mu, k, L), pk = nbOver(muM, k, L);
+    const L = +Ls, pm = nbOver(row.mu, k, L), pk = nbOver(muM, k, L), pB = sogBlendOver(row.pos, pm, pk);
     for (const s of ['o', 'u']) {
       const P = x[s]; if (!Object.keys(P).length) continue; const ox = {}; for (const b of XBK) if (P[b] != null) ox[b] = P[b];
       const best = bestPrice(P.dk != null ? P.dk : null, P.fd != null ? P.fd : null, ox); if (!best) continue;
       const pmS = s === 'o' ? pm : 1 - pm, pkS = s === 'o' ? pk : 1 - pk;
-      const p = sigm(SOGB.w * logit(clamp(pmS, .002, .998)) + (1 - SOGB.w) * logit(clamp(pkS, .002, .998))), ev = betEV(p, best.price);
+      const p = s === 'o' ? pB : 1 - pB, ev = betEV(p, best.price);
       out.push({ line: L, side: s, pModel: pmS, pMkt: pkS, p, best: best.price, book: best.book, edge: p - amImplied(best.price), ev: ev.ev, roi: ev.roi, dk: P.dk != null ? P.dk : null, fd: P.fd != null ? P.fd : null, ox });
     }
   }
@@ -7863,7 +7871,7 @@ function sogTonight(St, e, gsRows, PF) {
     const row = { pid: r.pid, n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, gid: String(e.id), start: e.date, role: r.role, inj: r.inj, gl: r.gl, lowN: m.gp < 5, ...m, mk };
     if (mk && mk.line % 1 !== 0) {
       row.line = mk.line; row.pModelO = nbOver(m.mu, St.k, mk.line);
-      row.pO = fin(mk.fair) ? sigm(SOGB.w * logit(row.pModelO) + (1 - SOGB.w) * logit(clamp(mk.fair, .02, .98))) : row.pModelO; row.pU = 1 - row.pO;
+      row.pO = fin(mk.fair) ? sogBlendOver(r.pos, row.pModelO, clamp(mk.fair, .02, .98)) : row.pModelO; row.pU = 1 - row.pO;
       for (const [s, P_, x] of [['o', row.pO, mk.ov], ['u', row.pU, mk.un]]) { if (!x.best) continue; const ev = betEV(P_, x.best.price); row[s + 'Best'] = x.best.price; row[s + 'Book'] = x.best.book; row[s + 'Edge'] = P_ - amImplied(x.best.price); row[s + 'Ev'] = ev.ev; row[s + 'Roi'] = ev.roi; }
       const pick = [['o', row.oEv], ['u', row.uEv]].filter(([, v]) => fin(v)).sort((a, b) => b[1] - a[1])[0]; row.side = pick ? pick[0] : null;
     } else { row.line = null; row.pModelO = NaN; }
@@ -7904,11 +7912,23 @@ function sogHomeFit(PK) {
 function sogBlendFit(PK) {
   sogHomeFit(PK);
   const ps = ((PK && PK.sog) || []).filter(p => p.side === 'o' && (p.res === 'W' || p.res === 'L') && fin(p.pRaw) && fin(p.fair));
-  SOGB.n = ps.length; if (ps.length < 150) { SOGB.w = .4; SOGB.fit = null; return SOGB.w; }
-  let best = .4, bl = Infinity;
-  for (let w = 0; w <= 1.0001; w += .05) { let L = 0; for (const p of ps) { const q = clamp(sigm(w * logit(clamp(p.pRaw, .005, .995)) + (1 - w) * logit(clamp(p.fair, .02, .98))), 1e-4, 1 - 1e-4); L -= p.res === 'W' ? Math.log(q) : Math.log(1 - q); } if (L < bl) { bl = L; best = w; } }
-  SOGB.fit = best; SOGB.w = (ps.length * best + 300 * .4) / (ps.length + 300); return SOGB.w;
+  SOGB.n = ps.length; const W0 = .4, PRIOR = 300;
+  for (const pos of ['F', 'D']) {
+    const L = ps.filter(p => (p.pos === 'D' ? 'D' : 'F') === pos), B = SOGB.pos[pos] = { w: W0, c: 0, n: L.length, fitW: null, fitC: null };
+    if (L.length < 50) continue;
+    const X = L.map(p => [logit(clamp(p.pRaw, .002, .998)), logit(clamp(p.fair, .02, .98)), p.res === 'W']);
+    let best = [W0, 0], bl = Infinity;
+    for (let w = 0; w <= 1.0001; w += .05) for (let c = -.3; c <= .3001; c += .01) {
+      let ll = 0; for (const [m, k, y] of X) { const q = clamp(sigm(w * m + (1 - w) * k + c), 1e-4, 1 - 1e-4); ll -= y ? Math.log(q) : Math.log(1 - q); }
+      if (ll < bl) { bl = ll; best = [w, c]; }
+    }
+    B.fitW = best[0]; B.fitC = best[1];
+    B.w = (L.length * best[0] + PRIOR * W0) / (L.length + PRIOR); B.c = L.length * best[1] / (L.length + PRIOR);
+  }
+  SOGB.fit = SOGB.pos.F.fitW; SOGB.w = (SOGB.pos.F.w * SOGB.pos.F.n + SOGB.pos.D.w * SOGB.pos.D.n) / Math.max(1, SOGB.pos.F.n + SOGB.pos.D.n) || W0;
+  return SOGB.w;
 }
+const sogBlendTxt = () => ['F', 'D'].map(p => { const b = SOGB.pos[p]; return `${p === 'F' ? 'forwards' : 'defensemen'} ${Math.round(b.w * 100)}% model${Math.abs(b.c) >= .005 ? `, overs tilted ${b.c < 0 ? 'down' : 'up'} ${Math.abs(b.c * 25).toFixed(1)} pts` : ''}`; }).join(' · ') + (SOGB.n >= 50 ? ` (learned from ${SOGB.n} graded overs)` : ' (starting values until graded picks come in)');
 const sogWhy = (r, k) => `<b>${esc(r.n)}</b><div class='row'><span>Even strength</span><b>${f2(r.evRate * 3600)} shots/60 × ${mmss(r.evSec)}</b></div>${r.ppSec > 1 ? `<div class='row'><span>Power play</span><b>${f2(r.ppRate * 3600)} shots/60 × ${mmss(r.ppSec)}</b></div>` : ''}<div class='row'><span>Before matchup</span><b>${f2(r.base)} shots</b></div>${r.ppSec > 1 && r.ppUsual > 1 && Math.abs(r.ppSec / r.ppUsual - 1) >= .05 ? `<div class='row'><span>Power-play time vs. his usual ${mmss(r.ppUsual)} (opponent penalties, referees, PP unit)</span><b>${r.ppSec > r.ppUsual ? '+' : '−'}${pct1(Math.abs(r.ppSec / r.ppUsual - 1))}%</b></div>` : ''}${[[`Opponent shots allowed to ${r.pos === 'D' ? 'defensemen' : 'forwards'}`, r.oppF], ['Arena scorekeeping', r.arF], ['Home ice and favorite/underdog (learned from graded picks)', r.haF], ['Game total (pace)', r.paceF], ['Back-to-back', r.b2bF], [`Line shot share${r.lineTxt ? ' (' + r.lineTxt + ')' : ''}`, r.lineF], ['Level correction (how far recent predictions ran from real shots)', r.lvlF]].filter(([, f]) => fin(f) && Math.abs(f - 1) >= .005).map(([l, f]) => `<div class='row'><span>${l}</span><b>${f > 1 ? '+' : '−'}${pct1(Math.abs(f - 1))}%</b></div>`).join('')}<div class='row'><span><b>Expected tonight</b></span><b>${f2(r.mu)} shots</b></div>${r.line != null ? `<div style='margin-top:4px;border-top:1px solid var(--border);padding-top:4px'><div class='row'><span>Model alone: over ${r.line}</span><b>${fairAmerican(r.pModelO)} (${pct1(r.pModelO)}%)</b></div>${fin(r.mk.fair) ? `<div class='row'><span>Books, no margin (${BOOKS[r.mk.ref]})</span><b>${fairAmerican(r.mk.fair)} (${pct1(r.mk.fair)}%)</b></div>` : ''}<div class='row'><span>Blended (${Math.round(SOGB.w * 100)}% model)</span><b>${fairAmerican(r.pO)} (${pct1(r.pO)}%)</b></div></div>` : ''}<div class='muted' style='margin-top:4px'>Range uses a negative binomial with spread ${f1(k)} (learned from real games).</div>`;
 async function renderSog() {
   const body = $('#sogBody');
@@ -8041,7 +8061,7 @@ function sogTrackCard(PK) {
   const UT = unitTrack(ps.map(p => ({ start: p.start, date: p.date, res: p.res, px: p.best, u: recU('sog', p, p.p, p.best), result: resCell(p),
     cells: `${dateTd(p.date)}<td class="l"><div class="tcell">${logoImg(p.tm, 16)}${plink(p.pid, p.n)}</div></td><td class="l">${p.side === 'o' ? 'Over' : 'Under'} ${p.line}</td><td>${f2(p.mu)}</td><td>${pct1(p.p)}%</td><td><b>${fmtML(p.best)}</b> <span class="muted" style="font-size:11px">${BK[p.book] || ''}</span></td><td style="color:${p.edge > 0 ? 'var(--good)' : 'var(--neg)'}">${(p.edge > 0 ? '+' : '') + (p.edge * 100).toFixed(1)}</td>` })), SOGT, { strat: 'sogtStrat', all: 'sogtAll' }, '<th class="l">Date</th><th class="l">Player</th><th class="l">Bet</th><th>Expected</th><th>Ice Lab</th><th>Price</th><th>Edge</th>');
   return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📒 Shots on goal pick log</h3><p>${UT.done} graded recommended bets · ${UT.pend} pending · updated ${PK.updated ? new Date(PK.updated).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</p></div>
-    <p class="muted" style="margin:-4px 0 6px;font-size:12px">The GitHub job saves the over and the under for every priced player before each game (best price across your five books) and grades them from the official box score the next morning. Model vs. books blend: ${Math.round(SOGB.w * 100)}% model${SOGB.n ? ` (learned from ${SOGB.n} graded overs)` : ' (starting value until 150 picks are graded)'}.</p>
+    <p class="muted" style="margin:-4px 0 6px;font-size:12px">The GitHub job saves the over and the under for every priced player before each game (best price across your five books) and grades them from the official box score the next morning. Model vs. books blend: ${sogBlendTxt()}.</p>
     ${sogClvHtml(PK)}${UT.note}${UT.tiles}<h3 class="cmp-sec" style="margin-top:0">Running profit (units)</h3>${UT.chart}
     ${UT.log}</div>`;
 }
