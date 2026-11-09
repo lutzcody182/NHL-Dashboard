@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-09",
- "updated": "2026-11-09T18:30:16.174Z",
+ "updated": "2026-11-09T19:00:20.971Z",
  "games": [
   {
    "time": "8:00 PM ET",
@@ -648,7 +648,7 @@
         {
          "n": "Michael Misa",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -656,19 +656,19 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Mason Marchment",
-         "pos": "W",
+         "n": "Alexander Wennberg",
+         "pos": "C",
          "pp": "PP1"
         },
         {
-         "n": "Collin Graf",
-         "pos": "C",
-         "pp": ""
+         "n": "Mason Marchment",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Kiefer Sherwood",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -678,7 +678,7 @@
         {
          "n": "Ivar Stenberg",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Ty Dellandrea",
@@ -688,7 +688,7 @@
         {
          "n": "Tyler Toffoli",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -701,12 +701,12 @@
          "pp": ""
         },
         {
-         "n": "Adam Gaudette",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Collin Graf",
+         "pos": "C",
+         "pp": ""
         },
         {
-         "n": "Filip Bystedt",
+         "n": "Zack Ostapchuk",
          "pos": "C",
          "pp": ""
         }
@@ -723,7 +723,7 @@
         {
          "n": "Jacob Trouba",
          "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Michael Kesselring",
