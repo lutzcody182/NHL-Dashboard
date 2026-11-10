@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-10",
- "updated": "2026-11-10T18:07:17.938Z",
+ "updated": "2026-11-10T19:07:10.755Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -102,9 +102,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Jared Spurgeon",
+         "n": "Jonas Brodin",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Olli Maatta",
@@ -112,9 +112,9 @@
          "pp": ""
         },
         {
-         "n": "Jonas Brodin",
+         "n": "Jared Spurgeon",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Zach Bogosian",
@@ -1611,7 +1611,7 @@
     },
     {
      "team": "Los Angeles Kings",
-     "goalie": "Darcy Kuemper",
+     "goalie": "Anton Forsberg",
      "groups": [
       {
        "label": "Line 1",
@@ -1619,7 +1619,7 @@
         {
          "n": "Alex Laferriere",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Adrian Kempe",
@@ -1647,9 +1647,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Kevin Fiala",
+         "n": "Mats Zuccarello",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
