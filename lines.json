@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-10",
- "updated": "2026-11-10T16:07:12.535Z",
+ "updated": "2026-11-10T17:07:15.284Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -37,11 +37,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Ryan Hartman",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Bobby Brink",
          "pos": "W",
          "pp": "PP2"
@@ -50,6 +45,11 @@
          "n": "Blake Coleman",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Michael McCarron",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -82,14 +82,14 @@
          "pp": ""
         },
         {
-         "n": "Nico Sturm",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Nick Foligno",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Ryan Hartman",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -102,9 +102,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Jonas Brodin",
+         "n": "Jared Spurgeon",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Olli Maatta",
@@ -112,14 +112,14 @@
          "pp": ""
         },
         {
-         "n": "Zach Bogosian",
+         "n": "Jonas Brodin",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "David Spacek",
+         "n": "Zach Bogosian",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Matt Kiersted",
