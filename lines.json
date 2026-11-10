@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-10",
- "updated": "2026-11-10T20:07:10.517Z",
+ "updated": "2026-11-10T22:09:31.892Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1642,12 +1642,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Corey Perry",
+         "n": "Trevor Moore",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Mats Zuccarello",
+         "n": "Corey Perry",
          "pos": "W",
          "pp": "PP2"
         }
@@ -1657,27 +1657,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Trevor Moore",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Kenny Connors",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Erik Haula",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
-         "n": "Alex Turcotte",
+         "n": "Mats Zuccarello",
          "pos": "W",
          "pp": "PP2"
         },
@@ -1694,18 +1674,28 @@
        ]
       },
       {
-       "label": "Defensive Pairs",
+       "label": "Line 4",
        "players": [
         {
-         "n": "Brandt Clarke",
-         "pos": "D",
-         "pp": "PP1"
-        },
-        {
-         "n": "Joel Edmundson",
-         "pos": "D",
+         "n": "Kenny Connors",
+         "pos": "C",
          "pp": ""
         },
+        {
+         "n": "Andre Lee",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Erik Haula",
+         "pos": "W",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": [
         {
          "n": "Drew Doughty",
          "pos": "D",
@@ -1713,6 +1703,16 @@
         },
         {
          "n": "Mikey Anderson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Brandt Clarke",
+         "pos": "D",
+         "pp": "PP1"
+        },
+        {
+         "n": "Joel Edmundson",
          "pos": "D",
          "pp": ""
         },
