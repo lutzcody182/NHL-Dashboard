@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-10",
- "updated": "2026-11-10T17:07:15.284Z",
+ "updated": "2026-11-10T18:07:17.938Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -804,14 +804,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Amadeus Lombardi",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Cody Glass",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Evan Rodrigues",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -819,14 +819,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Jesper Boqvist",
+         "n": "Amadeus Lombardi",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Evan Rodrigues",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Jesper Boqvist",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1053,7 +1053,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Cole Reinhardt",
+         "n": "Jack Devine",
          "pos": "W",
          "pp": ""
         }
@@ -1103,7 +1103,7 @@
          "pp": ""
         },
         {
-         "n": "Uvis Balinskis",
+         "n": "Dmitry Kulikov",
          "pos": "D",
          "pp": ""
         },
@@ -1292,11 +1292,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Marco Kasper",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Michael Rasmussen",
          "pos": "W",
          "pp": "PP2"
@@ -1305,6 +1300,11 @@
          "n": "J.T. Compher",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Mason Appleton",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1317,13 +1317,13 @@
          "pp": ""
         },
         {
-         "n": "Carter Mazur",
+         "n": "Marco Kasper",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Sheldon Dries",
-         "pos": "C",
+         "n": "Carter Mazur",
+         "pos": "W",
          "pp": ""
         }
        ]
