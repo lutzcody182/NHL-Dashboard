@@ -2,56 +2,418 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-10",
- "updated": "2026-11-10T05:00:18.839Z",
+ "updated": "2026-11-10T14:53:11.647Z",
  "games": [
   {
-   "time": "8:00 PM ET",
-   "away": "New York Rangers",
-   "home": "Edmonton Oilers",
+   "time": "7:00 PM ET",
+   "away": "Minnesota Wild",
+   "home": "Montreal Canadiens",
    "teams": [
     {
-     "team": "New York Rangers",
+     "team": "Minnesota Wild",
      "goalie": "",
-     "groups": []
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
     },
     {
-     "team": "Edmonton Oilers",
+     "team": "Montreal Canadiens",
      "goalie": "",
-     "groups": []
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
     }
    ]
   },
   {
-   "time": "9:30 PM ET",
-   "away": "Philadelphia Flyers",
-   "home": "Vancouver Canucks",
+   "time": "7:00 PM ET",
+   "away": "Washington Capitals",
+   "home": "Ottawa Senators",
    "teams": [
     {
-     "team": "Philadelphia Flyers",
+     "team": "Washington Capitals",
      "goalie": "",
-     "groups": []
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
     },
     {
-     "team": "Vancouver Canucks",
+     "team": "Ottawa Senators",
      "goalie": "",
-     "groups": []
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "time": "7:00 PM ET",
+   "away": "Colorado Avalanche",
+   "home": "Toronto Maple Leafs",
+   "teams": [
+    {
+     "team": "Colorado Avalanche",
+     "goalie": "",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
+    },
+    {
+     "team": "Toronto Maple Leafs",
+     "goalie": "",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "time": "7:00 PM ET",
+   "away": "New Jersey Devils",
+   "home": "Winnipeg Jets",
+   "teams": [
+    {
+     "team": "New Jersey Devils",
+     "goalie": "",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
+    },
+    {
+     "team": "Winnipeg Jets",
+     "goalie": "",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "time": "7:30 PM ET",
+   "away": "Florida Panthers",
+   "home": "Columbus Blue Jackets",
+   "teams": [
+    {
+     "team": "Florida Panthers",
+     "goalie": "",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
+    },
+    {
+     "team": "Columbus Blue Jackets",
+     "goalie": "",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "time": "8:00 PM ET",
+   "away": "Detroit Red Wings",
+   "home": "St. Louis Blues",
+   "teams": [
+    {
+     "team": "Detroit Red Wings",
+     "goalie": "",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
+    },
+    {
+     "team": "St. Louis Blues",
+     "goalie": "",
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
     }
    ]
   },
   {
    "time": "10:00 PM ET",
-   "away": "New York Islanders",
-   "home": "San Jose Sharks",
+   "away": "Nashville Predators",
+   "home": "Los Angeles Kings",
    "teams": [
     {
-     "team": "New York Islanders",
+     "team": "Nashville Predators",
      "goalie": "",
-     "groups": []
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
     },
     {
-     "team": "San Jose Sharks",
+     "team": "Los Angeles Kings",
      "goalie": "",
-     "groups": []
+     "groups": [
+      {
+       "label": "Line 1",
+       "players": []
+      },
+      {
+       "label": "Line 2",
+       "players": []
+      },
+      {
+       "label": "Line 3",
+       "players": []
+      },
+      {
+       "label": "Line 4",
+       "players": []
+      },
+      {
+       "label": "Defensive Pairs",
+       "players": []
+      }
+     ]
     }
    ]
   }
