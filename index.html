@@ -5838,9 +5838,10 @@ const UNITS = { proof: {}, hair: {} };
    model said, because betting the biggest disagreements picks up model mistakes too. So bet sizes use a more cautious
    chance: the price's own chance plus h × the model's edge. h is learned from graded recommended bets (how much of the
    predicted edge actually showed up), starting at half and weighted by how sure that estimate is, between 20% and 100%.
-   Edges shown on the boards are unchanged; only the unit sizes use it. The game model doesn't use it, since its chance is
-   already mixed with the betting line by its live record (GMB). */
-const HAIR_MKTS = ['goal', 'fg', 'sog', 'sogAlt', 'sv', 'pl'];
+   Edges shown on the boards are unchanged; only the unit sizes use it. The game model's moneyline joined in Nov 2026: even after
+   its mix with the betting line (GMB), its biggest edges won less often than the price said (2u bets: model 63%, price 56.5%,
+   won 48%), so its sizes get the same learned haircut. */
+const HAIR_MKTS = ['goal', 'fg', 'sog', 'sogAlt', 'sv', 'pl', 'ml'];
 /* trial markets (added Nov 2026): alternate shots lines, goalie saves and puck line (game totals failed their backtest). Their edges are shown and
    their picks saved and graded (picks.json → xm), but they don't count as recommended bets or send alerts until they've
    earned it: 150+ graded picks where the dashboard's chance predicted better (log loss) than the books' own chance (pb). */
@@ -5857,7 +5858,8 @@ function trialFit(PK) {
 const trialOk = m => !TRIAL_MKTS.includes(m) || !!((UNITS.trial || {})[m] || {}).ok;
 function unitsHairFit(PK) {
   const xm = m => ((PK && PK.xm) || []).filter(x => x.m === m);
-  const lists = { goal: [(PK && PK.picks) || [], p => p.best != null ? p.best : p.dk], fg: [(PK && PK.first) || [], p => p.best != null ? p.best : p.dk], sog: [(PK && PK.sog) || [], p => p.best], sogAlt: [xm('sogAlt'), p => p.best], sv: [xm('sv'), p => p.best], pl: [xm('pl'), p => p.best] };
+  const lists = { goal: [(PK && PK.picks) || [], p => p.best != null ? p.best : p.dk], fg: [(PK && PK.first) || [], p => p.best != null ? p.best : p.dk], sog: [(PK && PK.sog) || [], p => p.best], sogAlt: [xm('sogAlt'), p => p.best], sv: [xm('sv'), p => p.best], pl: [xm('pl'), p => p.best],
+    ml: [((PK && PK.games) || []).filter(x => x.side && x.hw != null).map(x => ({ p: x.side === 'h' ? x.p : 1 - x.p, px: gpPx(x, x.side), res: (x.side === 'h') === !!x.hw ? 'W' : 'L' })), p => p.px] };
   for (const m of HAIR_MKTS) {
     const [list, pxf] = lists[m]; let W = 0, Q = 0, I = 0, V = 0, n = 0;
     for (const x of list) { if (x.res !== 'W' && x.res !== 'L') continue; const px = pxf(x); if (!fin(+px) || !fin(x.p)) continue; const u = unitsFor(m, x.p, px, { frac: .125, noHair: true }); if (!u || u.u < .5) continue;
