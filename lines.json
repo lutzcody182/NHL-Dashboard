@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-09",
- "updated": "2026-11-09T21:30:16.386Z",
+ "updated": "2026-11-10T01:00:18.579Z",
  "games": [
   {
    "time": "8:00 PM ET",
@@ -42,13 +42,13 @@
          "pp": "PP2"
         },
         {
-         "n": "J.T. Miller",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Pavel Dorofeyev",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
-         "n": "Oliver Bjorkstrand",
-         "pos": "W",
+         "n": "J.T. Miller",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -62,14 +62,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Eeli Tolvanen",
-         "pos": "W",
+         "n": "Noah Laba",
+         "pos": "C",
          "pp": ""
         },
         {
-         "n": "Pavel Dorofeyev",
+         "n": "Oliver Bjorkstrand",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -82,8 +82,8 @@
          "pp": ""
         },
         {
-         "n": "Noah Laba",
-         "pos": "C",
+         "n": "Eeli Tolvanen",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -286,11 +286,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Cole Knuble",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Trevor Zegras",
          "pos": "W",
          "pp": "PP1"
@@ -299,6 +294,11 @@
          "n": "Owen Tippett",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Michael Bunting",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -366,7 +366,7 @@
          "pp": ""
         },
         {
-         "n": "Simon Benoit",
+         "n": "David Jiricek",
          "pos": "D",
          "pp": ""
         },
