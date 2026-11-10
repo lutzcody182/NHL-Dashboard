@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-09",
- "updated": "2026-11-10T01:00:18.579Z",
+ "updated": "2026-11-10T02:30:16.071Z",
  "games": [
   {
    "time": "8:00 PM ET",
@@ -271,13 +271,13 @@
          "pp": "PP2"
         },
         {
-         "n": "Travis Konecny",
+         "n": "Trevor Zegras",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Christian Dvorak",
-         "pos": "C",
+         "n": "Travis Konecny",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -285,11 +285,6 @@
       {
        "label": "Line 2",
        "players": [
-        {
-         "n": "Trevor Zegras",
-         "pos": "W",
-         "pp": "PP1"
-        },
         {
          "n": "Owen Tippett",
          "pos": "W",
@@ -299,6 +294,11 @@
          "n": "Michael Bunting",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Christian Dvorak",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
