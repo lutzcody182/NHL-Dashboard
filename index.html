@@ -6226,7 +6226,11 @@ async function mbDiag() {
 mbInit();
 const mbToWin = (stake, odds) => odds > 0 ? stake * odds / 100 : stake * 100 / -odds;
 const mbProfit = b => b.res === 'W' ? mbToWin(b.stake, b.odds) : b.res === 'L' ? -b.stake : 0;
-const mbDefaultStake = odds => odds < 0 ? -odds : 100; // your rule: $100 on plus odds, bet to win $100 on minus odds
+// one unit = $10 (your rule since Nov 10, 2026): $10 on plus odds, bet to win $10 on minus odds (−120 risks $12)
+const UNIT_USD = 10;
+const mbDefaultStake = (odds, base = UNIT_USD) => Math.round((odds < 0 ? -odds * base / 100 : base) * 100) / 100;
+// a logged bet's 1-unit stake: bets saved before the change used $100 units (no ub field), newer ones save ub
+const mbUnitStake = b => mbDefaultStake(b.odds, b.ub || 100);
 function alertBox(msg) { const n = document.createElement('div'); n.className = 'toast'; n.textContent = msg; document.body.appendChild(n); setTimeout(() => n.remove(), 2600); }
 // bet form (new or edit)
 function mbOpenForm(seed, editId) {
@@ -6234,7 +6238,7 @@ function mbOpenForm(seed, editId) {
   const old = $('#mbModal'); if (old) old.remove();
   const b = seed || {};
   const odds = b.odds != null ? b.odds : (b.best != null ? b.best : b.dk != null ? b.dk : '');
-  const stake = b.stake != null ? b.stake : (odds !== '' ? mbDefaultStake(+odds) : 100);
+  const stake = b.stake != null ? b.stake : (odds !== '' ? mbDefaultStake(+odds) : UNIT_USD);
   const m = document.createElement('div'); m.id = 'mbModal'; m.className = 'mbmodal';
   m.innerHTML = `<div class="mbbox" role="dialog" aria-label="Log a bet">
     <div class="card-h"><h3>${editId ? 'Edit bet' : 'Log my bet'}</h3><button class="btn" data-mbclose>✕</button></div>
@@ -6266,7 +6270,7 @@ function mbOpenForm(seed, editId) {
       const type = b.type === 'fg' ? 'fg' : b.type === 'sog' ? 'sog' : b.type === 'sv' ? 'sv' : 'goal';
       // linked to its recommendation: the one it came from, or the matching one if you logged it from a table
       const link = b.recId ? { recId: b.recId, u: b.u, recPrice: b.recPrice, recBook: b.recBook, recLine: b.recLine, recAt: b.recAt } : (() => { const id = recFind({ type, gid: b.gid, pid: b.pid, side: b.side, line: ln }), r = id && recsAll().find(x => x.id === id); return r ? { recId: id, u: r.first.u, recPrice: r.first.price, recBook: r.first.book, recLine: r.line, recAt: r.first.t } : {}; })();
-      list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, side: b.side, line: ln, placed: new Date().toISOString(), gid: b.gid, start: b.start, date: b.start ? localDay(b.start) : todayStr(), pid: b.pid, n: b.n, tm: b.tm, opp: b.opp, gl: b.gl || '', p: b.p, dk: b.dk, odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim(), res: null, ...link });
+      list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, side: b.side, line: ln, placed: new Date().toISOString(), gid: b.gid, start: b.start, date: b.start ? localDay(b.start) : todayStr(), pid: b.pid, n: b.n, tm: b.tm, opp: b.opp, gl: b.gl || '', p: b.p, dk: b.dk, odds: o, stake: s, book: $('#mbBook').value.trim(), note: $('#mbNote').value.trim(), res: null, ub: UNIT_USD, ...link });
     }
     if (mbSave(list)) { m.remove(); recAfterChange(); alertBox(editId ? 'Bet updated' : `Bet logged: ${b.n} ${fmtML(o)} for ${money(s).replace('+', '')}`); if (activeTab() === 'mybets') renderMyBets(); else if (activeTab() === 'scorers') mbMarkButtons(); else if (activeTab() === 'firstgoal') fgMarkButtons(); else if (activeTab() === 'sog') sogMarkButtons(); }
   };
@@ -6306,7 +6310,7 @@ async function renderMyBets() {
   const withP = done.filter(b => fin(b.p)), expP = withP.reduce((s, b) => s + b.p * mbToWin(b.stake, b.odds) - (1 - b.p) * b.stake, 0), actP = withP.reduce((s, b) => s + mbProfit(b), 0);
   let streak = 0; const sorted = [...done].sort((a, b) => (a.start || a.placed) < (b.start || b.placed) ? -1 : 1);
   for (let i = sorted.length - 1; i >= 0; i--) { if (!streak) streak = sorted[i].res === 'W' ? 1 : -1; else if ((sorted[i].res === 'W') === (streak > 0)) streak += streak > 0 ? 1 : -1; else break; }
-  const uWonAll = done.reduce((s, b) => s + mbProfit(b) / mbDefaultStake(b.odds), 0), uRiskAll = done.reduce((s, b) => s + b.stake / mbDefaultStake(b.odds), 0);
+  const uWonAll = done.reduce((s, b) => s + mbProfit(b) / mbUnitStake(b), 0), uRiskAll = done.reduce((s, b) => s + b.stake / mbUnitStake(b), 0);
   const tile = (k, v, s, col) => `<div class="tile"><div class="k">${k}</div><div class="v num"${col ? ` style="color:${col}"` : ''}>${v}</div><div class="s">${s}</div></div>`;
   const tiles = `<div class="tiles" style="margin-bottom:14px">
     ${tile('Profit / loss', money(profit), `${w}-${done.length - w} · ROI ${staked ? (profit >= 0 ? '+' : '') + pct1(profit / staked) + '%' : '–'}`, profit > 0 ? 'var(--good)' : profit < 0 ? 'var(--neg)' : '')}
@@ -6364,7 +6368,7 @@ async function renderMyBets() {
    (and included in Export backup). "Bet placed" opens the bet form filled in with the recommended price, line and size, and
    the bet it saves is linked to the recommendation, so it counts in My Bets (record, ROI, units) like any other bet. */
 const RST_KEY = 'icelab-recstatus', RSEEN_KEY = 'icelab-recseen';
-const RS = { map: {}, ready: null, f: '', mk: '', all: false, asked: new Set(), when: '', from: '', to: '', sort: 'game' };
+const RS = { map: {}, ready: null, f: '', mk: '', all: false, asked: new Set(), when: '', from: '', to: '', sort: 'rec' };
 // "Recommended" time filter: when the recommendation first appeared (your local time)
 const REC_WHEN = [['', 'Any time'], ['6h', 'Last 6 hours'], ['24h', 'Last 24 hours'], ['today', 'Today'], ['yday', 'Yesterday'], ['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['custom', 'Custom range…']];
 function recWhenRange() {
@@ -6466,7 +6470,7 @@ function recRowHtml(r, BM) {
   const f = r.first, l = r.end || r.last, moved = r.endPrice != null && r.endPrice !== f.price ? `<div class="muted" style="font-size:11.5px">Price at end ${fmtML(r.endPrice)}</div>` : r.last && r.last.price !== f.price ? `<div class="muted" style="font-size:11.5px">Latest ${fmtML(r.last.price)} ${esc(BK[r.last.book] || '')} · ${r.last.u}u</div>` : '';
   return `<tr class="${recNeeds(r, BM) ? 'rsneed' : ''}"><td class="l">${recDt(f.t)}</td>
     <td class="l"><div class="tcell">${logoImg(tmId, 16)}<b>${esc(recLabel(r))}</b></div><div class="muted" style="font-size:11.5px">${REC_MKT[r.m]} · ${match} · ${recDt(r.start)}</div></td>
-    <td><b>${fmtML(f.price)}</b> <span class="muted" style="font-size:11.5px">${esc(BK[f.book] || f.book || '')}</span><div style="font-size:11.5px"><b style="color:var(--good)">${f.u}u</b>${fin(f.edge) ? ` · edge +${(f.edge * 100).toFixed(1)} pts` : ''}</div>${moved}</td>
+    <td><b>${fmtML(f.price)}</b> <span class="muted" style="font-size:11.5px">${esc(BK[f.book] || f.book || '')}</span><div style="font-size:11.5px"><b style="color:var(--good)">${f.u}u</b> <span class="muted">(${money(f.u * mbDefaultStake(f.price)).replace('+', '')})</span>${fin(f.edge) ? ` · edge +${(f.edge * 100).toFixed(1)} pts` : ''}</div>${moved}</td>
     <td class="l">${recStatusCell(r)}</td>
     <td class="l">${recPlaceCell(r, BM)}</td></tr>`;
 }
@@ -6481,7 +6485,7 @@ async function renderRecs() {
   if (!RS.f) RS.f = needs.length ? 'needs' : 'all';
   // your placed recommended bets (from My Bets) vs. every recommendation at its first price (the model's record)
   const placedBets = R.flatMap(r => BM[r.id] || []), pDone = placedBets.filter(b => b.res === 'W' || b.res === 'L');
-  const pProfit = pDone.reduce((s, b) => s + mbProfit(b), 0), pStake = pDone.reduce((s, b) => s + b.stake, 0), pUnits = pDone.reduce((s, b) => s + mbProfit(b) / mbDefaultStake(b.odds), 0), pW = pDone.filter(b => b.res === 'W').length;
+  const pProfit = pDone.reduce((s, b) => s + mbProfit(b), 0), pStake = pDone.reduce((s, b) => s + b.stake, 0), pUnits = pDone.reduce((s, b) => s + mbProfit(b) / mbUnitStake(b), 0), pW = pDone.filter(b => b.res === 'W').length;
   const gr = R.filter(r => r.res === 'W' || r.res === 'L'), uRisk = gr.reduce((s, r) => s + r.first.u, 0), uWon = gr.reduce((s, r) => s + uProfit(r.first.u, r.first.price, r.res), 0), mW = gr.filter(r => r.res === 'W').length;
   const notR = R.filter(r => recPlace(r, BM) === 'not' && (r.res === 'W' || r.res === 'L')), notU = notR.reduce((s, r) => s + uProfit(r.first.u, r.first.price, r.res), 0);
   const tile = (k, v, s, col) => `<div class="tile"><div class="k">${k}</div><div class="v num"${col ? ` style="color:${col}"` : ''}>${v}</div><div class="s">${s}</div></div>`;
@@ -7397,7 +7401,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
   });
   $('#mbBook').addEventListener('input', () => { st.bookTouched = true; });
   $('#gbLine').oninput = () => { st.line = +$('#gbLine').value; st.lineAuto = false; };
-  $('#mbOdds').oninput = () => { st.oddsTouched = true; if (!st.stakeTouched) { const o = +$('#mbOdds').value; if (Math.abs(o) >= 100) $('#mbStake').value = mbDefaultStake(o); } calc(); };
+  $('#mbOdds').oninput = () => { st.oddsTouched = true; if (!st.stakeTouched) { const o = +$('#mbOdds').value; if (Math.abs(o) >= 100) $('#mbStake').value = Math.round(mbDefaultStake(o) * (G.pre && G.pre.u && st.type === (G.pre.type || 'ml') && st.side === G.pre.side ? G.pre.u : 1) * 100) / 100; } calc(); };
   $('#mbStake').oninput = () => { st.stakeTouched = true; calc(); };
   const clr = $('#gbClear'); if (clr) clr.onclick = async () => { m.remove(); await decSet(G.gid, null); decPaint(G.gid); };
   paint(); if (!ex) setOdds(); else calc();
@@ -7420,7 +7424,7 @@ async function mbOpenGameForm(seed, editId, onCancel) {
     if (ex) { const x = list.find(y => y.id === ex.id); if (x) { Object.assign(x, rec); if (st.type === 'ml' && fin(st.p)) x.p = q; else if (st.type !== 'ml') delete x.p; } }
     else {
       const link = st.type !== 'ml' && st.type !== 'pl' ? {} : G.pre && st.type === (G.pre.type || 'ml') && st.side === G.pre.side ? { recId: G.pre.recId, u: G.pre.u, recPrice: G.pre.recPrice, recBook: G.pre.recBook, recAt: G.pre.recAt } : (() => { const id = recFind({ type: st.type, gid: G.gid, side: st.side, line: st.line }), r = id && recsAll().find(x => x.id === id); return r ? { recId: id, u: r.first.u, recPrice: r.first.price, recBook: r.first.book, recAt: r.first.t } : {}; })();
-      list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), placed: new Date().toISOString(), gid: G.gid, start: G.start, date: G.start ? localDay(G.start) : todayStr(), ...rec, p: q, pH: st.p, res: null, ...link });
+      list.push({ id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), placed: new Date().toISOString(), gid: G.gid, start: G.start, date: G.start ? localDay(G.start) : todayStr(), ...rec, p: q, pH: st.p, res: null, ub: UNIT_USD, ...link });
     }
     if (mbSave(list)) {
       m.remove(); await decSet(G.gid, 'bet'); decPaint(G.gid); recAfterChange();
