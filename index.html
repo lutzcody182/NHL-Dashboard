@@ -6226,11 +6226,13 @@ async function mbDiag() {
 mbInit();
 const mbToWin = (stake, odds) => odds > 0 ? stake * odds / 100 : stake * 100 / -odds;
 const mbProfit = b => b.res === 'W' ? mbToWin(b.stake, b.odds) : b.res === 'L' ? -b.stake : 0;
-// one unit = $10 (your rule since Nov 10, 2026): $10 on plus odds, bet to win $10 on minus odds (−120 risks $12)
-const UNIT_USD = 10;
+// one unit = $20 (your rule since Nov 11, 2026): $20 on plus odds, bet to win $20 on minus odds (−120 risks $24),
+// so a 0.5u bet is $10 on plus odds, or to win $10 on minus odds
+const UNIT_USD = 20;
 const mbDefaultStake = (odds, base = UNIT_USD) => Math.round((odds < 0 ? -odds * base / 100 : base) * 100) / 100;
-// a logged bet's 1-unit stake: bets saved before the change used $100 units (no ub field), newer ones save ub
-const mbUnitStake = b => mbDefaultStake(b.odds, b.ub || 100);
+// a logged bet's 1-unit stake: bets saved before Nov 10 used $100 units (no ub field); bets saved Nov 10–11 were sized
+// with a $10 unit by mistake, and your real unit then was already $20, so they count against $20
+const mbUnitStake = b => mbDefaultStake(b.odds, b.ub === 10 ? 20 : (b.ub || 100));
 function alertBox(msg) { const n = document.createElement('div'); n.className = 'toast'; n.textContent = msg; document.body.appendChild(n); setTimeout(() => n.remove(), 2600); }
 // bet form (new or edit)
 function mbOpenForm(seed, editId) {
@@ -6333,7 +6335,7 @@ async function renderMyBets() {
     ${tile('Profit / loss', money(profit), `${w}-${done.length - w} · ROI ${staked ? (profit >= 0 ? '+' : '') + pct1(profit / staked) + '%' : '–'}`, profit > 0 ? 'var(--good)' : profit < 0 ? 'var(--neg)' : '')}
     ${tile('Total bet', money(staked).replace('+', ''), `${done.length} settled bets · avg ${done.length ? money(staked / done.length).replace('+', '') : '–'}`)}
     ${tile('Pending', String(pend.length), pend.length ? `${money(atRisk).replace('+', '')} at risk · could win ${money(potential).replace('+', '')}` : 'Nothing open')}
-    ${tile('Units', done.length ? `${uWonAll >= 0 ? '+' : '−'}${Math.abs(uWonAll).toFixed(2)}u` : '–', done.length ? `${uRiskAll.toFixed(1)}u risked · 1u = $10 on plus odds, or to win $10 on minus odds` : '', uWonAll > 0 ? 'var(--good)' : uWonAll < 0 ? 'var(--neg)' : '')}
+    ${tile('Units', done.length ? `${uWonAll >= 0 ? '+' : '−'}${Math.abs(uWonAll).toFixed(2)}u` : '–', done.length ? `${uRiskAll.toFixed(1)}u risked · 1u = $20 on plus odds, or to win $20 on minus odds` : '', uWonAll > 0 ? 'var(--good)' : uWonAll < 0 ? 'var(--neg)' : '')}
     ${tile('Hit rate', done.length ? pct1(w / done.length) + '%' : '–', done.length ? `avg odds ${fmtML(Math.round(done.reduce((s, b) => s + b.odds, 0) / done.length))}` : '')}
     ${tile('Streak', streak ? `${Math.abs(streak)} ${streak > 0 ? 'W' : 'L'}` : '–', 'current run of results')}
     ${withP.length ? tile('Ice Lab expected', money(expP), `vs. ${money(actP)} actual on these bets · ${actP >= expP ? 'running hot' : 'running cold'}`) : ''}</div>`;
