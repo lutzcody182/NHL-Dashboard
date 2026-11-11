@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-11",
- "updated": "2026-11-11T20:03:25.998Z",
+ "updated": "2026-11-11T22:21:12.748Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -19,7 +19,7 @@
         {
          "n": "Yanni Gourde",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jake Guentzel",
@@ -39,7 +39,7 @@
         {
          "n": "Sam O'Reilly",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Anthony Cirelli",
@@ -77,8 +77,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Dominic James",
-         "pos": "C",
+         "n": "Scott Sabourin",
+         "pos": "W",
          "pp": ""
         },
         {
