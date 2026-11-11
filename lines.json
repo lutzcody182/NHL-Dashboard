@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-11",
- "updated": "2026-11-11T14:00:18.300Z",
+ "updated": "2026-11-11T17:00:20.819Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -321,11 +321,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Luke Glendening",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Eeli Tolvanen",
          "pos": "W",
          "pp": ""
@@ -368,7 +363,7 @@
         {
          "n": "Scott Morrow",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -376,7 +371,7 @@
     },
     {
      "team": "Calgary Flames",
-     "goalie": "Dustin Wolf",
+     "goalie": "Devin Cooley",
      "groups": [
       {
        "label": "Line 1",
