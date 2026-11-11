@@ -8232,24 +8232,27 @@ async function renderTrial() {
   // trial scoreboard: is each trial market earning its way to real recommendations?
   const trialCard = (() => {
     const all = (PK && PK.xm) || [], T = trialFit(PK), done = all.filter(x => x.res === 'W' || x.res === 'L' || x.res === 'PU');
-    const lbl = x => x.m === 'pl' ? `${esc(TM(x.tm).abbr)} ${x.line > 0 ? '+' : ''}${x.line} <span class="muted">vs ${esc(TM(x.opp).abbr)}</span>`
+    const plAb = (x, us) => esc((us ? (x.side === 'h' ? x.ha : x.aa) : (x.side === 'h' ? x.aa : x.ha)) || TM(us ? x.tm : x.opp).abbr);
+    const lbl = x => x.m === 'pl' ? `${plAb(x, true)} ${x.line > 0 ? '+' : ''}${x.line} <span class="muted">vs ${plAb(x, false)}</span>`
       : `${esc(x.n || '')} ${x.side === 'o' ? 'over' : 'under'} ${x.line} ${x.m === 'sv' ? 'saves' : 'shots'}`;
     const act = x => x.m === 'pl' ? `final ${esc(x.score || '')}` : x.m === 'sv' ? `${x.saves} saves` : `${x.shots} shots`;
     const resB = r => `<b style="color:${r === 'W' ? 'var(--good)' : r === 'L' ? 'var(--neg)' : 'var(--muted)'}">${r === 'PU' ? 'Push' : r}</b>`;
     const row = m => {
       const t = T[m] || { n: 0 }, L = done.filter(x => x.m === m);
       const bets = L.filter(x => x.uT >= .5 && x.best != null), W = bets.filter(x => x.res === 'W').length, Ls = bets.filter(x => x.res === 'L').length, P = bets.length - W - Ls;
+      const ep = L.filter(x => x.edge > 0 && x.best != null && x.res !== 'PU'), eW = ep.filter(x => x.res === 'W').length, eP = ep.reduce((s, x) => s + (x.res === 'W' ? (x.best > 0 ? x.best / 100 : 100 / -x.best) : -1), 0);
+      const edgeCell = ep.length ? `${eW}-${ep.length - eW} <b style="color:${eP >= 0 ? 'var(--good)' : 'var(--neg)'}">${eP >= 0 ? '+' : ''}${eP.toFixed(2)}u</b> <span class="muted" style="font-size:11px">${eP >= 0 ? '+' : ''}${(eP / ep.length * 100).toFixed(1)}%</span>` : '<span class="muted">–</span>';
       let won = 0, risk = 0, exp = 0; for (const x of bets) { won += uProfit(x.uT, x.best, x.res); if (x.res !== 'PU') { risk += x.uT; exp += x.p; } }
       const ll = fin(t.ll) && fin(t.llB) ? `<b style="color:${t.ll < t.llB ? 'var(--good)' : 'var(--neg)'}">${t.ll.toFixed(3)}</b> vs ${t.llB.toFixed(3)}` : '<span class="muted">–</span>';
       const status = t.ok ? '<b style="color:var(--good)">Passed: now recommended</b>' : t.n >= TRIAL_NEED ? '<b style="color:var(--neg)">Not beating the books yet</b>' : `${t.n} / ${TRIAL_NEED}`;
-      return `<tr><td class="l"><b>${UNIT_MKT[m]}</b></td><td>${status}</td><td>${ll}</td><td>${bets.length ? `${W}-${Ls}${P ? `-${P}` : ''}` : '<span class="muted">–</span>'}</td>
+      return `<tr><td class="l"><b>${UNIT_MKT[m]}</b></td><td>${status}</td><td>${ll}</td><td>${edgeCell}</td><td>${bets.length ? `${W}-${Ls}${P ? `-${P}` : ''}` : '<span class="muted">–</span>'}</td>
         <td>${bets.length ? `${pct1(exp / Math.max(1, W + Ls))}% / <b>${pct1(W / Math.max(1, W + Ls))}%</b>` : '<span class="muted">–</span>'}</td>
         <td>${bets.length ? `<b style="color:${won >= 0 ? 'var(--good)' : 'var(--neg)'}">${won >= 0 ? '+' : ''}${won.toFixed(2)}u</b> <span class="muted" style="font-size:11px">${risk ? `${won >= 0 ? '+' : ''}${(won / risk * 100).toFixed(1)}% ROI` : ''}</span>` : '<span class="muted">–</span>'}</td></tr>`;
     };
     const recent = done.filter(x => x.uT >= .5).sort((a, b) => new Date(b.start) - new Date(a.start)).slice(0, 15);
     return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📋 Trial results</h3><p>${done.length} graded picks</p></div>
-      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px"><b>Prediction test</b> is what decides a market: average log loss of Ice Lab's chance vs. the books' own chance on every graded pick (lower is better). A market starts being recommended once it has ${TRIAL_NEED}+ graded picks and wins this test. <b>Would-be bets</b> are the picks that showed "trial · 0.5u" or more before the game, graded at the best price and units shown then, so you can see what following them would have done.</p>
-      <div class="twrap"><table><thead><tr><th class="l">Market</th><th>Graded picks</th><th>Prediction test (Ice Lab vs books)</th><th>Would-be bets W-L</th><th>Expected / actual hit rate</th><th>Units</th></tr></thead>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px"><b>Prediction test</b> is what decides a market: average log loss of Ice Lab's chance vs. the books' own chance on every graded pick (lower is better). A market starts being recommended once it has ${TRIAL_NEED}+ graded picks and wins this test. <b>Would-be bets</b> are the picks that showed "trial · 0.5u" or more before the game, graded at the best price and units shown then, so you can see what following them would have done. <b>Every edge pick</b> is every graded pick that showed any edge at the best price, 1 unit each: more picks, so it fills in faster.</p>
+      <div class="twrap"><table><thead><tr><th class="l">Market</th><th>Graded picks</th><th>Prediction test (Ice Lab vs books)</th><th>Every edge pick (1u each)</th><th>Would-be bets W-L</th><th>Expected / actual hit rate</th><th>Units</th></tr></thead>
       <tbody>${TRIAL_MKTS.map(row).join('')}</tbody></table></div>
       ${recent.length ? `<h4 style="margin:14px 0 6px">Latest graded would-be bets</h4><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Bet</th><th>Price</th><th>Units</th><th>Result</th><th>Actual</th></tr></thead><tbody>
         ${recent.map(x => `<tr><td class="l">${esc(String(x.date || '').replace(/^(\d{4})(\d\d)(\d\d)$/, '$2/$3'))}</td><td class="l">${lbl(x)}</td><td>${fmtML(x.best)} <span class="muted" style="font-size:11px">${BK[x.book] || ''}</span></td><td>${x.uT}u</td><td>${resB(x.res)}</td><td>${act(x)}</td></tr>`).join('')}</tbody></table></div>`
