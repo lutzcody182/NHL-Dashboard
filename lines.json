@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-10",
- "updated": "2026-11-11T01:09:37.525Z",
+ "updated": "2026-11-11T03:00:16.332Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1332,24 +1332,24 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Moritz Seider",
-         "pos": "D",
-         "pp": "PP1"
-        },
-        {
-         "n": "Ben Chiarot",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "William Wallinder",
          "pos": "D",
          "pp": ""
         },
         {
+         "n": "Moritz Seider",
+         "pos": "D",
+         "pp": "PP1"
+        },
+        {
          "n": "Justin Faulk",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Ben Chiarot",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Anton Johansson",
