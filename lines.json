@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-10",
- "updated": "2026-11-10T22:09:31.892Z",
+ "updated": "2026-11-11T00:07:11.779Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -452,12 +452,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Philip Tomasino",
+         "n": "Hayden Hodgson",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Samuel Blais",
+         "n": "Philip Tomasino",
          "pos": "W",
          "pp": ""
         }
@@ -1319,7 +1319,7 @@
         {
          "n": "Marco Kasper",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Carter Mazur",
