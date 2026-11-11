@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-11",
- "updated": "2026-11-11T18:00:19.824Z",
+ "updated": "2026-11-11T18:32:21.835Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1403,11 +1403,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Nico Myatovic",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Troy Terry",
          "pos": "W",
          "pp": "PP2"
@@ -1416,6 +1411,11 @@
          "n": "Tim Washe",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Nikita Nesterenko",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -1428,9 +1428,9 @@
          "pp": ""
         },
         {
-         "n": "Nikita Nesterenko",
+         "n": "Sam Colangelo",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Roger McQueen",
