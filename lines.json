@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-11",
- "updated": "2026-11-11T18:32:21.835Z",
+ "updated": "2026-11-11T19:02:50.688Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -976,6 +976,11 @@
         },
         {
          "n": "Dylan Coghlan",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Parker Wotherspoon",
          "pos": "D",
          "pp": ""
         }
