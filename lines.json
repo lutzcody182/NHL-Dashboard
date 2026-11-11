@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-10",
- "updated": "2026-11-11T00:07:11.779Z",
+ "updated": "2026-11-11T01:09:37.525Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1292,6 +1292,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Marco Kasper",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Michael Rasmussen",
          "pos": "W",
          "pp": "PP2"
@@ -1300,11 +1305,6 @@
          "n": "J.T. Compher",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Mason Appleton",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -1317,12 +1317,12 @@
          "pp": ""
         },
         {
-         "n": "Marco Kasper",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Sheldon Dries",
+         "pos": "C",
+         "pp": ""
         },
         {
-         "n": "Carter Mazur",
+         "n": "Mason Appleton",
          "pos": "W",
          "pp": ""
         }
