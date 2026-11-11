@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-11",
- "updated": "2026-11-11T19:02:50.688Z",
+ "updated": "2026-11-11T20:03:25.998Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -37,9 +37,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Gage Goncalves",
+         "n": "Sam O'Reilly",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Anthony Cirelli",
@@ -76,6 +76,11 @@
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Dominic James",
+         "pos": "C",
+         "pp": ""
+        },
         {
          "n": "Conor Geekie",
          "pos": "C",
@@ -748,7 +753,7 @@
    "teams": [
     {
      "team": "Utah Hockey Club",
-     "goalie": "Karel Vejmelka",
+     "goalie": "Sebastian Cossa",
      "groups": [
       {
        "label": "Line 1",
@@ -997,7 +1002,7 @@
    "teams": [
     {
      "team": "Pittsburgh Penguins",
-     "goalie": "Arturs Silovs",
+     "goalie": "Sergei Murashov",
      "groups": [
       {
        "label": "Line 1",
