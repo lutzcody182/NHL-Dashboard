@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-12",
- "updated": "2026-11-12T13:02:34.333Z",
+ "updated": "2026-11-12T17:00:18.537Z",
  "games": [
   {
    "time": "12:00 PM ET",
@@ -11,7 +11,7 @@
    "teams": [
     {
      "team": "Carolina Hurricanes",
-     "goalie": "Pyotr Kochetkov",
+     "goalie": "Brandon Bussi",
      "groups": [
       {
        "label": "Line 1",
@@ -387,11 +387,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Sean Monahan",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
          "n": "Matthew Knies",
          "pos": "W",
          "pp": "PP1"
@@ -400,6 +395,11 @@
          "n": "Kent Johnson",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Adam Fantilli",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -412,13 +412,13 @@
          "pp": "PP2"
         },
         {
-         "n": "Dmitri Voronkov",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Sean Monahan",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
-         "n": "Adam Fantilli",
-         "pos": "C",
+         "n": "Dmitri Voronkov",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -477,24 +477,24 @@
          "pp": "PP1"
         },
         {
-         "n": "Denton Mateychuk",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Ivan Provorov",
          "pos": "D",
          "pp": "PP2"
         },
         {
-         "n": "Erik Gudbranson",
+         "n": "Dante Fabbro",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Dante Fabbro",
+         "n": "Jake Christiansen",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Denton Mateychuk",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
@@ -681,14 +681,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Cody Glass",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Evan Rodrigues",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Stefan Noesen",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -696,12 +696,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Amadeus Lombardi",
-         "pos": "W",
+         "n": "Jesper Boqvist",
+         "pos": "C",
          "pp": ""
         },
         {
-         "n": "Jesper Boqvist",
+         "n": "Cody Glass",
          "pos": "C",
          "pp": ""
         }
@@ -731,12 +731,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Johnathan Kovacevic",
+         "n": "Declan Chisholm",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Declan Chisholm",
+         "n": "Brenden Dillon",
          "pos": "D",
          "pp": ""
         }
@@ -1123,7 +1123,7 @@
     },
     {
      "team": "Toronto Maple Leafs",
-     "goalie": "Sergei Bobrovsky",
+     "goalie": "Anthony Stolarz",
      "groups": [
       {
        "label": "Line 1",
@@ -1621,7 +1621,7 @@
     },
     {
      "team": "Florida Panthers",
-     "goalie": "Jacob Markstrom",
+     "goalie": "Akira Schmid",
      "groups": [
       {
        "label": "Line 1",
