@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-12",
- "updated": "2026-11-12T18:00:20.258Z",
+ "updated": "2026-11-12T20:02:48.431Z",
  "games": [
   {
    "time": "12:00 PM ET",
@@ -2537,14 +2537,14 @@
          "pp": "PP2"
         },
         {
+         "n": "Matias Maccelli",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Ondrej Palat",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Jean-Gabriel Pageau",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
