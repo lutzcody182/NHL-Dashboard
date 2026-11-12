@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-11",
- "updated": "2026-11-11T22:21:12.748Z",
+ "updated": "2026-11-12T00:03:12.736Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -17,12 +17,12 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Yanni Gourde",
-         "pos": "W",
+         "n": "Anthony Cirelli",
+         "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Jake Guentzel",
+         "n": "Brandon Hagel",
          "pos": "W",
          "pp": "PP1"
         },
@@ -42,12 +42,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Anthony Cirelli",
-         "pos": "C",
+         "n": "Yanni Gourde",
+         "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Brandon Hagel",
+         "n": "Jake Guentzel",
          "pos": "W",
          "pp": "PP1"
         }
