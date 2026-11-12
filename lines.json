@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-11",
- "updated": "2026-11-12T00:03:12.736Z",
+ "updated": "2026-11-12T02:30:17.028Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -671,11 +671,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Trent Frederic",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Jason Dickinson",
          "pos": "C",
          "pp": ""
@@ -684,6 +679,11 @@
          "n": "Colton Dach",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Mathieu Joseph",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -691,17 +691,17 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Trent Frederic",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Owen Michaels",
          "pos": "C",
          "pp": ""
         },
         {
          "n": "Alex Formenton",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Mathieu Joseph",
          "pos": "W",
          "pp": ""
         }
@@ -779,19 +779,19 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Kailer Yamamoto",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Lawson Crouse",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Logan Cooley",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Vincent Trocheck",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -799,9 +799,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Dylan Guenther",
+         "n": "Daniil But",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Nick Schmaltz",
@@ -831,7 +831,7 @@
         {
          "n": "Michael Carcone",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -866,7 +866,7 @@
         {
          "n": "Artem Duda",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
