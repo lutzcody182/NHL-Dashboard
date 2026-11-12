@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-12",
- "updated": "2026-11-12T20:02:48.431Z",
+ "updated": "2026-11-12T21:00:17.312Z",
  "games": [
   {
    "time": "12:00 PM ET",
@@ -2140,9 +2140,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Ryan Donato",
+         "n": "Patrick Kane",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Oliver Moore",
@@ -2160,19 +2160,19 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Ryan Donato",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Andrew Mangiapane",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Teuvo Teravainen",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Anton Frondell",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2504,7 +2504,7 @@
         {
          "n": "Simon Holmstrom",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2514,7 +2514,7 @@
         {
          "n": "Emil Heineman",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Brayden Schenn",
@@ -2539,7 +2539,7 @@
         {
          "n": "Matias Maccelli",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Ondrej Palat",
