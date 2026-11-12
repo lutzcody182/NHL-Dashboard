@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-12",
- "updated": "2026-11-12T17:00:18.537Z",
+ "updated": "2026-11-12T17:31:18.317Z",
  "games": [
   {
    "time": "12:00 PM ET",
@@ -716,22 +716,17 @@
          "pp": "PP1"
         },
         {
-         "n": "Brett Pesce",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Jonas Siegenthaler",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Dougie Hamilton",
          "pos": "D",
          "pp": "PP2"
         },
         {
          "n": "Declan Chisholm",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Jonas Siegenthaler",
          "pos": "D",
          "pp": ""
         },
@@ -859,12 +854,12 @@
          "pp": ""
         },
         {
-         "n": "Arber Xhekaj",
+         "n": "Mike Matheson",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
-         "n": "Adam Engstrom",
+         "n": "Arber Xhekaj",
          "pos": "D",
          "pp": ""
         }
@@ -1251,7 +1246,7 @@
    "teams": [
     {
      "team": "Colorado Avalanche",
-     "goalie": "Mackenzie Blackwood",
+     "goalie": "Scott Wedgewood",
      "groups": [
       {
        "label": "Line 1",
@@ -1551,14 +1546,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Michael Rasmussen",
+         "n": "J.T. Compher",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "J.T. Compher",
+         "n": "Carter Mazur",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
