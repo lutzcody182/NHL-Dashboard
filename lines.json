@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-12",
- "updated": "2026-11-12T21:00:17.312Z",
+ "updated": "2026-11-12T21:32:31.433Z",
  "games": [
   {
    "time": "12:00 PM ET",
@@ -2152,7 +2152,7 @@
         {
          "n": "Frank Nazar",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2172,7 +2172,7 @@
         {
          "n": "Anton Frondell",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -2504,7 +2504,7 @@
         {
          "n": "Simon Holmstrom",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -2524,7 +2524,7 @@
         {
          "n": "Victor Eklund",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
