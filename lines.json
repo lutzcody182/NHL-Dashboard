@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-12",
- "updated": "2026-11-13T02:00:17.042Z",
+ "updated": "2026-11-13T03:00:17.409Z",
  "games": [
   {
    "time": "12:00 PM ET",
@@ -2364,9 +2364,29 @@
          "pp": "PP1"
         },
         {
+         "n": "Anders Lee",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Vincent Trocheck",
+         "pos": "C",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
          "n": "Kailer Yamamoto",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Barrett Hayton",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
          "n": "Daniil But",
@@ -2376,7 +2396,7 @@
        ]
       },
       {
-       "label": "Line 2",
+       "label": "Line 3",
        "players": [
         {
          "n": "Lawson Crouse",
@@ -2387,26 +2407,6 @@
          "n": "Jack McBain",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Vincent Trocheck",
-         "pos": "C",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Barrett Hayton",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "Anders Lee",
-         "pos": "W",
-         "pp": "PP2"
         },
         {
          "n": "Michael Carcone",
@@ -2444,9 +2444,9 @@
          "pp": "PP1"
         },
         {
-         "n": "MacKenzie Weegar",
+         "n": "Andrew Peeke",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Dmitri Simashev",
@@ -2454,12 +2454,12 @@
          "pp": ""
         },
         {
-         "n": "Andrew Peeke",
+         "n": "MacKenzie Weegar",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
-         "n": "Nick DeSimone",
+         "n": "Zac Jones",
          "pos": "D",
          "pp": ""
         },
@@ -2532,9 +2532,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Matias Maccelli",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Casey Cizikas",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Ondrej Palat",
@@ -2547,19 +2547,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Casey Cizikas",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Mitchell Chaffee",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Kyle MacLean",
+         "n": "Matias Maccelli",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       },
@@ -2653,27 +2648,7 @@
          "pp": ""
         },
         {
-         "n": "Corey Perry",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Alex Turcotte",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
-         "n": "Scott Laughton",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Andre Lee",
+         "n": "Joel Armia",
          "pos": "W",
          "pp": ""
         },
@@ -2685,15 +2660,40 @@
        ]
       },
       {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Corey Perry",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Scott Laughton",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Andre Lee",
+         "pos": "W",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Brian Dumoulin",
+         "n": "Drew Doughty",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Drew Doughty",
+         "n": "Mikey Anderson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Brian Dumoulin",
          "pos": "D",
          "pp": ""
         },
@@ -2703,17 +2703,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Joel Edmundson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Cody Ceci",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Mikey Anderson",
+         "n": "Joel Edmundson",
          "pos": "D",
          "pp": ""
         }
