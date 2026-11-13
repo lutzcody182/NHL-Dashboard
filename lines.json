@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-12",
- "updated": "2026-11-13T00:03:26.994Z",
+ "updated": "2026-11-13T00:32:41.999Z",
  "games": [
   {
    "time": "12:00 PM ET",
@@ -266,14 +266,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Sam O'Reilly",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
          "n": "Brandon Hagel",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Jake Guentzel",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "Nikita Kucherov",
@@ -286,33 +286,13 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Yanni Gourde",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Pontus Holmberg",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Jake Guentzel",
-         "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
          "n": "Zemgus Girgensons",
          "pos": "C",
          "pp": ""
         },
         {
-         "n": "Conor Geekie",
-         "pos": "C",
+         "n": "Pontus Holmberg",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -323,13 +303,28 @@
        ]
       },
       {
-       "label": "Line 4",
+       "label": "Line 3",
        "players": [
         {
-         "n": "Dominic James",
-         "pos": "C",
-         "pp": ""
+         "n": "Gage Goncalves",
+         "pos": "W",
+         "pp": "PP2"
         },
+        {
+         "n": "Sam O'Reilly",
+         "pos": "C",
+         "pp": "PP1"
+        },
+        {
+         "n": "Conor Geekie",
+         "pos": "C",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
         {
          "n": "Scott Sabourin",
          "pos": "W",
@@ -716,9 +711,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Dougie Hamilton",
+         "n": "Jonas Siegenthaler",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Declan Chisholm",
@@ -726,9 +721,9 @@
          "pp": ""
         },
         {
-         "n": "Jonas Siegenthaler",
+         "n": "Dougie Hamilton",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Brenden Dillon",
@@ -1672,7 +1667,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Jack Devine",
+         "n": "Sandis Vilmanis",
          "pos": "W",
          "pp": ""
         }
