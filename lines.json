@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-12",
- "updated": "2026-11-13T01:00:17.214Z",
+ "updated": "2026-11-13T02:00:17.042Z",
  "games": [
   {
    "time": "12:00 PM ET",
@@ -1078,9 +1078,19 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Brock Faber",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
          "n": "Quinn Hughes",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Jared Spurgeon",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Jonas Brodin",
@@ -1093,17 +1103,7 @@
          "pp": ""
         },
         {
-         "n": "Jared Spurgeon",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Zach Bogosian",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Matt Kiersted",
          "pos": "D",
          "pp": ""
         }
@@ -1994,14 +1994,14 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Zach Benson",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Peyton Krebs",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Josh Norris",
-         "pos": "C",
-         "pp": "PP2"
         },
         {
          "n": "Tage Thompson",
@@ -2019,12 +2019,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Jack Quinn",
+         "n": "Jason Zucker",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
-         "n": "Zach Benson",
+         "n": "Jack Quinn",
          "pos": "W",
          "pp": "PP1"
         }
@@ -2034,18 +2034,18 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Jason Zucker",
+         "n": "Jiri Kulich",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Ryan McLeod",
-         "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Josh Doan",
          "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Josh Norris",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -2054,9 +2054,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Jiri Kulich",
-         "pos": "W",
-         "pp": ""
+         "n": "Ryan McLeod",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Beck Malenstyn",
@@ -2084,7 +2084,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Olen Zellweger",
+         "n": "Conor Timmins",
          "pos": "D",
          "pp": ""
         },
@@ -2094,7 +2094,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Zach Metsa",
+         "n": "Olen Zellweger",
          "pos": "D",
          "pp": ""
         },
@@ -2135,9 +2135,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Patrick Kane",
+         "n": "Ryan Donato",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Oliver Moore",
@@ -2155,9 +2155,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Ryan Donato",
+         "n": "Patrick Kane",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Andrew Mangiapane",
@@ -2364,14 +2364,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Daniil But",
+         "n": "Kailer Yamamoto",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Nick Schmaltz",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Daniil But",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -2399,11 +2399,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Kailer Yamamoto",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Barrett Hayton",
          "pos": "C",
          "pp": "PP1"
@@ -2412,6 +2407,11 @@
          "n": "Anders Lee",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Michael Carcone",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -2424,14 +2424,14 @@
          "pp": ""
         },
         {
-         "n": "Kevin Stenlund",
-         "pos": "C",
+         "n": "Ben McCartney",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Michael Carcone",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Kevin Stenlund",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -2466,7 +2466,7 @@
         {
          "n": "Artem Duda",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
