@@ -5845,11 +5845,15 @@ const HAIR_MKTS = ['goal', 'fg', 'sog', 'sogAlt', 'sv', 'pl', 'ml'];
 /* trial markets (added Nov 2026): alternate shots lines, goalie saves and puck line (game totals failed their backtest). Their edges are shown and
    their picks saved and graded (picks.json → xm), but they don't count as recommended bets or send alerts until they've
    earned it: 150+ graded picks where the dashboard's chance predicted better (log loss) than the books' own chance (pb). */
-const TRIAL_MKTS = ['sogAlt', 'sv', 'pl'], TRIAL_NEED = 150;
+// moneyline joined the trial markets in Nov 2026: over its first 187 graded games the game model's win chance was less accurate
+// than DraftKings' no-vig line (log loss 0.647 vs 0.638), and the sides it liked lost money. It is still shown and graded,
+// and starts being recommended again on its own once it beats the line over 150+ games.
+const TRIAL_MKTS = ['sogAlt', 'sv', 'pl', 'ml'], TRIAL_NEED = 150;
 function trialFit(PK) {
   UNITS.trial = UNITS.trial || {};
   for (const m of TRIAL_MKTS) {
-    const L = ((PK && PK.xm) || []).filter(x => x.m === m && (x.res === 'W' || x.res === 'L') && fin(x.p) && fin(x.pb));
+    const L = m === 'ml' ? ((PK && PK.games) || []).filter(x => x.hw != null && fin(x.p) && fin(x.mk)).map(x => ({ p: x.p, pb: x.mk, res: x.hw ? 'W' : 'L' })) // home team's chance vs. the line's
+      : ((PK && PK.xm) || []).filter(x => x.m === m && (x.res === 'W' || x.res === 'L') && fin(x.p) && fin(x.pb));
     let a = 0, b = 0; for (const x of L) { const y = x.res === 'W'; a += llOne(x.p, y); b += llOne(x.pb, y); }
     UNITS.trial[m] = { n: L.length, ll: L.length ? a / L.length : NaN, llB: L.length ? b / L.length : NaN, ok: L.length >= TRIAL_NEED && a < b };
   }
@@ -6515,6 +6519,21 @@ function recRowHtml(r, BM) {
     <td class="l">${recStatusCell(r)}</td>
     <td class="l">${recPlaceCell(r, BM)}</td></tr>`;
 }
+// WATCH LIST: bets the model likes (0.5u or more) that the job hasn't recommended yet, and why (see the gates in the job)
+function recWatchCard(PK) {
+  const W = ((PK && PK.watch) || []).filter(w => w.now && !w.rec && new Date(w.start) > Date.now()).sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : (b.u || 0) - (a.u || 0));
+  const asOf = PK && PK.updated ? new Date(PK.updated).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+  const rules = `A bet becomes a recommendation (and sends an alert) only when <b>puck drop is 3 hours away or less</b>, <b>both starting goalies are confirmed</b>, the <b>price hasn't moved 2+ pts against it</b> since the job first saw it, the player <b>hasn't moved down the projected lines or off the first power-play unit</b>, and, for shots, the <b>edge isn't over 3.5 pts</b>. Earlier flags lost money because lineup news comes out during the day.`;
+  const warn = k => k === 'moved' || k === 'lineup' || k === 'cap';
+  const rows = W.map(w => { const fa = pToAm(w.p);
+    return `<tr><td class="l"><b>${esc(recLabel(w))}</b><div class="muted" style="font-size:11.5px">${REC_MKT[w.m] || ''} · ${esc(w.tmA || '')} vs ${esc(w.oppA || '')} · ${recDt(w.start)}</div></td>
+      <td><b>${fmtML(w.price)}</b> <span class="muted" style="font-size:11.5px">${esc(BK[w.book] || w.book || '')}</span><div style="font-size:11.5px">${w.u}u${fin(w.edge) ? ` · edge +${(w.edge * 100).toFixed(1)} pts` : ''}</div>${w.px0 != null && w.px0 !== w.price ? `<div class="muted" style="font-size:11.5px">first seen ${fmtML(w.px0)}</div>` : ''}</td>
+      <td>${fa == null ? '–' : `<b>${fmtML(fa)}</b> <span class="muted" style="font-size:11.5px">${(w.p * 100).toFixed(1)}%</span>`}</td>
+      <td class="l" style="font-size:12px">${(w.why || []).map(y => `<div style="color:${warn(y.k) ? 'var(--neg)' : 'var(--muted)'}">${warn(y.k) ? '⚠️' : '⏳'} ${esc(y.t)}</div>`).join('')}</td></tr>`; }).join('');
+  return `<div class="card" style="margin-bottom:12px"><div class="card-h"><h3>👀 Watching</h3><p>${W.length} bet${W.length === 1 ? '' : 's'} the model likes, not recommended yet${asOf ? ` · as of the ${asOf} run` : ''}</p></div>
+    <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">${rules} ⏳ = still waiting, ⚠️ = a warning sign: don't bet it.</p>
+    ${W.length ? `<div class="twrap"><table class="rstab"><thead><tr><th class="l">Bet</th><th>Price now</th><th>Fair price</th><th class="l">Not recommended yet because</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="muted" style="font-size:13px">Nothing on the watch list right now.</div>'}</div>`;
+}
 const recHead = '<tr><th class="l">Recommended</th><th class="l">Bet</th><th data-gloss="The price, book and size when it was first recommended. This is what Bet placed fills in; change it if you got something different.">Recommended at</th><th data-gloss="The recommended price as a percentage chance (the book&#39;s chance with its margin included), the same scale prediction markets use: a 54% price is like a 54¢ contract. If the price has moved since, the current one is shown under it.">Odds as %</th><th data-gloss="Ice Lab&#39;s chance for this bet, written as odds with no margin: the price where the bet would be exactly break-even. &quot;Bet at … or better&quot; is the worst price that would still be recommended (0.5 units or more after the usual caution), so if the line has moved, compare your book&#39;s price to it.">Fair price</th><th class="l">Status</th><th class="l">Did you bet it?</th></tr>';
 async function renderRecs() {
   const body = $('#recBody'); if (!body) return;
@@ -6544,6 +6563,7 @@ async function renderRecs() {
   body.innerHTML = `<div class="bar"><h2 class="grow">Recommended bets</h2></div>
     <p class="muted" style="margin:-6px 0 12px;font-size:13px">Every bet the dashboard recommends (0.5 units or more) is kept here with its own ID, even after the price moves, the line changes or the model stops recommending it. Mark each one <b>Bet placed</b>, <b>Not placed</b> or <b>Pending</b> any time. <b>Bet placed</b> opens the bet form with the recommended odds, line and size filled in (change anything that differs), and saves it to <b>My Bets</b>, where it counts in your record, ROI and units. Your answers are saved in this browser and included in My Bets' Export backup.</p>
     ${tiles}
+    ${recWatchCard(PK)}
     <div class="card"><div class="card-h" style="flex-wrap:wrap;gap:8px"><div class="rsseg">${F.map(([k, l]) => `<button class="dbtn${RS.f === k ? ' on' : ''}" data-rsf="${k}">${l}</button>`).join('')}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><select id="rsMk"><option value="">All markets</option>${Object.entries(REC_MKT).map(([k, l]) => `<option value="${k}"${RS.mk === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
       <select id="rsWhen" title="When the recommendation first appeared">${REC_WHEN.map(([k, l]) => `<option value="${k}"${RS.when === k ? ' selected' : ''}>${k ? 'Recommended: ' + l : 'Recommended: any time'}</option>`).join('')}</select>
@@ -8247,11 +8267,14 @@ async function renderTrial() {
     { k: 'units', h: 'Units', v: () => 0, f: (v, r) => r.edge > 0 ? unitsCell('pl', r.p, r.best) : '<span class="muted">–</span>' }];
   // trial scoreboard: is each trial market earning its way to real recommendations?
   const trialCard = (() => {
-    const all = (PK && PK.xm) || [], T = trialFit(PK), done = all.filter(x => x.res === 'W' || x.res === 'L' || x.res === 'PU');
+    // moneyline: the game model's side in each graded game, in the same shape as the other trial picks
+    const mlX = ((PK && PK.games) || []).filter(x => x.side && x.hw != null && fin(x.p)).map(x => { const h = x.side === 'h', p = h ? x.p : 1 - x.p, best = gpPx(x, x.side), u = best != null ? unitsFor('ml', p, best) : null;
+      return { m: 'ml', side: x.side, ha: x.ha, aa: x.aa, h: x.h, a: x.a, p, pb: fin(x.mk) ? (h ? x.mk : 1 - x.mk) : null, best, book: x.book, edge: x.edge, uT: u ? (u.trial ? u.uT : u.u) : 0, res: h === !!x.hw ? 'W' : 'L', score: `${x.as}-${x.hs}`, date: x.date, start: x.start }; });
+    const all = [...((PK && PK.xm) || []), ...mlX], T = trialFit(PK), done = all.filter(x => x.res === 'W' || x.res === 'L' || x.res === 'PU');
     const plAb = (x, us) => esc((us ? (x.side === 'h' ? x.ha : x.aa) : (x.side === 'h' ? x.aa : x.ha)) || TM(us ? x.tm : x.opp).abbr);
-    const lbl = x => x.m === 'pl' ? `${plAb(x, true)} ${x.line > 0 ? '+' : ''}${x.line} <span class="muted">vs ${plAb(x, false)}</span>`
+    const lbl = x => x.m === 'ml' ? `${plAb(x, true)} moneyline <span class="muted">vs ${plAb(x, false)}</span>` : x.m === 'pl' ? `${plAb(x, true)} ${x.line > 0 ? '+' : ''}${x.line} <span class="muted">vs ${plAb(x, false)}</span>`
       : `${esc(x.n || '')} ${x.side === 'o' ? 'over' : 'under'} ${x.line} ${x.m === 'sv' ? 'saves' : 'shots'}`;
-    const act = x => x.m === 'pl' ? `final ${esc(x.score || '')}` : x.m === 'sv' ? `${x.saves} saves` : `${x.shots} shots`;
+    const act = x => x.m === 'pl' || x.m === 'ml' ? `final ${esc(x.score || '')}` : x.m === 'sv' ? `${x.saves} saves` : `${x.shots} shots`;
     const resB = r => `<b style="color:${r === 'W' ? 'var(--good)' : r === 'L' ? 'var(--neg)' : 'var(--muted)'}">${r === 'PU' ? 'Push' : r}</b>`;
     const row = m => {
       const t = T[m] || { n: 0 }, L = done.filter(x => x.m === m);
