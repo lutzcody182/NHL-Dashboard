@@ -6492,16 +6492,30 @@ function recPlaceCell(r, BM) {
   const btn = (s, l) => `<button class="dbtn${pl === s ? ' on ' + s : ''}" data-rsset="${s}" data-rid="${esc(r.id)}">${l}</button>`;
   return `<div class="rsseg">${btn('placed', '✓ Bet placed')}${btn('not', 'Not placed')}${btn('pending', 'Pending')}</div>${bs.map(b => `<div class="muted" style="font-size:11.5px;margin-top:3px">Logged ${fmtML(b.odds)}${b.type === 'sog' && b.line !== r.line ? ` on ${b.line}` : ''} · ${money(b.stake).replace('+', '')}${b.book ? ' · ' + esc(b.book) : ''}${b.res ? ` · ${b.res === 'W' ? 'won ' + money(mbProfit(b)) : b.res === 'L' ? 'lost ' + money(mbProfit(b)).replace('+', '') : 'refunded'}` : ''} <button class="btn sm" data-rsedit="${esc(b.id)}">Edit</button></div>`).join('')}`;
 }
+// chance → American odds (no vig), and the worst price that would still be recommended (0.5u or more)
+const pToAm = p => !(p > 0 && p < 1) ? null : p >= .5 ? -Math.round(p / (1 - p) * 100) : Math.round((1 - p) / p * 100);
+const amPct = a => a == null || !isFinite(a) ? '–' : (amImplied(+a) * 100).toFixed(1) + '%';
+function recBetTo(m, p) {
+  if (!fin(p)) return null;
+  const ok = im => { const x = unitsFor(m, p, pToAm(im)); return !!x && (x.trial ? x.uT : x.u) >= .5; };
+  let lo = .01, hi = Math.min(.99, p); if (!ok(lo)) return null; if (ok(hi)) return pToAm(hi);
+  for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (ok(mid)) lo = mid; else hi = mid; }
+  let a = pToAm(lo); // step to the nearest whole price that still qualifies
+  for (let k = 0; k < 30 && a != null && !ok(amImplied(a)); k++) a = a > 0 ? (a <= 100 ? -101 : a + 1) : a + 1;
+  return a;
+}
 function recRowHtml(r, BM) {
   const tmId = r.tm, match = r.m === 'ml' || r.m === 'pl' ? `${esc(r.side === 'h' ? r.oppA : r.tmA)} @ ${esc(r.side === 'h' ? r.tmA : r.oppA)}` : `${esc(r.tmA)} vs ${esc(r.oppA)}`;
   const f = r.first, l = r.end || r.last, moved = r.endPrice != null && r.endPrice !== f.price ? `<div class="muted" style="font-size:11.5px">Price at end ${fmtML(r.endPrice)}</div>` : r.last && r.last.price !== f.price ? `<div class="muted" style="font-size:11.5px">Latest ${fmtML(r.last.price)} ${esc(BK[r.last.book] || '')} · ${r.last.u}u</div>` : '';
   return `<tr class="${recNeeds(r, BM) ? 'rsneed' : ''}"><td class="l">${recDt(f.t)}</td>
     <td class="l"><div class="tcell">${logoImg(tmId, 16)}<b>${esc(recLabel(r))}</b></div><div class="muted" style="font-size:11.5px">${REC_MKT[r.m]} · ${match} · ${recDt(r.start)}</div></td>
     <td><b>${fmtML(f.price)}</b> <span class="muted" style="font-size:11.5px">${esc(BK[f.book] || f.book || '')}</span><div style="font-size:11.5px"><b style="color:var(--good)">${f.u}u</b> <span class="muted">(${money(f.u * mbDefaultStake(f.price)).replace('+', '')})</span>${fin(f.edge) ? ` · edge +${(f.edge * 100).toFixed(1)} pts` : ''}</div>${moved}</td>
+    <td>${amPct(f.price)}${r.last && r.last.price !== f.price && !r.res ? `<div class="muted" style="font-size:11.5px">now ${amPct(r.last.price)}</div>` : ''}</td>
+    <td>${(() => { const fa = pToAm(f.p), to = recBetTo(r.m, f.p); return fa == null ? '<span class="muted">–</span>' : `<b>${fmtML(fa)}</b> <span class="muted" style="font-size:11.5px">${(f.p * 100).toFixed(1)}%</span>${to != null ? `<div style="font-size:11.5px">bet at <b>${fmtML(to)}</b> or better</div>` : ''}`; })()}</td>
     <td class="l">${recStatusCell(r)}</td>
     <td class="l">${recPlaceCell(r, BM)}</td></tr>`;
 }
-const recHead = '<tr><th class="l">Recommended</th><th class="l">Bet</th><th data-gloss="The price, book and size when it was first recommended. This is what Bet placed fills in; change it if you got something different.">Recommended at</th><th class="l">Status</th><th class="l">Did you bet it?</th></tr>';
+const recHead = '<tr><th class="l">Recommended</th><th class="l">Bet</th><th data-gloss="The price, book and size when it was first recommended. This is what Bet placed fills in; change it if you got something different.">Recommended at</th><th data-gloss="The recommended price as a percentage chance (the book&#39;s chance with its margin included), the same scale prediction markets use: a 54% price is like a 54¢ contract. If the price has moved since, the current one is shown under it.">Odds as %</th><th data-gloss="Ice Lab&#39;s chance for this bet, written as odds with no margin: the price where the bet would be exactly break-even. &quot;Bet at … or better&quot; is the worst price that would still be recommended (0.5 units or more after the usual caution), so if the line has moved, compare your book&#39;s price to it.">Fair price</th><th class="l">Status</th><th class="l">Did you bet it?</th></tr>';
 async function renderRecs() {
   const body = $('#recBody'); if (!body) return;
   await rsInit(); await mbInit(); try { await mbGrade(); } catch (e) {}
