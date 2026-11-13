@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-12",
- "updated": "2026-11-12T23:30:21.229Z",
+ "updated": "2026-11-13T00:03:26.994Z",
  "games": [
   {
    "time": "12:00 PM ET",
@@ -515,14 +515,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Alex Tuch",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Dylan Strome",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Ryan Leonard",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Jordan Kyrou",
@@ -535,14 +535,14 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Alex Tuch",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Aliaksei Protas",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Tom Wilson",
-         "pos": "W",
-         "pp": "PP1"
         },
         {
          "n": "Pierre-Luc Dubois",
@@ -555,9 +555,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Justin Sourdif",
+         "n": "Ilya Protas",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Anthony Beauvillier",
@@ -575,19 +575,19 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ilya Protas",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Boone Jenner",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Ryan Leonard",
+         "n": "Justin Sourdif",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Tom Wilson",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -844,22 +844,22 @@
          "pp": "PP1"
         },
         {
-         "n": "Kaiden Guhle",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Alexandre Carrier",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Mike Matheson",
          "pos": "D",
          "pp": "PP2"
         },
         {
+         "n": "Kaiden Guhle",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Arber Xhekaj",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Alexandre Carrier",
          "pos": "D",
          "pp": ""
         }
@@ -2653,19 +2653,19 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Alex Turcotte",
+         "n": "Trevor Moore",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Corey Perry",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Joel Armia",
+         "n": "Alex Turcotte",
          "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Scott Laughton",
-         "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -2673,9 +2673,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Corey Perry",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Scott Laughton",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Andre Lee",
@@ -2693,12 +2693,12 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Drew Doughty",
+         "n": "Brian Dumoulin",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Mikey Anderson",
+         "n": "Drew Doughty",
          "pos": "D",
          "pp": ""
         },
@@ -2713,12 +2713,12 @@
          "pp": ""
         },
         {
-         "n": "Brian Dumoulin",
+         "n": "Cody Ceci",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Cody Ceci",
+         "n": "Mikey Anderson",
          "pos": "D",
          "pp": ""
         }
