@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T18:02:48.068Z",
+ "updated": "2026-11-14T18:30:13.495Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1403,9 +1403,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Aleksanteri Kaskimaki",
-         "pos": "W",
-         "pp": ""
+         "n": "Connor McMichael",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -1418,13 +1418,13 @@
          "pp": "PP2"
         },
         {
-         "n": "Pavel Buchnevich",
+         "n": "Aleksanteri Kaskimaki",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Connor McMichael",
-         "pos": "C",
+         "n": "Pavel Buchnevich",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
@@ -1755,9 +1755,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Nazem Kadri",
+         "n": "Brock Nelson",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -1775,9 +1775,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Brock Nelson",
+         "n": "Nazem Kadri",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -1840,12 +1840,12 @@
          "pp": ""
         },
         {
-         "n": "Brent Burns",
+         "n": "Noah Juulsen",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Noah Juulsen",
+         "n": "Brent Burns",
          "pos": "D",
          "pp": ""
         },
@@ -2481,7 +2481,7 @@
    "teams": [
     {
      "team": "Buffalo Sabres",
-     "goalie": "Ukko-Pekka Luukkonen",
+     "goalie": "Alex Lyon",
      "groups": [
       {
        "label": "Line 1",
