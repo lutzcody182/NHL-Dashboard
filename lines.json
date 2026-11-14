@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T18:30:13.495Z",
+ "updated": "2026-11-14T19:32:42.557Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -2974,7 +2974,7 @@
    "teams": [
     {
      "team": "New York Islanders",
-     "goalie": "Ilya Sorokin",
+     "goalie": "Semyon Varlamov",
      "groups": [
       {
        "label": "Line 1",
@@ -3002,7 +3002,7 @@
         {
          "n": "Emil Heineman",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Brayden Schenn",
@@ -3012,7 +3012,7 @@
         {
          "n": "Victor Eklund",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -3025,20 +3025,25 @@
          "pp": "PP2"
         },
         {
-         "n": "Casey Cizikas",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Ondrej Palat",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Mathew Barzal",
+         "pos": "C",
+         "pp": "PP1"
         }
        ]
       },
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Casey Cizikas",
+         "pos": "C",
+         "pp": ""
+        },
         {
          "n": "Mitchell Chaffee",
          "pos": "C",
@@ -3339,11 +3344,16 @@
     },
     {
      "team": "Los Angeles Kings",
-     "goalie": "Darcy Kuemper",
+     "goalie": "Anton Forsberg",
      "groups": [
       {
        "label": "Line 1",
        "players": [
+        {
+         "n": "Alex Turcotte",
+         "pos": "W",
+         "pp": "PP2"
+        },
         {
          "n": "Alex Laferriere",
          "pos": "C",
@@ -3351,11 +3361,6 @@
         },
         {
          "n": "Adrian Kempe",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Artemi Panarin",
          "pos": "W",
          "pp": "PP1"
         }
@@ -3387,7 +3392,7 @@
         {
          "n": "Trevor Moore",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Joel Armia",
@@ -3442,7 +3447,7 @@
         {
          "n": "Brandt Clarke",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Cody Ceci",
