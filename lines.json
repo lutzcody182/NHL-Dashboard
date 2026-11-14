@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T16:30:14.296Z",
+ "updated": "2026-11-14T17:00:16.851Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1078,13 +1078,13 @@
          "pp": ""
         },
         {
-         "n": "Sheldon Dries",
-         "pos": "C",
-         "pp": ""
+         "n": "Michael Rasmussen",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
-         "n": "Mason Appleton",
-         "pos": "W",
+         "n": "Sheldon Dries",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -1750,11 +1750,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Nathan MacKinnon",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
          "n": "Martin Necas",
          "pos": "W",
          "pp": "PP1"
@@ -1762,22 +1757,7 @@
         {
          "n": "Artturi Lehkonen",
          "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Gabriel Landeskog",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Nicolas Roy",
-         "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Nazem Kadri",
@@ -1787,7 +1767,7 @@
        ]
       },
       {
-       "label": "Line 3",
+       "label": "Line 2",
        "players": [
         {
          "n": "Jaden Schwartz",
@@ -1807,6 +1787,26 @@
        ]
       },
       {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Fedor Svechkov",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Gabriel Landeskog",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Nicolas Roy",
+         "pos": "W",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
        "label": "Line 4",
        "players": [
         {
@@ -1820,7 +1820,7 @@
          "pp": ""
         },
         {
-         "n": "Fedor Svechkov",
+         "n": "Gavin Brindley",
          "pos": "C",
          "pp": ""
         }
@@ -1830,24 +1830,19 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Brett Kulak",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Cale Makar",
-         "pos": "D",
-         "pp": "PP1"
-        },
-        {
          "n": "Sam Malinski",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Devon Toews",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
+        },
+        {
+         "n": "Brett Kulak",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Brent Burns",
@@ -1856,6 +1851,11 @@
         },
         {
          "n": "Noah Juulsen",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Alex Gagne",
          "pos": "D",
          "pp": ""
         }
