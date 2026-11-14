@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-13",
- "updated": "2026-11-13T15:31:23.732Z",
+ "updated": "2026-11-14T00:32:39.028Z",
  "games": [
   {
    "time": "9:00 PM ET",
@@ -188,7 +188,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Drew O'Connor",
+         "n": "Linus Karlsson",
          "pos": "W",
          "pp": ""
         }
@@ -208,7 +208,7 @@
          "pp": ""
         },
         {
-         "n": "Arshdeep Bains",
+         "n": "Drew O'Connor",
          "pos": "W",
          "pp": ""
         }
@@ -233,17 +233,17 @@
          "pp": ""
         },
         {
-         "n": "Jamie Oleksiak",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Tom Willander",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Guillaume Brisebois",
+         "n": "Cameron Crotty",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Jamie Oleksiak",
          "pos": "D",
          "pp": ""
         }
