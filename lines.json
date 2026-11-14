@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T20:02:40.285Z",
+ "updated": "2026-11-14T20:30:14.571Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -412,26 +412,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Andrew Mangiapane",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Anton Frondell",
-         "pos": "C",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Ryan Donato",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Oliver Moore",
          "pos": "W",
          "pp": "PP2"
@@ -444,6 +424,26 @@
        ]
       },
       {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Ryan Donato",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Teuvo Teravainen",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Anton Frondell",
+         "pos": "C",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
        "label": "Line 4",
        "players": [
         {
@@ -452,7 +452,7 @@
          "pp": ""
         },
         {
-         "n": "Jordan Greenway",
+         "n": "Andrew Mangiapane",
          "pos": "W",
          "pp": ""
         },
@@ -467,14 +467,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Ian Cole",
+         "n": "Alex Vlasic",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Alex Vlasic",
+         "n": "Sam Rinzel",
          "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Artyom Levshunov",
@@ -482,7 +482,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Ethan Del Mastro",
+         "n": "Ian Cole",
          "pos": "D",
          "pp": ""
         },
@@ -492,9 +492,9 @@
          "pp": ""
         },
         {
-         "n": "Sam Rinzel",
+         "n": "Ethan Del Mastro",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       }
@@ -2803,7 +2803,7 @@
         {
          "n": "Adam Gaudette",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -2838,7 +2838,7 @@
         {
          "n": "Eric Pohlkamp",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
