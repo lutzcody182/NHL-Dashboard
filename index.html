@@ -7854,7 +7854,10 @@ function sogMu(St, r, ctx) {
   const evOwn = (p.evS + lgEv * 3600) / (p.evT + 3600); // shrunk with one hour at the position's average
   const onNet = opt.own ? (p.evS + 100 * St.sogPerAtt) / (p.att + 100) : St.sogPerAtt; // his own share of attempts that reach the net (100 attempts of league average)
   const attRate = (p.att * onNet + lgEv * 3600) / (p.evT + 3600); // his even-strength attempts × that rate: steadier than shots alone
-  const evRate = .7 * evOwn + .3 * attRate;
+  // how much to trust attempts over shots on goal (Nov 2026 backtest, 35,000 unseen player-games, better in both seasons):
+  // forwards 50%, defensemen 30%, and more for players with little data (up to 70% / 40% with no games), fading out by 40 games
+  const wAtt = (pos === 'D' ? .3 : .5) + ((pos === 'D' ? .4 : .7) - (pos === 'D' ? .3 : .5)) * Math.max(0, 1 - (p.gp || 0) / 40);
+  const evRate = (1 - wAtt) * evOwn + wAtt * attRate;
   const ppRate = (p.ppS + lgPP * 1200) / (p.ppT + 1200);
   const evSec = fin(r.evSec) ? r.evSec : (p.gp ? p.evT / p.gp : 900), ppSec = fin(r.ppSec) ? r.ppSec : (p.gp ? p.ppT / p.gp : 0);
   const base = evRate * evSec + ppRate * ppSec;
