@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T19:32:42.557Z",
+ "updated": "2026-11-14T20:02:40.285Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -2359,26 +2359,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Matthew Knies",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Kent Johnson",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Luca Del Bel Belluz",
-         "pos": "C",
-         "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
          "n": "Valeri Nichushkin",
          "pos": "W",
          "pp": "PP2"
@@ -2392,6 +2372,26 @@
          "n": "Adam Fantilli",
          "pos": "C",
          "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Matthew Knies",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Kent Johnson",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Luca Del Bel Belluz",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -3012,7 +3012,7 @@
         {
          "n": "Victor Eklund",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -3032,7 +3032,7 @@
         {
          "n": "Mathew Barzal",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
