@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T15:32:23.111Z",
+ "updated": "2026-11-14T16:02:38.489Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -985,14 +985,14 @@
          "pp": ""
         },
         {
-         "n": "Mason Lohrei",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Jonathan Aspirot",
+         "n": "Connor Clifton",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Frederic Brunet",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
@@ -1616,7 +1616,7 @@
     },
     {
      "team": "Toronto Maple Leafs",
-     "goalie": "Sergei Bobrovsky",
+     "goalie": "Anthony Stolarz",
      "groups": [
       {
        "label": "Line 1",
