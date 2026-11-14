@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T16:02:38.489Z",
+ "updated": "2026-11-14T16:30:14.296Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -630,7 +630,7 @@
     },
     {
      "team": "Washington Capitals",
-     "goalie": "Logan Thompson",
+     "goalie": "Charlie Lindgren",
      "groups": [
       {
        "label": "Line 1",
@@ -1257,14 +1257,14 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Anton Lundell",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Brady Tkachuk",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Sam Bennett",
-         "pos": "C",
-         "pp": "PP2"
         },
         {
          "n": "Matthew Tkachuk",
@@ -1297,11 +1297,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Anton Lundell",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Eetu Luostarinen",
          "pos": "W",
          "pp": "PP2"
@@ -1310,6 +1305,11 @@
          "n": "Sandis Vilmanis",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Sam Bennett",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -1865,7 +1865,7 @@
     },
     {
      "team": "Montreal Canadiens",
-     "goalie": "Jacob Fowler",
+     "goalie": "Jakub Dobes",
      "groups": [
       {
        "label": "Line 1",
@@ -1911,14 +1911,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Josh Anderson",
+         "n": "Florian Xhekaj",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Chris Kreider",
+         "n": "Josh Anderson",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jake Evans",
@@ -1938,7 +1938,7 @@
         {
          "n": "Kirby Dach",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Alex Newhook",
@@ -2099,12 +2099,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Nikolas Matinpalo",
+         "n": "Tyler Kleven",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Tyler Kleven",
+         "n": "Carter Yakemchuk",
          "pos": "D",
          "pp": ""
         }
@@ -2114,7 +2114,7 @@
     },
     {
      "team": "Pittsburgh Penguins",
-     "goalie": "Arturs Silovs",
+     "goalie": "Sergei Murashov",
      "groups": [
       {
        "label": "Line 1",
@@ -2358,16 +2358,11 @@
     },
     {
      "team": "Columbus Blue Jackets",
-     "goalie": "Cam Talbot",
+     "goalie": "Jet Greaves",
      "groups": [
       {
        "label": "Line 1",
        "players": [
-        {
-         "n": "Sean Monahan",
-         "pos": "C",
-         "pp": "PP1"
-        },
         {
          "n": "Matthew Knies",
          "pos": "W",
@@ -2377,6 +2372,11 @@
          "n": "Kent Johnson",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Luca Del Bel Belluz",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -2411,7 +2411,7 @@
         {
          "n": "Cole Sillinger",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Mathieu Olivier",
