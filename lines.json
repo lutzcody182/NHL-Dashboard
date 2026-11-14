@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T17:00:16.851Z",
+ "updated": "2026-11-14T17:30:18.719Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -613,11 +613,6 @@
          "n": "Dougie Hamilton",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Vladislav Kolyachonok",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Brenden Dillon",
