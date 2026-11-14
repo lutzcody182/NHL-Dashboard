@@ -866,7 +866,7 @@ jobs:
             let created = 0, ended = 0, graded = 0;
             /* GATES (Nov 2026): a bet the model likes is only RECOMMENDED when
                  - puck drop is 3 hours away or less (earlier flags lost money: news comes out during the day),
-                 - both starting goalies are confirmed,
+                 - both starting goalies are confirmed (not for shots on goal: the goalie isn't in that model),
                  - the price hasn't moved 2+ pts (of chance) against it since the job first saw it,
                  - the player hasn't dropped down RotoGrinders' projected lines / off PP1 / out of the lineup since then,
                  - and, for shots, the edge isn't over 3.5 pts (big edges usually mean missed news).
@@ -901,7 +901,8 @@ jobs:
               if (x.m === 'sog' && p.edge > .035) why.push({ k: 'cap', t: `edge ${pts(p.edge)} is over 3.5 pts: usually missed news (line change, scratch), check before betting` });
               if (new Date(p.start) - now > 3 * 3600e3) why.push({ k: 'time', t: `opens 3 hours before puck drop (${etT(new Date(p.start) - 3 * 3600e3)} ET)` });
               const g = M.gByKey.get(`g|${p.gid}`);
-              if (g) { const c = [g.gHs, g.gAs].filter(v => /confirm/i.test(v || '')).length; if (c < 2) why.push({ k: 'goalie', t: c ? 'waiting for the other starting goalie to be confirmed' : 'waiting for both starting goalies to be confirmed' }); }
+              // the starting goalie isn't part of the shots model, so shots bets (main and alternate lines) don't wait for goalies
+              if (g && x.m !== 'sog' && x.m !== 'sogAlt') { const c = [g.gHs, g.gAs].filter(v => /confirm/i.test(v || '')).length; if (c < 2) why.push({ k: 'goalie', t: c ? 'waiting for the other starting goalie to be confirmed' : 'waiting for both starting goalies to be confirmed' }); }
               if (Number.isFinite(imp(w.px0)) && Number.isFinite(imp(price)) && imp(price) - imp(w.px0) >= .02) why.push({ k: 'moved', t: `price moved against it: ${am(w.px0)} → ${am(price)} since ${etT(w.t0)} ET` });
               if (w.slot0 && slot && slot.posted) {
                 if (!slot.found) why.push({ k: 'lineup', t: 'no longer in the projected lineup' });
@@ -1497,7 +1498,7 @@ jobs:
             let created = 0, ended = 0, graded = 0;
             /* GATES (Nov 2026): a bet the model likes is only RECOMMENDED when
                  - puck drop is 3 hours away or less (earlier flags lost money: news comes out during the day),
-                 - both starting goalies are confirmed,
+                 - both starting goalies are confirmed (not for shots on goal: the goalie isn't in that model),
                  - the price hasn't moved 2+ pts (of chance) against it since the job first saw it,
                  - the player hasn't dropped down RotoGrinders' projected lines / off PP1 / out of the lineup since then,
                  - and, for shots, the edge isn't over 3.5 pts (big edges usually mean missed news).
@@ -1532,7 +1533,8 @@ jobs:
               if (x.m === 'sog' && p.edge > .035) why.push({ k: 'cap', t: `edge ${pts(p.edge)} is over 3.5 pts: usually missed news (line change, scratch), check before betting` });
               if (new Date(p.start) - now > 3 * 3600e3) why.push({ k: 'time', t: `opens 3 hours before puck drop (${etT(new Date(p.start) - 3 * 3600e3)} ET)` });
               const g = M.gByKey.get(`g|${p.gid}`);
-              if (g) { const c = [g.gHs, g.gAs].filter(v => /confirm/i.test(v || '')).length; if (c < 2) why.push({ k: 'goalie', t: c ? 'waiting for the other starting goalie to be confirmed' : 'waiting for both starting goalies to be confirmed' }); }
+              // the starting goalie isn't part of the shots model, so shots bets (main and alternate lines) don't wait for goalies
+              if (g && x.m !== 'sog' && x.m !== 'sogAlt') { const c = [g.gHs, g.gAs].filter(v => /confirm/i.test(v || '')).length; if (c < 2) why.push({ k: 'goalie', t: c ? 'waiting for the other starting goalie to be confirmed' : 'waiting for both starting goalies to be confirmed' }); }
               if (Number.isFinite(imp(w.px0)) && Number.isFinite(imp(price)) && imp(price) - imp(w.px0) >= .02) why.push({ k: 'moved', t: `price moved against it: ${am(w.px0)} → ${am(price)} since ${etT(w.t0)} ET` });
               if (w.slot0 && slot && slot.posted) {
                 if (!slot.found) why.push({ k: 'lineup', t: 'no longer in the projected lineup' });
