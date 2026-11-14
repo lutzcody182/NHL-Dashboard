@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T21:02:44.871Z",
+ "updated": "2026-11-14T23:00:17.816Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -962,7 +962,7 @@
         {
          "n": "Hampus Lindholm",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Charlie McAvoy",
@@ -1578,7 +1578,7 @@
         {
          "n": "Mattias Ekholm",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Evan Bouchard",
@@ -1707,7 +1707,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Troy Stecher",
+         "n": "Chris Tanev",
          "pos": "D",
          "pp": ""
         },
@@ -1717,7 +1717,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Cole McWard",
+         "n": "Troy Stecher",
          "pos": "D",
          "pp": ""
         },
@@ -1906,26 +1906,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Florian Xhekaj",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Josh Anderson",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Jake Evans",
-         "pos": "C",
-         "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
          "n": "Oliver Kapanen",
          "pos": "C",
          "pp": "PP2"
@@ -1939,6 +1919,26 @@
          "n": "Alex Newhook",
          "pos": "W",
          "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
+         "n": "Florian Xhekaj",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Josh Anderson",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Jake Evans",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -2101,7 +2101,7 @@
         {
          "n": "Carter Yakemchuk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -3168,7 +3168,7 @@
         {
          "n": "Sam Colangelo",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Roger McQueen",
