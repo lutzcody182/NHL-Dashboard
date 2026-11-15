@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-15",
- "updated": "2026-11-15T18:10:05.090Z",
+ "updated": "2026-11-15T18:38:35.135Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -1007,19 +1007,19 @@
    "teams": [
     {
      "team": "Vancouver Canucks",
-     "goalie": "Leevi Merilainen",
+     "goalie": "Kevin Lankinen",
      "groups": [
       {
        "label": "Line 1",
        "players": [
         {
-         "n": "Elias Pettersson",
-         "pos": "C",
+         "n": "Jonathan Lekkerimaki",
+         "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Brock Boeser",
-         "pos": "W",
+         "n": "Elias Pettersson",
+         "pos": "C",
          "pp": "PP1"
         },
         {
@@ -1033,11 +1033,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Jonathan Lekkerimaki",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Filip Chytil",
          "pos": "C",
          "pp": "PP2"
@@ -1046,6 +1041,11 @@
          "n": "Paul Cotter",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Brock Boeser",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
