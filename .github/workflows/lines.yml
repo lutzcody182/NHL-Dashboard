@@ -481,12 +481,34 @@ jobs:
             }
             for (const o of [out.tri, out.pr, out.pl]) for (const r of Object.values(o)) { r[7] = +r[7].toFixed(4); r[8] = +r[8].toFixed(4); }
             for (const s of shifts) out.names[s.id] = [name[s.id] || '', s.p];
+            // RESEARCH (Nov 2026): per skater this game → x[id] = [team, offensive-zone faceoffs on ice, defensive-zone, neutral,
+            //   ice time sec, power-play sec, shots on goal, shot attempts (incl. missed + blocked), {opponent id: 5-on-5 sec together} (top 8)]
+            const X = {}, xr = (id, tm) => X[id] || (X[id] = [tm, 0, 0, 0, 0, 0, 0, 0, {}]);
+            for (const s of shifts) if (s.p !== 'G') xr(s.id, s.tm)[4] += s.b - s.a;
+            for (let t = 0; t <= maxT; t++) {
+              const by = split(sec[t]), nH = by[H].f.length + by[H].d.length, nA = by[A].f.length + by[A].d.length;
+              const goalies = (!hasG[H] || by[H].g === 1) && (!hasG[A] || by[A].g === 1);
+              if (goalies && nH !== nA && nH >= 3 && nA >= 3) { const pp = nH > nA ? H : A; for (const id of [...by[pp].f, ...by[pp].d]) xr(id, pp)[5]++; }
+              if (goalies && nH === 5 && nA === 5) for (const [me, op] of [[H, A], [A, H]]) for (const id of [...by[me].f, ...by[me].d]) { const v = xr(id, me)[8]; for (const o of [...by[op].f, ...by[op].d]) v[o] = (v[o] || 0) + 1; }
+            }
+            for (const p of pbp.plays || []) {
+              const k = p.typeDescKey, per = p.periodDescriptor && p.periodDescriptor.number; if (!(per >= 1 && per <= 4)) continue;
+              const t = (per - 1) * 1200 + toS(p.timeInPeriod), d = p.details || {};
+              if (k === 'faceoff' && /^[ODN]$/.test(d.zoneCode || '') && (d.eventOwnerTeamId === H || d.eventOwnerTeamId === A)) {
+                for (const s of shifts) { if (s.p === 'G' || !(s.a <= t && t < s.b)) continue; const mine = s.tm === d.eventOwnerTeamId ? d.zoneCode : d.zoneCode === 'O' ? 'D' : d.zoneCode === 'D' ? 'O' : 'N'; xr(s.id, s.tm)[mine === 'O' ? 1 : mine === 'D' ? 2 : 3]++; }
+              } else if (/^(shot-on-goal|missed-shot|blocked-shot|goal)$/.test(k)) {
+                const sh = d.shootingPlayerId || d.scoringPlayerId; if (!sh || !team[sh]) continue; const r = xr(sh, team[sh]); r[7]++; if (k === 'shot-on-goal' || k === 'goal') r[6]++;
+              }
+            }
+            for (const r of Object.values(X)) r[8] = Object.fromEntries(Object.entries(r[8]).sort((a, b) => b[1] - a[1]).slice(0, 8));
+            out.x = X;
             return out;
           }
           async function run({ fetchImpl = fetch, now = new Date(), budgetMs = 10 * 60e3 } = {}) {
             const t0 = Date.now(), y = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1, code = `${y}${y + 1}`, today = etDay(now);
             let C = { s: code, days: {}, games: {} }; try { C = JSON.parse(fs.readFileSync('.cache/combos.json', 'utf8')); } catch (e) {}
             if (C.s !== code) C = { s: code, days: {}, games: {} }; // new season: start over
+            if (!C.xv) { C.days = {}; C.xv = 1; } // research extras (Nov 2026): revisit every day once so older games get re-read
             // the NHL's servers rate-limit bursts: retry a failed request after a pause (longer each time, or what the server asks for)
             const errs = [];
             const getJ = async url => {
@@ -509,7 +531,7 @@ jobs:
               let allDone = d < today;
               for (const g of gs) {
                 if (!/^(OFF|FINAL)$/.test(g.gameState || '')) { allDone = false; continue; }
-                if (C.games[g.id]) continue;
+                if (C.games[g.id] && C.games[g.id].x) continue;
                 if (Date.now() - t0 > budgetMs) { stopped = true; allDone = false; break; }
                 try {
                   const [sh, pbp] = await Promise.all([getJ(`https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId=${g.id}`), getJ(`https://api-web.nhle.com/v1/gamecenter/${g.id}/play-by-play`)]);
@@ -551,12 +573,56 @@ jobs:
             let P = {}; try { P = JSON.parse(fs.readFileSync('props.json', 'utf8')); } catch (e) {}
             P.combos = { v: 2, source: 'NHL shift charts + play-by-play, 5-on-5', season: code, updated: now.toISOString(), games: Object.keys(C.games).length, xgScale: +scale.toFixed(3),
               cols: ['toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], plCols: ['n', 'pos', 'toi', 'cf', 'ca', 'sf', 'sa', 'gf', 'ga', 'xgf', 'xga', 'gp'], teams };
+            try { P.research = research(C, now); log(`Research: ${JSON.stringify(P.research.summary)}`); } catch (e) { log('Research error: ' + e.message); }
             fs.writeFileSync('props.json', JSON.stringify(P));
             log(`Line combinations: ${fetched} new games (${Object.keys(C.games).length} this season), ${failed} failed requests${stopped ? ', stopped early to stay within time (continues next run)' : ''}. xG scale ${scale.toFixed(2)}.`);
             if (errs.length) log('  first errors: ' + errs.join(' · '));
             return P.combos;
           }
-          module.exports = { run, gameCombos, xgOf };
+          /* RESEARCH BACKTEST (Nov 2026): do zone starts, power-play unit and quality of competition predict a player's shots
+             beyond what the shots model already knows (his own shot rate and minutes)? Walks forward through this season:
+             each player-game is predicted only from games before it. Learns on the first half of the dates, tests on the second. */
+          function research(C, now) {
+            const games = Object.entries(C.games).filter(([, g]) => g.x).map(([id, g]) => ({ id, ...g })).sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : a.id < b.id ? -1 : 1);
+            const LG = [0]; for (let i = 1; i < 200; i++) LG[i] = LG[i - 1] + Math.log(i);
+            const lgamma = z => { if (Number.isInteger(z) && z < 200) return LG[z - 1] || 0; const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, .1208650973866179e-2, -.5395239384953e-5]; let x = z, y = z, t = x + 5.5; t -= (x + .5) * Math.log(t); let ser = 1.000000000190015; for (const q of c) ser += q / ++y; return -t + Math.log(2.5066282746310005 * ser / x); };
+            const K = 8, nbLP = (mu, y) => { mu = Math.max(.03, mu); return lgamma(y + K) - lgamma(K) - (LG[y] || lgamma(y + 1)) + K * Math.log(K / (K + mu)) + y * Math.log(mu / (K + mu)); };
+            const H = {}, rows = [], sf = {}, q = id => { const v = sf[id]; return v && v[0] + v[1] >= 40 ? v[0] / (v[0] + v[1]) : .5; };
+            const qocOf = x => { const o = Object.entries(x[8] || {}).reduce((a, [id, s]) => [a[0] + s * q(id), a[1] + s], [0, 0]); return o[1] ? o[0] / o[1] : null; };
+            for (const g of games) {
+              for (const [id, x] of Object.entries(g.x)) {
+                const h = H[id] || [], toi = x[4]; if (!(toi > 300)) continue;
+                if (h.length >= 5) {
+                  const sum = (a, i) => a.reduce((s, r) => s + (r[i] || 0), 0), T = sum(h, 4), S = sum(h, 6);
+                  const rate = (S + 0.0023 * 3600 * 2) / (T + 3600 * 2);
+                  const oz = sum(h, 1), dz = sum(h, 2), ozShare = (oz + 5) / (oz + dz + 10), l5 = h.slice(-5), oz5Share = (sum(l5, 1) + 5) / (sum(l5, 1) + sum(l5, 2) + 10);
+                  const l10 = h.slice(-10), l3 = h.slice(-3), qp = h.filter(r => r[9] != null);
+                  rows.push({ d: g.d, y: x[6], mu0: rate * toi, dOz: oz5Share - ozShare, ozShare, ppAvg: sum(l10, 5) / l10.length, ppL3: sum(l3, 5) / l3.length, ppLast: h[h.length - 1][5], ppA: x[5], qoc: qp.length ? qp.reduce((s, r) => s + r[9], 0) / qp.length : .5 });
+                }
+                h.push([0, x[1], x[2], x[3], x[4], x[5], x[6], x[7], 0, null]); H[id] = h.slice(-40);
+              }
+              for (const [id, x] of Object.entries(g.x)) { const h = H[id]; if (h && h.length && x[4] > 300) h[h.length - 1][9] = qocOf(x); }
+              for (const [k, r] of Object.entries(g.pl || {})) { const id = k.split('|')[1], v = sf[id] || (sf[id] = [0, 0]); v[0] += r[3]; v[1] += r[4]; }
+            }
+            const dates = [...new Set(rows.map(r => r.d))].sort(), mid = dates[Math.floor(dates.length / 2)];
+            const A = rows.filter(r => r.d < mid), B = rows.filter(r => r.d >= mid);
+            const out = { updated: now.toISOString(), games: games.length, rows: rows.length, learnOn: A.length, testOn: B.length, split: mid, tests: {} };
+            if (A.length < 500 || B.length < 500) { out.summary = { note: 'not enough games with the new data yet', games: games.length }; return out; }
+            const gain = f => { const d = B.map(r => nbLP(f(r), r.y) - nbLP(r.mu0, r.y)), m = d.reduce((a, b) => a + b, 0) / d.length, se = Math.sqrt(d.reduce((a, b) => a + (b - m) ** 2, 0) / (d.length - 1) / d.length); return { per1000: +(m * 1000).toFixed(2), noise: +(se * 1000).toFixed(2), z: se > 0 ? +(m / se).toFixed(2) : 0 }; };
+            const fit = mk => { let best = null; for (const b of [-3, -2, -1.5, -1, -.5, 0, .5, 1, 1.5, 2, 3, 4]) { const v = A.reduce((s, r) => s + nbLP(mk(b)(r), r.y), 0); if (!best || v > best.v) best = { b, v }; } return best.b; };
+            const tst = mk => { const b = fit(mk); return { learned: b, ...gain(mk(b)) }; };
+            // 1) zone starts: a recent change in his offensive-zone start share (last 5 games vs. his season), and his usual level
+            out.tests.zoneStartsChange = tst(b => r => r.mu0 * Math.exp(b * r.dOz));
+            out.tests.zoneStartsLevel = tst(b => r => r.mu0 * Math.exp(b * (r.ozShare - .5)));
+            // 2) power-play minutes: which projection of tonight's PP time is closest (minutes off, test games)
+            const mae = f => +(B.reduce((s, r) => s + Math.abs(f(r) - r.ppA), 0) / B.length / 60).toFixed(3);
+            out.tests.ppMinutesOff = { last10avg: mae(r => r.ppAvg), last3avg: mae(r => r.ppL3), lastGame: mae(r => r.ppLast), half_last3_half_last10: mae(r => .5 * r.ppL3 + .5 * r.ppAvg), half_lastGame_half_last10: mae(r => .5 * r.ppLast + .5 * r.ppAvg) };
+            // 3) quality of competition he usually faces at 5-on-5 (opponents' shot share, season so far)
+            out.tests.qualityOfCompetition = tst(b => r => r.mu0 * Math.exp(b * (r.qoc - .5) * 10));
+            out.summary = { zoneChange: out.tests.zoneStartsChange.z, zoneLevel: out.tests.zoneStartsLevel.z, qoc: out.tests.qualityOfCompetition.z, ppOff: out.tests.ppMinutesOff };
+            return out;
+          }
+          module.exports = { run, gameCombos, xgOf, research };
           if (require.main === module) run().then(() => process.exit(0)).catch(e => { console.log('::warning::' + (e.stack || e.message)); process.exit(0); });
           EOF
           node "$RUNNER_TEMP/combos.js"
