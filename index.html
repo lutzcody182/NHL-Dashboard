@@ -508,7 +508,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
       <button data-tab="scorers" data-g="players">Goal Scorers</button>
       <button data-tab="firstgoal" data-g="players">First Goal</button>
       <button data-tab="sog" data-g="players">Shots on Goal</button>
-      <button data-tab="trial" data-g="players">Saves & Puck Line</button>
+      <button data-tab="trial" data-g="players">Trial Markets</button>
       <button data-tab="compare" data-g="players">Compare</button>
       <button data-tab="birth" data-g="players">Birthplaces</button>
       <button data-tab="quads" data-g="league">Quadrants</button>
@@ -516,6 +516,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
       <button data-tab="upsets" data-g="league">Upsets</button>
       <button data-tab="bets" data-g="league">Bet Tracker</button>
       <button data-tab="recs" data-g="league">Recommended Bets</button>
+      <button data-tab="health" data-g="league">Model Health</button>
       <button data-tab="mybets" data-g="league">My Bets</button>
       <button data-tab="refs" data-g="league">Referees</button>
       <button data-tab="arenas" data-g="league">Arenas</button>
@@ -568,6 +569,7 @@ div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6
   <section class="tab" id="tab-periods"><div class="abar"></div><div id="pdBody"></div></section>
   <section class="tab" id="tab-faceoffs"><div class="abar"></div><div id="foBody"></div></section>
   <section class="tab" id="tab-recs"><div id="recBody"></div></section>
+  <section class="tab" id="tab-health"><div id="hlBody"></div></section>
   <section class="tab" id="tab-mybets"><div id="mbBody"></div></section>
   <section class="tab" id="tab-bets"><div class="abar"></div><div id="btBody"></div></section>
   <section class="tab" id="tab-upsets"><div class="abar"></div><div id="upBody"></div></section>
@@ -5841,14 +5843,14 @@ const UNITS = { proof: {}, hair: {} };
    Edges shown on the boards are unchanged; only the unit sizes use it. The game model's moneyline joined in Nov 2026: even after
    its mix with the betting line (GMB), its biggest edges won less often than the price said (2u bets: model 63%, price 56.5%,
    won 48%), so its sizes get the same learned haircut. */
-const HAIR_MKTS = ['goal', 'fg', 'sog', 'sogAlt', 'sv', 'pl', 'ml'];
+const HAIR_MKTS = ['goal', 'fg', 'sog', 'sogAlt', 'sv', 'pl', 'ml', 'blk', 'ast', 'pts'];
 /* trial markets (added Nov 2026): alternate shots lines, goalie saves and puck line (game totals failed their backtest). Their edges are shown and
    their picks saved and graded (picks.json → xm), but they don't count as recommended bets or send alerts until they've
    earned it: 150+ graded picks where the dashboard's chance predicted better (log loss) than the books' own chance (pb). */
 // moneyline joined the trial markets in Nov 2026: over its first 187 graded games the game model's win chance was less accurate
 // than DraftKings' no-vig line (log loss 0.647 vs 0.638), and the sides it liked lost money. It is still shown and graded,
 // and starts being recommended again on its own once it beats the line over 150+ games.
-const TRIAL_MKTS = ['sogAlt', 'sv', 'pl', 'ml'], TRIAL_NEED = 150;
+const TRIAL_MKTS = ['sogAlt', 'sv', 'pl', 'ml', 'blk', 'ast', 'pts'], TRIAL_NEED = 150;
 function trialFit(PK) {
   UNITS.trial = UNITS.trial || {};
   for (const m of TRIAL_MKTS) {
@@ -5872,7 +5874,7 @@ function trialFit(PK) {
 const trialOk = m => !TRIAL_MKTS.includes(m) || !!((UNITS.trial || {})[m] || {}).ok;
 function unitsHairFit(PK) {
   const xm = m => ((PK && PK.xm) || []).filter(x => x.m === m);
-  const lists = { goal: [(PK && PK.picks) || [], p => p.best != null ? p.best : p.dk], fg: [(PK && PK.first) || [], p => p.best != null ? p.best : p.dk], sog: [(PK && PK.sog) || [], p => p.best], sogAlt: [xm('sogAlt'), p => p.best], sv: [xm('sv'), p => p.best], pl: [xm('pl'), p => p.best],
+  const lists = { goal: [(PK && PK.picks) || [], p => p.best != null ? p.best : p.dk], fg: [(PK && PK.first) || [], p => p.best != null ? p.best : p.dk], sog: [(PK && PK.sog) || [], p => p.best], sogAlt: [xm('sogAlt'), p => p.best], sv: [xm('sv'), p => p.best], pl: [xm('pl'), p => p.best], blk: [xm('blk'), p => p.best], ast: [xm('ast'), p => p.best], pts: [xm('pts'), p => p.best],
     ml: [((PK && PK.games) || []).filter(x => x.side && x.hw != null).map(x => ({ p: x.side === 'h' ? x.p : 1 - x.p, px: gpPx(x, x.side), res: (x.side === 'h') === !!x.hw ? 'W' : 'L' })), p => p.px] };
   for (const m of HAIR_MKTS) {
     const [list, pxf] = lists[m]; let W = 0, Q = 0, I = 0, V = 0, n = 0;
@@ -5885,7 +5887,7 @@ function unitsHairFit(PK) {
   }
   return UNITS.hair;
 }
-const UNIT_MKT = { goal: 'Goal scorer', fg: 'First goal scorer', sog: 'Shots on goal', ml: 'Moneyline (game model)', sogAlt: 'Alternate shots lines', sv: 'Goalie saves', tot: 'Game totals', pl: 'Puck line' };
+const UNIT_MKT = { goal: 'Goal scorer', fg: 'First goal scorer', sog: 'Shots on goal', ml: 'Moneyline (game model)', sogAlt: 'Alternate shots lines', sv: 'Goalie saves', tot: 'Game totals', pl: 'Puck line', blk: 'Blocked shots', ast: 'Assists', pts: 'Points' };
 function unitsProof(PK) {
   trialFit(PK); unitsHairFit(PK);
   // a market is "proven" once its recommended bets (0.5u+) have 300+ graded results and a profit in units
@@ -6426,7 +6428,7 @@ function recWhenRange() {
   }
 }
 const recInWhen = r => { const [a, b] = recWhenRange(), t = new Date(r.first.t); return (!a || t >= a) && (!b || t < b); };
-const REC_MKT = { goal: 'Anytime goal', fg: 'First goal', sog: 'Shots on goal', ml: 'Moneyline', sogAlt: 'Alternate shots line', sv: 'Goalie saves', pl: 'Puck line' };
+const REC_MKT = { goal: 'Anytime goal', fg: 'First goal', sog: 'Shots on goal', ml: 'Moneyline', sogAlt: 'Alternate shots line', sv: 'Goalie saves', pl: 'Puck line', blk: 'Blocked shots', ast: 'Assists', pts: 'Points' };
 function rsInit() {
   if (RS.ready) return RS.ready;
   RS.ready = (async () => {
@@ -6451,7 +6453,7 @@ async function rsSave(opt = {}) {
   } catch (e) { try { localStorage.setItem(RST_KEY, JSON.stringify(RS.map)); } catch (e2) {} }
 }
 const recsAll = () => ((PKF.data && PKF.data.recs) || []);
-const recLabel = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'pl' ? `${r.tmA} ${r.line > 0 ? '+' : ''}${r.line} puck line` : r.m === 'sv' ? `${r.n} ${r.side === 'o' ? 'over' : 'under'} ${r.line} saves` : r.m === 'sog' || r.m === 'sogAlt' ? `${r.n} ${r.side === 'o' ? 'over' : 'under'} ${r.line} shots` : r.m === 'fg' ? `${r.n} first goal` : `${r.n} anytime goal`;
+const recLabel = r => r.m === 'ml' ? `${r.tmA} moneyline` : r.m === 'pl' ? `${r.tmA} ${r.line > 0 ? '+' : ''}${r.line} puck line` : r.m === 'sv' ? `${r.n} ${r.side === 'o' ? 'over' : 'under'} ${r.line} saves` : r.m === 'blk' || r.m === 'ast' || r.m === 'pts' ? `${r.n} ${r.side === 'o' ? 'over' : 'under'} ${r.line} ${{ blk: 'blocked shots', ast: 'assists', pts: 'points' }[r.m]}` : r.m === 'sog' || r.m === 'sogAlt' ? `${r.n} ${r.side === 'o' ? 'over' : 'under'} ${r.line} shots` : r.m === 'fg' ? `${r.n} first goal` : `${r.n} anytime goal`;
 const recBetsMap = () => { const o = {}; for (const b of mbLoad()) if (b.recId) (o[b.recId] = o[b.recId] || []).push(b); return o; };
 const recPlace = (r, BM) => (BM[r.id] && BM[r.id].length) ? 'placed' : (RS.map[r.id] || {}).s === 'not' ? 'not' : 'pending';
 const recNeeds = (r, BM) => r.status !== 'active' && recPlace(r, BM) === 'pending';
@@ -8163,6 +8165,61 @@ function sogTrackRender(PK) {
 const SV_CFG = { carry: .25, gcarry: .75, K: 1000, k: 30, lvl: .995, w: .5 };
 const PL_MAP = { aH: -1.0306, bH: 1.1911, aA: -0.8196, bA: 1.144 };
 const SVS = { key: '', st: null };
+/* ============================== TRIAL: BLOCKED SHOTS, ASSISTS, POINTS ==============================
+   Backtested Nov 14, 2026 on 35,000 unseen player-games (Jan 2026 → now), each better than a player's last-20-game average:
+   blocks  = his blocks per minute (weighted: this season 1, last season ½, shrunk ~4 games toward his position) × projected
+             ice time (30% last 3 games + 70% last 10) × how many shot attempts tonight's opponent takes vs. the league
+             (negative binomial, k = 15; a home factor didn't help)
+   assists = his assists per minute × projected ice time × both teams' scoring level (his team's goals for, the opponent's
+             goals against, vs. the league) (Poisson)
+   points  = the goal scorer model's chance of a goal (as a rate) + the assists rate (Poisson)
+   All three start in trial mode: shown, saved and graded, not recommended until they pass the trial test. */
+const XPS = { key: '', st: null }, XP_W = .5, XP_K = { blk: 15, ast: 1e4, pts: 1e4 };
+function xpState() {
+  const games = [...(GS.prior || []), ...A.filtered].filter(g => g && g.final && g.sk && g.shots && (g.stype === 2 || g.stype === 3)).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const key = games.length + '|' + (games.length ? games[games.length - 1].id : '');
+  if (XPS.st && XPS.key === key) return XPS.st;
+  const cs = games.length ? seasonOf(games[games.length - 1].date) : null, P = {}, T = {}, L = { F: { b: 0, a: 0, t: 0 }, D: { b: 0, a: 0, t: 0 } }; let lgAtt = 0, lgG = 0, lgN = 0;
+  for (const g of games) {
+    const w = seasonOf(g.date) === cs ? 1 : .5, H = g.home.id, Aw = g.away.id, att = {}, gl = {};
+    for (const x of g.shots) { if (x.en) continue; if (x.t <= 3) att[x.tm] = (att[x.tm] || 0) + 1; if (x.t === 0) gl[x.tm] = (gl[x.tm] || 0) + 1; }
+    for (const [id, p] of Object.entries(g.sk)) { if (!(p.toi > 0)) continue; const q = P[id] || (P[id] = { b: 0, a: 0, t: 0, h: [], pos: 'F' }); q.pos = p.pos === 'D' ? 'D' : 'F';
+      q.b += w * (p.bs || 0); q.a += w * (p.a || 0); q.t += w * p.toi; q.h.push(p.toi); if (q.h.length > 10) q.h.shift(); const l = L[q.pos]; l.b += w * (p.bs || 0); l.a += w * (p.a || 0); l.t += w * p.toi; }
+    for (const [t, o] of [[H, Aw], [Aw, H]]) { const x = T[t] || (T[t] = { att: 0, gf: 0, ga: 0, n: 0 }); x.att += w * (att[t] || 0); x.gf += w * (gl[t] || 0); x.ga += w * (gl[o] || 0); x.n += w; }
+    lgAtt += w * ((att[H] || 0) + (att[Aw] || 0)); lgG += w * ((gl[H] || 0) + (gl[Aw] || 0)); lgN += 2 * w;
+  }
+  XPS.key = key; XPS.st = { P, T, L, lgAtt: lgN ? lgAtt / lgN : 60, lgG: lgN ? lgG / lgN : 3 };
+  return XPS.st;
+}
+function xpPredict(St, pid, tm, opp) {
+  const q = St.P[pid]; if (!q || q.h.length < 3) return null;
+  const l = St.L[q.pos], S = 3600 * 4, h3 = q.h.slice(-3), m = a => a.reduce((s, v) => s + v, 0) / a.length;
+  const toi = .3 * m(h3) + .7 * m(q.h), rb = (q.b + (l.b / l.t) * S) / (q.t + S), ra = (q.a + (l.a / l.t) * S) / (q.t + S), K = 10;
+  const to = St.T[opp] || { att: 0, gf: 0, ga: 0, n: 0 }, tt = St.T[tm] || { att: 0, gf: 0, ga: 0, n: 0 };
+  const attF = (to.att + St.lgAtt * K) / (to.n + K) / St.lgAtt, envF = Math.sqrt(((tt.gf + St.lgG * K) / (tt.n + K) / St.lgG) * ((to.ga + St.lgG * K) / (to.n + K) / St.lgG));
+  return { toi, blk: rb * toi * attF, ast: ra * toi * envF, attF, envF, rb, ra };
+}
+function xpTonight(e, PF, gsRows) {
+  const c = e.competitions[0], H = String(c.competitors.find(x => x.homeAway === 'home').team.id), Aw = String(c.competitors.find(x => x.homeAway === 'away').team.id);
+  const g = propsGameFor(PF, e.date, H, Aw); if (!g) return [];
+  const St = xpState(), out = [], byPid = new Map((gsRows || []).map(r => [String(r.pid), r]));
+  const MK = { blk: g.blk, ast: g.ast, pts: g.pts };
+  for (const [m, list] of Object.entries(MK)) {
+    if (!Array.isArray(list) || !list.length) continue;
+    const pm = {}; for (const p of list) { const o = {}; for (const b of ['dk', 'fd', ...XBK]) if (p[b]) o[b] = p[b]; if (Object.keys(o).length) pm[oddsKey(p.n)] = o; }
+    for (const r of gsRows || []) {
+      const mk = sogMarket(dkLookup(pm, r.n, String(r.pid))); if (!mk || mk.line % 1 === 0) continue;
+      const x = xpPredict(St, String(r.pid), r.tm, r.opp); if (!x) continue;
+      const lamG = fin(r.p) ? -Math.log(1 - clamp(r.p, .001, .95)) : 0, mu = m === 'blk' ? x.blk : m === 'ast' ? x.ast : x.ast + lamG;
+      const row = { m, gid: String(e.id), start: e.date, pid: String(r.pid), n: r.n, pos: r.pos, tm: r.tm, opp: r.opp, mu, lamG, toi: x.toi, attF: x.attF, envF: x.envF, line: mk.line, mk };
+      row.pModelO = clamp(nbOver(mu, XP_K[m], mk.line), .002, .998);
+      row.pO = fin(mk.fair) ? sigm(XP_W * logit(row.pModelO) + (1 - XP_W) * logit(clamp(mk.fair, .02, .98))) : row.pModelO; row.pU = 1 - row.pO;
+      for (const [sd, P_, y] of [['o', row.pO, mk.ov], ['u', row.pU, mk.un]]) { if (!y.best) continue; row[sd + 'Best'] = y.best.price; row[sd + 'Book'] = y.best.book; row[sd + 'Edge'] = P_ - amImplied(y.best.price); row[sd + 'Ev'] = betEV(P_, y.best.price).ev; }
+      out.push(row);
+    }
+  }
+  return out;
+}
 function svState() {
   const games = [...(GS.prior || []), ...A.filtered].filter(g => g && g.final && g.sk && g.gk && (g.stype === 2 || g.stype === 3)).sort((a, b) => new Date(a.date) - new Date(b.date));
   const key = games.length + '|' + (games.length ? games[games.length - 1].id : '');
@@ -8286,8 +8343,8 @@ async function renderTrial() {
     const all = [...((PK && PK.xm) || []), ...mlX], T = trialFit(PK), done = all.filter(x => x.res === 'W' || x.res === 'L' || x.res === 'PU');
     const plAb = (x, us) => esc((us ? (x.side === 'h' ? x.ha : x.aa) : (x.side === 'h' ? x.aa : x.ha)) || TM(us ? x.tm : x.opp).abbr);
     const lbl = x => x.m === 'ml' ? `${plAb(x, true)} moneyline <span class="muted">vs ${plAb(x, false)}</span>` : x.m === 'pl' ? `${plAb(x, true)} ${x.line > 0 ? '+' : ''}${x.line} <span class="muted">vs ${plAb(x, false)}</span>`
-      : `${esc(x.n || '')} ${x.side === 'o' ? 'over' : 'under'} ${x.line} ${x.m === 'sv' ? 'saves' : 'shots'}`;
-    const act = x => x.m === 'pl' || x.m === 'ml' ? `final ${esc(x.score || '')}` : x.m === 'sv' ? `${x.saves} saves` : `${x.shots} shots`;
+      : `${esc(x.n || '')} ${x.side === 'o' ? 'over' : 'under'} ${x.line} ${{ sv: 'saves', blk: 'blocked shots', ast: 'assists', pts: 'points' }[x.m] || 'shots'}`;
+    const act = x => x.m === 'pl' || x.m === 'ml' ? `final ${esc(x.score || '')}` : x.m === 'sv' ? `${x.saves} saves` : x.m === 'blk' ? `${x.blk} blocks` : x.m === 'ast' ? `${x.ast} assists` : x.m === 'pts' ? `${x.pts} points` : `${x.shots} shots`;
     const resB = r => `<b style="color:${r === 'W' ? 'var(--good)' : r === 'L' ? 'var(--neg)' : 'var(--muted)'}">${r === 'PU' ? 'Push' : r}</b>`;
     const row = m => {
       const t = T[m] || { n: 0 }, L = done.filter(x => x.m === m);
@@ -8311,14 +8368,36 @@ async function renderTrial() {
         ${recent.map(x => `<tr><td class="l">${esc(String(x.date || '').replace(/^(\d{4})(\d\d)(\d\d)$/, '$2/$3'))}</td><td class="l">${lbl(x)}</td><td>${fmtML(x.best)} <span class="muted" style="font-size:11px">${BK[x.book] || ''}</span></td><td>${x.uT}u</td><td>${resB(x.res)}</td><td>${act(x)}</td></tr>`).join('')}</tbody></table></div>`
         : '<p class="muted" style="margin:8px 0 0">No would-be bets graded yet. They are graded the morning after each game.</p>'}</div>`;
   })();
-  const trialNote = m => `<b>Trial market:</b> shown, saved and graded, but not a recommended bet (no Recommended Bets entry or alert) until ${TRIAL_NEED}+ graded picks show these chances beating the books' own (${tr(m)} graded so far).`;
-  body.innerHTML = `<div class="bar"><h2 class="grow">Goalie saves & puck line</h2><div class="ctl"><label>Date</label><input type="date" id="trialDate" value="${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}"></div></div>
+  const trialNote = m => `<b>Trial market:</b> shown, saved and graded, but not a recommended bet (no Recommended Bets entry or alert) until it passes the trial: ${TRIAL_NEED}+ graded picks, beating the books' accuracy by 2× the noise, and edge picks winning more often than their prices needed (${tr(m)} graded so far).`;
+  // blocked shots, assists, points: the job prices these (it already has tonight's goal model rows); shown from its latest saved picks
+  const XPN = { blk: 'Blocked shots', ast: 'Assists', pts: 'Points' }, xpG = {};
+  for (const x of ((PK && PK.xm) || [])) { if (!XPN[x.m] || x.res != null || new Date(x.start) < Date.now() - 5 * 60e3 || (x.date && x.date !== d)) continue; const k = `${x.m}|${x.gid}|${x.pid}|${x.line}`; const g = xpG[k] || (xpG[k] = { m: x.m, n: x.n, pid: x.pid, tm: x.tm, opp: x.opp, start: x.start, line: x.line, mu: x.mu, pRaw: null, pb: null }); g[x.side] = x;
+    if (x.side === 'o') { g.pO = x.p; g.pRaw = x.pRaw; g.pb = x.pb; } else if (g.pO == null) { g.pO = 1 - x.p; g.pRaw = fin(x.pRaw) ? 1 - x.pRaw : null; g.pb = fin(x.pb) ? 1 - x.pb : null; } }
+  const xpRows = Object.values(xpG).map(g => ({ ...g, oBest: g.o ? g.o.best : null, oBook: g.o ? g.o.book : null, oEdge: g.o ? g.o.edge : null, uBest: g.u ? g.u.best : null, uBook: g.u ? g.u.book : null, uEdge: g.u ? g.u.edge : null }));
+  const xpCols = [
+    { k: 'n', h: 'Player', l: 1, v: r => r.n, f: (v, r) => `<div class="tcell">${logoImg(r.tm, 16)}<b>${esc(v)}</b> <span class="muted" style="font-size:11.5px">vs ${esc(TM(r.opp).abbr)}</span></div><div class="muted" style="font-size:11px">${XPN[r.m]}</div>` },
+    { k: 'm', h: 'Market', v: r => r.m, f: v => XPN[v] },
+    { k: 'mu', h: 'Expected', v: r => r.mu, f: v => `<b>${f2(v)}</b>`, dir: 1, t: 'Blocks: his blocks per minute × projected ice time × the opponent\'s shot attempts. Assists: his assists per minute × ice time × both teams\' scoring level. Points: the goal model\'s goal rate + the assists rate.' },
+    { k: 'line', h: 'Line', v: r => r.line, f: v => `<b>${v}</b>` },
+    { k: 'pRaw', h: 'Ice Lab over', v: r => r.pRaw, f: v => fin(v) ? `${pct1(v)}%` : '–', t: 'The model alone, before mixing with the books.' },
+    { k: 'pb', h: 'Books over', v: r => r.pb, f: v => fin(v) ? `${pct1(v)}%` : '–', t: 'The books\' chance with their margin removed (needs a book with both sides).' },
+    { k: 'pO', h: 'Over fair', v: r => r.pO, f: v => fin(v) ? `<b>${fairAmerican(v)}</b><div class="muted" style="font-size:11px">${pct1(v)}%</div>` : '–', t: 'Half Ice Lab, half the books.' },
+    { k: 'oBest', h: 'Over price', v: r => r.oBest, f: (v, r) => v == null ? '–' : `<b>${fmtML(v)}</b> <span class="muted" style="font-size:11px">${BK[r.oBook] || ''}</span>` },
+    { k: 'oEdge', h: 'Over edge', v: r => r.oEdge, f: edgeCell },
+    { k: 'uBest', h: 'Under price', v: r => r.uBest, f: (v, r) => v == null ? '–' : `<b>${fmtML(v)}</b> <span class="muted" style="font-size:11px">${BK[r.uBook] || ''}</span>` },
+    { k: 'uEdge', h: 'Under edge', v: r => r.uEdge, f: edgeCell },
+    { k: 'units', h: 'Units', v: () => 0, f: (v, r) => { const s = fin(r.oEdge) && fin(r.uEdge) ? (r.oEdge > r.uEdge ? 'o' : 'u') : fin(r.oEdge) ? 'o' : fin(r.uEdge) ? 'u' : null; return s ? unitsCell(r.m, s === 'o' ? r.pO : 1 - r.pO, r[s + 'Best'], { side: s === 'o' ? 'Over' : 'Under' }) : '–'; } }];
+  const xpCard = `<div class="card" style="margin-top:14px"><div class="card-h"><h3>🧱 Blocked shots · 🅰️ Assists · ⭐ Points</h3><p>${xpRows.length} priced lines</p></div>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">Priced by the GitHub job at its last pick run. In a test on 35,000 past player-games, each model beat the player's own last-20-game average. ${trialNote('blk')}</p>
+      ${xpRows.length ? table('xptab', xpCols, xpRows, { sort: 'oEdge', heat: false }) : '<p class="muted" style="margin:0">No blocked shots, assists or points lines saved for this date yet. The job prices them at each pick run once the books post them.</p>'}</div>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Trial markets</h2><div class="ctl"><label>Date</label><input type="date" id="trialDate" value="${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}"></div></div>
     <div class="card"><div class="card-h"><h3>🧤 Goalie saves</h3><p>${svRows.filter(r => r.line != null).length} priced starters</p></div>
       <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">Expected saves = the opponent's expected shots × the starter's save rate × how much of the game starters usually play. On 1,654 past starts this beat each goalie's own average saves. Starters come from RotoGrinders (or yours, if you set one). ${trialNote('sv')}</p>
       ${svRows.length ? table('svtab', svCols, svRows, { sort: 'oEdge', heat: false }) : '<p class="muted" style="margin:0">No starting goalies found for these games yet.</p>'}</div>
     <div class="card" style="margin-top:14px"><div class="card-h"><h3>🏒 Puck line</h3><p>${plRows.length} priced sides</p></div>
       <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">The chance to cover ±1.5 comes from the game model's win chance (already mixed with the betting line) and how often teams with that win chance won by 2+ in past games, empty-net goals included. ${trialNote('pl')} ${GM.model ? '' : '<b>Train the game model in Model Lab to see these.</b>'}</p>
       ${plRows.length ? table('pltab', plCols, plRows, { sort: 'edge', heat: false }) : '<p class="muted" style="margin:0">No puck line prices for these games yet.</p>'}</div>
+    ${xpCard}
     ${trialCard}
     <p class="muted" style="font-size:12px;margin:10px 0 0">Game totals were tested too and left out: the goals model predicted worse than the betting market on 638 unseen games. For fun and analysis, not betting advice.</p>`;
   RERENDER.trial = renderTrial;
@@ -8690,6 +8769,93 @@ function markGloss(root) {
 new MutationObserver(ms => { for (const m of ms) m.addedNodes.forEach(n => { if (n.nodeType === 1) markGloss(n); }); }).observe(document.body, { childList: true, subtree: true });
 markGloss(document.body);
 
+/* ============================== MODEL HEALTH ==============================
+   Faster signals than win/loss records, per market, all from picks.json:
+   (1) accuracy vs. the books (log loss, with how many times its own noise the gap is), (2) calibration (when Ice Lab says 60%,
+   how often it happens), (3) recommended bets vs. the closing price (CLV), (4) the book report. */
+const HL = { m: 'sog' };
+const HL_BOOK_HIST = { since: 'Oct 27 – Nov 14, 2026', sog: { dk: [36.3, 7.4, 1.61], fd: [41.9, 6.5, 1.34], sc: [46.9, 6.5, 1.75], pn: [null, 7.1, 1.25] }, goal: { dk: [44.0, null, 6.5], fd: [59.3, null, 6.1], cz: [1.9, null, 31.7], fn: [25.5, null, 6.6], pn: [null, null, 3.7] } }; // one-off from the saved odds history
+function hlRows(PK, m) {
+  const ok = x => x.res === 'W' || x.res === 'L', xm = (k, side) => ((PK && PK.xm) || []).filter(x => x.m === k && ok(x) && (!side || x.side === side) && fin(x.p)).map(x => ({ d: x.date, p: x.p, pb: x.pb, y: x.res === 'W' }));
+  if (m === 'goal') return ((PK && PK.picks) || []).filter(x => ok(x) && fin(x.p)).map(x => ({ d: x.date, p: x.p, pb: x.fair, y: x.res === 'W' }));
+  if (m === 'fg') return ((PK && PK.first) || []).filter(x => ok(x) && fin(x.p)).map(x => ({ d: x.date, p: x.p, pb: x.fair, y: x.res === 'W' }));
+  if (m === 'sog') return ((PK && PK.sog) || []).filter(x => ok(x) && x.side === 'o' && fin(x.p)).map(x => ({ d: x.date, p: x.p, pb: x.fair, y: x.res === 'W' }));
+  if (m === 'ml') return ((PK && PK.games) || []).filter(x => x.hw != null && fin(x.p)).map(x => ({ d: x.date, p: x.p, pb: x.mk, y: !!x.hw }));
+  if (m === 'sogAlt') return xm('sogAlt');
+  if (m === 'pl') return xm('pl', 'h');
+  return xm(m, 'o');
+}
+function hlAcc(L) {
+  const R = L.filter(r => fin(r.pb)); if (R.length < 20) return null;
+  const d = R.map(r => llOne(r.pb, r.y) - llOne(r.p, r.y)), m = d.reduce((a, b) => a + b, 0) / d.length, se = Math.sqrt(d.reduce((a, b) => a + (b - m) ** 2, 0) / (d.length - 1) / d.length);
+  return { n: R.length, gap: m, z: se > 0 ? m / se : 0 };
+}
+function hlCal(L) {
+  const B = [[0, .05], [.05, .1], [.1, .2], [.2, .3], [.3, .4], [.4, .5], [.5, .6], [.6, .7], [.7, .8], [.8, 1.01]];
+  return B.map(([a, b]) => { const Q = L.filter(r => r.p >= a && r.p < b); if (!Q.length) return null; const pb = Q.filter(r => fin(r.pb));
+    return { a, b, n: Q.length, said: Q.reduce((s, r) => s + r.p, 0) / Q.length, got: Q.filter(r => r.y).length / Q.length, books: pb.length ? pb.reduce((s, r) => s + r.pb, 0) / pb.length : NaN }; }).filter(Boolean);
+}
+function hlCalSvg(C) {
+  const W = 230, P = 26, sc = v => P + v * (W - 2 * P), mx = Math.max(...C.map(c => c.n), 1);
+  const dots = C.map(c => `<circle cx="${sc(c.said).toFixed(1)}" cy="${(W - sc(c.got)).toFixed(1)}" r="${(3 + 7 * Math.sqrt(c.n / mx)).toFixed(1)}" fill="var(--accent)" fill-opacity=".75"><title>Ice Lab said ${pct1(c.said)}%, happened ${pct1(c.got)}% (${c.n})</title></circle>`).join('');
+  const grid = [0, .25, .5, .75, 1].map(v => `<line x1="${sc(v)}" y1="${W - P}" x2="${sc(v)}" y2="${P}" stroke="var(--border)" stroke-width=".5"/><line x1="${P}" y1="${W - sc(v)}" x2="${W - P}" y2="${W - sc(v)}" stroke="var(--border)" stroke-width=".5"/><text x="${sc(v)}" y="${W - P + 12}" font-size="9" text-anchor="middle" fill="var(--muted)">${v * 100}%</text><text x="${P - 4}" y="${W - sc(v) + 3}" font-size="9" text-anchor="end" fill="var(--muted)">${v * 100}%</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${W}" width="${W}" height="${W}" role="img" aria-label="Calibration chart">${grid}<line x1="${sc(0)}" y1="${W - sc(0)}" x2="${sc(1)}" y2="${W - sc(1)}" stroke="var(--muted)" stroke-dasharray="3 3"/>${dots}<text x="${W / 2}" y="${W - 2}" font-size="9.5" text-anchor="middle" fill="var(--muted)">Ice Lab said</text><text x="9" y="${W / 2}" font-size="9.5" text-anchor="middle" fill="var(--muted)" transform="rotate(-90 9 ${W / 2})">Happened</text></svg>`;
+}
+function hlClv(PK) {
+  const S = {}; for (const p of (PK && PK.sog) || []) S[`${p.gid}|${p.pid}|${p.side}`] = p;
+  const G = {}; for (const g of (PK && PK.games) || []) G[g.gid] = g;
+  const Gp = {}; for (const p of (PK && PK.picks) || []) Gp[`${p.gid}|${p.pid}`] = p;
+  const out = {};
+  for (const r of (PK && PK.recs) || []) {
+    const f = r.first; if (!f || f.price == null) continue; let c = null;
+    if (r.m === 'sog') { const p = S[`${r.gid}|${r.pid}|${r.side}`]; if (p && p.closeLine === r.line && p.closeO != null && p.closeU != null) { const io = amImplied(p.closeO), iu = amImplied(p.closeU); c = (r.side === 'o' ? io : iu) / (io + iu) - amImplied(f.price); } }
+    else if (r.m === 'ml') { const g = G[r.gid]; if (g && g.mlCloseH != null && g.mlCloseA != null) { const ih = amImplied(g.mlCloseH), ia = amImplied(g.mlCloseA); c = (r.side === 'h' ? ih : ia) / (ih + ia) - amImplied(f.price); } }
+    else if (r.m === 'goal') { const p = Gp[`${r.gid}|${r.pid}`]; if (p && p.dkClose != null) c = amImplied(p.dkClose) - amImplied(f.price); }
+    const o = out[r.m] || (out[r.m] = { n: 0, c: 0, cs: 0, beat: 0, g: 0, w: 0, pr: 0, u: 0 });
+    if (c != null) { o.n++; o.c += c; o.cs += c * c; if (c > 0) o.beat++; }
+    if (r.res === 'W' || r.res === 'L') { o.g++; if (r.res === 'W') o.w++; o.pr += r.res === 'W' ? f.u * (f.price > 0 ? f.price / 100 : 100 / -f.price) : -f.u; o.u += f.u; }
+  }
+  return out;
+}
+async function renderHealth() {
+  const body = $('#hlBody'); if (!body) return;
+  body.innerHTML = `<div class="empty"><div class="spinner"></div>Loading graded picks…</div>`;
+  const PK = await getPicksFile(); if (activeTab() !== 'health') return;
+  if (!PK) { body.innerHTML = '<div class="empty">No picks file yet: the GitHub job writes it at its first run.</div>'; return; }
+  try { unitsProof(PK); } catch (e) {}
+  const MK = [['sog', 'Shots on goal'], ['goal', 'Anytime goal'], ['fg', 'First goal'], ['ml', 'Moneyline'], ['sogAlt', 'Alternate shots'], ['sv', 'Goalie saves'], ['pl', 'Puck line'], ['blk', 'Blocked shots'], ['ast', 'Assists'], ['pts', 'Points']];
+  const day = n => { const d = new Date(Date.now() - n * 864e5); return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; };
+  const accCell = a => !a ? '<span class="muted">–</span>' : `<b style="color:${a.z >= 2 ? 'var(--good)' : a.z <= -2 ? 'var(--neg)' : 'inherit'}">${a.gap >= 0 ? '+' : ''}${(a.gap * 1000).toFixed(1)}</b> <span class="muted" style="font-size:11px">${a.z >= 0 ? '' : '−'}${Math.abs(a.z).toFixed(1)}× noise · ${a.n}</span>`;
+  const accRows = MK.map(([m, lab]) => { const L = hlRows(PK, m); const st = TRIAL_MKTS.includes(m) ? (trialOk(m) ? 'live' : 'trial') : 'live';
+    return `<tr><td class="l"><b>${lab}</b> <span class="muted" style="font-size:11px">${st}</span></td><td>${L.length}</td><td>${accCell(hlAcc(L))}</td><td>${accCell(hlAcc(L.filter(r => r.d >= day(30))))}</td><td>${accCell(hlAcc(L.filter(r => r.d >= day(14))))}</td><td>${accCell(hlAcc(L.filter(r => r.d >= day(7))))}</td></tr>`; }).join('');
+  const L = hlRows(PK, HL.m), C = hlCal(L);
+  const calRows = C.map(c => `<tr><td class="l">${Math.round(c.a * 100)}–${Math.min(100, Math.round(c.b * 100))}%</td><td>${c.n}</td><td>${pct1(c.said)}%</td><td><b style="color:${Math.abs(c.got - c.said) > Math.max(.03, 1.5 * Math.sqrt(c.said * (1 - c.said) / c.n)) ? (c.got < c.said ? 'var(--neg)' : 'var(--good)') : 'inherit'}">${pct1(c.got)}%</b></td><td>${fin(c.books) ? pct1(c.books) + '%' : '–'}</td></tr>`).join('');
+  const CL = hlClv(PK), clvRows = Object.entries(CL).map(([m, o]) => { const sd = o.n > 1 ? Math.sqrt(Math.max(0, o.cs / o.n - (o.c / o.n) ** 2) / (o.n - 1)) : NaN;
+    return `<tr><td class="l"><b>${REC_MKT[m] || m}</b></td><td>${o.n}</td><td>${o.n ? `<b style="color:${o.c > 0 ? 'var(--good)' : 'var(--neg)'}">${o.c >= 0 ? '+' : ''}${(o.c / o.n * 100).toFixed(2)} pts</b>${fin(sd) ? ` <span class="muted" style="font-size:11px">±${(sd * 100).toFixed(2)}</span>` : ''}` : '–'}</td><td>${o.n ? Math.round(o.beat / o.n * 100) + '%' : '–'}</td><td>${o.g ? `${o.w}-${o.g - o.w}` : '–'}</td><td>${o.u ? `<b style="color:${o.pr >= 0 ? 'var(--good)' : 'var(--neg)'}">${o.pr >= 0 ? '+' : ''}${o.pr.toFixed(2)}u</b> <span class="muted" style="font-size:11px">${(o.pr / o.u * 100).toFixed(1)}%</span>` : '–'}</td></tr>`; }).join('');
+  const BN = { dk: 'DraftKings', fd: 'FanDuel', cz: 'Caesars', fn: 'Fanatics', sc: 'theScore Bet', pn: 'Pinnacle (reference)' }, BT = (PK.books && PK.books.t) || { sog: {}, goal: {} };
+  const bookRows = mk => Object.keys(BN).map(b => { const t = (BT[mk] || {})[b], h = (HL_BOOK_HIST[mk] || {})[b]; if (!t && !h) return '';
+    const live = t ? `${t.bestN ? pct1(t.best / t.bestN) + '%' : '–'}</td><td>${mk === 'sog' && t.margN ? pct1(t.marg / t.margN) + '%' : '–'}</td><td>${t.offN ? (mk === 'sog' ? (t.off / t.offN * 100).toFixed(2) + ' pts' : pct1(t.off / t.offN) + '%') : '–'}</td><td>${t.n}` : '–</td><td>–</td><td>–</td><td>0';
+    const hs = h ? `${h[0] != null ? h[0].toFixed(1) + '%' : '–'} · ${h[2] != null ? (mk === 'sog' ? h[2].toFixed(2) + ' pts' : h[2].toFixed(1) + '%') : '–'}` : '–';
+    return `<tr><td class="l"><b>${BN[b]}</b></td><td>${live}</td><td class="muted">${hs}</td></tr>`; }).join('');
+  const bookHead = `<thead><tr><th class="l">Book</th><th data-gloss="How often this book had the best price (of the five you can bet), at the last pick run before puck drop.">Best price</th><th data-gloss="The book's built-in margin on a shots line (both sides' chances added up, minus 100%). Lower is better for you.">Margin</th><th data-gloss="How far this book's FIRST price of the day was from where the books ended up before puck drop. Low = a sharp book that moves early; high = a slow book whose early prices are worth shopping.">First price off the close</th><th>Props</th><th class="l" data-gloss="The same numbers from the saved odds history before the running count started.">${HL_BOOK_HIST.since} (best · off close)</th></tr></thead>`;
+  body.innerHTML = `<div class="bar"><h2 class="grow">Model health</h2></div>
+    <div class="card"><div class="card-h"><h3>🎯 Accuracy vs. the books</h3><p>log loss gap per 1,000 picks · higher is better</p></div>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">How much more accurate Ice Lab's chances were than the books' own (margin removed) on graded picks: positive means Ice Lab was closer to what happened. The "× noise" tells you whether it's real: under 2× is within luck. <b style="color:var(--good)">Green</b> = clearly better than the books, <b style="color:var(--neg)">red</b> = clearly worse.</p>
+      <div class="twrap"><table><thead><tr><th class="l">Market</th><th>Graded</th><th>All</th><th>Last 30 days</th><th>Last 14 days</th><th>Last 7 days</th></tr></thead><tbody>${accRows}</tbody></table></div></div>
+    <div class="card" style="margin-top:14px"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>📐 Calibration</h3><div class="rsseg">${MK.map(([m, lab]) => `<button class="dbtn ${HL.m === m ? 'on' : ''}" data-hlm="${m}">${lab}</button>`).join('')}</div></div>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">When Ice Lab said a chance, how often it actually happened (${L.length} graded ${HL.m === 'sog' || ['sv', 'blk', 'ast', 'pts'].includes(HL.m) ? 'overs' : HL.m === 'pl' ? 'home sides' : HL.m === 'ml' ? 'home teams' : 'picks'}). On the chart, dots on the dashed line are well calibrated; dots below it mean Ice Lab was too high. A <b style="color:var(--neg)">red</b> result is further off than luck explains.</p>
+      ${C.length ? `<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">${hlCalSvg(C)}<div class="twrap" style="flex:1;min-width:260px"><table><thead><tr><th class="l">Ice Lab said</th><th>Picks</th><th>Average</th><th>Happened</th><th>Books said</th></tr></thead><tbody>${calRows}</tbody></table></div></div>` : '<p class="muted" style="margin:0">No graded picks for this market yet.</p>'}</div>
+    <div class="card" style="margin-top:14px"><div class="card-h"><h3>📉 Recommended bets vs. the closing price</h3><p>closing line value (CLV)</p></div>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">For every recommended bet: the closing chance (books' price just before puck drop, margin removed) minus the chance in the price we got. Positive = we beat the close, the most reliable early sign of a real edge; it settles much faster than wins and losses. Shots use the closing price at the same line; moneyline the DraftKings close; anytime goal compares DraftKings' closing price to ours.</p>
+      ${clvRows ? `<div class="twrap"><table><thead><tr><th class="l">Market</th><th>With a close</th><th>Average CLV</th><th>Beat the close</th><th>Record</th><th>Units</th></tr></thead><tbody>${clvRows}</tbody></table></div>` : '<p class="muted" style="margin:0">No recommended bets yet.</p>'}</div>
+    <div class="card" style="margin-top:14px"><div class="card-h"><h3>📚 Book report</h3><p>running count since ${PK.books && PK.books.since ? new Date(PK.books.since).toLocaleDateString() : 'the next pick run'}</p></div>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px">Which books give you the best prices, how much margin they build in, and which ones move first. Pinnacle can't be bet; it's the sharp yardstick. The right-hand column is from the saved odds history before the running count started.</p>
+      <h4 style="margin:6px 0">Shots on goal</h4><div class="twrap"><table>${bookHead}<tbody>${bookRows('sog')}</tbody></table></div>
+      <h4 style="margin:12px 0 6px">Anytime goal</h4><div class="twrap"><table>${bookHead}<tbody>${bookRows('goal')}</tbody></table></div></div>`;
+  $$('#hlBody [data-hlm]').forEach(b => b.onclick = () => { HL.m = b.dataset.hlm; renderHealth(); });
+  RERENDER.health = renderHealth;
+}
+
 /* ============================== TABS / INIT ============================== */
 function activeTab() { const b = $('#tabs button.on'); return b ? b.dataset.tab : 'scores'; }
 function renderActiveAnalytics() {
@@ -8711,6 +8877,7 @@ function setTab(t) {
   if (t === 'birth') renderBirth();
   if (t === 'mybets') renderMyBets();
   if (t === 'recs') renderRecs();
+  if (t === 'health') renderHealth();
   recBanner();
   if (t === 'combos') renderCombos();
   if (['teams', 'skaters', 'goalies', 'luck', 'compare', 'power', 'special', 'splits', 'rookies', 'model', 'recap', 'clutch', 'sos', 'travel', 'streaks', 'faceoffs', 'refs', 'arenas', 'upsets', 'bets', 'props', 'periods', 'profiles', 'quads', 'scorers', 'firstgoal', 'sog', 'trial'].includes(t)) {
