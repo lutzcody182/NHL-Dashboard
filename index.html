@@ -5854,8 +5854,18 @@ function trialFit(PK) {
   for (const m of TRIAL_MKTS) {
     const L = m === 'ml' ? ((PK && PK.games) || []).filter(x => x.hw != null && fin(x.p) && fin(x.mk)).map(x => ({ p: x.p, pb: x.mk, res: x.hw ? 'W' : 'L' })) // home team's chance vs. the line's
       : ((PK && PK.xm) || []).filter(x => x.m === m && (x.res === 'W' || x.res === 'L') && fin(x.p) && fin(x.pb));
-    let a = 0, b = 0; for (const x of L) { const y = x.res === 'W'; a += llOne(x.p, y); b += llOne(x.pb, y); }
-    UNITS.trial[m] = { n: L.length, ll: L.length ? a / L.length : NaN, llB: L.length ? b / L.length : NaN, ok: L.length >= TRIAL_NEED && a < b };
+    let a = 0, b = 0; const d = []; for (const x of L) { const y = x.res === 'W', la = llOne(x.p, y), lb = llOne(x.pb, y); a += la; b += lb; d.push(lb - la); }
+    // how sure: the gap between the books' log loss and Ice Lab's, in units of its own noise (standard error)
+    const dm = d.length ? d.reduce((s, v) => s + v, 0) / d.length : 0, dse = d.length > 1 ? Math.sqrt(d.reduce((s, v) => s + (v - dm) ** 2, 0) / (d.length - 1) / d.length) : Infinity, z = dse > 0 ? dm / dse : 0;
+    // the picks it would have bet (any edge at the best price): did they win more often than their prices needed?
+    const E = m === 'ml' ? ((PK && PK.games) || []).filter(x => x.side && x.hw != null && fin(x.p) && x.edge > 0).map(x => ({ w: (x.side === 'h') === !!x.hw, px: gpPx(x, x.side) })).filter(x => x.px != null)
+      : ((PK && PK.xm) || []).filter(x => x.m === m && (x.res === 'W' || x.res === 'L') && x.edge > 0 && x.best != null).map(x => ({ w: x.res === 'W', px: x.best }));
+    const eW = E.length ? E.filter(x => x.w).length / E.length : NaN, eImp = E.length ? E.reduce((s, x) => s + amImplied(x.px), 0) / E.length : NaN;
+    /* PASS RULE (tightened Nov 14, 2026, after alternate lines and saves "passed" by a margin half the size of the noise and
+       alternates were down 16.7u): 150+ graded picks, Ice Lab beats the books' log loss by at least 2× the noise, AND its edge
+       picks have actually won more often than their prices required. */
+    UNITS.trial[m] = { n: L.length, ll: L.length ? a / L.length : NaN, llB: L.length ? b / L.length : NaN, z, eN: E.length, eW, eImp,
+      ok: L.length >= TRIAL_NEED && z >= 2 && E.length >= 30 && eW > eImp };
   }
   return UNITS.trial;
 }
@@ -8286,14 +8296,15 @@ async function renderTrial() {
       const edgeCell = ep.length ? `${eW}-${ep.length - eW} <b style="color:${eP >= 0 ? 'var(--good)' : 'var(--neg)'}">${eP >= 0 ? '+' : ''}${eP.toFixed(2)}u</b> <span class="muted" style="font-size:11px">${eP >= 0 ? '+' : ''}${(eP / ep.length * 100).toFixed(1)}%</span>` : '<span class="muted">–</span>';
       let won = 0, risk = 0, exp = 0; for (const x of bets) { won += uProfit(x.uT, x.best, x.res); if (x.res !== 'PU') { risk += x.uT; exp += x.p; } }
       const ll = fin(t.ll) && fin(t.llB) ? `<b style="color:${t.ll < t.llB ? 'var(--good)' : 'var(--neg)'}">${t.ll.toFixed(3)}</b> vs ${t.llB.toFixed(3)}` : '<span class="muted">–</span>';
-      const status = t.ok ? '<b style="color:var(--good)">Passed: now recommended</b>' : t.n >= TRIAL_NEED ? '<b style="color:var(--neg)">Not beating the books yet</b>' : `${t.n} / ${TRIAL_NEED}`;
+      const why = !(t.n >= TRIAL_NEED) ? '' : !(t.z >= 2) ? `ahead by ${fin(t.z) ? Math.max(0, t.z).toFixed(1) : '0'}× the noise, needs 2×` : !(t.eW > t.eImp) ? `edge picks won ${pct1(t.eW)}%, prices needed ${pct1(t.eImp)}%` : 'needs 30+ edge picks';
+      const status = t.ok ? '<b style="color:var(--good)">Passed: now recommended</b>' : t.n >= TRIAL_NEED ? `<b style="color:var(--neg)">Not passed yet</b><div class="muted" style="font-size:11px">${t.n} graded · ${why}</div>` : `${t.n} / ${TRIAL_NEED}`;
       return `<tr><td class="l"><b>${UNIT_MKT[m]}</b></td><td>${status}</td><td>${ll}</td><td>${edgeCell}</td><td>${bets.length ? `${W}-${Ls}${P ? `-${P}` : ''}` : '<span class="muted">–</span>'}</td>
         <td>${bets.length ? `${pct1(exp / Math.max(1, W + Ls))}% / <b>${pct1(W / Math.max(1, W + Ls))}%</b>` : '<span class="muted">–</span>'}</td>
         <td>${bets.length ? `<b style="color:${won >= 0 ? 'var(--good)' : 'var(--neg)'}">${won >= 0 ? '+' : ''}${won.toFixed(2)}u</b> <span class="muted" style="font-size:11px">${risk ? `${won >= 0 ? '+' : ''}${(won / risk * 100).toFixed(1)}% ROI` : ''}</span>` : '<span class="muted">–</span>'}</td></tr>`;
     };
     const recent = done.filter(x => x.uT >= .5).sort((a, b) => new Date(b.start) - new Date(a.start)).slice(0, 15);
     return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📋 Trial results</h3><p>${done.length} graded picks</p></div>
-      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px"><b>Prediction test</b> is what decides a market: average log loss of Ice Lab's chance vs. the books' own chance on every graded pick (lower is better). A market starts being recommended once it has ${TRIAL_NEED}+ graded picks and wins this test. <b>Would-be bets</b> are the picks that showed "trial · 0.5u" or more before the game, graded at the best price and units shown then, so you can see what following them would have done. <b>Every edge pick</b> is every graded pick that showed any edge at the best price, 1 unit each: more picks, so it fills in faster.</p>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px"><b>Prediction test</b> is what decides a market: average log loss of Ice Lab's chance vs. the books' own chance on every graded pick (lower is better). A market starts being recommended only when it has ${TRIAL_NEED}+ graded picks, wins this test by at least 2× its own noise (so it isn't luck), and its edge picks have actually won more often than their prices needed. <b>Would-be bets</b> are the picks that showed "trial · 0.5u" or more before the game, graded at the best price and units shown then, so you can see what following them would have done. <b>Every edge pick</b> is every graded pick that showed any edge at the best price, 1 unit each: more picks, so it fills in faster.</p>
       <div class="twrap"><table><thead><tr><th class="l">Market</th><th>Graded picks</th><th>Prediction test (Ice Lab vs books)</th><th>Every edge pick (1u each)</th><th>Would-be bets W-L</th><th>Expected / actual hit rate</th><th>Units</th></tr></thead>
       <tbody>${TRIAL_MKTS.map(row).join('')}</tbody></table></div>
       ${recent.length ? `<h4 style="margin:14px 0 6px">Latest graded would-be bets</h4><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Bet</th><th>Price</th><th>Units</th><th>Result</th><th>Actual</th></tr></thead><tbody>
