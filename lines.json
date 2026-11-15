@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-14T23:00:17.816Z",
+ "updated": "2026-11-15T00:02:33.903Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -651,6 +651,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Tom Wilson",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Dylan Strome",
          "pos": "C",
          "pp": "PP1"
@@ -659,11 +664,6 @@
          "n": "Ryan Leonard",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Jordan Kyrou",
-         "pos": "W",
-         "pp": "PP1"
         }
        ]
       },
@@ -676,12 +676,12 @@
          "pp": ""
         },
         {
-         "n": "Justin Sourdif",
-         "pos": "C",
+         "n": "Anthony Beauvillier",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Tom Wilson",
+         "n": "Jordan Kyrou",
          "pos": "W",
          "pp": "PP1"
         }
@@ -696,8 +696,8 @@
          "pp": "PP2"
         },
         {
-         "n": "Anthony Beauvillier",
-         "pos": "W",
+         "n": "Justin Sourdif",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -839,11 +839,6 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Brock Faber",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Quinn Hughes",
          "pos": "D",
          "pp": "PP1"
@@ -852,6 +847,11 @@
          "n": "Jared Spurgeon",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Brock Faber",
+         "pos": "D",
+         "pp": "PP2"
         },
         {
          "n": "Jonas Brodin",
@@ -1785,7 +1785,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Fedor Svechkov",
+         "n": "Gavin Brindley",
          "pos": "C",
          "pp": ""
         },
@@ -1815,7 +1815,7 @@
          "pp": ""
         },
         {
-         "n": "Gavin Brindley",
+         "n": "Fedor Svechkov",
          "pos": "C",
          "pp": ""
         }
@@ -1956,12 +1956,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Mike Matheson",
+         "n": "Kaiden Guhle",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Kaiden Guhle",
+         "n": "Alexandre Carrier",
          "pos": "D",
          "pp": ""
         },
@@ -1971,7 +1971,7 @@
          "pp": ""
         },
         {
-         "n": "Alexandre Carrier",
+         "n": "Adam Engstrom",
          "pos": "D",
          "pp": ""
         }
