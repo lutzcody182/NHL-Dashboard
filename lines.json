@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-15",
- "updated": "2026-11-15T22:30:19.411Z",
+ "updated": "2026-11-15T23:30:15.278Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -37,19 +37,19 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Colton Dach",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Zach Hyman",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Ryan Nugent-Hopkins",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
          "n": "Kasperi Kapanen",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -59,7 +59,7 @@
         {
          "n": "Trent Frederic",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jason Dickinson",
@@ -67,9 +67,9 @@
          "pp": ""
         },
         {
-         "n": "Colton Dach",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Filip Hallander",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -366,12 +366,12 @@
          "pp": ""
         },
         {
-         "n": "Dmitry Kulikov",
+         "n": "Uvis Balinskis",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Radko Gudas",
+         "n": "Dmitry Kulikov",
          "pos": "D",
          "pp": ""
         }
@@ -636,12 +636,12 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Judd Caulfield",
+         "n": "Cutter Gauthier",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Troy Terry",
+         "n": "Judd Caulfield",
          "pos": "W",
          "pp": "PP2"
         },
@@ -656,11 +656,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Cutter Gauthier",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Mikael Granlund",
          "pos": "C",
          "pp": "PP1"
@@ -669,6 +664,11 @@
          "n": "Beckett Sennecke",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Troy Terry",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -676,9 +676,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Alex Killorn",
+         "n": "Frank Vatrano",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jeff Malott",
@@ -696,9 +696,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Sam Colangelo",
+         "n": "Alex Killorn",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Nikita Nesterenko",
@@ -1055,7 +1055,7 @@
         {
          "n": "Liam Ohgren",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Marco Rossi",
@@ -1065,7 +1065,7 @@
         {
          "n": "Linus Karlsson",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
