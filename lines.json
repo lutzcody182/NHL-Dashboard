@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-14",
- "updated": "2026-11-15T01:01:47.173Z",
+ "updated": "2026-11-15T03:04:43.082Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -962,7 +962,7 @@
         {
          "n": "Hampus Lindholm",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Charlie McAvoy",
@@ -1538,7 +1538,7 @@
         {
          "n": "Trent Frederic",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jason Dickinson",
@@ -3161,14 +3161,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Frank Vatrano",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Sam Colangelo",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Nikita Nesterenko",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Roger McQueen",
