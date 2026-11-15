@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-15",
- "updated": "2026-11-15T20:34:44.923Z",
+ "updated": "2026-11-15T22:30:19.411Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -160,12 +160,12 @@
         {
          "n": "Owen Tippett",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Michael Bunting",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Christian Dvorak",
@@ -203,9 +203,9 @@
          "pp": ""
         },
         {
-         "n": "Denver Barkey",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Cole Knuble",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Sean Couturier",
@@ -225,17 +225,7 @@
         {
          "n": "Travis Sanheim",
          "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Oliver Bonk",
-         "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Cam York",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Rasmus Ristolainen",
@@ -244,6 +234,16 @@
         },
         {
          "n": "Nick Seeler",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Simon Benoit",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Cam York",
          "pos": "D",
          "pp": ""
         }
