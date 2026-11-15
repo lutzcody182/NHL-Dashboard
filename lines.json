@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-15",
- "updated": "2026-11-15T18:38:35.135Z",
+ "updated": "2026-11-15T20:34:44.923Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -698,17 +698,17 @@
         {
          "n": "Sam Colangelo",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Nikita Nesterenko",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Roger McQueen",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
