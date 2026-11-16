@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-15",
- "updated": "2026-11-16T00:00:19.277Z",
+ "updated": "2026-11-16T01:00:17.405Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -387,6 +387,11 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Jason Robertson",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Wyatt Johnston",
          "pos": "C",
          "pp": "PP1"
@@ -395,11 +400,6 @@
          "n": "Mikko Rantanen",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Jamie Benn",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -412,13 +412,13 @@
          "pp": ""
         },
         {
-         "n": "Roope Hintz",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Tyler Seguin",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
-         "n": "Jason Robertson",
-         "pos": "W",
+         "n": "Roope Hintz",
+         "pos": "C",
          "pp": "PP1"
         }
        ]
@@ -426,11 +426,6 @@
       {
        "label": "Line 3",
        "players": [
-        {
-         "n": "Tyler Seguin",
-         "pos": "W",
-         "pp": "PP2"
-        },
         {
          "n": "Justin Hryckowian",
          "pos": "C",
@@ -440,6 +435,11 @@
          "n": "Sam Steel",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Jamie Benn",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -666,9 +666,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Troy Terry",
+         "n": "Jeff Malott",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -676,14 +676,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Frank Vatrano",
+         "n": "Alex Killorn",
          "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Jeff Malott",
-         "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Tim Washe",
@@ -696,7 +691,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Alex Killorn",
+         "n": "Troy Terry",
          "pos": "W",
          "pp": "PP2"
         },
@@ -732,6 +727,11 @@
         },
         {
          "n": "Noah Warren",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Ian Moore",
          "pos": "D",
          "pp": ""
         },
