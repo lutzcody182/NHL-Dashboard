@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-16",
- "updated": "2026-11-16T17:00:18.209Z",
+ "updated": "2026-11-16T19:00:38.525Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -260,7 +260,7 @@
    "teams": [
     {
      "team": "Vancouver Canucks",
-     "goalie": "Kevin Lankinen",
+     "goalie": "Nikita Tolopilo",
      "groups": [
       {
        "label": "Line 1",
@@ -381,7 +381,7 @@
     },
     {
      "team": "Utah Hockey Club",
-     "goalie": "Sebastian Cossa",
+     "goalie": "Karel Vejmelka",
      "groups": [
       {
        "label": "Line 1",
@@ -419,7 +419,7 @@
         {
          "n": "Daniil But",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -489,7 +489,7 @@
         {
          "n": "Zac Jones",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Artem Duda",
