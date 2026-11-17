@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-16",
- "updated": "2026-11-17T00:34:43.242Z",
+ "updated": "2026-11-17T02:34:45.548Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -392,9 +392,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Anders Lee",
+         "n": "Logan Cooley",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Vincent Trocheck",
@@ -414,12 +414,12 @@
         {
          "n": "Barrett Hayton",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
-         "n": "Daniil But",
+         "n": "Anders Lee",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -452,7 +452,7 @@
          "pp": ""
         },
         {
-         "n": "Ben McCartney",
+         "n": "Daniil But",
          "pos": "W",
          "pp": ""
         },
@@ -472,7 +472,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Artem Duda",
+         "n": "Andrew Peeke",
          "pos": "D",
          "pp": ""
         },
@@ -487,12 +487,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Zac Jones",
+         "n": "Nick DeSimone",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Andrew Peeke",
+         "n": "Zac Jones",
          "pos": "D",
          "pp": ""
         }
