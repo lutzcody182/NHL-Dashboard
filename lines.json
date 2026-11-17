@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-17T16:03:33.239Z",
+ "updated": "2026-11-17T16:32:32.993Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -132,7 +132,7 @@
     },
     {
      "team": "Boston Bruins",
-     "goalie": "Jeremy Swayman",
+     "goalie": "Michael DiPietro",
      "groups": [
       {
        "label": "Line 1",
@@ -1229,12 +1229,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Tyrel Bauer",
+         "n": "Haydn Fleury",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Haydn Fleury",
+         "n": "Henry Thrun",
          "pos": "D",
          "pp": ""
         }
