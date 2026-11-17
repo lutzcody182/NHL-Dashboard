@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-17T13:04:21.256Z",
+ "updated": "2026-11-17T15:34:49.959Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -905,14 +905,14 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Denver Barkey",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Owen Tippett",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Michael Bunting",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Christian Dvorak",
@@ -937,7 +937,7 @@
         {
          "n": "Noah Cates",
          "pos": "C",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       },
@@ -980,7 +980,7 @@
          "pp": ""
         },
         {
-         "n": "Nick Seeler",
+         "n": "Cam York",
          "pos": "D",
          "pp": ""
         },
@@ -990,7 +990,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Cam York",
+         "n": "Nick Seeler",
          "pos": "D",
          "pp": ""
         }
@@ -1425,7 +1425,7 @@
         {
          "n": "Pontus Holmberg",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Ilya Mikheyev",
