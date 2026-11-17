@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-17T20:34:30.655Z",
+ "updated": "2026-11-17T23:30:15.398Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1398,6 +1398,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Gage Goncalves",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Anthony Cirelli",
          "pos": "C",
          "pp": "PP2"
@@ -1406,11 +1411,6 @@
          "n": "Yanni Gourde",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Brandon Hagel",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -1438,14 +1438,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Gage Goncalves",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Sam O'Reilly",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Jeffrey Viel",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -1480,7 +1480,7 @@
         {
          "n": "Victor Hedman",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -1596,11 +1596,6 @@
          "pp": ""
         },
         {
-         "n": "Morgan Rielly",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Troy Stecher",
          "pos": "D",
          "pp": ""
@@ -1609,6 +1604,11 @@
          "n": "Oliver Ekman-Larsson",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Morgan Rielly",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
@@ -1866,9 +1866,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Jake Neighbours",
+         "n": "Dylan Holloway",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Robert Thomas",
@@ -1886,9 +1886,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Dylan Holloway",
+         "n": "Jake Neighbours",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Mason McTavish",
@@ -1906,9 +1906,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Aleksanteri Kaskimaki",
+         "n": "Dalibor Dvorsky",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jonatan Berggren",
@@ -1936,9 +1936,9 @@
          "pp": ""
         },
         {
-         "n": "Dalibor Dvorsky",
+         "n": "Aleksanteri Kaskimaki",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2263,20 +2263,25 @@
          "pp": ""
         },
         {
-         "n": "Tyler Seguin",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Roope Hintz",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Jamie Benn",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
       {
        "label": "Line 3",
        "players": [
+        {
+         "n": "Tyler Seguin",
+         "pos": "W",
+         "pp": "PP2"
+        },
         {
          "n": "Justin Hryckowian",
          "pos": "C",
@@ -2286,11 +2291,6 @@
          "n": "Sam Steel",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Jamie Benn",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
