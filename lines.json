@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-17T19:34:32.112Z",
+ "updated": "2026-11-17T20:00:20.361Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2547,14 +2547,14 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Maxim Tsyplakov",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Aydar Suniev",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Brennan Othmann",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Jonathan Castagna",
@@ -2567,22 +2567,22 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Simon Nemec",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Joel Hanley",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Zach Whitecloud",
          "pos": "D",
          "pp": ""
         },
         {
          "n": "Jacob Middleton",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Simon Nemec",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
+         "n": "Joel Hanley",
          "pos": "D",
          "pp": ""
         },
