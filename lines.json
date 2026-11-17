@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-16",
- "updated": "2026-11-16T19:00:38.525Z",
+ "updated": "2026-11-17T00:00:32.649Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -245,7 +245,7 @@
         {
          "n": "Scott Morrow",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -293,7 +293,7 @@
         {
          "n": "Paul Cotter",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Brock Boeser",
@@ -363,7 +363,7 @@
         {
          "n": "Tom Willander",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Cameron Crotty",
@@ -472,7 +472,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Andrew Peeke",
+         "n": "Artem Duda",
          "pos": "D",
          "pp": ""
         },
@@ -492,7 +492,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Artem Duda",
+         "n": "Andrew Peeke",
          "pos": "D",
          "pp": ""
         }
