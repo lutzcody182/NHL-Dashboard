@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-17T20:00:20.361Z",
+ "updated": "2026-11-17T20:34:30.655Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2318,6 +2318,16 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Esa Lindell",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Miro Heiskanen",
+         "pos": "D",
+         "pp": "PP1"
+        },
+        {
          "n": "Nils Lundkvist",
          "pos": "D",
          "pp": ""
@@ -2325,17 +2335,7 @@
         {
          "n": "Thomas Harley",
          "pos": "D",
-         "pp": "PP1"
-        },
-        {
-         "n": "Esa Lindell",
-         "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Tyler Myers",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Trey Taylor",
