@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-17T16:32:32.993Z",
+ "updated": "2026-11-17T17:00:19.145Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -758,7 +758,7 @@
    "teams": [
     {
      "team": "Buffalo Sabres",
-     "goalie": "Ukko-Pekka Luukkonen",
+     "goalie": "Alex Lyon",
      "groups": [
       {
        "label": "Line 1",
@@ -1860,7 +1860,7 @@
     },
     {
      "team": "St. Louis Blues",
-     "goalie": "Joel Hofer",
+     "goalie": "Jordan Binnington",
      "groups": [
       {
        "label": "Line 1",
