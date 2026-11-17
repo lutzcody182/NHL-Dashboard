@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-17T17:32:23.362Z",
+ "updated": "2026-11-17T18:00:20.865Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1378,9 +1378,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Brandon Hagel",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Brayden Point",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
          "n": "Jake Guentzel",
@@ -1398,11 +1398,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Gage Goncalves",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Anthony Cirelli",
          "pos": "C",
          "pp": "PP2"
@@ -1411,6 +1406,11 @@
          "n": "Yanni Gourde",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Brandon Hagel",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -1425,7 +1425,7 @@
         {
          "n": "Pontus Holmberg",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ilya Mikheyev",
@@ -1438,14 +1438,14 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Gage Goncalves",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Sam O'Reilly",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Conor Geekie",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -1460,7 +1460,7 @@
         {
          "n": "Charle-Edouard D'Astous",
          "pos": "D",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Ryan McDonagh",
@@ -1480,7 +1480,7 @@
         {
          "n": "Victor Hedman",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -1996,7 +1996,7 @@
         {
          "n": "Mavrik Bourque",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Ryan O'Reilly",
@@ -2029,6 +2029,26 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Reid Schaefer",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Alexander Kerfoot",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Jonathan Marchessault",
+         "pos": "W",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
          "n": "Jack Drury",
          "pos": "C",
          "pp": ""
@@ -2042,26 +2062,6 @@
          "n": "Adam Edstrom",
          "pos": "W",
          "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
-         "n": "Reid Schaefer",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Alexander Kerfoot",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Vitali Pinchuk",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
