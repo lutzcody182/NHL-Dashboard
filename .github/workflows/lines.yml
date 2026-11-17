@@ -912,7 +912,7 @@ jobs:
             if (gone.length) { lines.push('— No longer recommended: did you bet these? Record it under Recommended Bets —'); for (const r of gone.slice(0, 10)) lines.push(`⚠️ ${recLbl(r)} · was ${am(r.first.price)} ${BKN[r.first.book] || ''} ${r.first.u}u · ${r.why}`); if (gone.length > 10) lines.push(`+${gone.length - 10} more`); }
             const units = items.reduce((s, [p]) => s + p.u, 0);
             try {
-              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: items.length ? `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)${gone.length ? ` + ${gone.length} ended` : ''}` : `Ice Lab: ${gone.length} recommendation${gone.length === 1 ? '' : 's'} ended - did you bet ${gone.length === 1 ? 'it' : 'them'}?`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/#recs' } });
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: items.length ? `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)${gone.length ? ` + ${gone.length} ended` : ''}` : `Ice Lab: ${gone.length} recommendation${gone.length === 1 ? '' : 's'} ended - did you bet ${gone.length === 1 ? 'it' : 'them'}?`, Priority: items.length ? 'high' : '1', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/#recs' } });
               if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return 0; }
               for (const [p] of items) { p.nt = now.toISOString(); p.ntU = p.u; }
               for (const r of gone) r.ntE = now.toISOString();
@@ -970,7 +970,7 @@ jobs:
                 M.sent ? `${M.sent} new recommended bet${M.sent === 1 ? '' : 's'} (sent in a separate alert)` : 'No new recommended bets this run',
                 `${M.graded} finished pick${M.graded === 1 ? '' : 's'} graded`,
                 PF ? `Odds from ${oddsAge != null && oddsAge <= 1 ? 'this run' : oddsAge != null ? (oddsAge < 90 ? `${oddsAge} min ago` : `${Math.round(oddsAge / 60)} hours ago`) : 'unknown time'}${Number.isFinite(+PF.remaining) ? ` · ${(+PF.remaining).toLocaleString('en-US')} API credits left` : ''}` : 'No odds file found'];
-              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `${kind === 'repick' ? 'Goalie re-pick' : 'Pick run'} done - ${tm(now)} ET`, Priority: '2', Tags: kind === 'repick' ? 'repeat' : 'white_check_mark' } });
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `${kind === 'repick' ? 'Goalie re-pick' : 'Pick run'} done - ${tm(now)} ET`, Priority: '1', Tags: kind === 'repick' ? 'repeat' : 'white_check_mark' } });
               log(r.ok ? 'Run-status notification sent.' : '::warning::Run-status notification failed: HTTP ' + r.status);
             } catch (e) { log('::warning::Run-status notification failed: ' + e.message); }
           }
@@ -1591,7 +1591,7 @@ jobs:
             if (gone.length) { lines.push('— No longer recommended: did you bet these? Record it under Recommended Bets —'); for (const r of gone.slice(0, 10)) lines.push(`⚠️ ${recLbl(r)} · was ${am(r.first.price)} ${BKN[r.first.book] || ''} ${r.first.u}u · ${r.why}`); if (gone.length > 10) lines.push(`+${gone.length - 10} more`); }
             const units = items.reduce((s, [p]) => s + p.u, 0);
             try {
-              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: items.length ? `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)${gone.length ? ` + ${gone.length} ended` : ''}` : `Ice Lab: ${gone.length} recommendation${gone.length === 1 ? '' : 's'} ended - did you bet ${gone.length === 1 ? 'it' : 'them'}?`, Priority: 'high', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/#recs' } });
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: items.length ? `Ice Lab: ${items.length} new recommended bet${items.length === 1 ? '' : 's'} (${units}u)${gone.length ? ` + ${gone.length} ended` : ''}` : `Ice Lab: ${gone.length} recommendation${gone.length === 1 ? '' : 's'} ended - did you bet ${gone.length === 1 ? 'it' : 'them'}?`, Priority: items.length ? 'high' : '1', Tags: 'ice_hockey', Click: 'https://lutzcody182.github.io/NHL-Dashboard/#recs' } });
               if (!r.ok) { log('::warning::Notification failed: HTTP ' + r.status); return 0; }
               for (const [p] of items) { p.nt = now.toISOString(); p.ntU = p.u; }
               for (const r of gone) r.ntE = now.toISOString();
@@ -1649,7 +1649,7 @@ jobs:
                 M.sent ? `${M.sent} new recommended bet${M.sent === 1 ? '' : 's'} (sent in a separate alert)` : 'No new recommended bets this run',
                 `${M.graded} finished pick${M.graded === 1 ? '' : 's'} graded`,
                 PF ? `Odds from ${oddsAge != null && oddsAge <= 1 ? 'this run' : oddsAge != null ? (oddsAge < 90 ? `${oddsAge} min ago` : `${Math.round(oddsAge / 60)} hours ago`) : 'unknown time'}${Number.isFinite(+PF.remaining) ? ` · ${(+PF.remaining).toLocaleString('en-US')} API credits left` : ''}` : 'No odds file found'];
-              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `${kind === 'repick' ? 'Goalie re-pick' : 'Pick run'} done - ${tm(now)} ET`, Priority: '2', Tags: kind === 'repick' ? 'repeat' : 'white_check_mark' } });
+              const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), { method: 'POST', body: lines.join('\n'), headers: { Title: `${kind === 'repick' ? 'Goalie re-pick' : 'Pick run'} done - ${tm(now)} ET`, Priority: '1', Tags: kind === 'repick' ? 'repeat' : 'white_check_mark' } });
               log(r.ok ? 'Run-status notification sent.' : '::warning::Run-status notification failed: HTTP ' + r.status);
             } catch (e) { log('::warning::Run-status notification failed: ' + e.message); }
           }
