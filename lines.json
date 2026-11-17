@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-17T18:34:40.295Z",
+ "updated": "2026-11-17T19:34:32.112Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2364,14 +2364,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Ivan Barbashev",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Jack Eichel",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Brett Howden",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -2384,14 +2384,14 @@
          "pp": "PP2"
         },
         {
+         "n": "Trevor Connelly",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Mitch Marner",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Brett Howden",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -2404,9 +2404,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Trevor Connelly",
+         "n": "Ivan Barbashev",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Tomas Hertl",
@@ -2481,7 +2481,7 @@
    "teams": [
     {
      "team": "Calgary Flames",
-     "goalie": "Devin Cooley",
+     "goalie": "Dustin Wolf",
      "groups": [
       {
        "label": "Line 1",
@@ -2628,14 +2628,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Mason Marchment",
-         "pos": "W",
+         "n": "Alexander Wennberg",
+         "pos": "C",
          "pp": "PP1"
         },
         {
-         "n": "Collin Graf",
+         "n": "Mason Marchment",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Michael Misa",
@@ -2648,9 +2648,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Alexander Wennberg",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Collin Graf",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Ty Dellandrea",
@@ -2660,7 +2660,7 @@
         {
          "n": "Tyler Toffoli",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
