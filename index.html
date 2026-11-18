@@ -5875,11 +5875,15 @@ function trialFit(PK) {
        alternates were down 16.7u): 150+ graded picks, Ice Lab beats the books' log loss by at least 2× the noise, AND its edge
        picks have actually won more often than their prices required. */
     UNITS.trial[m] = { n: L.length, ll: L.length ? a / L.length : NaN, llB: L.length ? b / L.length : NaN, z, eN: E.length, eW, eImp,
-      ok: L.length >= TRIAL_NEED && z >= 2 && E.length >= 30 && eW > eImp };
+      ok: L.length >= TRIAL_NEED && z >= 2 && E.length >= 30 && eW > eImp,
+      // EARLY (Nov 17, 2026, your call): 100+ lines, ahead of the books by 1.5× the noise, and edge picks beating their prices →
+      // recommended now but capped at 0.5u until it fully passes; it drops back to trial on its own if the evidence fades
+      early: L.length >= 100 && z >= 1.5 && E.length >= 30 && eW > eImp };
   }
   return UNITS.trial;
 }
-const trialOk = m => !TRIAL_MKTS.includes(m) || !!((UNITS.trial || {})[m] || {}).ok;
+const trialOk = m => !TRIAL_MKTS.includes(m) || !!((UNITS.trial || {})[m] || {}).ok || !!((UNITS.trial || {})[m] || {}).early;
+const trialEarly = m => TRIAL_MKTS.includes(m) && !((UNITS.trial || {})[m] || {}).ok && !!((UNITS.trial || {})[m] || {}).early;
 function unitsHairFit(PK) {
   const xm = m => ((PK && PK.xm) || []).filter(x => x.m === m);
   const lists = { goal: [(PK && PK.picks) || [], p => p.best != null ? p.best : p.dk], fg: [(PK && PK.first) || [], p => p.best != null ? p.best : p.dk], sog: [(PK && PK.sog) || [], p => p.best], sogAlt: [xm('sogAlt'), p => p.best], sv: [xm('sv'), p => p.best], pl: [xm('pl'), p => p.best], blk: [xm('blk'), p => p.best], ast: [xm('ast'), p => p.best], pts: [xm('pts'), p => p.best],
@@ -5922,6 +5926,7 @@ function unitsFor(m, p, price, opt = {}) {
   const out = { u, raw, kelly, frac, proven: pr.proven, n: pr.n, roi: pr.roi, shaky: !!opt.shaky, p, pS, hr, hair: HAIR_MKTS.includes(m) && !opt.noHair ? UNITS.hair[m] || null : null };
   // trial market not proven yet: show what it would be, but it isn't a recommended bet (no log entry, no alert)
   if (!opt.noTrial && !trialOk(m)) { const t = (UNITS.trial || {})[m] || { n: 0 }; return { ...out, trial: true, uT: u, u: 0, tn: t.n }; }
+  if (!opt.noTrial && trialEarly(m) && u > .5) return { ...out, u: .5, early: true, uFull: u }; // early market: capped at 0.5u
   return out;
 }
 const unitsTip = (m, x) => `<b>${x.u} unit${x.u === 1 ? '' : 's'}</b><div class='row'><span>Sizing</span><b>${x.proven ? 'Quarter' : 'Eighth'} Kelly</b></div><div class='row'><span>${UNIT_MKT[m]} track record</span><b>${x.n.toLocaleString()} graded recommended bets${fin(x.roi) ? `, ROI ${x.roi > 0 ? '+' : ''}${pct1(x.roi)}%` : ''}</b></div>${x.hr < 1 ? `<div class='row'><span>Sizing chance (cautious)</span><b>${pct1(x.pS)}% (model ${pct1(x.p)}%, keeping ${Math.round(x.hr * 100)}% of the edge)</b></div>` : ''}<div class='row'><span>Full Kelly would be</span><b>${(x.kelly * 100).toFixed(1)}% of bankroll</b></div>${x.shaky ? "<div class='row'><span>Few games of data</span><b>halved</b></div>" : ''}<div class='muted' style='margin-top:4px'>${x.proven ? 'This market&#39;s recommended bets are profitable over 300+ graded bets, so it gets quarter Kelly.' : 'Not proven yet (needs 300+ graded recommended bets with a profit in units), so it gets the more cautious eighth Kelly.'} 1 unit = 1% of a 100-unit bankroll; capped at 2 units.</div>`;
@@ -8363,14 +8368,14 @@ async function renderTrial() {
       let won = 0, risk = 0, exp = 0; for (const x of bets) { won += uProfit(x.uT, x.best, x.res); if (x.res !== 'PU') { risk += x.uT; exp += x.p; } }
       const ll = fin(t.ll) && fin(t.llB) ? `<b style="color:${t.ll < t.llB ? 'var(--good)' : 'var(--neg)'}">${t.ll.toFixed(3)}</b> vs ${t.llB.toFixed(3)}` : '<span class="muted">–</span>';
       const why = !(t.n >= TRIAL_NEED) ? '' : !(t.z >= 2) ? `ahead by ${fin(t.z) ? Math.max(0, t.z).toFixed(1) : '0'}× the noise, needs 2×` : !(t.eW > t.eImp) ? `edge picks won ${pct1(t.eW)}%, prices needed ${pct1(t.eImp)}%` : 'needs 30+ edge picks';
-      const status = t.ok ? '<b style="color:var(--good)">Passed: now recommended</b>' : t.n >= TRIAL_NEED ? `<b style="color:var(--neg)">Not passed yet</b><div class="muted" style="font-size:11px">${t.n} graded · ${why}</div>` : `${t.n} / ${TRIAL_NEED}`;
+      const status = t.ok ? '<b style="color:var(--good)">Passed: now recommended</b>' : t.early ? `<b style="color:#e8a33d">Early: recommended at 0.5u max</b><div class="muted" style="font-size:11px">${t.n} lines · ${fin(t.z) ? t.z.toFixed(1) : '0'}× noise · full pass at ${TRIAL_NEED} lines & 2×</div>` : t.n >= TRIAL_NEED ? `<b style="color:var(--neg)">Not passed yet</b><div class="muted" style="font-size:11px">${t.n} graded · ${why}</div>` : `${t.n} / ${TRIAL_NEED}`;
       return `<tr><td class="l"><b>${UNIT_MKT[m]}</b></td><td>${status}</td><td>${ll}</td><td>${edgeCell}</td><td>${bets.length ? `${W}-${Ls}${P ? `-${P}` : ''}` : '<span class="muted">–</span>'}</td>
         <td>${bets.length ? `${pct1(exp / Math.max(1, W + Ls))}% / <b>${pct1(W / Math.max(1, W + Ls))}%</b>` : '<span class="muted">–</span>'}</td>
         <td>${bets.length ? `<b style="color:${won >= 0 ? 'var(--good)' : 'var(--neg)'}">${won >= 0 ? '+' : ''}${won.toFixed(2)}u</b> <span class="muted" style="font-size:11px">${risk ? `${won >= 0 ? '+' : ''}${(won / risk * 100).toFixed(1)}% ROI` : ''}</span>` : '<span class="muted">–</span>'}</td></tr>`;
     };
     const recent = done.filter(x => x.uT >= .5).sort((a, b) => new Date(b.start) - new Date(a.start)).slice(0, 15);
     return `<div class="card" style="margin-top:14px"><div class="card-h"><h3>📋 Trial results</h3><p>${done.length} graded picks</p></div>
-      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px"><b>Prediction test</b> is what decides a market: average log loss of Ice Lab's chance vs. the books' own chance on every graded pick (lower is better). A market starts being recommended only when it has ${TRIAL_NEED}+ graded picks, wins this test by at least 2× its own noise (so it isn't luck), and its edge picks have actually won more often than their prices needed. <b>Would-be bets</b> are the picks that showed "trial · 0.5u" or more before the game, graded at the best price and units shown then, so you can see what following them would have done. <b>Every edge pick</b> is every graded pick that showed any edge at the best price, 1 unit each: more picks, so it fills in faster.</p>
+      <p class="muted" style="margin:-4px 0 8px;font-size:12.5px"><b>Prediction test</b> is what decides a market: average log loss of Ice Lab's chance vs. the books' own chance on every graded pick (lower is better). A market starts being recommended only when it has ${TRIAL_NEED}+ graded picks, wins this test by at least 2× its own noise (so it isn't luck), and its edge picks have actually won more often than their prices needed. A market that has 100+ lines, is ahead by 1.5× the noise and has winning edge picks is let in <b>early</b>: recommended now but capped at 0.5u until it fully passes, and back to trial on its own if the evidence fades. <b>Would-be bets</b> are the picks that showed "trial · 0.5u" or more before the game, graded at the best price and units shown then, so you can see what following them would have done. <b>Every edge pick</b> is every graded pick that showed any edge at the best price, 1 unit each: more picks, so it fills in faster.</p>
       <div class="twrap"><table><thead><tr><th class="l">Market</th><th>Graded picks</th><th>Prediction test (Ice Lab vs books)</th><th>Every edge pick (1u each)</th><th>Would-be bets W-L</th><th>Expected / actual hit rate</th><th>Units</th></tr></thead>
       <tbody>${TRIAL_MKTS.map(row).join('')}</tbody></table></div>
       ${recent.length ? `<h4 style="margin:14px 0 6px">Latest graded would-be bets</h4><div class="twrap"><table><thead><tr><th class="l">Date</th><th class="l">Bet</th><th>Price</th><th>Units</th><th>Result</th><th>Actual</th></tr></thead><tbody>
