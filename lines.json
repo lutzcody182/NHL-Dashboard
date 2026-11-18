@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-18T00:00:22.084Z",
+ "updated": "2026-11-18T00:34:32.771Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1433,6 +1433,11 @@
          "pp": "PP1"
         },
         {
+         "n": "Scott Sabourin",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Jeffrey Viel",
          "pos": "C",
          "pp": ""
@@ -1581,17 +1586,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Chris Tanev",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Troy Stecher",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Oliver Ekman-Larsson",
          "pos": "D",
          "pp": ""
         },
@@ -1599,6 +1594,16 @@
          "n": "Morgan Rielly",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Chris Tanev",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Oliver Ekman-Larsson",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -1973,7 +1978,7 @@
    "teams": [
     {
      "team": "Nashville Predators",
-     "goalie": "Juuse Saros",
+     "goalie": "Justus Annunen",
      "groups": [
       {
        "label": "Line 1",
