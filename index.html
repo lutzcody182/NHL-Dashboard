@@ -434,7 +434,9 @@ ol.plist{list-style:none;margin:0;padding:0;display:grid;gap:6px}ol.plist li{dis
 div.whyg+div.whyg{margin-top:10px}div.whyh{display:flex;align-items:center;gap:6px;font-size:12.5px;margin:0 0 5px}span.whyv{display:flex;align-items:center;gap:6px;white-space:nowrap}span.whyv i{display:inline-block;height:6px;border-radius:3px}ul.gmwhy{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}ul.gmwhy li{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:8px;background:var(--surface-2)}
 .sst{position:relative;height:22px;min-width:180px;background:var(--surface-2);border-radius:11px}.sst .mid{position:absolute;left:50%;top:3px;bottom:3px;width:1px;background:var(--text-2);opacity:.5}.sst i{position:absolute;top:2px;width:18px;height:18px;margin-left:-9px;border-radius:50%;font-style:normal;font-size:10px;font-weight:800;display:grid;place-items:center;color:#fff}.sst i.trail{background:var(--away)}.sst i.tied{background:var(--text-2)}.sst i.lead{background:var(--home)}
 .edges{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.edge{padding:10px 12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);display:grid;gap:4px}.edge .eg{display:flex;justify-content:space-between;gap:8px;font-size:13px}
-.rsseg{display:flex;gap:4px;flex-wrap:wrap}.rsseg .dbtn{padding:4px 9px;font-size:11.5px}.rsseg .dbtn.on{color:#fff;border-color:transparent;background:var(--accent)}.rsseg .dbtn.on.placed{background:var(--good)}.rsseg .dbtn.on.not{background:var(--neg)}.rsseg .dbtn.on.pending{background:#e8a33d}.rsb{display:inline-block;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;background:var(--surface-2);color:var(--text-2)}.rsb.on{background:var(--good);color:#fff}.rsb.ex{background:#e8a33d;color:#fff}.rstab td{vertical-align:top}.rstab tr.rsneed td{background:color-mix(in srgb,#e8a33d 9%,transparent)}.rsbanner{margin:10px 0 0;padding:8px 12px;border:1px solid #e8a33d;border-left-width:4px;border-radius:10px;background:var(--surface);font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rsseg{display:flex;gap:4px;flex-wrap:wrap}.rsseg .dbtn{padding:4px 9px;font-size:11.5px}.rsseg .dbtn.on{color:#fff;border-color:transparent;background:var(--accent)}.rsseg .dbtn.on.placed{background:var(--good)}.rsseg .dbtn.on.not{background:var(--neg)}.rsseg .dbtn.on.pending{background:#e8a33d}.rsb{display:inline-block;font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;background:var(--surface-2);color:var(--text-2)}.rsb.on{background:var(--good);color:#fff}.rsb.ex{background:#e8a33d;color:#fff}
+.rsst{white-space:normal;min-width:110px;max-width:160px;line-height:1.35}.rsst .why{font-size:11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:help}
+.rspl{white-space:normal;min-width:150px;max-width:175px}.rstab td{vertical-align:top}.rstab tr.rsneed td{background:color-mix(in srgb,#e8a33d 9%,transparent)}.rsbanner{margin:10px 0 0;padding:8px 12px;border:1px solid #e8a33d;border-left-width:4px;border-radius:10px;background:var(--surface);font-size:13.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .btn.sm{padding:3px 9px;font-size:12px;border-radius:8px}.mybet{white-space:nowrap}.mybet.on{background:var(--good);border-color:var(--good);color:#fff}
 .mbmodal{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}.mbbox{background:var(--surface);color:var(--text);border-radius:16px;padding:18px;width:min(460px,100%);box-shadow:0 20px 60px rgba(0,0,0,.35)}
 .gbseg{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap}.gbseg .dbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;font-size:13.5px}.gbseg .dbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}.gbseg .dbtn:disabled{opacity:.35;cursor:default}
@@ -5855,7 +5857,13 @@ function trialFit(PK) {
   UNITS.trial = UNITS.trial || {};
   for (const m of TRIAL_MKTS) {
     const L = m === 'ml' ? ((PK && PK.games) || []).filter(x => x.hw != null && fin(x.p) && fin(x.mk)).map(x => ({ p: x.p, pb: x.mk, res: x.hw ? 'W' : 'L' })) // home team's chance vs. the line's
-      : ((PK && PK.xm) || []).filter(x => x.m === m && (x.res === 'W' || x.res === 'L') && fin(x.p) && fin(x.pb));
+      : (() => { // one record per line: the job saves BOTH sides of saves / puck line / blocks / assists / points lines, and counting
+          // the over and the under of the same line twice would double the count and overstate the evidence by about 1.4× (fixed Nov 17, 2026)
+          const seen = new Map();
+          for (const x of ((PK && PK.xm) || [])) { if (x.m !== m || !(x.res === 'W' || x.res === 'L') || !fin(x.p) || !fin(x.pb)) continue;
+            const k = m === 'pl' ? x.gid : `${x.gid}|${x.pid || ''}|${x.line}`, cur = seen.get(k);
+            if (!cur || (x.side === 'o' || x.side === 'h') && !(cur.side === 'o' || cur.side === 'h')) seen.set(k, x); }
+          return [...seen.values()]; })();
     let a = 0, b = 0; const d = []; for (const x of L) { const y = x.res === 'W', la = llOne(x.p, y), lb = llOne(x.pb, y); a += la; b += lb; d.push(lb - la); }
     // how sure: the gap between the books' log loss and Ice Lab's, in units of its own noise (standard error)
     const dm = d.length ? d.reduce((s, v) => s + v, 0) / d.length : 0, dse = d.length > 1 ? Math.sqrt(d.reduce((s, v) => s + (v - dm) ** 2, 0) / (d.length - 1) / d.length) : Infinity, z = dse > 0 ? dm / dse : 0;
@@ -6500,13 +6508,14 @@ const recDt = t => new Date(t).toLocaleString([], { month: 'short', day: 'numeri
 function recStatusCell(r) {
   const res = r.res === 'W' ? '<b style="color:var(--good)">✓ Won</b>' : r.res === 'L' ? '<span style="color:var(--neg)">✗ Lost</span>' : r.res === 'PU' ? '<span class="muted">Push</span>' : r.res === 'V' ? '<span class="muted">Void (didn&#39;t play)</span>' : '';
   const det = r.m === 'sog' && r.shots != null ? ` (${r.shots} SOG)` : r.m === 'goal' && r.goals > 1 ? ` (${r.goals} G)` : r.m === 'ml' && r.score ? ` (${esc(r.score)})` : '';
-  const st = r.status === 'active' ? '<span class="rsb on">Active now</span>' : r.status === 'expired' ? `<span class="rsb ex">No longer recommended</span><div class="muted" style="font-size:11.5px">${esc(r.why || '')} · ${recDt(r.ended)}</div>` : '<span class="rsb cl">Game started</span>';
-  return `${st}${res ? `<div>${res}${det}</div>` : ''}`;
+  // kept narrow: the reason a recommendation ended shows 2 lines, the full text is in the tooltip
+  const st = r.status === 'active' ? '<span class="rsb on">Active</span>' : r.status === 'expired' ? `<span class="rsb ex" title="No longer recommended">Ended</span><div class="muted why" title="${esc((r.why || '') + ' · ' + recDt(r.ended))}">${esc(r.why || '')}</div>` : '<span class="rsb cl">Started</span>';
+  return `<div class="rsst">${st}${res ? `<div>${res}${det}</div>` : ''}</div>`;
 }
 function recPlaceCell(r, BM) {
   const pl = recPlace(r, BM), bs = BM[r.id] || [];
   const btn = (s, l) => `<button class="dbtn${pl === s ? ' on ' + s : ''}" data-rsset="${s}" data-rid="${esc(r.id)}">${l}</button>`;
-  return `<div class="rsseg">${btn('placed', '✓ Bet placed')}${btn('not', 'Not placed')}${btn('pending', 'Pending')}</div>${bs.map(b => `<div class="muted" style="font-size:11.5px;margin-top:3px">Logged ${fmtML(b.odds)}${b.type === 'sog' && b.line !== r.line ? ` on ${b.line}` : ''} · ${money(b.stake).replace('+', '')}${b.book ? ' · ' + esc(b.book) : ''}${b.res ? ` · ${b.res === 'W' ? 'won ' + money(mbProfit(b)) : b.res === 'L' ? 'lost ' + money(mbProfit(b)).replace('+', '') : 'refunded'}` : ''} <button class="btn sm" data-rsedit="${esc(b.id)}">Edit</button></div>`).join('')}`;
+  return `<div class="rspl"><div class="rsseg">${btn('placed', '✓ Bet placed')}${btn('not', 'Not placed')}${btn('pending', 'Pending')}</div>${bs.map(b => `<div class="muted" style="font-size:11.5px;margin-top:3px">Logged ${fmtML(b.odds)}${b.type === 'sog' && b.line !== r.line ? ` on ${b.line}` : ''} · ${money(b.stake).replace('+', '')}${b.book ? ' · ' + esc(b.book) : ''}${b.res ? ` · ${b.res === 'W' ? 'won ' + money(mbProfit(b)) : b.res === 'L' ? 'lost ' + money(mbProfit(b)).replace('+', '') : 'refunded'}` : ''} <button class="btn sm" data-rsedit="${esc(b.id)}">Edit</button></div>`).join('')}</div>`;
 }
 // chance → American odds (no vig), and the worst price that would still be recommended (0.5u or more)
 const pToAm = p => !(p > 0 && p < 1) ? null : p >= .5 ? -Math.round(p / (1 - p) * 100) : Math.round((1 - p) / p * 100);
