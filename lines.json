@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-18T00:34:32.771Z",
+ "updated": "2026-11-18T01:00:16.625Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1785,17 +1785,17 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Alex Killorn",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Troy Terry",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Nikita Nesterenko",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Roger McQueen",
+         "n": "Tim Washe",
          "pos": "C",
          "pp": ""
         }
@@ -1805,12 +1805,17 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Alex Killorn",
+         "n": "Sam Colangelo",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Nikita Nesterenko",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Tim Washe",
+         "n": "Roger McQueen",
          "pos": "C",
          "pp": ""
         }
@@ -1861,9 +1866,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Dylan Holloway",
+         "n": "Jake Neighbours",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Robert Thomas",
@@ -1881,9 +1886,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Jake Neighbours",
+         "n": "Dylan Holloway",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Mason McTavish",
@@ -1901,9 +1906,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Dalibor Dvorsky",
+         "n": "Aleksanteri Kaskimaki",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jonatan Berggren",
@@ -1931,9 +1936,9 @@
          "pp": ""
         },
         {
-         "n": "Aleksanteri Kaskimaki",
+         "n": "Dalibor Dvorsky",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -2185,11 +2190,6 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Brock Faber",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Quinn Hughes",
          "pos": "D",
          "pp": "PP1"
@@ -2198,6 +2198,11 @@
          "n": "Jared Spurgeon",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Brock Faber",
+         "pos": "D",
+         "pp": "PP2"
         },
         {
          "n": "Jonas Brodin",
