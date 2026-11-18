@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-18",
- "updated": "2026-11-18T16:34:39.583Z",
+ "updated": "2026-11-18T17:03:08.003Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -326,11 +326,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Florian Xhekaj",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Owen Beck",
          "pos": "W",
          "pp": ""
@@ -338,6 +333,11 @@
         {
          "n": "Jake Evans",
          "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Brett Berard",
+         "pos": "W",
          "pp": ""
         }
        ]
