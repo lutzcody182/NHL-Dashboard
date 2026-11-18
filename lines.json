@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-17",
- "updated": "2026-11-17T23:30:15.398Z",
+ "updated": "2026-11-18T00:00:22.084Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -326,11 +326,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ryan Lomberg",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Jack Williams",
          "pos": "C",
          "pp": ""
@@ -366,7 +361,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Erik Gudbranson",
+         "n": "Jake Christiansen",
          "pos": "D",
          "pp": ""
         },
@@ -636,14 +631,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Anton Lundell",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Brady Tkachuk",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Sam Bennett",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Matthew Tkachuk",
@@ -656,14 +651,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Lars Eller",
-         "pos": "W",
+         "n": "Anton Lundell",
+         "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Carter Verhaeghe",
+         "n": "Eetu Luostarinen",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Sam Reinhart",
@@ -676,7 +671,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Eetu Luostarinen",
+         "n": "Lars Eller",
          "pos": "W",
          "pp": "PP2"
         },
@@ -686,9 +681,9 @@
          "pp": ""
         },
         {
-         "n": "Sam Bennett",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Carter Verhaeghe",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -905,9 +900,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Denver Barkey",
+         "n": "Cole Knuble",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Owen Tippett",
@@ -950,9 +945,9 @@
          "pp": ""
         },
         {
-         "n": "Cole Knuble",
+         "n": "Denver Barkey",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Sean Couturier",
@@ -1189,11 +1184,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Nino Niederreiter",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Morgan Barron",
          "pos": "C",
          "pp": ""
@@ -1229,7 +1219,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Haydn Fleury",
+         "n": "Tyrel Bauer",
          "pos": "D",
          "pp": ""
         },
