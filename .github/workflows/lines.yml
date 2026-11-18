@@ -1038,9 +1038,24 @@ jobs:
               }
               w.why = why; return why;
             };
+            /* ONE BET PER PLAYER PER GAME (Nov 17, 2026): several bets on one player stack the same risk (a scratch, a quiet night) and
+               can even work against each other (to score + under shots). Among the bets on a player that pass every gate, only the one
+               with the biggest edge is recommended; if he already has an active recommendation in this game, no second one is added. */
+            const WHY = new Map(); for (const [id, x] of cur) WHY.set(id, gates(x, id));
+            const mkTxt = x => ({ goal: 'to score', fg: 'first goal', sog: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} shots`, sogAlt: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} shots (alt)`, blk: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} blocked shots`, ast: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} assists`, pts: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} points` })[x.m] || x.m;
+            const PLY = new Map(); // gid|pid → candidate ids that passed every gate
+            for (const [id, x] of cur) if (x.p.pid && !['ml', 'pl', 'sv'].includes(x.m) && !WHY.get(id).length) { const k = `${x.p.gid}|${x.p.pid}`; (PLY.get(k) || PLY.set(k, []).get(k)).push(id); }
+            for (const [k, ids] of PLY) {
+              const act = [...R.values()].find(r => r.status === 'active' && r.pid && `${r.gid}|${r.pid}` === k); // he already has a live recommendation
+              const keep = act ? (ids.includes(act.id) ? act.id : null) : ids.reduce((a, b) => (cur.get(b).p.edge || 0) > (cur.get(a).p.edge || 0) ? b : a);
+              for (const id of ids) if (id !== keep) {
+                const t = act ? `one bet per player: already recommended ${act.n} ${act.m === 'goal' ? 'to score' : act.m === 'fg' ? 'first goal' : `${act.side === 'o' ? 'over' : 'under'} ${act.line}${act.m === 'sog' ? ' shots' : ''}`}` : `one bet per player: ${mkTxt(cur.get(keep))} has the bigger edge (${pts(cur.get(keep).p.edge)})`;
+                WHY.get(id).push({ k: 'player', t }); const w = W.get(id); if (w) w.why = WHY.get(id);
+              }
+            }
             for (const [id, x] of cur) {
               const p = x.p, r = R.get(id), s = snap(x);
-              const why = gates(x, id);
+              const why = WHY.get(id);
               if (why.length) {
                 const hard = why.filter(w => w.k === 'moved' || w.k === 'lineup' || w.k === 'cap');
                 if (r && r.status === 'active') {
@@ -1097,7 +1112,7 @@ jobs:
             const act = new Set([...R.values()].filter(r => r.status === 'active').map(r => r.id));
             M.watch = [...W.values()].filter(w => new Date(w.start) > now).map(w => ({ ...w, now: w.upd === iso, rec: act.has(w.id) }));
             const wNow = M.watch.filter(w => w.now && !w.rec), wc = k => wNow.filter(w => w.why.some(y => y.k === k)).length;
-            log(`Watch list: ${wNow.length} bets the model likes but not recommended yet (waiting on time ${wc('time')}, goalies ${wc('goalie')}, price moved ${wc('moved')}, lineup ${wc('lineup')}, shots edge over 3.5 ${wc('cap')}).`);
+            log(`Watch list: ${wNow.length} bets the model likes but not recommended yet (waiting on time ${wc('time')}, goalies ${wc('goalie')}, price moved ${wc('moved')}, lineup ${wc('lineup')}, shots edge over 3.5 ${wc('cap')}, one bet per player ${wc('player')}).`);
             log(`Recommendation log: ${created} new, ${ended} ended (expired or game started), ${graded} graded, ${R.size} kept in all.`);
             return [...R.values()].sort((a, b) => a.first.t < b.first.t ? -1 : a.first.t > b.first.t ? 1 : 0);
           }
@@ -1717,9 +1732,24 @@ jobs:
               }
               w.why = why; return why;
             };
+            /* ONE BET PER PLAYER PER GAME (Nov 17, 2026): several bets on one player stack the same risk (a scratch, a quiet night) and
+               can even work against each other (to score + under shots). Among the bets on a player that pass every gate, only the one
+               with the biggest edge is recommended; if he already has an active recommendation in this game, no second one is added. */
+            const WHY = new Map(); for (const [id, x] of cur) WHY.set(id, gates(x, id));
+            const mkTxt = x => ({ goal: 'to score', fg: 'first goal', sog: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} shots`, sogAlt: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} shots (alt)`, blk: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} blocked shots`, ast: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} assists`, pts: `${x.p.side === 'o' ? 'over' : 'under'} ${x.p.line} points` })[x.m] || x.m;
+            const PLY = new Map(); // gid|pid → candidate ids that passed every gate
+            for (const [id, x] of cur) if (x.p.pid && !['ml', 'pl', 'sv'].includes(x.m) && !WHY.get(id).length) { const k = `${x.p.gid}|${x.p.pid}`; (PLY.get(k) || PLY.set(k, []).get(k)).push(id); }
+            for (const [k, ids] of PLY) {
+              const act = [...R.values()].find(r => r.status === 'active' && r.pid && `${r.gid}|${r.pid}` === k); // he already has a live recommendation
+              const keep = act ? (ids.includes(act.id) ? act.id : null) : ids.reduce((a, b) => (cur.get(b).p.edge || 0) > (cur.get(a).p.edge || 0) ? b : a);
+              for (const id of ids) if (id !== keep) {
+                const t = act ? `one bet per player: already recommended ${act.n} ${act.m === 'goal' ? 'to score' : act.m === 'fg' ? 'first goal' : `${act.side === 'o' ? 'over' : 'under'} ${act.line}${act.m === 'sog' ? ' shots' : ''}`}` : `one bet per player: ${mkTxt(cur.get(keep))} has the bigger edge (${pts(cur.get(keep).p.edge)})`;
+                WHY.get(id).push({ k: 'player', t }); const w = W.get(id); if (w) w.why = WHY.get(id);
+              }
+            }
             for (const [id, x] of cur) {
               const p = x.p, r = R.get(id), s = snap(x);
-              const why = gates(x, id);
+              const why = WHY.get(id);
               if (why.length) {
                 const hard = why.filter(w => w.k === 'moved' || w.k === 'lineup' || w.k === 'cap');
                 if (r && r.status === 'active') {
@@ -1776,7 +1806,7 @@ jobs:
             const act = new Set([...R.values()].filter(r => r.status === 'active').map(r => r.id));
             M.watch = [...W.values()].filter(w => new Date(w.start) > now).map(w => ({ ...w, now: w.upd === iso, rec: act.has(w.id) }));
             const wNow = M.watch.filter(w => w.now && !w.rec), wc = k => wNow.filter(w => w.why.some(y => y.k === k)).length;
-            log(`Watch list: ${wNow.length} bets the model likes but not recommended yet (waiting on time ${wc('time')}, goalies ${wc('goalie')}, price moved ${wc('moved')}, lineup ${wc('lineup')}, shots edge over 3.5 ${wc('cap')}).`);
+            log(`Watch list: ${wNow.length} bets the model likes but not recommended yet (waiting on time ${wc('time')}, goalies ${wc('goalie')}, price moved ${wc('moved')}, lineup ${wc('lineup')}, shots edge over 3.5 ${wc('cap')}, one bet per player ${wc('player')}).`);
             log(`Recommendation log: ${created} new, ${ended} ended (expired or game started), ${graded} graded, ${R.size} kept in all.`);
             return [...R.values()].sort((a, b) => a.first.t < b.first.t ? -1 : a.first.t > b.first.t ? 1 : 0);
           }
