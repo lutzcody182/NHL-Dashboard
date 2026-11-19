@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-19",
- "updated": "2026-11-19T17:00:19.702Z",
+ "updated": "2026-11-19T17:34:42.453Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -748,7 +748,7 @@
    "teams": [
     {
      "team": "Buffalo Sabres",
-     "goalie": "Alex Lyon",
+     "goalie": "Ukko-Pekka Luukkonen",
      "groups": [
       {
        "label": "Line 1",
@@ -1043,11 +1043,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Trevor Moore",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Joel Armia",
          "pos": "W",
          "pp": ""
@@ -1056,6 +1051,11 @@
          "n": "Erik Haula",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Samuel Helenius",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
