@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-19",
- "updated": "2026-11-19T17:34:42.453Z",
+ "updated": "2026-11-19T19:05:02.206Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1755,14 +1755,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Dmitri Voronkov",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Adam Fantilli",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Steven Lorentz",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1797,7 +1797,7 @@
         {
          "n": "Cole Sillinger",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Mathieu Olivier",
@@ -1810,13 +1810,18 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Jack Williams",
+         "n": "Ryan Lomberg",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Isac Lundestrom",
          "pos": "C",
          "pp": ""
         },
         {
-         "n": "Steven Lorentz",
-         "pos": "W",
+         "n": "Jack Williams",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -1845,12 +1850,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Jake Christiansen",
+         "n": "Erik Gudbranson",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Dante Fabbro",
+         "n": "Jake Christiansen",
          "pos": "D",
          "pp": ""
         }
@@ -2039,14 +2044,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Yakov Trenin",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Danila Yurov",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Tyler Pitlick",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -2283,17 +2288,17 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Alex Killorn",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Troy Terry",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Nikita Nesterenko",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Roger McQueen",
+         "n": "Tim Washe",
          "pos": "C",
          "pp": ""
         }
@@ -2303,12 +2308,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Alex Killorn",
+         "n": "Nikita Nesterenko",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Tim Washe",
+         "n": "Roger McQueen",
          "pos": "C",
          "pp": ""
         }
