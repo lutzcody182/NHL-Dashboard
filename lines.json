@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-18",
- "updated": "2026-11-18T17:03:08.003Z",
+ "updated": "2026-11-19T00:30:16.017Z",
  "games": [
   {
    "time": "7:30 PM ET",
@@ -17,14 +17,34 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "JJ Peterka",
+         "n": "Elias Lindholm",
+         "pos": "C",
+         "pp": "PP1"
+        },
+        {
+         "n": "Morgan Geekie",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "David Pastrnak",
          "pos": "W",
          "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "JJ Peterka",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Casey Mittelstadt",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Pavel Zacha",
@@ -34,41 +54,21 @@
        ]
       },
       {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Michael Eyssimont",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Morgan Geekie",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Fraser Minten",
-         "pos": "C",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
        "label": "Line 3",
        "players": [
-        {
-         "n": "Elias Lindholm",
-         "pos": "C",
-         "pp": "PP1"
-        },
         {
          "n": "Marat Khusnutdinov",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Casey Mittelstadt",
-         "pos": "W",
+         "n": "Matthew Poitras",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Fraser Minten",
+         "pos": "C",
          "pp": "PP2"
         }
        ]
