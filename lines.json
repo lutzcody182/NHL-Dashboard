@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-19",
- "updated": "2026-11-19T19:30:28.977Z",
+ "updated": "2026-11-19T20:34:51.657Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1642,29 +1642,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Gage Goncalves",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Anthony Cirelli",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Yanni Gourde",
-         "pos": "W",
-         "pp": ""
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Jansen Harkins",
-         "pos": "C",
-         "pp": ""
         },
         {
          "n": "Pontus Holmberg",
@@ -1679,16 +1659,36 @@
        ]
       },
       {
-       "label": "Line 4",
+       "label": "Line 3",
        "players": [
+        {
+         "n": "Gage Goncalves",
+         "pos": "W",
+         "pp": "PP2"
+        },
         {
          "n": "Sam O'Reilly",
          "pos": "C",
          "pp": "PP1"
         },
         {
+         "n": "Yanni Gourde",
+         "pos": "W",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
          "n": "Scott Sabourin",
          "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Jansen Harkins",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -2308,6 +2308,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Frank Vatrano",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Nikita Nesterenko",
          "pos": "W",
          "pp": "PP2"
@@ -2811,7 +2816,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Colin Blackwell",
+         "n": "Joel Kiviranta",
          "pos": "W",
          "pp": ""
         }
@@ -2927,7 +2932,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Raphael Lavoie",
+         "n": "Marc Gatcomb",
          "pos": "W",
          "pp": ""
         },
