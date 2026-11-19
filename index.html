@@ -4921,7 +4921,20 @@ function gmBlendFit(PK) {
   for (let w = 0; w <= 1.0001; w += .05) { let L = 0; for (const x of gs) { const q = clamp(sigm(w * logit(clamp(x.p, .01, .99)) + (1 - w) * logit(clamp(x.mk, .02, .98))), 1e-4, 1 - 1e-4); L -= x.hw ? Math.log(q) : Math.log(1 - q); } if (L < bl) { bl = L; best = w; } }
   GMB.fit = best; GMB.w = (gs.length * best + 150 * .5) / (gs.length + 150); return GMB;
 }
-async function gmLoadSaved() { if (GM.model) return GM.model; try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.luV && m.slimV && m.carry === GM_CARRY && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} return GM.model; } // older saved models (before the rest change) need one retrain
+async function gmLoadSaved() { if (GM.model) { gmAutoRetrain(); return GM.model; } try { const m = await DB.get('gm2'); if (m && m.W && m.restV && m.luV && m.slimV && m.carry === GM_CARRY && m.W.length === GM_FEATS.length) GM.model = m; } catch (e) {} gmAutoRetrain(); return GM.model; }
+/* AUTOMATIC NIGHTLY RETRAIN (Nov 18, 2026): the copy of the game model saved in this browser retrains itself in the background
+   the first time the dashboard is opened after 3 AM Eastern (when every game of the night has ended), so it always includes last
+   night's games. The GitHub job already retrains from scratch on every run for the recommendations and alerts. */
+const gmCutoff = () => { const et = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })), c = new Date(et); c.setHours(3, 0, 0, 0); if (et < c) c.setDate(c.getDate() - 1); return Date.now() - (et - c); };
+function gmAutoRetrain() {
+  if (GM.loading || GM.autoTried) return;
+  if (GM.model && GM.model.trainedAt && GM.model.trainedAt >= gmCutoff()) return; // already trained since this morning's 3 AM
+  GM.autoTried = true; // once per page load
+  setTimeout(async () => {
+    await gmRun(true);
+    if (!GM.err && GM.model) { const t = activeTab(); if (t !== 'model' && RERENDER[t]) try { RERENDER[t](); } catch (e) {} }
+  }, 1500);
+} // older saved models (before the rest change) need one retrain
 async function gmCollect(onProg) {
   const seasons = [S.curSeason - 2, S.curSeason - 1, S.curSeason], today = todayStr(), ids = [];
   for (const y of seasons) {
@@ -4941,7 +4954,7 @@ async function gmRun(force) {
     const games = await gmCollect(prog); await getPHFile();
     GM.prog = 'Training and testing…'; const e = $('#gmProg'); if (e) e.textContent = GM.prog; await sleep(30);
     const m = gmTrain(games);
-    if (m.error) GM.err = m.error; else { GM.model = m; DB.set('gm2', m); }
+    if (m.error) GM.err = m.error; else { m.trainedAt = Date.now(); GM.model = m; DB.set('gm2', m); }
   } catch (err) { GM.err = err.message || String(err); }
   GM.loading = false;
   if (activeTab() === 'model') renderGameModelCard();
@@ -4972,7 +4985,7 @@ async function renderGameModelCard() {
     return `<tr><td class="l">${esc(l)}</td><td class="l muted" style="font-size:12px">${esc(desc)}</td><td>${kept ? `<b style="color:${eff > 0 ? 'var(--home)' : eff < 0 ? 'var(--away)' : 'inherit'}">${eff >= 0 ? '+' : ''}${eff.toFixed(1)} pts</b>` : `<span class="muted" data-tip="${esc('What the model learned when it tried this factor. It was left out because it didn\'t improve predictions on the test games.')}">${eff >= 0 ? '+' : ''}${eff.toFixed(1)} pts</span>`}</td><td>${fin(d) ? (d > 0 ? '+' : '') + (d * 1000).toFixed(2) : '–'}</td><td>${M.ridge ? (d > .0005 && kept ? '<span class="badge ok" data-tip="Carries real weight and improved predictions on games the model never saw.">✓ Helping</span>' : kept ? `<span class="badge maybe" data-tip="${esc('Has some weight, but removing it didn\'t make predictions on unseen games worse, so its benefit isn\'t proven yet.')}">Minor</span>` : `<span class="badge maybe" data-tip="${esc('Still in the model, but the evidence for it is weak so far, so its weight was shrunk to a small amount (under 0.4 points per unit). It grows automatically if the data starts supporting it.')}">≈ 0 so far</span>`) : kept ? '<span class="badge ok">✓ Used</span>' : M.ridge ? `<span class="badge maybe" data-tip="${esc('Still in the model, but the evidence for it is weak so far, so its weight was shrunk to a small amount (under 0.4 points per unit). It grows automatically if the data starts supporting it.')}">≈ 0 so far</span>` : '<span class="badge maybe">Not used</span>'}</td></tr>`;
   }).join('');
   const grpRows = GM_GROUPS.map(([g, l]) => `${l}: ${M.keep.includes(g) ? '✓' : '✗'}`).join(' · ');
-  box.innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><button class="btn" id="gmRe">Retrain with latest games</button></div>
+  box.innerHTML = `<div class="card"><div class="card-h"><h3>🧠 Game model v2</h3><button class="btn" id="gmRe" title="It also retrains by itself the first time you open the dashboard after 3 AM Eastern each day.">Retrain now</button></div>
     <p style="margin:0 0 10px">Trained on <b>${M.nRows.toLocaleString()}</b> games from ${M.seasons.map(y => `${y - 1}-${String(y).slice(2)}`).join(' and ')} · last trained ${age < 1 ? 'under an hour' : age < 48 ? Math.round(age) + ' hours' : Math.round(age / 24) + ' days'} ago. ${better ? `On games it never saw, its win chances were closer to what actually happened than the old ratings-only model (lower log loss).` : `On the test games it didn't beat the ratings-only model, so treat its extra factors with caution.`} Pick accuracy swings a lot over a few hundred games; log loss is the fairer grade because it rewards getting the chances right, not just the winner.</p>
     <div class="tiles" style="margin-bottom:12px">
       <div class="tile"><div class="k">Game model v2</div><div class="v num">${gmPct(M.sKeep.acc)}</div><div class="s">picks right · log loss ${M.sKeep.ll.toFixed(3)} · ${M.nTest} test games</div></div>
@@ -5108,7 +5121,7 @@ async function renderGameModelPreview(s, g) {
       ${r.phTeam ? `<h4 class="cmp-sec">Post Hockey team stats</h4><p style="margin:0 0 4px;font-size:13px" data-tip="${esc('Post Hockey\'s shooter-adjusted expected goals: 5-on-5 differential per 60, and power-play xGF/60 minus penalty-kill xGA/60. This season to date, blended with last season early on.')}">5v5 xG ±/60: ${esc(g.home.abbr)} ${r.phTeam.d5 >= 0 ? '+' : '−'}${f2(Math.abs(r.phTeam.d5))} better · special teams: ${esc(g.home.abbr)} ${r.phTeam.st >= 0 ? '+' : '−'}${f2(Math.abs(r.phTeam.st))}</p>${r.phTeam.on ? '' : '<p class="muted" style="margin:0;font-size:12px">Small weight in the win chance so far: the evidence for it is still weak.</p>'}` : ''}
       <h4 class="cmp-sec">Referees</h4>${r.ref.names.length ? `<p style="margin:0 0 4px;font-size:13px">${r.ref.names.map(esc).join(' & ')}: <b style="color:${r.ref.crew > 1.03 ? 'var(--neg)' : r.ref.crew < .97 ? 'var(--good)' : 'inherit'}">${pct1(Math.abs(r.ref.crew - 1))}% ${r.ref.crew >= 1 ? 'more' : 'fewer'}</b> penalties than an average crew</p>${(() => { const pt = r.parts.find(x => x.k === 'ref'); return `<p class="muted" style="margin:0;font-size:12px">${r.ref.goals.h || r.ref.goals.a ? `Expected power-play goals: ${esc(g.home.abbr)} ${r.ref.goals.h >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.h))}, ${esc(g.away.abbr)} ${r.ref.goals.a >= 0 ? '+' : '−'}${f2(Math.abs(r.ref.goals.a))}${pt ? ` → ${esc(pt.d >= 0 ? g.home.abbr : g.away.abbr)} +${Math.abs(pt.d * 100).toFixed(1)} pts` : ''}. ` : ''}${fin(r.ref.beta) ? `${Math.round(r.ref.beta * 100)}% of a crew's past rate carries into its next game (learned from past games).` : 'Retrain in Model Lab to use referee crews.'}</p>`; })()}` : '<p class="muted" style="margin:0;font-size:13px">Not posted yet (usually the day of the game).</p>'}
       <h4 class="cmp-sec">Injuries factored in</h4>${injTxt || '<p class="muted" style="margin:0;font-size:13px">No regulars listed as out.</p>'}</div></div>
-    <p class="muted" style="font-size:12px;margin:8px 0 0">The model was last trained ${new Date(M.t).toLocaleDateString()}; retrain it in Model Lab to include the newest games. For fun and analysis, not betting advice.</p></div>`;
+    <p class="muted" style="font-size:12px;margin:8px 0 0">${M.trainedAt ? `The model was last trained ${new Date(M.trainedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}; ` : ''}It retrains itself each day after the night's games end. For fun and analysis, not betting advice.</p></div>`;
   renderLineHistory(g);
 }
 
