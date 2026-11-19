@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-19",
- "updated": "2026-11-19T20:34:51.657Z",
+ "updated": "2026-11-19T21:30:24.444Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2408,11 +2408,6 @@
       {
        "label": "Line 3",
        "players": [
-        {
-         "n": "Gavin Brindley",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Gabriel Landeskog",
          "pos": "W",
