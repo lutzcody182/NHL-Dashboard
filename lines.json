@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-19",
- "updated": "2026-11-19T19:05:02.206Z",
+ "updated": "2026-11-19T19:30:28.977Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -507,7 +507,7 @@
         {
          "n": "Alexandre Texier",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Nick Suzuki",
@@ -547,17 +547,17 @@
         {
          "n": "Phillip Danault",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Zachary Bolduc",
-         "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Kirby Dach",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Brett Berard",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -570,12 +570,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Owen Beck",
+         "n": "Florian Xhekaj",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Brett Berard",
+         "n": "Owen Beck",
          "pos": "W",
          "pp": ""
         }
@@ -2039,6 +2039,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Nico Sturm",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Maxim Shabanov",
          "pos": "W",
          "pp": "PP1"
@@ -2047,11 +2052,6 @@
          "n": "Danila Yurov",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Tyler Pitlick",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -2242,7 +2242,7 @@
    "teams": [
     {
      "team": "Anaheim Ducks",
-     "goalie": "Ville Husso",
+     "goalie": "Lukas Dostal",
      "groups": [
       {
        "label": "Line 1",
