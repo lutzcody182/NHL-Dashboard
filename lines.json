@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-19",
- "updated": "2026-11-19T16:34:29.036Z",
+ "updated": "2026-11-19T17:00:19.702Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -250,7 +250,7 @@
    "teams": [
     {
      "team": "Philadelphia Flyers",
-     "goalie": "Dan Vladar",
+     "goalie": "Joseph Woll",
      "groups": [
       {
        "label": "Line 1",
@@ -1246,7 +1246,7 @@
    "teams": [
     {
      "team": "New York Islanders",
-     "goalie": "Ilya Sorokin",
+     "goalie": "Semyon Varlamov",
      "groups": [
       {
        "label": "Line 1",
@@ -1322,8 +1322,8 @@
          "pp": ""
         },
         {
-         "n": "Mitchell Chaffee",
-         "pos": "W",
+         "n": "Jean-Gabriel Pageau",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -1501,17 +1501,17 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Colton Dach",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Connor McDavid",
          "pos": "C",
          "pp": "PP1"
         },
         {
-         "n": "Vasily Podkolzin",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Leon Draisaitl",
+         "n": "Zach Hyman",
          "pos": "W",
          "pp": "PP1"
         }
@@ -1521,17 +1521,17 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Colton Dach",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Zach Hyman",
+         "n": "Kasperi Kapanen",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Kasperi Kapanen",
+         "n": "Vasily Podkolzin",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Leon Draisaitl",
          "pos": "W",
          "pp": "PP1"
         }
