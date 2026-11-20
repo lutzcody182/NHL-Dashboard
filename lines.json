@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-19",
- "updated": "2026-11-20T01:00:31.894Z",
+ "updated": "2026-11-20T02:00:29.792Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2351,11 +2351,6 @@
          "n": "Tristan Luneau",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Tyson Hinds",
-         "pos": "D",
-         "pp": ""
         }
        ]
       }
@@ -2389,14 +2384,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Jaden Schwartz",
+         "n": "Gabriel Landeskog",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "T.J. Hughes",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Nicolas Roy",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Nazem Kadri",
@@ -2409,14 +2404,19 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Gabriel Landeskog",
+         "n": "Jaden Schwartz",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Nicolas Roy",
+         "n": "T.J. Hughes",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Fedor Svechkov",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2431,11 +2431,6 @@
         {
          "n": "Parker Kelly",
          "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Fedor Svechkov",
-         "pos": "C",
          "pp": ""
         }
        ]
