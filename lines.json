@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-19",
- "updated": "2026-11-20T00:00:28.233Z",
+ "updated": "2026-11-20T01:00:31.894Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -547,7 +547,7 @@
         {
          "n": "Phillip Danault",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Kirby Dach",
@@ -784,9 +784,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Ryan McLeod",
+         "n": "Peyton Krebs",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -794,14 +794,14 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Jason Zucker",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Josh Doan",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Peyton Krebs",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Josh Norris",
@@ -814,9 +814,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Jason Zucker",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Sam Carrick",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Beck Malenstyn",
@@ -1523,12 +1523,12 @@
         {
          "n": "Kasperi Kapanen",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Vasily Podkolzin",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Leon Draisaitl",
@@ -1755,14 +1755,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Adam Fantilli",
+         "n": "Charlie Coyle",
          "pos": "C",
          "pp": "PP1"
         },
         {
-         "n": "Steven Lorentz",
-         "pos": "W",
-         "pp": ""
+         "n": "Adam Fantilli",
+         "pos": "C",
+         "pp": "PP1"
         }
        ]
       },
@@ -1790,14 +1790,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Charlie Coyle",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
          "n": "Cole Sillinger",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Jack Williams",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Mathieu Olivier",
@@ -1820,8 +1820,8 @@
          "pp": ""
         },
         {
-         "n": "Jack Williams",
-         "pos": "C",
+         "n": "Steven Lorentz",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -1911,7 +1911,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Jordan Greenway",
+         "n": "Cole Smith",
          "pos": "W",
          "pp": ""
         },
@@ -1931,7 +1931,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Cole Smith",
+         "n": "Dillon Boucher",
          "pos": "W",
          "pp": ""
         },
