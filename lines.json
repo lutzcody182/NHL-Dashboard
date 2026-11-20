@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-19",
- "updated": "2026-11-19T22:00:30.797Z",
+ "updated": "2026-11-20T00:00:28.233Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -188,6 +188,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Justin Brazeau",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Connor Dewar",
          "pos": "W",
          "pp": ""
@@ -195,11 +200,6 @@
         {
          "n": "Blake Lizotte",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Nick Robertson",
-         "pos": "W",
          "pp": ""
         }
        ]
@@ -555,7 +555,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Brett Berard",
+         "n": "Owen Beck",
          "pos": "W",
          "pp": ""
         }
@@ -575,7 +575,7 @@
          "pp": ""
         },
         {
-         "n": "Owen Beck",
+         "n": "Brett Berard",
          "pos": "W",
          "pp": ""
         }
@@ -895,13 +895,13 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Tom Wilson",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Boone Jenner",
+         "pos": "C",
+         "pp": ""
         },
         {
-         "n": "Dylan Strome",
-         "pos": "C",
+         "n": "Tom Wilson",
+         "pos": "W",
          "pp": "PP1"
         },
         {
@@ -915,9 +915,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Boone Jenner",
+         "n": "Dylan Strome",
          "pos": "C",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Anthony Beauvillier",
@@ -925,7 +925,7 @@
          "pp": ""
         },
         {
-         "n": "Jordan Kyrou",
+         "n": "Alex Ovechkin",
          "pos": "W",
          "pp": "PP1"
         }
@@ -945,7 +945,7 @@
          "pp": ""
         },
         {
-         "n": "Alex Ovechkin",
+         "n": "Jordan Kyrou",
          "pos": "W",
          "pp": "PP1"
         }
@@ -1003,11 +1003,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Alex Turcotte",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Alex Laferriere",
          "pos": "C",
          "pp": "PP1"
@@ -1016,6 +1011,11 @@
          "n": "Adrian Kempe",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Andre Lee",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1043,6 +1043,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Alex Turcotte",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Joel Armia",
          "pos": "W",
          "pp": ""
@@ -1051,11 +1056,6 @@
          "n": "Erik Haula",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Samuel Helenius",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -1073,8 +1073,8 @@
          "pp": ""
         },
         {
-         "n": "Andre Lee",
-         "pos": "W",
+         "n": "Samuel Helenius",
+         "pos": "C",
          "pp": ""
         }
        ]
