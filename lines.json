@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T20:04:32.978Z",
+ "updated": "2026-11-21T20:30:16.374Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -271,14 +271,14 @@
          "pp": "PP1"
         },
         {
+         "n": "Ryan Donato",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Tyler Bertuzzi",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Anton Frondell",
-         "pos": "C",
-         "pp": "PP2"
         }
        ]
       },
@@ -316,9 +316,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Ryan Greene",
+         "n": "Anton Frondell",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -331,13 +331,13 @@
          "pp": ""
         },
         {
-         "n": "Ryan Donato",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Andrew Mangiapane",
          "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Ryan Greene",
+         "pos": "C",
          "pp": ""
         }
        ]
