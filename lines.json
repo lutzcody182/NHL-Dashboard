@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T19:00:24.547Z",
+ "updated": "2026-11-21T19:30:26.608Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -2180,17 +2180,17 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Ross Johnston",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Pius Suter",
          "pos": "C",
          "pp": ""
         },
         {
          "n": "Alexey Toropchenko",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Nathan Walker",
          "pos": "W",
          "pp": ""
         }
@@ -3274,14 +3274,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Nico Sturm",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Maxim Shabanov",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Yakov Trenin",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Danila Yurov",
@@ -3324,7 +3324,7 @@
          "pp": ""
         },
         {
-         "n": "Zach Bogosian",
+         "n": "Matt Kiersted",
          "pos": "D",
          "pp": ""
         },
@@ -3334,12 +3334,12 @@
          "pp": "PP2"
         },
         {
-         "n": "David Spacek",
+         "n": "Zach Bogosian",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Matt Kiersted",
+         "n": "David Spacek",
          "pos": "D",
          "pp": ""
         }
