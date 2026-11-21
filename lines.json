@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T16:30:16.854Z",
+ "updated": "2026-11-21T17:05:14.568Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1251,7 +1251,7 @@
    "teams": [
     {
      "team": "Washington Capitals",
-     "goalie": "Logan Thompson",
+     "goalie": "Charlie Lindgren",
      "groups": [
       {
        "label": "Line 1",
@@ -1760,27 +1760,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Trevor Zegras",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
          "n": "Travis Konecny",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Cole Knuble",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Owen Tippett",
          "pos": "W",
          "pp": "PP2"
         },
@@ -1792,15 +1772,35 @@
        ]
       },
       {
-       "label": "Line 3",
+       "label": "Line 2",
        "players": [
         {
-         "n": "Matvei Michkov",
+         "n": "Denver Barkey",
          "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Porter Martone",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Owen Tippett",
+         "pos": "W",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Cole Knuble",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Matvei Michkov",
          "pos": "W",
          "pp": "PP1"
         },
@@ -1820,8 +1820,8 @@
          "pp": ""
         },
         {
-         "n": "Denver Barkey",
-         "pos": "W",
+         "n": "Trevor Zegras",
+         "pos": "C",
          "pp": "PP1"
         },
         {
@@ -1835,9 +1835,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Jamie Drysdale",
+         "n": "Rasmus Ristolainen",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Travis Sanheim",
@@ -1845,9 +1845,9 @@
          "pp": ""
         },
         {
-         "n": "Rasmus Ristolainen",
+         "n": "Jamie Drysdale",
          "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Cam York",
