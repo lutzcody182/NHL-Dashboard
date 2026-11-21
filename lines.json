@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T20:30:16.374Z",
+ "updated": "2026-11-21T21:34:36.574Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -158,17 +158,17 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Taylor Hall",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Logan Stankoven",
          "pos": "C",
          "pp": "PP2"
         },
         {
          "n": "Jackson Blake",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Nikolaj Ehlers",
          "pos": "W",
          "pp": "PP1"
         }
@@ -180,7 +180,7 @@
         {
          "n": "Seth Jarvis",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Jordan Martinook",
@@ -198,14 +198,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Taylor Hall",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Eric Robinson",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Jesperi Kotkaniemi",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Mark Jankowski",
@@ -818,11 +818,6 @@
       {
        "label": "Line 4",
        "players": [
-        {
-         "n": "Justin Brazeau",
-         "pos": "W",
-         "pp": ""
-        },
         {
          "n": "Connor Dewar",
          "pos": "W",
