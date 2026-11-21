@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T16:00:18.872Z",
+ "updated": "2026-11-21T16:30:16.854Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1878,7 +1878,7 @@
         {
          "n": "Alexandre Texier",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Nick Suzuki",
@@ -1936,14 +1936,14 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Zachary Bolduc",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Oliver Kapanen",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Florian Xhekaj",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Brett Berard",
@@ -1981,9 +1981,9 @@
          "pp": ""
         },
         {
-         "n": "Adam Engstrom",
+         "n": "David Reinbacher",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -2416,7 +2416,7 @@
         {
          "n": "Dakota Joshua",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "William Nylander",
@@ -2474,9 +2474,9 @@
          "pp": ""
         },
         {
-         "n": "Oliver Ekman-Larsson",
+         "n": "Dakota Mermis",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -3420,8 +3420,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Brendan Gallagher",
-         "pos": "W",
+         "n": "Jacob Quillan",
+         "pos": "C",
          "pp": ""
         },
         {
