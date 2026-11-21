@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T21:34:36.574Z",
+ "updated": "2026-11-21T23:05:06.425Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -636,14 +636,14 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Anton Lundell",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Brady Tkachuk",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Sam Bennett",
-         "pos": "C",
-         "pp": "PP2"
         },
         {
          "n": "Matthew Tkachuk",
@@ -656,14 +656,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Anton Lundell",
+         "n": "Lars Eller",
          "pos": "C",
          "pp": "PP2"
         },
         {
-         "n": "Eetu Luostarinen",
+         "n": "Carter Verhaeghe",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Sam Reinhart",
@@ -676,8 +676,8 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Lars Eller",
-         "pos": "C",
+         "n": "Eetu Luostarinen",
+         "pos": "W",
          "pp": "PP2"
         },
         {
@@ -686,9 +686,9 @@
          "pp": ""
         },
         {
-         "n": "Carter Verhaeghe",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Sam Bennett",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -854,7 +854,7 @@
          "pp": ""
         },
         {
-         "n": "Spencer Stastney",
+         "n": "Declan Carlile",
          "pos": "D",
          "pp": ""
         },
@@ -2109,7 +2109,7 @@
     },
     {
      "team": "St. Louis Blues",
-     "goalie": "Joel Hofer",
+     "goalie": "Jordan Binnington",
      "groups": [
       {
        "label": "Line 1",
@@ -2145,7 +2145,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Jonatan Berggren",
+         "n": "Dalibor Dvorsky",
          "pos": "W",
          "pp": "PP2"
         }
@@ -2155,14 +2155,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Dalibor Dvorsky",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Aleksanteri Kaskimaki",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Jonatan Berggren",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Pavel Buchnevich",
