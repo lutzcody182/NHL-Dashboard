@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T17:05:14.568Z",
+ "updated": "2026-11-21T17:30:17.701Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1189,11 +1189,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Cole Koepke",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Danil Zhilkin",
          "pos": "",
          "pp": ""
@@ -1224,12 +1219,12 @@
          "pp": ""
         },
         {
-         "n": "Mario Ferraro",
+         "n": "Elias Salomonsson",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Tyrel Bauer",
+         "n": "Mario Ferraro",
          "pos": "D",
          "pp": ""
         },
@@ -1586,7 +1581,7 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Ryan Pulock",
+         "n": "Logan Stanley",
          "pos": "D",
          "pp": ""
         },
