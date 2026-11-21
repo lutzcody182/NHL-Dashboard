@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T19:30:26.608Z",
+ "updated": "2026-11-21T20:04:32.978Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -696,13 +696,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Cole Reinhardt",
+         "n": "Garnet Hathaway",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Garnet Hathaway",
-         "pos": "W",
+         "n": "Cole Schwindt",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -1342,7 +1342,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Timothy Liljegren",
+         "n": "Justin Holl",
          "pos": "D",
          "pp": ""
         },
@@ -2150,7 +2150,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Dalibor Dvorsky",
+         "n": "Jonatan Berggren",
          "pos": "W",
          "pp": "PP2"
         }
@@ -2160,14 +2160,14 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Dalibor Dvorsky",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Aleksanteri Kaskimaki",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Jonatan Berggren",
-         "pos": "W",
-         "pp": "PP2"
         },
         {
          "n": "Pavel Buchnevich",
