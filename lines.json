@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T14:34:59.614Z",
+ "updated": "2026-11-21T15:30:16.756Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -636,26 +636,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Aleksander Barkov",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "Carter Verhaeghe",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Sam Reinhart",
-         "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
          "n": "Brady Tkachuk",
          "pos": "W",
          "pp": "PP1"
@@ -673,7 +653,7 @@
        ]
       },
       {
-       "label": "Line 3",
+       "label": "Line 2",
        "players": [
         {
          "n": "Anton Lundell",
@@ -686,9 +666,29 @@
          "pp": "PP2"
         },
         {
+         "n": "Sam Reinhart",
+         "pos": "W",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Lars Eller",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Sandis Vilmanis",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Carter Verhaeghe",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -696,8 +696,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Lars Eller",
-         "pos": "C",
+         "n": "Cole Reinhardt",
+         "pos": "W",
          "pp": ""
         },
         {
