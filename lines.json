@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T13:04:32.284Z",
+ "updated": "2026-11-21T14:34:59.614Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -2813,12 +2813,12 @@
         {
          "n": "Nikita Nesterenko",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Roger McQueen",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -3203,7 +3203,7 @@
         {
          "n": "Dmitry Orlov",
          "pos": "D",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Jacob Trouba",
@@ -3213,7 +3213,7 @@
         {
          "n": "Sam Dickinson",
          "pos": "D",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Nolan Allan",
