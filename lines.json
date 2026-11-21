@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T17:30:17.701Z",
+ "updated": "2026-11-21T18:04:45.916Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -22,26 +22,6 @@
          "pp": "PP1"
         },
         {
-         "n": "Filip Hallander",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Kasperi Kapanen",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Mathieu Joseph",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Vasily Podkolzin",
          "pos": "W",
          "pp": "PP1"
@@ -54,13 +34,8 @@
        ]
       },
       {
-       "label": "Line 3",
+       "label": "Line 2",
        "players": [
-        {
-         "n": "Jason Dickinson",
-         "pos": "C",
-         "pp": ""
-        },
         {
          "n": "Colton Dach",
          "pos": "C",
@@ -70,6 +45,31 @@
          "n": "Zach Hyman",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Kasperi Kapanen",
+         "pos": "W",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Jason Dickinson",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Mathieu Joseph",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Filip Hallander",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
@@ -2303,9 +2303,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ryan Lomberg",
+         "n": "Dmitri Voronkov",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Isac Lundestrom",
@@ -2333,14 +2333,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Denton Mateychuk",
+         "n": "Ivan Provorov",
          "pos": "D",
          "pp": "PP2"
         },
         {
-         "n": "Ivan Provorov",
+         "n": "Dante Fabbro",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Erik Gudbranson",
@@ -2502,9 +2502,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Artemi Panarin",
+         "n": "Andre Lee",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       },
@@ -2562,8 +2562,8 @@
          "pp": ""
         },
         {
-         "n": "Andre Lee",
-         "pos": "W",
+         "n": "Samuel Helenius",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -2574,7 +2574,7 @@
         {
          "n": "Erik Gustafsson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Brandt Clarke",
@@ -2584,7 +2584,7 @@
         {
          "n": "Drew Doughty",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Joel Edmundson",
@@ -2851,7 +2851,7 @@
     },
     {
      "team": "Utah Hockey Club",
-     "goalie": "Karel Vejmelka",
+     "goalie": "Sebastian Cossa",
      "groups": [
       {
        "label": "Line 1",
@@ -3355,13 +3355,13 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Jonathan Lekkerimaki",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Filip Chytil",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
-         "n": "Elias Pettersson",
-         "pos": "C",
+         "n": "Brock Boeser",
+         "pos": "W",
          "pp": "PP1"
         },
         {
@@ -3375,18 +3375,18 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Filip Chytil",
+         "n": "Jonathan Lekkerimaki",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Liam Ohgren",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Marco Rossi",
          "pos": "C",
-         "pp": "PP2"
-        },
-        {
-         "n": "Paul Cotter",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Brock Boeser",
-         "pos": "W",
          "pp": "PP1"
         }
        ]
@@ -3395,14 +3395,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Liam Ohgren",
+         "n": "Drew O'Connor",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Marco Rossi",
-         "pos": "C",
-         "pp": "PP2"
         },
         {
          "n": "Linus Karlsson",
@@ -3420,9 +3415,9 @@
          "pp": ""
         },
         {
-         "n": "Drew O'Connor",
+         "n": "Paul Cotter",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Arshdeep Bains",
