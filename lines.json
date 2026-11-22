@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-22",
- "updated": "2026-11-22T20:34:38.454Z",
+ "updated": "2026-11-22T21:04:45.904Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -381,7 +381,7 @@
     },
     {
      "team": "Tampa Bay Lightning",
-     "goalie": "Andrei Vasilevskiy",
+     "goalie": "Dennis Hildeby",
      "groups": [
       {
        "label": "Line 1",
@@ -759,9 +759,29 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Colton Dach",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Connor McDavid",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Zach Hyman",
+         "pos": "W",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Kasperi Kapanen",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Vasily Podkolzin",
@@ -776,36 +796,16 @@
        ]
       },
       {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Colton Dach",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Zach Hyman",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Kasperi Kapanen",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
        "label": "Line 3",
        "players": [
         {
-         "n": "Jason Dickinson",
-         "pos": "C",
-         "pp": ""
+         "n": "Trent Frederic",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
-         "n": "Mathieu Joseph",
-         "pos": "W",
+         "n": "Jason Dickinson",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -819,17 +819,17 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Trent Frederic",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Owen Michaels",
          "pos": "C",
          "pp": ""
         },
         {
          "n": "Alex Formenton",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Mathieu Joseph",
          "pos": "W",
          "pp": ""
         }
@@ -864,7 +864,7 @@
          "pp": ""
         },
         {
-         "n": "Ty Emberson",
+         "n": "Jake Walman",
          "pos": "D",
          "pp": ""
         }
