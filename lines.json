@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-22",
- "updated": "2026-11-22T21:04:45.904Z",
+ "updated": "2026-11-22T22:04:45.203Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -84,7 +84,7 @@
         {
          "n": "Jesperi Kotkaniemi",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Mark Jankowski",
@@ -331,13 +331,13 @@
          "pp": ""
         },
         {
-         "n": "Beck Malenstyn",
+         "n": "Ryan McLeod",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Tyson Kozak",
-         "pos": "C",
+         "n": "Beck Malenstyn",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -371,7 +371,7 @@
          "pp": ""
         },
         {
-         "n": "Zach Metsa",
+         "n": "Louis Crevier",
          "pos": "D",
          "pp": ""
         }
@@ -610,7 +610,7 @@
          "pp": ""
         },
         {
-         "n": "Declan Carlile",
+         "n": "Spencer Stastney",
          "pos": "D",
          "pp": ""
         },
