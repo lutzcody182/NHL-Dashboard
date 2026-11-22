@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-22",
- "updated": "2026-11-22T17:30:17.702Z",
+ "updated": "2026-11-22T19:04:35.413Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -82,9 +82,9 @@
          "pp": ""
         },
         {
-         "n": "Nicolas Deslauriers",
-         "pos": "W",
-         "pp": ""
+         "n": "Jesperi Kotkaniemi",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Mark Jankowski",
@@ -1103,7 +1103,7 @@
          "pp": ""
         },
         {
-         "n": "Wyatt Kaiser",
+         "n": "Kevin Korchinski",
          "pos": "D",
          "pp": ""
         },
@@ -1180,6 +1180,11 @@
        "players": [
         {
          "n": "Jacob Quillan",
+         "pos": "C",
+         "pp": ""
+        },
+        {
+         "n": "Aatu Raty",
          "pos": "C",
          "pp": ""
         },
