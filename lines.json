@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-22T00:04:32.948Z",
+ "updated": "2026-11-22T02:04:58.023Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1687,8 +1687,8 @@
          "pp": ""
         },
         {
-         "n": "Sheldon Dries",
-         "pos": "C",
+         "n": "Mason Appleton",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -2238,14 +2238,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Valeri Nichushkin",
+         "n": "Matthew Knies",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Charlie Coyle",
+         "n": "Luca Del Bel Belluz",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Adam Fantilli",
@@ -2258,19 +2258,19 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Matthew Knies",
+         "n": "Valeri Nichushkin",
          "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Charlie Coyle",
+         "pos": "C",
          "pp": "PP1"
         },
         {
          "n": "Kent Johnson",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Luca Del Bel Belluz",
-         "pos": "C",
-         "pp": "PP2"
         }
        ]
       },
@@ -2741,7 +2741,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Sam Colangelo",
+         "n": "Nico Myatovic",
          "pos": "W",
          "pp": ""
         },
@@ -2852,9 +2852,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Clayton Keller",
+         "n": "Daniil But",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Logan Cooley",
@@ -2879,7 +2879,7 @@
         {
          "n": "Barrett Hayton",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Anders Lee",
@@ -2917,7 +2917,7 @@
          "pp": ""
         },
         {
-         "n": "Daniil But",
+         "n": "Ben McCartney",
          "pos": "W",
          "pp": ""
         },
@@ -2949,7 +2949,7 @@
         {
          "n": "MacKenzie Weegar",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Nick DeSimone",
