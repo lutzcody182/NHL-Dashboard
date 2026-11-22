@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-21",
- "updated": "2026-11-21T23:05:06.425Z",
+ "updated": "2026-11-22T00:04:32.948Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1267,6 +1267,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Ivan Miroshnichenko",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Boone Jenner",
          "pos": "C",
          "pp": ""
@@ -1275,11 +1280,6 @@
          "n": "Tom Wilson",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Ryan Leonard",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -1292,9 +1292,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Anthony Beauvillier",
+         "n": "Ryan Leonard",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Alex Ovechkin",
@@ -1697,19 +1697,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Anton Johansson",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Moritz Seider",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Justin Faulk",
-         "pos": "D",
-         "pp": "PP2"
         },
         {
          "n": "Ben Chiarot",
@@ -1718,6 +1708,16 @@
         },
         {
          "n": "Albert Johansson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Justin Faulk",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
+         "n": "Anton Johansson",
          "pos": "D",
          "pp": ""
         },
@@ -1911,14 +1911,14 @@
          "pp": ""
         },
         {
+         "n": "Zachary Bolduc",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Kirby Dach",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Owen Beck",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -1926,14 +1926,14 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Zachary Bolduc",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Oliver Kapanen",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Owen Beck",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Brett Berard",
