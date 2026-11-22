@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-22",
- "updated": "2026-11-22T16:04:31.921Z",
+ "updated": "2026-11-22T17:30:17.702Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -82,9 +82,9 @@
          "pp": ""
         },
         {
-         "n": "Jesperi Kotkaniemi",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Nicolas Deslauriers",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Mark Jankowski",
@@ -114,7 +114,7 @@
         {
          "n": "Sean Walker",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Shayne Gostisbehere",
@@ -203,13 +203,13 @@
          "pp": ""
         },
         {
-         "n": "Glenn Gawdin",
-         "pos": "C",
+         "n": "Matt Rempe",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Taylor Raddysh",
-         "pos": "W",
+         "n": "Glenn Gawdin",
+         "pos": "C",
          "pp": ""
         }
        ]
