@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-22",
- "updated": "2026-11-22T19:04:35.413Z",
+ "updated": "2026-11-22T20:34:38.454Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -1063,7 +1063,7 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Dillon Boucher",
+         "n": "Jordan Greenway",
          "pos": "W",
          "pp": ""
         },
@@ -1180,11 +1180,6 @@
        "players": [
         {
          "n": "Jacob Quillan",
-         "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Aatu Raty",
          "pos": "C",
          "pp": ""
         },
