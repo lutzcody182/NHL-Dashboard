@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-22",
- "updated": "2026-11-22T22:04:45.203Z",
+ "updated": "2026-11-23T00:05:01.900Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -540,9 +540,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Andrei Kuzmenko",
+         "n": "Avery Hayes",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Ben Kindel",
@@ -570,6 +570,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Justin Brazeau",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Connor Dewar",
          "pos": "W",
          "pp": ""
@@ -577,11 +582,6 @@
         {
          "n": "Blake Lizotte",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Avery Hayes",
-         "pos": "W",
          "pp": ""
         }
        ]
@@ -595,12 +595,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Kaedan Korczak",
+         "n": "Spencer Stastney",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Trevor van Riemsdyk",
+         "n": "Kaedan Korczak",
          "pos": "D",
          "pp": ""
         },
@@ -610,7 +610,7 @@
          "pp": ""
         },
         {
-         "n": "Spencer Stastney",
+         "n": "Trevor van Riemsdyk",
          "pos": "D",
          "pp": ""
         },
@@ -759,17 +759,17 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Colton Dach",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Connor McDavid",
          "pos": "C",
          "pp": "PP1"
         },
         {
-         "n": "Zach Hyman",
+         "n": "Filip Hallander",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Kasperi Kapanen",
          "pos": "W",
          "pp": "PP1"
         }
@@ -779,9 +779,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Kasperi Kapanen",
+         "n": "Mathieu Joseph",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Vasily Podkolzin",
@@ -799,19 +799,19 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Trent Frederic",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Jason Dickinson",
          "pos": "C",
          "pp": ""
         },
         {
-         "n": "Filip Hallander",
+         "n": "Colton Dach",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Alex Formenton",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -819,17 +819,17 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Trent Frederic",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Owen Michaels",
          "pos": "C",
          "pp": ""
         },
         {
-         "n": "Alex Formenton",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Mathieu Joseph",
+         "n": "Max Jones",
          "pos": "W",
          "pp": ""
         }
@@ -841,7 +841,7 @@
         {
          "n": "Mattias Ekholm",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Evan Bouchard",
@@ -866,7 +866,7 @@
         {
          "n": "Jake Walman",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -940,17 +940,17 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ross Johnston",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Pius Suter",
          "pos": "C",
          "pp": ""
         },
         {
          "n": "Alexey Toropchenko",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Nathan Walker",
          "pos": "W",
          "pp": ""
         }
@@ -1030,7 +1030,7 @@
         {
          "n": "Oliver Moore",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Frank Nazar",
@@ -1043,6 +1043,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Dominic Toninato",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Cole Smith",
          "pos": "W",
          "pp": ""
@@ -1050,11 +1055,6 @@
         {
          "n": "Teuvo Teravainen",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Anton Frondell",
-         "pos": "C",
          "pp": "PP2"
         }
        ]
