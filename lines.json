@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-22",
- "updated": "2026-11-23T00:05:01.900Z",
+ "updated": "2026-11-23T01:04:55.401Z",
  "games": [
   {
    "time": "12:30 PM ET",
@@ -1043,6 +1043,26 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Andrew Mangiapane",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Teuvo Teravainen",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Ryan Greene",
+         "pos": "C",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 4",
+       "players": [
+        {
          "n": "Dominic Toninato",
          "pos": "C",
          "pp": ""
@@ -1053,29 +1073,9 @@
          "pp": ""
         },
         {
-         "n": "Teuvo Teravainen",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 4",
-       "players": [
-        {
          "n": "Jordan Greenway",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Andrew Mangiapane",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Ryan Greene",
-         "pos": "C",
-         "pp": "PP2"
         }
        ]
       },
@@ -1209,12 +1209,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Elias Nils Pettersson",
+         "n": "Tom Willander",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Tom Willander",
+         "n": "Jamie Oleksiak",
          "pos": "D",
          "pp": ""
         },
@@ -1224,7 +1224,7 @@
          "pp": ""
         },
         {
-         "n": "Jamie Oleksiak",
+         "n": "Elias Nils Pettersson",
          "pos": "D",
          "pp": ""
         }
