@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T16:30:18.687Z",
+ "updated": "2026-11-23T17:05:04.519Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -286,14 +286,14 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Aydar Suniev",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Matvei Gridin",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Martin Pospisil",
-         "pos": "C",
-         "pp": ""
         },
         {
          "n": "Ryan Strome",
@@ -331,9 +331,9 @@
          "pp": ""
         },
         {
-         "n": "Aydar Suniev",
+         "n": "Brennan Othmann",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Jonathan Castagna",
@@ -900,6 +900,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Dylan Larkin",
+         "pos": "C",
+         "pp": "PP1"
+        },
+        {
          "n": "Juraj Slafkovsky",
          "pos": "W",
          "pp": "PP1"
@@ -935,6 +940,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Florian Xhekaj",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Owen Beck",
          "pos": "W",
          "pp": ""
@@ -942,11 +952,6 @@
         {
          "n": "Jake Evans",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Brett Berard",
-         "pos": "W",
          "pp": ""
         }
        ]
@@ -1065,6 +1070,11 @@
         {
          "n": "Brandon Duhaime",
          "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Aatu Raty",
+         "pos": "C",
          "pp": ""
         },
         {
