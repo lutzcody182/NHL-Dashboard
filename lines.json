@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T13:05:17.380Z",
+ "updated": "2026-11-23T16:00:24.567Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -138,7 +138,27 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Connor Brown",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Timo Meier",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Jack Hughes",
+         "pos": "C",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Nico Hischier",
          "pos": "C",
          "pp": "PP1"
         },
@@ -155,32 +175,12 @@
        ]
       },
       {
-       "label": "Line 2",
+       "label": "Line 3",
        "players": [
         {
          "n": "Luke Evangelista",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Nico Hischier",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "Timo Meier",
-         "pos": "W",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Connor Brown",
-         "pos": "W",
-         "pp": "PP1"
         },
         {
          "n": "Amadeus Lombardi",
@@ -208,7 +208,7 @@
          "pp": ""
         },
         {
-         "n": "Lenni Hameenaho",
+         "n": "Stefan Noesen",
          "pos": "W",
          "pp": ""
         }
@@ -479,7 +479,7 @@
         {
          "n": "Jordan Spence",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Thomas Chabot",
@@ -487,14 +487,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Nikolas Matinpalo",
+         "n": "Tyler Kleven",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Tyler Kleven",
+         "n": "Carter Yakemchuk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -1144,12 +1144,12 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Emil Heineman",
-         "pos": "W",
-         "pp": ""
+         "n": "Brayden Schenn",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
-         "n": "Brayden Schenn",
+         "n": "Mathew Barzal",
          "pos": "C",
          "pp": "PP1"
         },
@@ -1164,19 +1164,19 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Emil Heineman",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Matias Maccelli",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Ondrej Palat",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Mathew Barzal",
+         "n": "Jean-Gabriel Pageau",
          "pos": "C",
-         "pp": "PP1"
+         "pp": ""
         }
        ]
       },
@@ -1194,8 +1194,8 @@
          "pp": ""
         },
         {
-         "n": "Jean-Gabriel Pageau",
-         "pos": "C",
+         "n": "Ondrej Palat",
+         "pos": "W",
          "pp": ""
         }
        ]
