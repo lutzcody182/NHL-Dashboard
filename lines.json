@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T18:34:48.782Z",
+ "updated": "2026-11-23T19:05:05.231Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -1702,22 +1702,12 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Eric Pohlkamp",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Darnell Nurse",
+         "n": "Michael Kesselring",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Dmitry Orlov",
-         "pos": "D",
-         "pp": "PP1"
-        },
-        {
-         "n": "Jacob Trouba",
+         "n": "Darnell Nurse",
          "pos": "D",
          "pp": ""
         },
@@ -1730,6 +1720,16 @@
          "n": "Nolan Allan",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Dmitry Orlov",
+         "pos": "D",
+         "pp": "PP1"
+        },
+        {
+         "n": "Eric Pohlkamp",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
