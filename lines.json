@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T16:00:24.567Z",
+ "updated": "2026-11-23T16:30:18.687Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -874,7 +874,7 @@
     },
     {
      "team": "Montreal Canadiens",
-     "goalie": "Jacob Fowler",
+     "goalie": "Jakub Dobes",
      "groups": [
       {
        "label": "Line 1",
@@ -882,7 +882,7 @@
         {
          "n": "Alexandre Texier",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Nick Suzuki",
@@ -908,11 +908,6 @@
          "n": "Alex Newhook",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Jake Evans",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -930,9 +925,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Florian Xhekaj",
-         "pos": "W",
-         "pp": ""
+         "n": "Oliver Kapanen",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -940,13 +935,13 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Oliver Kapanen",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Owen Beck",
          "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Jake Evans",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -985,7 +980,7 @@
          "pp": ""
         },
         {
-         "n": "David Reinbacher",
+         "n": "Adam Engstrom",
          "pos": "D",
          "pp": ""
         }
