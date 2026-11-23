@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T19:30:18.461Z",
+ "updated": "2026-11-23T20:30:18.684Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -846,7 +846,7 @@
         {
          "n": "Drew Doughty",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Joel Edmundson",
