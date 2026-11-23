@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T17:30:22.431Z",
+ "updated": "2026-11-23T18:34:48.782Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -504,7 +504,7 @@
    "teams": [
     {
      "team": "Utah Hockey Club",
-     "goalie": "Karel Vejmelka",
+     "goalie": "Sebastian Cossa",
      "groups": [
       {
        "label": "Line 1",
@@ -555,14 +555,14 @@
          "pp": "PP2"
         },
         {
+         "n": "Daniil But",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Jack McBain",
          "pos": "C",
          "pp": ""
-        },
-        {
-         "n": "Michael Carcone",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -575,7 +575,7 @@
          "pp": ""
         },
         {
-         "n": "Daniil But",
+         "n": "Ben McCartney",
          "pos": "W",
          "pp": ""
         },
@@ -607,7 +607,7 @@
         {
          "n": "MacKenzie Weegar",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Nick DeSimone",
@@ -1003,12 +1003,12 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Nick Paul",
+         "n": "Easton Cowan",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Easton Cowan",
+         "n": "Jack Roslovic",
          "pos": "W",
          "pp": "PP2"
         },
@@ -1023,14 +1023,14 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Nick Paul",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Gavin McKenna",
          "pos": "W",
          "pp": "PP1"
-        },
-        {
-         "n": "Ryan Tverberg",
-         "pos": "C",
-         "pp": ""
         },
         {
          "n": "John Tavares",
@@ -1050,7 +1050,7 @@
         {
          "n": "Dakota Joshua",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "William Nylander",
