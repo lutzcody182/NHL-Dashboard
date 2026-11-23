@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T17:05:04.519Z",
+ "updated": "2026-11-23T17:30:22.431Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -77,11 +77,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Dmitri Voronkov",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Isac Lundestrom",
          "pos": "C",
          "pp": ""
@@ -99,7 +94,7 @@
         {
          "n": "Damon Severson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Zach Werenski",
@@ -117,14 +112,14 @@
          "pp": ""
         },
         {
-         "n": "Erik Gudbranson",
+         "n": "Jake Christiansen",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Jake Christiansen",
+         "n": "Denton Mateychuk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -711,9 +706,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Neal Pionk",
+         "n": "Elias Salomonsson",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Josh Morrissey",
@@ -726,9 +721,9 @@
          "pp": ""
         },
         {
-         "n": "Elias Salomonsson",
+         "n": "Neal Pionk",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Mario Ferraro",
@@ -1002,7 +997,7 @@
    "teams": [
     {
      "team": "Toronto Maple Leafs",
-     "goalie": "Sergei Bobrovsky",
+     "goalie": "Anthony Stolarz",
      "groups": [
       {
        "label": "Line 1",
