@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T20:30:18.684Z",
+ "updated": "2026-11-23T22:30:18.474Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -532,7 +532,7 @@
         {
          "n": "Kailer Yamamoto",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Barrett Hayton",
@@ -550,12 +550,12 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Lawson Crouse",
+         "n": "Dylan Guenther",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
-         "n": "Daniil But",
+         "n": "Lawson Crouse",
          "pos": "W",
          "pp": "PP2"
         },
@@ -575,7 +575,7 @@
          "pp": ""
         },
         {
-         "n": "Ben McCartney",
+         "n": "Daniil But",
          "pos": "W",
          "pp": ""
         },
@@ -607,7 +607,7 @@
         {
          "n": "MacKenzie Weegar",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Nick DeSimone",
@@ -834,17 +834,7 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Erik Gustafsson",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Brandt Clarke",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Drew Doughty",
          "pos": "D",
          "pp": "PP2"
         },
@@ -854,12 +844,22 @@
          "pp": ""
         },
         {
+         "n": "Drew Doughty",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
+         "n": "Mikey Anderson",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Brian Dumoulin",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Mikey Anderson",
+         "n": "Cody Ceci",
          "pos": "D",
          "pp": ""
         }
