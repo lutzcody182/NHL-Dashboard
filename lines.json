@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T19:05:05.231Z",
+ "updated": "2026-11-23T19:30:18.461Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -77,8 +77,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Isac Lundestrom",
-         "pos": "C",
+         "n": "Ryan Lomberg",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -794,7 +794,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Alex Turcotte",
+         "n": "Trevor Moore",
          "pos": "W",
          "pp": ""
         },
@@ -1495,7 +1495,7 @@
    "teams": [
     {
      "team": "Minnesota Wild",
-     "goalie": "Jesper Wallstedt",
+     "goalie": "",
      "groups": [
       {
        "label": "Line 1",
