@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-24T00:30:19.342Z",
+ "updated": "2026-11-24T02:34:39.210Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -102,14 +102,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Ivan Provorov",
+         "n": "Denton Mateychuk",
          "pos": "D",
          "pp": "PP2"
         },
         {
-         "n": "Dante Fabbro",
+         "n": "Ivan Provorov",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jake Christiansen",
@@ -117,9 +117,9 @@
          "pp": ""
         },
         {
-         "n": "Denton Mateychuk",
+         "n": "Dante Fabbro",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -1252,13 +1252,13 @@
          "pp": "PP1"
         },
         {
-         "n": "Nico Myatovic",
-         "pos": "W",
-         "pp": ""
+         "n": "Mikael Granlund",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
-         "n": "Leo Carlsson",
-         "pos": "C",
+         "n": "Judd Caulfield",
+         "pos": "W",
          "pp": "PP1"
         }
        ]
@@ -1272,14 +1272,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Mikael Granlund",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Nico Myatovic",
+         "pos": "W",
+         "pp": ""
         },
         {
-         "n": "Judd Caulfield",
-         "pos": "W",
-         "pp": "PP1"
+         "n": "Roger McQueen",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -1294,7 +1294,7 @@
         {
          "n": "Troy Terry",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Tim Washe",
@@ -1312,13 +1312,13 @@
          "pp": ""
         },
         {
-         "n": "Nikita Nesterenko",
+         "n": "Sam Colangelo",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Roger McQueen",
-         "pos": "C",
+         "n": "Nikita Nesterenko",
+         "pos": "W",
          "pp": "PP2"
         }
        ]
