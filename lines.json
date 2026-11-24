@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-24",
- "updated": "2026-11-24T14:34:42.186Z",
+ "updated": "2026-11-24T17:00:25.686Z",
  "games": [
   {
    "time": "8:00 PM ET",
@@ -188,9 +188,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Alex Formenton",
+         "n": "Filip Hallander",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -208,9 +208,9 @@
          "pp": ""
         },
         {
-         "n": "Filip Hallander",
+         "n": "Alex Formenton",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -243,7 +243,7 @@
          "pp": ""
         },
         {
-         "n": "Ty Emberson",
+         "n": "Jake Walman",
          "pos": "D",
          "pp": ""
         }
