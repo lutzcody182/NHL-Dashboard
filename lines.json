@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-23",
- "updated": "2026-11-23T22:30:18.474Z",
+ "updated": "2026-11-24T00:30:19.342Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -82,8 +82,8 @@
          "pp": ""
         },
         {
-         "n": "Steven Lorentz",
-         "pos": "W",
+         "n": "Isac Lundestrom",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -261,9 +261,9 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Mikael Backlund",
+         "n": "Morgan Frost",
          "pos": "C",
-         "pp": ""
+         "pp": "PP1"
         },
         {
          "n": "Matt Coronato",
@@ -281,14 +281,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Aydar Suniev",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Matvei Gridin",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Adam Klapka",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
          "n": "Ryan Strome",
@@ -301,14 +301,9 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Adam Klapka",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Morgan Frost",
+         "n": "Mikael Backlund",
          "pos": "C",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Yegor Sharangovich",
@@ -326,9 +321,9 @@
          "pp": ""
         },
         {
-         "n": "Brennan Othmann",
+         "n": "Aydar Suniev",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Jonathan Castagna",
@@ -515,6 +510,26 @@
          "pp": "PP1"
         },
         {
+         "n": "Dylan Guenther",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Jack McBain",
+         "pos": "C",
+         "pp": ""
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Lawson Crouse",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Logan Cooley",
          "pos": "W",
          "pp": "PP1"
@@ -527,7 +542,7 @@
        ]
       },
       {
-       "label": "Line 2",
+       "label": "Line 3",
        "players": [
         {
          "n": "Kailer Yamamoto",
@@ -543,26 +558,6 @@
          "n": "Anders Lee",
          "pos": "W",
          "pp": "PP2"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
-         "n": "Dylan Guenther",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Lawson Crouse",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Jack McBain",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -819,7 +814,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Scott Laughton",
+         "n": "Alex Turcotte",
          "pos": "W",
          "pp": ""
         },
@@ -833,16 +828,6 @@
       {
        "label": "Defensive Pairs",
        "players": [
-        {
-         "n": "Brandt Clarke",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Joel Edmundson",
-         "pos": "D",
-         "pp": ""
-        },
         {
          "n": "Drew Doughty",
          "pos": "D",
@@ -859,7 +844,17 @@
          "pp": ""
         },
         {
+         "n": "Brandt Clarke",
+         "pos": "D",
+         "pp": "PP2"
+        },
+        {
          "n": "Cody Ceci",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Joel Edmundson",
          "pos": "D",
          "pp": ""
         }
@@ -875,17 +870,17 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Alexandre Texier",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Nick Suzuki",
          "pos": "C",
          "pp": "PP1"
         },
         {
          "n": "Cole Caufield",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Juraj Slafkovsky",
          "pos": "W",
          "pp": "PP1"
         }
@@ -895,13 +890,13 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Dylan Larkin",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Alexandre Texier",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
-         "n": "Juraj Slafkovsky",
-         "pos": "W",
+         "n": "Dylan Larkin",
+         "pos": "C",
          "pp": "PP1"
         },
         {
@@ -925,15 +920,20 @@
          "pp": "PP2"
         },
         {
-         "n": "Oliver Kapanen",
+         "n": "Jake Evans",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Oliver Kapanen",
+         "pos": "C",
+         "pp": "PP2"
+        },
         {
          "n": "Florian Xhekaj",
          "pos": "W",
@@ -942,11 +942,6 @@
         {
          "n": "Owen Beck",
          "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Jake Evans",
-         "pos": "C",
          "pp": ""
         }
        ]
@@ -1003,12 +998,12 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Easton Cowan",
+         "n": "Nick Paul",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Jack Roslovic",
+         "n": "Easton Cowan",
          "pos": "W",
          "pp": "PP2"
         },
@@ -1023,14 +1018,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Nick Paul",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Gavin McKenna",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Ryan Tverberg",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "John Tavares",
@@ -1043,14 +1038,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Teddy Blueger",
+         "n": "Aatu Raty",
          "pos": "C",
          "pp": ""
         },
         {
          "n": "Dakota Joshua",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "William Nylander",
@@ -1068,7 +1063,7 @@
          "pp": ""
         },
         {
-         "n": "Aatu Raty",
+         "n": "Teddy Blueger",
          "pos": "C",
          "pp": ""
         },
