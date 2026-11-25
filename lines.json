@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-25",
- "updated": "2026-11-25T13:00:21.525Z",
+ "updated": "2026-11-25T16:30:18.409Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -630,7 +630,7 @@
     },
     {
      "team": "Pittsburgh Penguins",
-     "goalie": "Sergei Murashov",
+     "goalie": "Arturs Silovs",
      "groups": [
       {
        "label": "Line 1",
@@ -1118,7 +1118,7 @@
     },
     {
      "team": "Buffalo Sabres",
-     "goalie": "Alex Lyon",
+     "goalie": "Ukko-Pekka Luukkonen",
      "groups": [
       {
        "label": "Line 1",
@@ -1463,12 +1463,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Martin Fehervary",
+         "n": "Timothy Liljegren",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Vincent Desharnais",
+         "n": "Martin Fehervary",
          "pos": "D",
          "pp": ""
         },
