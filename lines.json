@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-25",
- "updated": "2026-11-25T17:30:30.874Z",
+ "updated": "2026-11-25T18:00:21.613Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -148,8 +148,8 @@
          "pp": "PP1"
         },
         {
-         "n": "Matthew Knies",
-         "pos": "W",
+         "n": "Adam Fantilli",
+         "pos": "C",
          "pp": "PP1"
         }
        ]
@@ -157,6 +157,11 @@
       {
        "label": "Line 2",
        "players": [
+        {
+         "n": "Matthew Knies",
+         "pos": "W",
+         "pp": "PP1"
+        },
         {
          "n": "Kent Johnson",
          "pos": "W",
@@ -166,11 +171,6 @@
          "n": "Luca Del Bel Belluz",
          "pos": "C",
          "pp": ""
-        },
-        {
-         "n": "Adam Fantilli",
-         "pos": "C",
-         "pp": "PP1"
         }
        ]
       },
@@ -228,14 +228,14 @@
          "pp": "PP1"
         },
         {
-         "n": "Denton Mateychuk",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Ivan Provorov",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Dante Fabbro",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Jake Christiansen",
@@ -243,7 +243,7 @@
          "pp": ""
         },
         {
-         "n": "Dante Fabbro",
+         "n": "Denton Mateychuk",
          "pos": "D",
          "pp": ""
         }
@@ -656,7 +656,7 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Andrei Kuzmenko",
+         "n": "Justin Brazeau",
          "pos": "W",
          "pp": "PP2"
         },
@@ -764,13 +764,13 @@
          "pp": "PP1"
         },
         {
-         "n": "Robert Thomas",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Dylan Holloway",
+         "pos": "W",
+         "pp": "PP2"
         },
         {
-         "n": "Jimmy Snuggerud",
-         "pos": "W",
+         "n": "Robert Thomas",
+         "pos": "C",
          "pp": "PP1"
         }
        ]
@@ -779,25 +779,30 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Dylan Holloway",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Mason McTavish",
          "pos": "C",
          "pp": "PP1"
         },
         {
+         "n": "Otto Stenberg",
+         "pos": "C",
+         "pp": ""
+        },
+        {
          "n": "Dalibor Dvorsky",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
       {
        "label": "Line 3",
        "players": [
+        {
+         "n": "Pius Suter",
+         "pos": "C",
+         "pp": "PP2"
+        },
         {
          "n": "Aleksanteri Kaskimaki",
          "pos": "W",
@@ -807,11 +812,6 @@
          "n": "Jonatan Berggren",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Pavel Buchnevich",
-         "pos": "C",
-         "pp": "PP2"
         }
        ]
       },
@@ -819,8 +819,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Pius Suter",
-         "pos": "C",
+         "n": "Ross Johnston",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -859,9 +859,9 @@
          "pp": ""
         },
         {
-         "n": "Calle Rosen",
+         "n": "Adam Jiricek",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -2469,7 +2469,7 @@
          "pp": ""
         },
         {
-         "n": "Trey Taylor",
+         "n": "Kyle Burroughs",
          "pos": "D",
          "pp": ""
         }
@@ -2864,17 +2864,17 @@
         {
          "n": "Martin Necas",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Artturi Lehkonen",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Brock Nelson",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -2884,17 +2884,17 @@
         {
          "n": "Gabriel Landeskog",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Nicolas Roy",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Nazem Kadri",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2904,12 +2904,12 @@
         {
          "n": "Jaden Schwartz",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "T.J. Hughes",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Fedor Svechkov",
@@ -2944,12 +2944,12 @@
         {
          "n": "Cale Makar",
          "pos": "D",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Devon Toews",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Brett Kulak",
