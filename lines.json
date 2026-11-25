@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-25",
- "updated": "2026-11-25T19:35:03.861Z",
+ "updated": "2026-11-25T23:30:17.394Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -585,8 +585,8 @@
          "pp": ""
         },
         {
-         "n": "Sam Morton",
-         "pos": "W",
+         "n": "Ben Jones",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -1393,26 +1393,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Dylan Strome",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "Anthony Beauvillier",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Alex Ovechkin",
-         "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 3",
-       "players": [
-        {
          "n": "Ilya Protas",
          "pos": "C",
          "pp": "PP2"
@@ -1426,6 +1406,26 @@
          "n": "Ryan Leonard",
          "pos": "W",
          "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Dylan Strome",
+         "pos": "C",
+         "pp": "PP1"
+        },
+        {
+         "n": "Anthony Beauvillier",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Alex Ovechkin",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
