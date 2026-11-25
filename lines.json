@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-25",
- "updated": "2026-11-25T18:00:21.613Z",
+ "updated": "2026-11-25T18:30:19.443Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2864,17 +2864,17 @@
         {
          "n": "Martin Necas",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Artturi Lehkonen",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Brock Nelson",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
@@ -2884,17 +2884,17 @@
         {
          "n": "Gabriel Landeskog",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Nicolas Roy",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Nazem Kadri",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -2904,12 +2904,12 @@
         {
          "n": "Jaden Schwartz",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "T.J. Hughes",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Fedor Svechkov",
@@ -2944,12 +2944,12 @@
         {
          "n": "Cale Makar",
          "pos": "D",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Devon Toews",
          "pos": "D",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Brett Kulak",
@@ -3105,7 +3105,7 @@
     },
     {
      "team": "Seattle Kraken",
-     "goalie": "Philipp Grubauer",
+     "goalie": "Joey Daccord",
      "groups": [
       {
        "label": "Line 1",
@@ -3354,7 +3354,7 @@
     },
     {
      "team": "Anaheim Ducks",
-     "goalie": "Ville Husso",
+     "goalie": "Laurent Brossoit",
      "groups": [
       {
        "label": "Line 1",
@@ -3440,14 +3440,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Ian Moore",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Jackson LaCombe",
          "pos": "D",
          "pp": "PP1"
+        },
+        {
+         "n": "Drew Helleson",
+         "pos": "D",
+         "pp": ""
         },
         {
          "n": "Pavel Mintyukov",
@@ -3455,7 +3455,7 @@
          "pp": ""
         },
         {
-         "n": "Drew Helleson",
+         "n": "Ian Moore",
          "pos": "D",
          "pp": ""
         },
