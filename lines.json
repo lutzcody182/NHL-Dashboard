@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-25",
- "updated": "2026-11-25T17:05:01.153Z",
+ "updated": "2026-11-25T17:30:30.874Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -132,7 +132,7 @@
     },
     {
      "team": "Columbus Blue Jackets",
-     "goalie": "Jet Greaves",
+     "goalie": "Cam Talbot",
      "groups": [
       {
        "label": "Line 1",
@@ -143,9 +143,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Sean Monahan",
-         "pos": "C",
-         "pp": "PP2"
+         "n": "Charlie Coyle",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "Matthew Knies",
@@ -178,19 +178,19 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Charlie Coyle",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Mikael Pyyhtia",
-         "pos": "W",
-         "pp": ""
+         "n": "Sean Monahan",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Cole Sillinger",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Jack Williams",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -203,7 +203,7 @@
          "pp": ""
         },
         {
-         "n": "Dmitri Voronkov",
+         "n": "Mikael Pyyhtia",
          "pos": "W",
          "pp": ""
         },
@@ -260,7 +260,7 @@
    "teams": [
     {
      "team": "Carolina Hurricanes",
-     "goalie": "Pyotr Kochetkov",
+     "goalie": "Brandon Bussi",
      "groups": [
       {
        "label": "Line 1",
@@ -1068,13 +1068,13 @@
          "pp": ""
         },
         {
-         "n": "Matt Rempe",
-         "pos": "W",
+         "n": "Glenn Gawdin",
+         "pos": "C",
          "pp": ""
         },
         {
-         "n": "Glenn Gawdin",
-         "pos": "C",
+         "n": "Taylor Raddysh",
+         "pos": "W",
          "pp": ""
         }
        ]
@@ -2464,12 +2464,12 @@
          "pp": "PP2"
         },
         {
-         "n": "Trey Taylor",
+         "n": "Tyler Myers",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Kyle Burroughs",
+         "n": "Trey Taylor",
          "pos": "D",
          "pp": ""
         }
