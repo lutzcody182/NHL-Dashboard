@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-25",
- "updated": "2026-11-25T18:30:19.443Z",
+ "updated": "2026-11-25T19:35:03.861Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -2932,7 +2932,7 @@
          "pp": ""
         },
         {
-         "n": "Gavin Brindley",
+         "n": "Adam Beckman",
          "pos": "W",
          "pp": ""
         }
@@ -2962,12 +2962,12 @@
          "pp": ""
         },
         {
-         "n": "Brent Burns",
+         "n": "Mike Reilly",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Noah Juulsen",
+         "n": "Brent Burns",
          "pos": "D",
          "pp": ""
         }
@@ -3450,16 +3450,6 @@
          "pp": ""
         },
         {
-         "n": "Pavel Mintyukov",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Ian Moore",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Tristan Luneau",
          "pos": "D",
          "pp": "PP2"
@@ -3468,6 +3458,16 @@
          "n": "Stian Solberg",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Pavel Mintyukov",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Ian Moore",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
