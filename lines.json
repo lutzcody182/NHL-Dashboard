@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-25",
- "updated": "2026-11-25T16:30:18.409Z",
+ "updated": "2026-11-25T17:05:01.153Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -143,9 +143,29 @@
          "pp": "PP2"
         },
         {
-         "n": "Charlie Coyle",
+         "n": "Sean Monahan",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
+         "n": "Matthew Knies",
          "pos": "W",
          "pp": "PP1"
+        }
+       ]
+      },
+      {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Kent Johnson",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Luca Del Bel Belluz",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Adam Fantilli",
@@ -155,28 +175,13 @@
        ]
       },
       {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Matthew Knies",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Kent Johnson",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Luca Del Bel Belluz",
-         "pos": "C",
-         "pp": "PP2"
-        }
-       ]
-      },
-      {
        "label": "Line 3",
        "players": [
+        {
+         "n": "Charlie Coyle",
+         "pos": "W",
+         "pp": "PP1"
+        },
         {
          "n": "Mikael Pyyhtia",
          "pos": "W",
@@ -186,11 +191,6 @@
          "n": "Cole Sillinger",
          "pos": "W",
          "pp": "PP2"
-        },
-        {
-         "n": "Jack Williams",
-         "pos": "C",
-         "pp": ""
         }
        ]
       },
@@ -656,7 +656,7 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Egor Chinakhov",
+         "n": "Andrei Kuzmenko",
          "pos": "W",
          "pp": "PP2"
         },
@@ -997,7 +997,7 @@
    "teams": [
     {
      "team": "New York Rangers",
-     "goalie": "Dylan Garand",
+     "goalie": "Joonas Korpisalo",
      "groups": [
       {
        "label": "Line 1",
@@ -1744,7 +1744,7 @@
    "teams": [
     {
      "team": "Winnipeg Jets",
-     "goalie": "Stuart Skinner",
+     "goalie": "Nico Daws",
      "groups": [
       {
        "label": "Line 1",
@@ -2185,7 +2185,7 @@
          "pp": ""
         },
         {
-         "n": "Carter Mazur",
+         "n": "Mason Appleton",
          "pos": "W",
          "pp": ""
         }
