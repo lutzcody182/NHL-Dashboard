@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-25",
- "updated": "2026-11-26T02:04:58.263Z",
+ "updated": "2026-11-26T02:30:18.966Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -3000,7 +3000,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Frank Nazar",
+         "n": "Anton Frondell",
          "pos": "C",
          "pp": "PP1"
         }
@@ -3020,9 +3020,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Ryan Greene",
+         "n": "Frank Nazar",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         }
        ]
       },
@@ -3040,9 +3040,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Anton Frondell",
+         "n": "Ryan Greene",
          "pos": "C",
-         "pp": "PP1"
+         "pp": "PP2"
         }
        ]
       },
