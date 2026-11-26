@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-25",
- "updated": "2026-11-25T23:30:17.394Z",
+ "updated": "2026-11-26T00:00:20.301Z",
  "games": [
   {
    "time": "7:00 PM ET",
@@ -356,7 +356,7 @@
          "pp": ""
         },
         {
-         "n": "K'Andre Miller",
+         "n": "Juuso Valimaki",
          "pos": "D",
          "pp": ""
         },
@@ -477,12 +477,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Ryan McDonagh",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "Erik Cernak",
+         "n": "Max Crozier",
          "pos": "D",
          "pp": ""
         },
@@ -492,7 +487,12 @@
          "pp": ""
         },
         {
-         "n": "Victor Hedman",
+         "n": "Ryan McDonagh",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Emil Lilleberg",
          "pos": "D",
          "pp": ""
         }
@@ -656,9 +656,9 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Justin Brazeau",
+         "n": "Avery Hayes",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Ben Kindel",
@@ -691,6 +691,11 @@
        "label": "Line 4",
        "players": [
         {
+         "n": "Justin Brazeau",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Connor Dewar",
          "pos": "W",
          "pp": ""
@@ -698,11 +703,6 @@
         {
          "n": "Blake Lizotte",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Avery Hayes",
-         "pos": "W",
          "pp": ""
         }
        ]
@@ -844,7 +844,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Justin Barron",
+         "n": "Cam Fowler",
          "pos": "D",
          "pp": ""
         },
@@ -854,7 +854,7 @@
          "pp": ""
         },
         {
-         "n": "Cam Fowler",
+         "n": "Justin Barron",
          "pos": "D",
          "pp": ""
         },
@@ -940,8 +940,8 @@
          "pp": "PP2"
         },
         {
-         "n": "Mitchell Chaffee",
-         "pos": "W",
+         "n": "Calum Ritchie",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -2942,24 +2942,24 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Cale Makar",
-         "pos": "D",
-         "pp": "PP1"
-        },
-        {
-         "n": "Devon Toews",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
          "n": "Brett Kulak",
          "pos": "D",
          "pp": ""
         },
         {
+         "n": "Cale Makar",
+         "pos": "D",
+         "pp": "PP1"
+        },
+        {
          "n": "Sam Malinski",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Devon Toews",
+         "pos": "D",
+         "pp": "PP2"
         },
         {
          "n": "Mike Reilly",
