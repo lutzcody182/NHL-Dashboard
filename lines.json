@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T20:00:22.067Z",
+ "updated": "2026-11-27T20:34:35.370Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1322,7 +1322,7 @@
          "pp": ""
         },
         {
-         "n": "Mason Appleton",
+         "n": "Carter Mazur",
          "pos": "W",
          "pp": ""
         }
@@ -1566,8 +1566,8 @@
          "pp": "PP1"
         },
         {
-         "n": "Hayden Hodgson",
-         "pos": "C",
+         "n": "Nick Cousins",
+         "pos": "W",
          "pp": ""
         },
         {
@@ -1745,14 +1745,14 @@
        "label": "Line 1",
        "players": [
         {
+         "n": "Jonathan Lekkerimaki",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
          "n": "Filip Chytil",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Brock Boeser",
-         "pos": "W",
-         "pp": "PP1"
         },
         {
          "n": "Jake DeBrusk",
@@ -1765,11 +1765,6 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Jonathan Lekkerimaki",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Liam Ohgren",
          "pos": "W",
          "pp": "PP2"
@@ -1777,6 +1772,11 @@
         {
          "n": "Marco Rossi",
          "pos": "C",
+         "pp": "PP1"
+        },
+        {
+         "n": "Brock Boeser",
+         "pos": "W",
          "pp": "PP1"
         }
        ]
@@ -1873,7 +1873,7 @@
         {
          "n": "Travis Konecny",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Christian Dvorak",
@@ -1913,12 +1913,12 @@
         {
          "n": "Noah Cates",
          "pos": "C",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Michael Bunting",
          "pos": "W",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       },
@@ -1988,7 +1988,7 @@
    "teams": [
     {
      "team": "Vegas Golden Knights",
-     "goalie": "Adin Hill",
+     "goalie": "Carter Hart",
      "groups": [
       {
        "label": "Line 1",
@@ -3417,7 +3417,7 @@
         {
          "n": "Mattias Samuelsson",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Rasmus Dahlin",
@@ -3437,7 +3437,7 @@
         {
          "n": "Olen Zellweger",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Louis Crevier",
