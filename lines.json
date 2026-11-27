@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T20:34:35.370Z",
+ "updated": "2026-11-27T21:00:19.673Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -2120,9 +2120,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Will Smith",
+         "n": "Adam Gaudette",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Macklin Celebrini",
@@ -2160,14 +2160,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Collin Graf",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Ty Dellandrea",
          "pos": "C",
          "pp": ""
+        },
+        {
+         "n": "Will Smith",
+         "pos": "W",
+         "pp": "PP1"
         }
        ]
       },
@@ -2180,14 +2180,14 @@
          "pp": ""
         },
         {
-         "n": "Zack Ostapchuk",
-         "pos": "C",
+         "n": "Collin Graf",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Adam Gaudette",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Zack Ostapchuk",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -2195,9 +2195,9 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Luca Cagnoni",
+         "n": "Michael Kesselring",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Darnell Nurse",
@@ -2220,9 +2220,9 @@
          "pp": "PP1"
         },
         {
-         "n": "Michael Kesselring",
+         "n": "Luca Cagnoni",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -2693,14 +2693,14 @@
        "label": "Defensive Pairs",
        "players": [
         {
+         "n": "Ian Moore",
+         "pos": "D",
+         "pp": ""
+        },
+        {
          "n": "Jackson LaCombe",
          "pos": "D",
          "pp": "PP1"
-        },
-        {
-         "n": "Drew Helleson",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Tristan Luneau",
@@ -2718,7 +2718,7 @@
          "pp": ""
         },
         {
-         "n": "Ian Moore",
+         "n": "Drew Helleson",
          "pos": "D",
          "pp": ""
         }
