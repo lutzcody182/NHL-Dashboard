@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T16:04:38.815Z",
+ "updated": "2026-11-27T17:00:22.383Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -610,7 +610,7 @@
          "pp": ""
         },
         {
-         "n": "Nick DeSimone",
+         "n": "Gregor Biber",
          "pos": "D",
          "pp": ""
         },
@@ -1571,7 +1571,7 @@
          "pp": ""
         },
         {
-         "n": "Samuel Blais",
+         "n": "Warren Foegele",
          "pos": "W",
          "pp": ""
         }
@@ -3294,11 +3294,6 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Justin Brazeau",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Connor Dewar",
          "pos": "W",
          "pp": ""
@@ -3319,12 +3314,12 @@
          "pp": "PP1"
         },
         {
-         "n": "Spencer Stastney",
+         "n": "Kaedan Korczak",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Kaedan Korczak",
+         "n": "Trevor van Riemsdyk",
          "pos": "D",
          "pp": ""
         },
@@ -3334,7 +3329,7 @@
          "pp": ""
         },
         {
-         "n": "Trevor van Riemsdyk",
+         "n": "Declan Carlile",
          "pos": "D",
          "pp": ""
         },
@@ -3360,7 +3355,7 @@
          "pp": "PP2"
         },
         {
-         "n": "Zach Benson",
+         "n": "Josh Doan",
          "pos": "W",
          "pp": "PP1"
         },
@@ -3375,14 +3370,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Noah Ostlund",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Jack Quinn",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Ryan McLeod",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Peyton Krebs",
@@ -3397,17 +3392,17 @@
         {
          "n": "Jason Zucker",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Josh Doan",
-         "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Josh Norris",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Tyson Kozak",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -3420,12 +3415,12 @@
          "pp": ""
         },
         {
-         "n": "Ryan McLeod",
-         "pos": "C",
+         "n": "Beck Malenstyn",
+         "pos": "W",
          "pp": ""
         },
         {
-         "n": "Beck Malenstyn",
+         "n": "Justin Danforth",
          "pos": "W",
          "pp": ""
         }
@@ -3457,7 +3452,7 @@
         {
          "n": "Olen Zellweger",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Louis Crevier",
@@ -3674,7 +3669,7 @@
          "pp": ""
         },
         {
-         "n": "Alex Formenton",
+         "n": "Max Jones",
          "pos": "W",
          "pp": ""
         }
@@ -3704,7 +3699,7 @@
          "pp": ""
         },
         {
-         "n": "Shakir Mukhamadullin",
+         "n": "Ty Emberson",
          "pos": "D",
          "pp": ""
         },
