@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T18:34:41.286Z",
+ "updated": "2026-11-27T19:04:55.413Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -2200,7 +2200,7 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Eric Pohlkamp",
+         "n": "Luca Cagnoni",
          "pos": "D",
          "pp": "PP2"
         },
@@ -2882,14 +2882,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Patrick Kane",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
          "n": "Oliver Moore",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Tyler Bertuzzi",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "Frank Nazar",
