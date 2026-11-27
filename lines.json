@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T15:34:51.315Z",
+ "updated": "2026-11-27T16:04:38.815Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -381,7 +381,7 @@
     },
     {
      "team": "New Jersey Devils",
-     "goalie": "Connor Hellebuyck",
+     "goalie": "Jake Allen",
      "groups": [
       {
        "label": "Line 1",
@@ -485,11 +485,6 @@
          "n": "Dougie Hamilton",
          "pos": "D",
          "pp": "PP2"
-        },
-        {
-         "n": "Declan Chisholm",
-         "pos": "D",
-         "pp": ""
         },
         {
          "n": "Vladislav Kolyachonok",
@@ -3354,7 +3349,7 @@
     },
     {
      "team": "Buffalo Sabres",
-     "goalie": "Alex Lyon",
+     "goalie": "Ukko-Pekka Luukkonen",
      "groups": [
       {
        "label": "Line 1",
