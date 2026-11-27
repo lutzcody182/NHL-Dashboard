@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T21:34:30.330Z",
+ "updated": "2026-11-27T22:30:21.471Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1669,7 +1669,7 @@
         {
          "n": "Yanni Gourde",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ilya Mikheyev",
@@ -1724,7 +1724,7 @@
         {
          "n": "Victor Hedman",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
@@ -2471,7 +2471,7 @@
         {
          "n": "David Spacek",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
@@ -2741,11 +2741,6 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Will Cuylle",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
          "n": "Alexis Lafreniere",
          "pos": "W",
          "pp": "PP1"
@@ -2754,12 +2749,22 @@
          "n": "Mika Zibanejad",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Taylor Raddysh",
+         "pos": "W",
+         "pp": "PP2"
         }
        ]
       },
       {
        "label": "Line 2",
        "players": [
+        {
+         "n": "Will Cuylle",
+         "pos": "W",
+         "pp": "PP2"
+        },
         {
          "n": "Tye Kartye",
          "pos": "W",
@@ -2776,7 +2781,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Noah Laba",
+         "n": "Max Sasson",
          "pos": "C",
          "pp": ""
         },
@@ -2796,7 +2801,12 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Max Sasson",
+         "n": "Matt Rempe",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Noah Laba",
          "pos": "C",
          "pp": ""
         },
@@ -2804,11 +2814,6 @@
          "n": "Glenn Gawdin",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Taylor Raddysh",
-         "pos": "W",
-         "pp": "PP2"
         }
        ]
       },
@@ -2897,6 +2902,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Dillon Boucher",
+         "pos": "W",
+         "pp": ""
+        },
+        {
          "n": "Andrew Mangiapane",
          "pos": "W",
          "pp": ""
@@ -2918,11 +2928,6 @@
         },
         {
          "n": "Cole Smith",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Jordan Greenway",
          "pos": "W",
          "pp": ""
         }
