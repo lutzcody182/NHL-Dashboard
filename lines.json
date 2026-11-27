@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T17:00:22.383Z",
+ "updated": "2026-11-27T17:34:28.734Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -260,7 +260,7 @@
    "teams": [
     {
      "team": "Calgary Flames",
-     "goalie": "Dustin Wolf",
+     "goalie": "Devin Cooley",
      "groups": [
       {
        "label": "Line 1",
@@ -3191,11 +3191,6 @@
        "label": "Defensive Pairs",
        "players": [
         {
-         "n": "Logan Stanley",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Matthew Schaefer",
          "pos": "D",
          "pp": "PP1"
@@ -3206,12 +3201,7 @@
          "pp": ""
         },
         {
-         "n": "Tony DeAngelo",
-         "pos": "D",
-         "pp": "PP2"
-        },
-        {
-         "n": "Ben Hutton",
+         "n": "Logan Stanley",
          "pos": "D",
          "pp": ""
         },
@@ -3219,6 +3209,16 @@
          "n": "Matthew Kessel",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Ben Hutton",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Tony DeAngelo",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
@@ -3261,7 +3261,7 @@
         {
          "n": "Avery Hayes",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Ben Kindel",
@@ -3352,7 +3352,7 @@
         {
          "n": "Jiri Kulich",
          "pos": "C",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Josh Doan",
@@ -3392,7 +3392,7 @@
         {
          "n": "Jason Zucker",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Josh Norris",
@@ -3593,7 +3593,7 @@
     },
     {
      "team": "Edmonton Oilers",
-     "goalie": "Devon Levi",
+     "goalie": "Tristan Jarry",
      "groups": [
       {
        "label": "Line 1",
@@ -3602,26 +3602,6 @@
          "n": "Connor McDavid",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Ryan Nugent-Hopkins",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "Kasperi Kapanen",
-         "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
-         "n": "Mathieu Joseph",
-         "pos": "W",
-         "pp": ""
         },
         {
          "n": "Vasily Podkolzin",
@@ -3636,6 +3616,26 @@
        ]
       },
       {
+       "label": "Line 2",
+       "players": [
+        {
+         "n": "Colton Dach",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
+         "n": "Ryan Nugent-Hopkins",
+         "pos": "W",
+         "pp": "PP1"
+        },
+        {
+         "n": "Kasperi Kapanen",
+         "pos": "W",
+         "pp": "PP1"
+        }
+       ]
+      },
+      {
        "label": "Line 3",
        "players": [
         {
@@ -3644,14 +3644,14 @@
          "pp": ""
         },
         {
-         "n": "Colton Dach",
+         "n": "Alex Formenton",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
-         "n": "Filip Hallander",
+         "n": "Mathieu Joseph",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -3681,7 +3681,7 @@
         {
          "n": "Mattias Ekholm",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Evan Bouchard",
