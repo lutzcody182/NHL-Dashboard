@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T13:00:23.498Z",
+ "updated": "2026-11-27T15:34:51.315Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -3110,7 +3110,7 @@
     },
     {
      "team": "New York Islanders",
-     "goalie": "Ilya Sorokin",
+     "goalie": "Semyon Varlamov",
      "groups": [
       {
        "label": "Line 1",
