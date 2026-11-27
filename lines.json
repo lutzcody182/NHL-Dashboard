@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T18:05:08.543Z",
+ "updated": "2026-11-27T18:34:41.286Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1797,7 +1797,7 @@
         {
          "n": "Drew O'Connor",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Linus Karlsson",
@@ -1817,7 +1817,7 @@
         {
          "n": "Paul Cotter",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Cole Reinhardt",
@@ -1878,7 +1878,7 @@
         {
          "n": "Travis Konecny",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Christian Dvorak",
@@ -1916,14 +1916,14 @@
          "pp": ""
         },
         {
-         "n": "Matvei Michkov",
+         "n": "Trevor Zegras",
          "pos": "W",
          "pp": "PP1"
         },
         {
          "n": "Noah Cates",
          "pos": "C",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -1936,9 +1936,9 @@
          "pp": ""
         },
         {
-         "n": "Trevor Zegras",
+         "n": "Michael Bunting",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Sean Couturier",
