@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T19:30:21.401Z",
+ "updated": "2026-11-27T20:00:22.067Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1246,7 +1246,7 @@
    "teams": [
     {
      "team": "Detroit Red Wings",
-     "goalie": "Daniil Tarasov",
+     "goalie": "John Gibson",
      "groups": [
       {
        "label": "Line 1",
@@ -1616,7 +1616,7 @@
     },
     {
      "team": "Tampa Bay Lightning",
-     "goalie": "Andrei Vasilevskiy",
+     "goalie": "Dennis Hildeby",
      "groups": [
       {
        "label": "Line 1",
@@ -1642,7 +1642,7 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Yanni Gourde",
+         "n": "Gage Goncalves",
          "pos": "W",
          "pp": "PP2"
         },
@@ -1667,9 +1667,9 @@
          "pp": ""
         },
         {
-         "n": "Sam O'Reilly",
-         "pos": "C",
-         "pp": "PP1"
+         "n": "Yanni Gourde",
+         "pos": "W",
+         "pp": ""
         },
         {
          "n": "Ilya Mikheyev",
@@ -1682,14 +1682,9 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Gage Goncalves",
-         "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Scott Sabourin",
-         "pos": "W",
-         "pp": ""
+         "n": "Sam O'Reilly",
+         "pos": "C",
+         "pp": "PP1"
         },
         {
          "n": "Jeffrey Viel",
@@ -1712,16 +1707,6 @@
          "pp": "PP2"
         },
         {
-         "n": "Max Crozier",
-         "pos": "D",
-         "pp": ""
-        },
-        {
-         "n": "J.J. Moser",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Ryan McDonagh",
          "pos": "D",
          "pp": ""
@@ -1730,6 +1715,16 @@
          "n": "Emil Lilleberg",
          "pos": "D",
          "pp": ""
+        },
+        {
+         "n": "Max Crozier",
+         "pos": "D",
+         "pp": ""
+        },
+        {
+         "n": "Victor Hedman",
+         "pos": "D",
+         "pp": "PP2"
         }
        ]
       }
@@ -1896,7 +1891,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Porter Martone",
+         "n": "Trevor Zegras",
          "pos": "W",
          "pp": "PP1"
         },
@@ -1911,12 +1906,7 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Cole Knuble",
-         "pos": "W",
-         "pp": ""
-        },
-        {
-         "n": "Trevor Zegras",
+         "n": "Porter Martone",
          "pos": "W",
          "pp": "PP1"
         },
@@ -1924,6 +1914,11 @@
          "n": "Noah Cates",
          "pos": "C",
          "pp": "PP2"
+        },
+        {
+         "n": "Michael Bunting",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
@@ -1936,7 +1931,7 @@
          "pp": ""
         },
         {
-         "n": "Michael Bunting",
+         "n": "Cole Knuble",
          "pos": "W",
          "pp": ""
         },
@@ -1968,12 +1963,12 @@
         {
          "n": "Cam York",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
-         "n": "Oliver Bonk",
+         "n": "Simon Benoit",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Nick Seeler",
@@ -3365,6 +3360,11 @@
        "label": "Line 2",
        "players": [
         {
+         "n": "Jason Zucker",
+         "pos": "W",
+         "pp": "PP2"
+        },
+        {
          "n": "Jack Quinn",
          "pos": "W",
          "pp": "PP1"
@@ -3373,11 +3373,6 @@
          "n": "Ryan McLeod",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Peyton Krebs",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -3385,19 +3380,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Jason Zucker",
+         "n": "Peyton Krebs",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Josh Norris",
          "pos": "C",
          "pp": "PP2"
-        },
-        {
-         "n": "Tyson Kozak",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
