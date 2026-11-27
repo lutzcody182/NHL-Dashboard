@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T17:34:28.734Z",
+ "updated": "2026-11-27T18:05:08.543Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -87,7 +87,7 @@
          "pp": ""
         },
         {
-         "n": "Dakota Joshua",
+         "n": "Zack MacEwen",
          "pos": "W",
          "pp": ""
         }
@@ -138,34 +138,14 @@
        "label": "Line 1",
        "players": [
         {
-         "n": "Elias Lindholm",
-         "pos": "C",
-         "pp": "PP1"
-        },
-        {
-         "n": "Morgan Geekie",
-         "pos": "W",
-         "pp": "PP1"
-        },
-        {
-         "n": "David Pastrnak",
-         "pos": "W",
-         "pp": "PP1"
-        }
-       ]
-      },
-      {
-       "label": "Line 2",
-       "players": [
-        {
          "n": "JJ Peterka",
          "pos": "W",
          "pp": "PP2"
         },
         {
-         "n": "Casey Mittelstadt",
+         "n": "David Pastrnak",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Pavel Zacha",
@@ -175,12 +155,32 @@
        ]
       },
       {
-       "label": "Line 3",
+       "label": "Line 2",
        "players": [
+        {
+         "n": "Elias Lindholm",
+         "pos": "C",
+         "pp": "PP1"
+        },
         {
          "n": "Marat Khusnutdinov",
          "pos": "W",
          "pp": ""
+        },
+        {
+         "n": "Casey Mittelstadt",
+         "pos": "W",
+         "pp": "PP2"
+        }
+       ]
+      },
+      {
+       "label": "Line 3",
+       "players": [
+        {
+         "n": "Morgan Geekie",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
          "n": "Matthew Poitras",
@@ -328,7 +328,7 @@
         {
          "n": "Maxim Tsyplakov",
          "pos": "W",
-         "pp": "PP1"
+         "pp": ""
         },
         {
          "n": "Brennan Othmann",
@@ -336,9 +336,9 @@
          "pp": ""
         },
         {
-         "n": "Ben Jones",
+         "n": "Morgan Frost",
          "pos": "C",
-         "pp": ""
+         "pp": "PP1"
         }
        ]
       },
@@ -432,20 +432,25 @@
          "pp": "PP2"
         },
         {
-         "n": "Amadeus Lombardi",
-         "pos": "C",
-         "pp": ""
-        },
-        {
          "n": "Evan Rodrigues",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Stefan Noesen",
+         "pos": "W",
+         "pp": ""
         }
        ]
       },
       {
        "label": "Line 4",
        "players": [
+        {
+         "n": "Amadeus Lombardi",
+         "pos": "C",
+         "pp": ""
+        },
         {
          "n": "Jesper Boqvist",
          "pos": "W",
@@ -454,11 +459,6 @@
         {
          "n": "Cody Glass",
          "pos": "C",
-         "pp": ""
-        },
-        {
-         "n": "Stefan Noesen",
-         "pos": "W",
          "pp": ""
         }
        ]
@@ -504,7 +504,7 @@
    "teams": [
     {
      "team": "Utah Hockey Club",
-     "goalie": "Sebastian Cossa",
+     "goalie": "Karel Vejmelka",
      "groups": [
       {
        "label": "Line 1",
@@ -753,7 +753,7 @@
    "teams": [
     {
      "team": "Dallas Stars",
-     "goalie": "Jake Oettinger",
+     "goalie": "Casey DeSmith",
      "groups": [
       {
        "label": "Line 1",
@@ -910,7 +910,7 @@
          "pp": ""
         },
         {
-         "n": "Dalibor Dvorsky",
+         "n": "Connor McMichael",
          "pos": "W",
          "pp": "PP2"
         }
@@ -920,11 +920,6 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Pius Suter",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Aleksanteri Kaskimaki",
          "pos": "W",
          "pp": ""
@@ -933,6 +928,11 @@
          "n": "Jonatan Berggren",
          "pos": "W",
          "pp": "PP2"
+        },
+        {
+         "n": "Pavel Buchnevich",
+         "pos": "C",
+         "pp": "PP2"
         }
        ]
       },
@@ -940,8 +940,8 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Ross Johnston",
-         "pos": "W",
+         "n": "Pius Suter",
+         "pos": "C",
          "pp": ""
         },
         {
@@ -950,9 +950,9 @@
          "pp": ""
         },
         {
-         "n": "Nathan Walker",
+         "n": "Dalibor Dvorsky",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -977,7 +977,7 @@
         {
          "n": "Justin Barron",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Adam Jiricek",
@@ -1023,14 +1023,14 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Anton Lundell",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Brady Tkachuk",
          "pos": "W",
          "pp": "PP1"
+        },
+        {
+         "n": "Sam Bennett",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Matthew Tkachuk",
@@ -1043,6 +1043,11 @@
        "label": "Line 3",
        "players": [
         {
+         "n": "Anton Lundell",
+         "pos": "C",
+         "pp": "PP2"
+        },
+        {
          "n": "Eetu Luostarinen",
          "pos": "W",
          "pp": ""
@@ -1050,11 +1055,6 @@
         {
          "n": "Brad Marchand",
          "pos": "W",
-         "pp": "PP2"
-        },
-        {
-         "n": "Sam Bennett",
-         "pos": "C",
          "pp": "PP2"
         }
        ]
@@ -1224,14 +1224,14 @@
          "pp": ""
         },
         {
-         "n": "Jack St. Ivany",
-         "pos": "D",
-         "pp": ""
-        },
-        {
          "n": "Cole Hutson",
          "pos": "D",
          "pp": "PP2"
+        },
+        {
+         "n": "Vincent Desharnais",
+         "pos": "D",
+         "pp": ""
         }
        ]
       }
@@ -1571,7 +1571,7 @@
          "pp": ""
         },
         {
-         "n": "Warren Foegele",
+         "n": "Andre Burakovsky",
          "pos": "W",
          "pp": ""
         }
@@ -2774,11 +2774,6 @@
          "n": "J.T. Miller",
          "pos": "C",
          "pp": "PP1"
-        },
-        {
-         "n": "Jaroslav Chmelar",
-         "pos": "W",
-         "pp": ""
         }
        ]
       },
@@ -2796,9 +2791,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Taylor Raddysh",
+         "n": "Jaroslav Chmelar",
          "pos": "W",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       },
@@ -2811,14 +2806,14 @@
          "pp": ""
         },
         {
-         "n": "Matt Rempe",
+         "n": "Glenn Gawdin",
          "pos": "W",
          "pp": ""
         },
         {
-         "n": "Glenn Gawdin",
+         "n": "Taylor Raddysh",
          "pos": "W",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       },
@@ -3483,7 +3478,7 @@
          "pp": "PP1"
         },
         {
-         "n": "Bobby McMann",
+         "n": "Chandler Stephenson",
          "pos": "W",
          "pp": "PP1"
         },
@@ -3518,14 +3513,14 @@
        "label": "Line 3",
        "players": [
         {
-         "n": "Chandler Stephenson",
+         "n": "Bobby McMann",
          "pos": "W",
          "pp": "PP1"
         },
         {
-         "n": "Ryan Winterton",
-         "pos": "W",
-         "pp": ""
+         "n": "Matthew Wood",
+         "pos": "C",
+         "pp": "PP2"
         },
         {
          "n": "Freddy Gaudreau",
@@ -3538,17 +3533,17 @@
        "label": "Line 4",
        "players": [
         {
-         "n": "Matthew Wood",
-         "pos": "C",
-         "pp": "PP2"
-        },
-        {
          "n": "Jacob Melanson",
          "pos": "W",
          "pp": ""
         },
         {
          "n": "Ben Meyers",
+         "pos": "W",
+         "pp": ""
+        },
+        {
+         "n": "Ryan Winterton",
          "pos": "W",
          "pp": ""
         }
