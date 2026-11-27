@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-27T21:00:19.673Z",
+ "updated": "2026-11-27T21:34:30.330Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -1322,7 +1322,7 @@
          "pp": ""
         },
         {
-         "n": "Carter Mazur",
+         "n": "Mason Appleton",
          "pos": "W",
          "pp": ""
         }
@@ -2864,7 +2864,7 @@
         {
          "n": "Ryan Donato",
          "pos": "W",
-         "pp": "PP2"
+         "pp": "PP1"
         },
         {
          "n": "Anton Frondell",
@@ -2882,9 +2882,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Tyler Bertuzzi",
+         "n": "Teuvo Teravainen",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Frank Nazar",
@@ -2900,11 +2900,6 @@
          "n": "Andrew Mangiapane",
          "pos": "W",
          "pp": ""
-        },
-        {
-         "n": "Teuvo Teravainen",
-         "pos": "W",
-         "pp": "PP2"
         },
         {
          "n": "Ryan Greene",
