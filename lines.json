@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-28",
- "updated": "2026-11-28T16:00:20.895Z",
+ "updated": "2026-11-28T17:04:44.902Z",
  "games": [
   {
    "time": "4:00 PM ET",
@@ -457,7 +457,7 @@
          "pp": ""
         },
         {
-         "n": "Garnet Hathaway",
+         "n": "Bokondji Imama",
          "pos": "W",
          "pp": ""
         }
@@ -834,7 +834,7 @@
          "pp": ""
         },
         {
-         "n": "Zack MacEwen",
+         "n": "Dakota Joshua",
          "pos": "W",
          "pp": ""
         }
@@ -2424,12 +2424,12 @@
          "pp": ""
         },
         {
-         "n": "David Perron",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Oskar Back",
+         "pos": "C",
+         "pp": ""
         },
         {
-         "n": "Joel Kiviranta",
+         "n": "Colin Blackwell",
          "pos": "W",
          "pp": ""
         }
@@ -2441,7 +2441,7 @@
         {
          "n": "Esa Lindell",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Miro Heiskanen",
@@ -2552,9 +2552,9 @@
          "pp": ""
         },
         {
-         "n": "Nico Myatovic",
-         "pos": "W",
-         "pp": "PP2"
+         "n": "Ryan Poehling",
+         "pos": "C",
+         "pp": ""
         },
         {
          "n": "Nikita Nesterenko",
@@ -2579,7 +2579,7 @@
         {
          "n": "Tristan Luneau",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         },
         {
          "n": "Stian Solberg",
