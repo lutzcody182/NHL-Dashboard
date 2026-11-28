@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-27",
- "updated": "2026-11-28T01:34:53.018Z",
+ "updated": "2026-11-28T02:34:49.062Z",
  "games": [
   {
    "time": "1:00 PM ET",
@@ -690,7 +690,7 @@
         {
          "n": "Mattias Ekholm",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         },
         {
          "n": "Evan Bouchard",
@@ -715,7 +715,7 @@
         {
          "n": "Jake Walman",
          "pos": "D",
-         "pp": ""
+         "pp": "PP2"
         }
        ]
       }
