@@ -2,7 +2,7 @@
  "source": "RotoGrinders",
  "url": "https://rotogrinders.com/lineups/nhl",
  "date": "2026-11-28",
- "updated": "2026-11-28T17:04:44.902Z",
+ "updated": "2026-11-28T18:04:53.235Z",
  "games": [
   {
    "time": "4:00 PM ET",
@@ -580,14 +580,14 @@
          "pp": ""
         },
         {
-         "n": "Brennan Othmann",
-         "pos": "W",
-         "pp": ""
-        },
-        {
          "n": "Morgan Frost",
          "pos": "C",
          "pp": "PP1"
+        },
+        {
+         "n": "Martin Pospisil",
+         "pos": "C",
+         "pp": ""
         }
        ]
       },
@@ -769,9 +769,9 @@
          "pp": "PP2"
         },
         {
-         "n": "Kirill Marchenko",
+         "n": "Jack Roslovic",
          "pos": "W",
-         "pp": "PP1"
+         "pp": "PP2"
         },
         {
          "n": "Auston Matthews",
@@ -784,12 +784,12 @@
        "label": "Line 2",
        "players": [
         {
-         "n": "Colton Sissons",
-         "pos": "C",
-         "pp": ""
+         "n": "Gavin McKenna",
+         "pos": "W",
+         "pp": "PP1"
         },
         {
-         "n": "Gavin McKenna",
+         "n": "Kirill Marchenko",
          "pos": "W",
          "pp": "PP1"
         },
@@ -829,13 +829,13 @@
          "pp": ""
         },
         {
-         "n": "Teddy Blueger",
+         "n": "Colton Sissons",
          "pos": "C",
          "pp": ""
         },
         {
-         "n": "Dakota Joshua",
-         "pos": "W",
+         "n": "Teddy Blueger",
+         "pos": "C",
          "pp": ""
         }
        ]
@@ -864,14 +864,14 @@
          "pp": "PP2"
         },
         {
-         "n": "Nick Blankenburg",
+         "n": "Oliver Ekman-Larsson",
          "pos": "D",
          "pp": ""
         },
         {
-         "n": "Oliver Ekman-Larsson",
+         "n": "Dakota Mermis",
          "pos": "D",
-         "pp": "PP2"
+         "pp": ""
         }
        ]
       }
